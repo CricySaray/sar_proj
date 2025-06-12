@@ -1,5 +1,14 @@
 #-------------------------------------------------
 # some more ls aliases
+alias p='pwd'
+alias vt='vim ~/.tmux.conf'
+alias tm='tmux'
+alias vc='vim ~/.cshrc'
+alias d='du -sh'
+alias vinvs='vim ~/.invs_alias.tcl'
+alias gp='grep -rni'
+alias ma='make'
+alias open='xdg-open'
 alias md='mkdir -p'
 alias tt='tree'
 alias s='source'
@@ -19,6 +28,9 @@ alias .='cd ..'
 alias ..='cd ../../'
 alias ...='cd ../../../'
 alias ....='cd ../../../../'
+
+alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
+alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
 # config proxy

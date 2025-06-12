@@ -37,6 +37,11 @@ alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 alias proxy='export all_proxy=http://172.29.64.1:7897'
 alias unproxy='unset all_proxy'
 
+#------------------------------------------------
+# export vars
+export DISPLAY=172.23.112.1:0
+
+
 
 # default config when install
 #--------------------------------------------------

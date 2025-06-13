@@ -13,8 +13,9 @@
   lg = log --oneline --decorate --graph
   tt = log --all --graph --decorate --oneline
   tree = log --all --graph --decorate --oneline
-  pup = push --set-upstream origin $(git branch --show-current)
+  p = push --set-upstream main main
   cleanup = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d
+	h = help
 [color]
   ui = auto           # 自动着色
   branch = auto

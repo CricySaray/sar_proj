@@ -33,6 +33,18 @@ alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
 alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
+# GIT alias 
+
+alias vg='vim ~/.gitconfig'
+# 在.bashrc或.zshrc中添加
+if [ -f /usr/share/bash-completion/completions/git ]; then
+  source /usr/share/bash-completion/completions/git
+fi
+# 启用命令补全 using bash-completion tool
+alias g='git'
+__git_complete g __git_main  # 使g命令也支持补全
+
+#------------------------------------------------
 # config proxy
 alias proxy='export all_proxy=http://172.29.64.1:7897'
 alias unproxy='unset all_proxy'

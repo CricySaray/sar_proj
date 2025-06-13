@@ -1,4 +1,3 @@
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "               
 "        ██╗   ██╗██╗███╗   ███╗██████╗  ██████╗
@@ -8,7 +7,6 @@
 "         ╚████╔╝ ██║██║ ╚═╝ ██║██║  ██║╚██████╗
 "          ╚═══╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
 "               
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " All system-wide defaults are set in $VIMRUNTIME/debian.vim and sourced by
 " the call to :runtime you can find below.  If you wish to change any of those
@@ -16,13 +14,36 @@
 " will be overwritten everytime an upgrade of the vim packages is performed.
 " It is recommended to make changes after sourcing debian.vim since it alters
 " the value of the 'compatible' option.
-
 runtime! debian.vim
 
 " Set the backslash as the leader key.
 let mapleader = "\\"
 
-""" BASIC CONFIG ------------------------------------------------------------
+""" ABBR CONFIG ------------------------------------------------------------
+iabbrev hw Hello World
+iabbrev class public class{}<esc>i<cr><esc>k$Fsli
+iabbrev SS ######################################<esc>oi# author     : sar <esc>oi# descrip    : this is blahblah ... <esc>oi######################################<esc>oi
+iabbrev ec ecoChangeCell
+iabbrev ea ecoAddRepeater
+iabbrev ed ecoDeleteRepeater
+cabbrev GG %!grep -B1 -A1
+cabbrev bwp v/BWP/d
+cabbrev a %!awk '{print }'
+cabbrev 12 %!awk '{print $1,$2}'
+cabbrev ) %s/(\|)//g
+cabbrev ch12 %!awk '{print $2,$1}'
+cabbrev rmulvt g/CPDULVT/d
+cabbrev rmpinm %s/\/\w\+ / /
+cabbrev rmpine %s/\/\w\+$//
+cabbrev lvtm %s/CPD /CPDLVT /
+cabbrev lvte %s/CPD$/CPDLVT/
+cabbrev ulvtm %s/CPDLVT /CPDULVT /
+cabbrev ulvte %s/CPDLVT$/CPDULVT/
+cabbrev t16 %s/T\d\dP96/T16P96/
+cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
+cabbrev vv vs ~/.vimrc
+
+""" SETTING CONFIG ------------------------------------------------------------
 if has("syntax")
   syntax on
 endif
@@ -88,6 +109,10 @@ nnoremap <c-e> A
 inoremap <c-a> <esc>I
 inoremap <c-e> <esc>A
 noremap - dd
+nnoremap <F2> :g/^\s*$/d<CR>
+nnoremap <F3> :tabnew .<CR>
+nnoremap <c-a> ggVG:ya
+
 " buffers config
 nnoremap <c-n> :bn <CR>
 nnoremap <c-p> :bp <CR>
@@ -131,7 +156,8 @@ noremap <c-right> <c-w><
 let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', '\.pyc$', '\.odt$', '\.png$', '\.gif$', '\.db$']
 
 
-""" VIMSCRIPT -------------------------------------------------------------- 
+""" VIMSCRIPT & FUNCTIONS -------------------------------------------------------------- 
+
 
 " ---------------------------
 " auto reLoad file every 500ms
@@ -154,8 +180,107 @@ augroup filetype_vim
     autocmd FileType vim setlocal foldmethod=marker
 augroup END
 
+" ----------------------------
+" 仅对指定文件格式设置自动补全功能
+" autocmd FileType c,cpp,sh,java,html,js,css,py exec AutoComplete()
+" 对所有文件格式设置自动补全功能
+autocmd FileType * exec AutoComplete()
+func! AutoComplete()
+    "相关映射
+    :inoremap ( ()<Left>
+    :inoremap ) <c-r>=ClosePair(')')<CR>
+    :inoremap { {}<Left>
+    :inoremap } <c-r>=ClosePair('}')<CR>
+    :inoremap [ []<Left>
+    :inoremap ] <c-r>=ClosePair(']')<CR>
+    :inoremap " <c-r>=DQuote()<CR>
+    :inoremap ' <c-r>=SQuote()<CR>
+	" 将BackSpace键映射为RemovePairs函数
+    :inoremap <BS> <c-r>=RemovePairs()<CR>
+	" 将回车键映射为BracketIndent函数
+	:inoremap <CR> <c-r>=BracketIndent()<CR>
+endfunc
 
-""" STATUS LINE ------------------------------------------------------------ 
+func! ClosePair(char)
+    if getline('.')[col('.') - 1] == a:char
+        return "\<Right>"
+    else
+        return a:char
+    endif
+endfunc
+"自动补全双引号
+func! DQuote()
+    if getline('.')[col('.') - 1] == '"'
+        return "\<Right>"
+    else
+		if getline('.')[col('.') - 2] == '"'
+			return '"'
+		else
+			return "\"\"\<Left>"
+    endif
+endfunc
+"自动补全单引号
+func! SQuote()
+    if getline('.')[col('.') - 1] == "'"
+        return "\<Right>"
+    else
+		if getline('.')[col('.') - 2] == "'"
+			return "'"
+		else
+	        return "''\<Left>"
+    endif
+endfunc
+" 按BackSpace键时判断当前字符和前一字符是否为括号对或一对引号，如果是则两者均删除，并保留BackSpace正常功能
+func! RemovePairs()
+	let l:line = getline(".") " 取得当前行
+	let l:current_char = l:line[col(".")-1] " 取得当前光标字符
+	let l:previous_char = l:line[col(".")-2] " 取得光标前一个字符 
+	if (l:previous_char == '"' || l:previous_char == "'") && l:previous_char == l:current_char
+		return "\<delete>\<bs>"
+	elseif index(["(", "[", "{"], l:previous_char) != -1
+		" 将光标定位到前括号上并取得它的索引值
+		execute "normal! h" 
+		let l:front_col = col(".")
+		" 将光标定位到后括号上并取得它的行和索引值
+		execute "normal! %" 
+		let l:line1 = getline(".")
+		let l:back_col = col(".")
+		" 将光标重新定位到前括号上
+		execute "normal! %"
+		" 当行相同且后括号的索引比前括号大1则匹配成功
+		if l:line1 == l:line && l:back_col == l:front_col + 1
+			return "\<right>\<delete>\<bs>"
+		else
+			return "\<right>\<bs>"
+		end
+	else
+	  	return "\<bs>" 
+	end
+endfunc 
+" 在大括号内换行时进行缩进
+func! BracketIndent()
+	let l:line = getline(".")
+	let l:current_char = l:line[col(".")-1] 
+	let l:previous_char = l:line[col(".")-2] 
+	if l:previous_char == "{" && l:current_char == "}"
+		return "\<cr>\<bs>\<esc>\O"
+	else
+		return "\<cr>"
+	end
+endfunc
+"设置跳出自动补全的括号
+func! SkipPair()
+    if getline('.')[col('.') - 1] == ')' || getline('.')[col('.') - 1] == ']' || getline('.')[col('.') - 1] == '"' || getline('.')[col('.') - 1] == "'" || getline('.')[col('.') - 1] == '}'
+        return "\<ESC>la"
+    else
+        return "\t"
+    endif
+endfunc
+" 将tab键绑定为跳出括号
+inoremap <TAB> <c-r>=SkipPair()<CR>
+
+
+""" STATUS LINE CONFIG ------------------------------------------------------------ 
 
 " set status line  display (no need for other plugins)
 set statusline=%n\ %F%m%r%h%w%=\ \ \ \ \ \ %l/%L,\ %c/%{col('$')-1}\ \ \ --%p%%--\

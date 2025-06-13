@@ -1,0 +1,37 @@
+proc create_select_blockPGPin_routeblk { } {
+	set inst_boxes [dbGet selected.boxes]
+	set instPtr [dbGet selected]
+	set ShapePtr [dbGet selected.cell.pgTerms.pins.allShapes]
+	deselectAll
+	set m4_blk_boxes {}
+	foreach shape $ShapePtr {
+		set layer_name [dbGet  $shape.layer.name]
+		set rect [dbGet $shape.shapes.rect]
+			puts "$rect"
+		if { $rect == "0x0" } {
+			set rect { 0 0 0 0}
+			set width 0
+			set length 0
+			puts "aa"
+		} else {
+			set rect [dbTransform -inst [dbGet  $instPtr.name] -localPt $rect]
+			set x1 [lindex $rect  0]
+			set y1 [lindex $rect  1]
+			set x2 [lindex $rect  2]
+			set y2 [lindex $rect  3]
+			puts "$x1 $x2 $y1 $y2"
+			set width abs([expr $x1 - $x2])
+			set length abs([expr $y1 - $y2])
+		}
+		puts "bb"
+		if { $layer_name == "M4" } {
+			if { $width >= 4.9 || $length >=4.9 } {
+		  		set m4_blk_boxes [dbShape $m4_blk_boxes OR $rect -output rect]
+			}
+		}
+	}
+	set m4_blk [dbShape [dbShape [dbShape $inst_boxes size 0.6 ] AND [dbShape $m4_blk_boxes size 0.3] size -0.1 ] size 0.1 -output rect]
+	foreach m_list $m4_blk {
+		createRouteBlk -boxList "$m_list" -layer M4 -name blockpgpin_blkm4
+	}
+}

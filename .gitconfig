@@ -1,6 +1,10 @@
 [user]
 	name = cricy
 	email = cricysaray@qq.com
+[http]
+	proxy = 'http://127.0.0.1:7897'
+[https]
+	proxy = 'http://127.0.0.1:7897'
 [alias]
 	ls = ls-files
 	a = add

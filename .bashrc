@@ -46,7 +46,7 @@ __git_complete g __git_main  # 使g命令也支持补全
 
 #------------------------------------------------
 # config proxy
-alias proxy='export all_proxy=http://172.29.64.1:7897'
+alias proxy='export all_proxy=http://192.168.5.4:7897'
 alias unproxy='unset all_proxy'
 
 #------------------------------------------------

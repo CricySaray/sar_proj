@@ -1,4 +1,10 @@
 #!/usr/bin/perl
+# ----------------------------
+# check sdc file
+# if comment: can have this statement or not
+# if pass   : this is ok, correct
+# if Error  : this statement need delete!!!
+# ----------------------------
 # clocks
 $status_command_list{"create_clock"}						= "pass";
 $status_command_list{"create_generated_clock"}	= "pass";

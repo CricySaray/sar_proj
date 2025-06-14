@@ -1,7 +1,7 @@
 .*
 */
 !project/
-!project/**/*
+!project/**
 !.vimrc
 !.bashrc
 !.tmux.conf

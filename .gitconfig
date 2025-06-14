@@ -2,6 +2,7 @@
 	name = cricy
 	email = cricysaray@qq.com
 [alias]
+	chi = check-ignore -v # check ignored file status
 	re = remote
 	ls = ls-files
 	a = add

@@ -55,8 +55,9 @@ export DISPLAY=172.23.112.1:0
 
 
 
-# default config when install
 #--------------------------------------------------
+# default config when install
+
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples

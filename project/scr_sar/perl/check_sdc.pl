@@ -67,7 +67,7 @@ foreach my $cmd ( @sdc_cmds ) {
 		}	
 	} else {
 		if ($wrapper_cmd) {
-			my $new_cmd = " ";
+			my $new_cmd = "";
 			foreach my $xx (split/\s+/,$cmd) {$new_cmd .= "$xx \\\n";}	
 			$new_cmd =~ s/\\$//g;
 		}
@@ -77,7 +77,7 @@ open(F,"$ARGV[0]");
 open(N,">new.sdc");
 while(<F>) {
 	my $line = $_;
-	my $key = (split/\s+/.$line)[0];
+	my $key = (split/\s+/,$line)[0];
 	if ($status_command_list{$key} eq "comment") {
 		#debug# print "KEY=#$key,$status_command_list{$key}#\n";
 		$line =~ s/$key/#$key/g;	
@@ -85,3 +85,14 @@ while(<F>) {
 	print N $line;
 }
 close F;
+close N;
+
+foreach my $cmd (sort keys %exist_command_list) {
+	if ($status_command_list{$cmd} eq "pass") {
+		printf "%-50s%20s\n", $cmd, "Pass";	
+	} elsif ($status_command_list{$cmd} eq "comment") {
+		printf "%-50s%20s\n", $cmd, "Comment";	
+	} else {
+		printf "%-50s%20s\n", $cmd, "Error";	
+	}
+}

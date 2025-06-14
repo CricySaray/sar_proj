@@ -264,7 +264,7 @@ func! BracketIndent()
 	let l:previous_char = l:line[col(".")-2] 
 	if l:previous_char == "{" && l:current_char == "}"
 		" below statement need modify according to different env
-		return "\<cr>\<bs>\<esc>\O" 
+		return "\<cr>\<cr>\<esc>\k\i\<tab>" 
 	else
 		return "\<cr>"
 	end

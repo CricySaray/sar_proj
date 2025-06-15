@@ -70,7 +70,7 @@ set softtabstop=2 " 使得按退格键时可以一次删掉 2 个空格
 set tabstop=2 " 设定 tab 长度为 2
 " set shiftwidth=4 "when indenting with '>', use 4 spaces width
 set nobackup " 覆盖文件时不备份
-set autochdir " 自动切换当前目录为当前文件所在的目录
+" set autochdir " 自动切换当前目录为当前文件所在的目录
 set backupcopy=yes " 设置备份时的行为为覆盖
 set hlsearch " 搜索时高亮显示被找到的文本
 set noerrorbells " 关闭错误信息响铃
@@ -158,6 +158,22 @@ let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', 
 
 """ VIMSCRIPT & FUNCTIONS -------------------------------------------------------------- 
 
+" for ctags, it can detect whole vars name such as vars(xjbe,cts,max_trans)
+"		correspondingly, ~/.ctags file need modify suitable pattern to get correct var name!!!
+"		such as : in ~/.ctags file :
+"			--langdef=tcl
+" 		--langmap=tcl:.tcl
+" 		--regex-tcl=/^\s*set\s+((vars|FP)\([^)]+\))?\s+/\1/v,vars,variables/
+" 		--extra=+q
+function! TclGotoTag()
+	execute "set tags=./tags;/"
+	execute "set iskeyword+=$,(,),,"
+  let l:word = expand("<cword>")
+  let l:tag = substitute(l:word, '.*\$\(\(vars\|FP\)(.*)\)', '\1', '')  " 去除$符号
+	execute "set iskeyword-=$,(,),,"
+  execute "tag " . l:tag
+endfunction
+autocmd FileType tcl nnoremap <C-]> :call TclGotoTag()<CR>
 
 " ---------------------------
 " auto reLoad file every 500ms

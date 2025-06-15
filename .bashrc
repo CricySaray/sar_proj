@@ -1,5 +1,6 @@
 #-------------------------------------------------
 # some more ls aliases
+alias vm='vim Makefile'
 alias p='pwd'
 alias vt='vim ~/.tmux.conf'
 alias tm='tmux'

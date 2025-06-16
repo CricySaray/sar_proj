@@ -1,5 +1,6 @@
 #-------------------------------------------------
 # some more ls aliases
+alias vi='vim .gitignore'
 alias vm='vim Makefile'
 alias p='pwd'
 alias vt='vim ~/.tmux.conf'

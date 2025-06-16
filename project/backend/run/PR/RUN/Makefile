@@ -1,1 +1,1 @@
-VPATH = ./
+VPATH = ../SCRIPTS/: ./

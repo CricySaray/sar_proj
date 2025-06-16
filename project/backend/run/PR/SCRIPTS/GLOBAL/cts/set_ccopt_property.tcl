@@ -13,3 +13,5 @@ set_interactive_constraint_modes {}
 # ------------------------------
 # 02.1 ccopt_property cell setting
 set_ccopt_property use_inverters 
+
+

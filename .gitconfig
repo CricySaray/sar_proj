@@ -9,9 +9,11 @@
 	st = status
   s = status -s         # git st 等价于 git status
   c = commit -m
+	mo = commit --amend -m
   co = checkout
   br = branch
-  df = diff
+	df = diff --color
+	ds = diff --color --stat
 	lg = !git --no-pager log --oneline --decorate --graph --date=relative -10
 	tt = !git --no-pager log --all --graph --decorate --oneline --date=relative
   tree = log --all --graph --decorate --oneline

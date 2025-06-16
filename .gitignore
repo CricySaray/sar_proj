@@ -9,3 +9,5 @@
 !.gitconfig
 !.teamshare/
 !.ctags
+!.vim/
+!.vim/**

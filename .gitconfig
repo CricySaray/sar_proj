@@ -17,7 +17,7 @@
 	lg = !git --no-pager log --oneline --decorate --graph --date=relative -10
 	tt = !git --no-pager log --all --graph --decorate --oneline --date=relative
   tree = log --all --graph --decorate --oneline
-  p = push --set-upstream main main
+  p = push --set-upstream proj main
   cleanup = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d
 	h = help
 [color]

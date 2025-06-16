@@ -1,0 +1,36 @@
+###global file
+
+global vars
+
+setUserDataValue defHierChar {/}
+setUserDataValue conf_net_delay {1000ps}
+setUserDataValue timing_time_unit {1ns}
+setUserDataValue fp_core_cntl {}
+setUserDataValue report_timing_format {instance cell arc fanout load slew delay arrival}
+setUserDataValue init_oa_search_lib {}
+#setUserDataValue lsgOCPGainMult 1.000000
+setUserDataValue conf_ioOri {R0}
+setUserDataValue init_verilog $vars(netlist)
+setUserDataValue init_pwr_net $vars(power_nets)
+setUserDataValue init_gnd_net $vars(gnd_nets)
+setUserDataValue conf_tot_c_thresh $vars(total_c_thresh)
+setUserDataValue conf_rel_c_thresh $vars(relative_c_thresh)
+setUserDataValue conf_cpl_c_thresh $vars(coupling_c_thresh)
+setUserDataValue init_mmmc_file $vars(view_definition_file)
+setUserDataValue delaycal_input_transition_delay {0.1ps} 
+if {$vars(vp) == "true"} {
+setUserDataValue init_lef_file "$vars(TECH_LEF) $vars(VP_LEF) $vars(ABUT_LEF) $vars(LEF_LIBS) $vars(LL_LEF_LIBS) $vars(ULP_LEF_LIBS)  $vars(INNOM_LEF_LIBS)"
+} else {
+setUserDataValue init_lef_file "$vars(TECH_LEF_7T) $vars(TECH_NDR_LEF) $vars(LEF_7T_LIBS) $vars(LEF_RAM_LIBS) $vars(LEF_ROM_LIBS) $vars(LEF_IP_LIBS) $vars(LEF_IO_LIBS)"
+}
+setUserDataValue init_top_cell $vars(design)
+setUserDataValue init_pwr_net  $vars(power_nets)
+setUserDataValue init_gnd_net  $vars(gnd_nets)
+setUserDataValue conf_in_tran_delay {0.1ps} 
+setUserDataValue init_import_mode { -keepEmptyModule 1 -treatUndefinedCellAsBbox 0 -useLefDef56 1}
+setUserDataValue fpIsMaxIoHeight 0 
+setUserDataValue init_design_settop 1 
+setUserDataValue timing_cap_unit {1.0} 
+
+###info
+set_message -id IMPVL-346 -severity error

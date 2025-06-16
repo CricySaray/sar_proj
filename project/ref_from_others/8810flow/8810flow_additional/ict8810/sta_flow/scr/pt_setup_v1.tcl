@@ -1,0 +1,753 @@
+
+
+
+
+### pt_setup.tcl file              ###
+
+
+
+
+
+puts "RM-Info: Running script [info script]\n"
+
+
+
+
+#source /eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/.lib_setup.tcl
+#source -v /eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/backend/be8803/scripts/.lib_setup.tcl
+source /eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/backend/be8803/last/.lib_setup.tcl
+#source /eda_files/proj/ict8810/archive/chip_top_fdp/.lib_setup.tcl
+#source /eda_files/proj/ict2110/backend/wenjiezhang/script/run_time.tcl
+#userRunTimeCalculation -start
+### Start of PrimeTime Runtime Variables ###
+
+##########################################################################################
+# PrimeTime Variables PrimeTime Reference Methodology script
+# Script: pt_setup.tcl
+# Version: Q-2019.12-SP4 (July 20, 2020)
+# Copyright (C) 2008-2020 Synopsys All rights reserved.
+##########################################################################################
+
+
+######################################
+# Report and Results Directories
+######################################
+
+
+set REPORTS_DIR "reports"
+set RESULTS_DIR "results"
+
+
+######################################
+# Library and Design Setup
+######################################
+
+### Mode : DMSA
+
+set search_path "[pwd] $ADDITIONAL_SEARCH_PATH $search_path ${dsn_path}/spf ${dsn_path}/gate  ${dsn_path}/def ${dsn_path}/constrains"
+# Provide list of Verilog netlist files. It can be compressed --- example "A.v B.v C.v"
+# DESIGN_NAME is checked for existence from common_setup.tcl
+if {[string length $DESIGN_NAME] > 0} {
+} else {
+set DESIGN_NAME                   ""  ;#  The name of the top-level design
+}
+
+
+
+#set all_blocks ""
+
+
+
+######################################
+# DMSA File Section
+######################################
+
+set sh_source_uses_search_path true
+
+# Provide a list of DMSA Corners : best_case, nom, worst_case
+#
+# The syntax is:
+#		1.  set dmsa_corners "corner1 corner2 ..."
+
+#setup corners
+#set dmsa_corners      "wcl_cworst wc_cworst\
+
+
+#hold corners
+#set dmsa_corners      "ml_cbest   ml_rcbest \
+#			            ml_cworst  ml_rcworst \
+#			            lt_cbest   lt_rcbest \
+#			            lt_cworst  lt_rcworst \
+#			            bc_cbest   bc_rcbest \
+#			            bc_cworst  bc_rcworst \
+#			            wcl_cbest  wcl_rcbest \
+#			            wcl_cworst wcl_rcworst \
+#			            wc_cbest   wc_rcbest \
+#			            wc_cworst  wc_rcworst \
+#			            wcz_cbest  wcz_rcbest \
+#			            wcz_cworst wcz_rcworst \
+#			            typ_85 \
+#			            "
+#
+#set dmsa_corners       "typ_85"
+#set dmsa_modes         "func scan"
+#set dmsa_check         "setup hold setuphold"
+#
+
+###set cdc_run 0
+#if {$cdc_run} {
+#    set dmsa_corners        "wcl_rcworst_t"
+#    set dmsa_modes          "cdc"
+#    set dmsa_check          "setup"
+#}
+#
+#set dmsa_corners    "wcl_rcworst_t"
+#set dmsa_modes      "func scan"
+#set dmsa_check      "setup"
+
+set dmsa_corners    "wcl_rcworst_t wcl_cworst_t \
+		     bc_cbest   bc_rcbest \
+                     bc_cworst  bc_rcworst \
+		     lt_cbest   lt_rcbest \
+                     lt_cworst  lt_rcworst \
+		     ml_cbest   ml_rcbest \
+		     ml_cworst  ml_rcworst \
+		     wc_cbest   wc_rcbest \
+		     wc_cworst  wc_rcworst \
+		     wcl_cbest  wcl_rcbest \
+		     wcl_cworst wcl_rcworst \
+		     wcz_cbest  wcz_rcbest \
+		     wcz_cworst wcz_rcworst \
+		     typ_85 \	
+			"
+set dmsa_modes      "scan"
+set dmsa_check      "setup hold setuphold"
+if {$cdc_run} {
+    set dmsa_corners        "wcl_rcworst_t wcl_cworst_t"
+    set dmsa_modes          "cdc"
+    set dmsa_check          "setup"
+}
+
+set dmsa_corners    "typ_85"
+set dmsa_modes      "func"
+set dmsa_check      "setuphold"
+
+#----------------------------------------------------------
+# Setting 
+#----------------------------------------------------------
+# 20250124 david
+set TOP                            $DESIGN_NAME
+set pba_mode                       "exhaustive" ;# path / exhaustive
+set nworst_num                     "1"
+set path_type                      "full"
+set transition_time                "true"
+set pba_path_num                   "25000"
+set max_path_num                   "9999999"
+
+# Provide an array of DMSA Corners Based Libraries : best_case, nom, worst_case
+#
+# The syntax is dmsa_corner_library_files(corner)
+#		1. dmsa_corner_library_files(corner1)
+#		2. dmsa_corner_library_files(corner2)
+
+#set dmsa_corner_library_files(corner1) ""
+#set dmsa_corner_library_files(corner2) ""
+####different timing model in different ip modes
+if { [info exist mode ] && ($mode == "scan") } {
+    if {[info exist check ] && ($check == "hold" ) } { 
+	set dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_HOLD_LIBS)"
+#	#set dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_T_HOLD_LIBS)"
+	set dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_RCWORST_HOLD_LIBS)"
+#	#set dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_RCWORST_T_HOLD_LIBS)"
+         set dmsa_corner_library_files(wcl_cbest)      "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_SETUP_LIBS)"
+	 set dmsa_corner_library_files(wcl_rcbest)     "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_SETUP_LIBS)"
+                                              
+	set dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_HOLD_LIBS)"
+#	#set dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_T_HOLD_LIBS)"
+	set dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(wc_cbest)       "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_rcbest)      "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_T_SETUP_LIBS)"
+
+#	#set dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_T_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(wcz_cbest)      "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcbest)     "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_HOLD_LIBS)"
+
+#	#set dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_T_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(ml_cworst)      "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(ml_rcworst)     "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_RCWORST_HOLD_LIBS) "
+	set dmsa_corner_library_files(ml_cbest)       "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_CBEST_HOLD_LIBS)"
+	set dmsa_corner_library_files(ml_rcbest)      "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_RCBEST_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(lt_cworst)      "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS) $vars(DB_IP_FUNC_LT_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(lt_rcworst)     "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS) $vars(DB_IP_FUNC_LT_RCWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(lt_cbest)       "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS)  $vars(DB_IP_FUNC_LT_CBEST_HOLD_LIBS)"
+	set dmsa_corner_library_files(lt_rcbest)      "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS) $vars(DB_IP_FUNC_LT_RCBEST_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(bc_cworst)      "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(bc_rcworst)     "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_RCWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(bc_cbest)       "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_CBEST_HOLD_LIBS)"
+	set dmsa_corner_library_files(bc_rcbest)      "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_RCBEST_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_0P9V_TC85_LIBS) $vars(CCSDB_9T_0P9V_TC85_LIBS) $vars(CCSDB_7T_0P9V_TC85_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_ROM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_FUNC_TC85_TYPICAL_HOLD_LIBS)"
+
+ 	
+#### 1.0v just run typic for cpu
+## 	set 1pv_dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(ml_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(lt_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(bc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+#                                                       
+#	set 1pv_dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_1P0V_TC85_LIBS) $vars(CCSDB_9T_1P0V_TC85_LIBS) $vars(CCSDB_7T_1P0V_TC85_LIBS) $vars(DB_RAM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_ROM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_SCAN_TC85_1P0V_TYPICAL_HOLD_LIBS) " 
+} else {
+
+ 	set dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_SCAN_WCL_CWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_SCAN_WCL_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_SCAN_WCL_RCWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_SCAN_WCL_RCWORST_T_SETUP_LIBS)"
+                                                      
+	set dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_SCAN_WC_CWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_SCAN_WC_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_SCAN_WC_RCWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_SCAN_WC_RCWORST_T_SETUP_LIBS)"
+                                                      
+	set dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_SCAN_WCZ_CWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_cworst_t)   "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_SCAN_WCZ_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_SCAN_WCZ_RCWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_SCAN_WCZ_RCWORST_T_SETUP_LIBS)"
+                                                       
+                                                       
+	set dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_0P9V_TC85_LIBS) $vars(CCSDB_9T_0P9V_TC85_LIBS) $vars(CCSDB_7T_0P9V_TC85_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_ROM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_SCAN_TC85_TYPICAL_SETUP_LIBS)"
+#### 1.0v just run typic for cpu
+## 	set 1pv_dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(ml_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(lt_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(bc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+#                                                       
+#	set 1pv_dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_1P0V_TC85_LIBS) $vars(CCSDB_9T_1P0V_TC85_LIBS) $vars(CCSDB_7T_1P0V_TC85_LIBS) $vars(DB_RAM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_ROM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_SCAN_TC85_1P0V_TYPICAL_SETUP_LIBS)"
+   }
+} else {
+       if { [info exist check ] && ($check == "hold" ) } {
+ 	set dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_HOLD_LIBS)"
+#	#set dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_T_HOLD_LIBS)"
+	set dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_RCWORST_HOLD_LIBS)"
+#	#set dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_RCWORST_T_HOLD_LIBS)"
+         set dmsa_corner_library_files(wcl_cbest)      "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_SETUP_LIBS)"
+	 set dmsa_corner_library_files(wcl_rcbest)     "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_SETUP_LIBS)"
+                                              
+	set dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_HOLD_LIBS)"
+#	#set dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_T_HOLD_LIBS)"
+	set dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(wc_cbest)       "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_rcbest)      "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_T_SETUP_LIBS)"
+
+#	#set dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_T_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(wcz_cbest)      "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcbest)     "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_HOLD_LIBS)"
+
+#	#set dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_T_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(ml_cworst)      "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(ml_rcworst)     "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_RCWORST_HOLD_LIBS) "
+	set dmsa_corner_library_files(ml_cbest)       "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_CBEST_HOLD_LIBS)"
+	set dmsa_corner_library_files(ml_rcbest)      "$vars(CCSDB_12T_0P9V_ML_LIBS) $vars(CCSDB_9T_0P9V_ML_LIBS) $vars(CCSDB_7T_0P9V_ML_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_ML_LIBS) $vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) $vars(DB_IO_1P8V0P9V_ML_LIBS) $vars(DB_IP_FUNC_ML_RCBEST_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(lt_cworst)      "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS) $vars(DB_IP_FUNC_LT_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(lt_rcworst)     "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS) $vars(DB_IP_FUNC_LT_RCWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(lt_cbest)       "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS)  $vars(DB_IP_FUNC_LT_CBEST_HOLD_LIBS)"
+	set dmsa_corner_library_files(lt_rcbest)      "$vars(CCSDB_12T_0P9V_LT_LIBS) $vars(CCSDB_9T_0P9V_LT_LIBS) $vars(CCSDB_7T_0P9V_LT_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_LT_LIBS) $vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) $vars(DB_IO_1P8V0P9V_LT_LIBS) $vars(DB_IP_FUNC_LT_RCBEST_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(bc_cworst)      "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_CWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(bc_rcworst)     "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_RCWORST_HOLD_LIBS)"
+	set dmsa_corner_library_files(bc_cbest)       "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_CBEST_HOLD_LIBS)"
+	set dmsa_corner_library_files(bc_rcbest)      "$vars(CCSDB_12T_0P9V_BC_LIBS) $vars(CCSDB_9T_0P9V_BC_LIBS) $vars(CCSDB_7T_0P9V_BC_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_BC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) $vars(DB_IO_1P8V0P9V_BC_LIBS) $vars(DB_IP_FUNC_BC_RCBEST_HOLD_LIBS)"
+#                                                       
+	set dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_0P9V_TC85_LIBS) $vars(CCSDB_9T_0P9V_TC85_LIBS) $vars(CCSDB_7T_0P9V_TC85_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_ROM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_FUNC_TC85_TYPICAL_HOLD_LIBS)"
+#### 1.0v just run typic for cpu
+## 	set 1pv_dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(ml_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(lt_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(bc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+#                                                       
+#	set 1pv_dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_1P0V_TC85_LIBS) $vars(CCSDB_9T_1P0V_TC85_LIBS) $vars(CCSDB_7T_1P0V_TC85_LIBS) $vars(DB_RAM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_ROM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_FUNC_TC85_1P0V_TYPICAL_HOLD_LIBS)"
+} else {
+#    	set dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_CWORST_T_SETUP_LIBS)"
+#	set dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_RCWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCL_LIBS) $vars(CCSDB_9T_0P9V_WCL_LIBS) $vars(CCSDB_7T_0P9V_WCL_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) $vars(DB_IO_1P8V0P9V_WCL_LIBS) $vars(DB_IP_FUNC_WCL_RCWORST_T_SETUP_LIBS)"
+                                                       
+#	set dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_0P9V_WC_LIBS) $vars(CCSDB_9T_0P9V_WC_LIBS) $vars(CCSDB_7T_0P9V_WC_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WC_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) $vars(DB_IO_1P8V0P9V_WC_LIBS) $vars(DB_IP_FUNC_WC_RCWORST_T_SETUP_LIBS)"
+                                                       
+	set dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_CWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_cworst_t)   "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_CWORST_T_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_SETUP_LIBS)"
+	set dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_0P9V_WCZ_LIBS) $vars(CCSDB_9T_0P9V_WCZ_LIBS) $vars(CCSDB_7T_0P9V_WCZ_LIBS) $vars(DB_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) $vars(DB_IO_1P8V0P9V_WCZ_LIBS) $vars(DB_IP_FUNC_WCZ_RCWORST_T_SETUP_LIBS)"
+
+# tt
+	set dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_0P9V_TC85_LIBS) $vars(CCSDB_9T_0P9V_TC85_LIBS) $vars(CCSDB_7T_0P9V_TC85_LIBS)  $vars(DB_RAM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_ROM_0P9VP_0P9VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_FUNC_TC85_TYPICAL_SETUP_LIBS)"
+#### 1.0v just run typic for cpu
+## 	set 1pv_dmsa_corner_library_files(wcl_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcl_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCL_LIBS) $vars(DB_RAM_1P0V_WCL_LIBS) $vars(DB_ROM_1P0V_WCL_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_cworst_t)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wc_rcworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WC_LIBS) $vars(DB_RAM_1P0V_WC_LIBS) $vars(DB_ROM_1P0V_WC_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(wcz_cworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_cworst_t)   "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst)    "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##	set 1pv_dmsa_corner_library_files(wcz_rcworst_t)  "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_WCZ_LIBS) $vars(DB_RAM_1P0V_WCZ_LIBS) $vars(DB_ROM_1P0V_WCZ_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(ml_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##	set 1pv_dmsa_corner_library_files(ml_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_ML_LIBS)  $vars(DB_RAM_1P0V_ML_LIBS) $vars(DB_ROM_1P0V_ML_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(lt_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##	set 1pv_dmsa_corner_library_files(lt_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_LT_LIBS)  $vars(DB_RAM_1P0V_LT_LIBS) $vars(DB_ROM_1P0V_LT_LIBS)"
+##                                                       
+##	set 1pv_dmsa_corner_library_files(bc_cworst)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcworst)     "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_cbest)       "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+##	set 1pv_dmsa_corner_library_files(bc_rcbest)      "$vars(CCSDB_12T_1P0V_WCL_LIBS) $vars(CCSDB_9T_1P0V_WCL_LIBS) $vars(CCSDB_7T_1P0V_BC_LIBS)  $vars(DB_RAM_1P0V_BC_LIBS) $vars(DB_ROM_1P0V_BC_LIBS)"
+#                                                       
+#	#set 1pv_dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_1P0V_TC85_LIBS) $vars(CCSDB_9T_1P0V_TC85_LIBS) $vars(CCSDB_7T_1P0V_TC85_LIBS) $vars(DB_RAM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_ROM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_FUNC_TC85_1P0V_TYPICAL_SETUP_LIBS)"
+#	#spark modify
+#	set 1pv_dmsa_corner_library_files(typ_85)         "$vars(CCSDB_12T_1P0V_TC85_LIBS) $vars(CCSDB_9T_1P0V_TC85_LIBS) $vars(CCSDB_7T_1P0V_TC85_LIBS) $vars(DB_RAM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_ROM_1P0VP_1P0VC_TC85_LIBS) $vars(DB_IO_1P8V0P9V_TC85_LIBS) $vars(DB_IP_FUNC_TC85_1P0V_TYPICAL_SETUP_LIBS)"
+}
+}
+
+### io 3.3v 0.9v std
+set io_3p3v0p9v_dmsa_corner_library_files(wcl_cworst)     "$vars(DB_IO_3P3V0P9V_WCL_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcl_cworst_t)   "$vars(DB_IO_3P3V0P9V_WCL_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcl_rcworst)    "$vars(DB_IO_3P3V0P9V_WCL_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcl_rcworst_t)  "$vars(DB_IO_3P3V0P9V_WCL_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcl_cbest)      "$vars(DB_IO_3P3V0P9V_WCL_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcl_rcbest)     "$vars(DB_IO_3P3V0P9V_WCL_LIBS)"
+
+set io_3p3v0p9v_dmsa_corner_library_files(wc_cworst)      "$vars(DB_IO_3P3V0P9V_WC_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wc_rcworst)     "$vars(DB_IO_3P3V0P9V_WC_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wc_cbest)       "$vars(DB_IO_3P3V0P9V_WC_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wc_rcbest)      "$vars(DB_IO_3P3V0P9V_WC_LIBS)"
+
+set io_3p3v0p9v_dmsa_corner_library_files(wcz_cworst)     "$vars(DB_IO_3P3V0P9V_WCZ_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcz_rcworst)    "$vars(DB_IO_3P3V0P9V_WCZ_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcz_cbest)      "$vars(DB_IO_3P3V0P9V_WCZ_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(wcz_rcbest)     "$vars(DB_IO_3P3V0P9V_WCZ_LIBS)"
+
+set io_3p3v0p9v_dmsa_corner_library_files(ml_cworst)      "$vars(DB_IO_3P3V0P9V_ML_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(ml_rcworst)     "$vars(DB_IO_3P3V0P9V_ML_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(ml_cbest)       "$vars(DB_IO_3P3V0P9V_ML_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(ml_rcbest)      "$vars(DB_IO_3P3V0P9V_ML_LIBS)"
+
+set io_3p3v0p9v_dmsa_corner_library_files(lt_cworst)      "$vars(DB_IO_3P3V0P9V_LT_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(lt_rcworst)     "$vars(DB_IO_3P3V0P9V_LT_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(lt_cbest)       "$vars(DB_IO_3P3V0P9V_LT_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(lt_rcbest)      "$vars(DB_IO_3P3V0P9V_LT_LIBS)"
+
+set io_3p3v0p9v_dmsa_corner_library_files(bc_cworst)      "$vars(DB_IO_3P3V0P9V_BC_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(bc_rcworst)     "$vars(DB_IO_3P3V0P9V_BC_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(bc_cbest)       "$vars(DB_IO_3P3V0P9V_BC_LIBS)"
+set io_3p3v0p9v_dmsa_corner_library_files(bc_rcbest)      "$vars(DB_IO_3P3V0P9V_BC_LIBS)"
+
+set io_3p3v0p9v_dmsa_corner_library_files(typ_85)         "$vars(DB_IO_3P3V0P9V_TC85_LIBS)"
+##### io 3.3v 1.0v
+set io_3p3v1p0v_dmsa_corner_library_files(typ_85)         "$vars(DB_IO_3P3V1P0V_TC85_LIBS)"
+
+if { [info exist mode ] && ( $mode=="func2" || $mode=="func3" )} {
+    set OPRATING_COND(typ_85)  "tt_ctypical_max_1p00v_85c" 
+} else {
+
+set OPRATING_COND(wcl_cworst_t)   "ssg_cworstt_max_0p81v_m40c"
+set OPRATING_COND(wcl_rcworst_t)  "ssg_cworstt_max_0p81v_m40c"
+set OPRATING_COND(wcl_cworst)     "ssg_cworstt_max_0p81v_m40c"
+set OPRATING_COND(wcl_rcworst)    "ssg_cworstt_max_0p81v_m40c"
+set OPRATING_COND(wcl_cworst)     "ssg_cworstt_max_0p81v_m40c"
+set OPRATING_COND(wcl_cbest)      "ssg_cworstt_max_0p81v_m40c"
+set OPRATING_COND(wcl_rcbest)     "ssg_cworstt_max_0p81v_m40c"
+
+set OPRATING_COND(wc_cworst)       "ssg_cworstt_max_0p81v_125c"
+set OPRATING_COND(wc_rcworst)      "ssg_cworstt_max_0p81v_125c"
+set OPRATING_COND(wc_cbest)        "ssg_cworstt_max_0p81v_125c"
+set OPRATING_COND(wc_rcbest)       "ssg_cworstt_max_0p81v_125c"
+
+set OPRATING_COND(wcz_cworst)      "ssg_cworstt_max_0p81v_0c"
+set OPRATING_COND(wcz_rcworst)     "ssg_cworstt_max_0p81v_0c"
+set OPRATING_COND(wcz_cbest)       "ssg_cworstt_max_0p81v_0c"
+set OPRATING_COND(wcz_rcbest)      "ssg_cworstt_max_0p81v_0c"
+
+set OPRATING_COND(ml_cworst)       "ffg_cbestt_min_0p99v_125c"
+set OPRATING_COND(ml_rcworst)      "ffg_cbestt_min_0p99v_125c"
+set OPRATING_COND(ml_cbest)        "ffg_cbestt_min_0p99v_125c"
+set OPRATING_COND(ml_rcbest)       "ffg_cbestt_min_0p99v_125c"
+
+set OPRATING_COND(bc_cworst)       "ffg_cbestt_min_0p99v_0c"
+set OPRATING_COND(bc_rcworst)      "ffg_cbestt_min_0p99v_0c"
+set OPRATING_COND(bc_cbest)        "ffg_cbestt_min_0p99v_0c"
+set OPRATING_COND(bc_rcbest)       "ffg_cbestt_min_0p99v_0c"
+
+set OPRATING_COND(lt_cworst)       "ffg_cbestt_min_0p99v_m40c"
+set OPRATING_COND(lt_rcworst)      "ffg_cbestt_min_0p99v_m40c"
+set OPRATING_COND(lt_cbest)        "ffg_cbestt_min_0p99v_m40c"
+set OPRATING_COND(lt_rcbest)       "ffg_cbestt_min_0p99v_m40c"
+
+set OPRATING_COND(typ_25)          "tt_ctypical_max_0p90v_25c"
+set OPRATING_COND(typ_85)          "tt_ctypical_max_0p90v_85c"
+set OPRATING_COND(typ_0)           "tt_ctypical_max_0p90v_0c"
+
+}
+
+
+set PARASITIC_FILES(wcl_cworst_t)      "${DESIGN_NAME}.${VIEW}.cmax_T_m40c.gz"
+set PARASITIC_FILES(wcl_rcworst_t)     "${DESIGN_NAME}.${VIEW}.rcmax_T_m40c.gz"
+
+set PARASITIC_FILES(wcl_cworst)       "${DESIGN_NAME}.${VIEW}.cmax_m40c.gz"
+set PARASITIC_FILES(wcl_rcworst)      "${DESIGN_NAME}.${VIEW}.rcmax_m40c.gz"
+set PARASITIC_FILES(wcl_cbest)        "${DESIGN_NAME}.${VIEW}.cmin_m40c.gz"
+set PARASITIC_FILES(wcl_rcbest)       "${DESIGN_NAME}.${VIEW}.rcmin_m40c.gz"
+
+set PARASITIC_FILES(wc_cworst)        "${DESIGN_NAME}.${VIEW}.cmax_125c.gz"
+set PARASITIC_FILES(wc_rcworst)       "${DESIGN_NAME}.${VIEW}.rcmax_125c.gz"
+set PARASITIC_FILES(wc_cbest)         "${DESIGN_NAME}.${VIEW}.cmin_125c.gz"
+set PARASITIC_FILES(wc_rcbest)        "${DESIGN_NAME}.${VIEW}.rcmin_125c.gz"
+
+set PARASITIC_FILES(wcz_cworst)       "${DESIGN_NAME}.${VIEW}.cmax_0c.gz"
+set PARASITIC_FILES(wcz_rcworst)      "${DESIGN_NAME}.${VIEW}.rcmax_0c.gz"
+set PARASITIC_FILES(wcz_cbest)        "${DESIGN_NAME}.${VIEW}.cmin_0c.gz"
+set PARASITIC_FILES(wcz_rcbest)       "${DESIGN_NAME}.${VIEW}.rcmin_0c.gz"
+
+set PARASITIC_FILES(ml_cworst)        "${DESIGN_NAME}.${VIEW}.cmax_125c.gz"
+set PARASITIC_FILES(ml_rcworst)       "${DESIGN_NAME}.${VIEW}.rcmax_125c.gz"
+set PARASITIC_FILES(ml_cbest)         "${DESIGN_NAME}.${VIEW}.cmin_125c.gz"
+set PARASITIC_FILES(ml_rcbest)        "${DESIGN_NAME}.${VIEW}.rcmin_125c.gz"
+
+set PARASITIC_FILES(bc_cworst)        "${DESIGN_NAME}.${VIEW}.cmax_0c.gz"
+set PARASITIC_FILES(bc_rcworst)       "${DESIGN_NAME}.${VIEW}.rcmax_0c.gz"
+set PARASITIC_FILES(bc_cbest)         "${DESIGN_NAME}.${VIEW}.cmin_0c.gz"
+set PARASITIC_FILES(bc_rcbest)        "${DESIGN_NAME}.${VIEW}.rcmin_0c.gz"
+
+set PARASITIC_FILES(lt_cworst)        "${DESIGN_NAME}.${VIEW}.cmax_m40c.gz"
+set PARASITIC_FILES(lt_rcworst)       "${DESIGN_NAME}.${VIEW}.rcmax_m40c.gz"
+set PARASITIC_FILES(lt_cbest)         "${DESIGN_NAME}.${VIEW}.cmin_m40c.gz"
+set PARASITIC_FILES(lt_rcbest)        "${DESIGN_NAME}.${VIEW}.rcmin_m40c.gz"
+
+set PARASITIC_FILES(typ_85)           "${DESIGN_NAME}.${VIEW}.typ_85c.gz"
+set PARASITIC_FILES(typ_125)          "${DESIGN_NAME}.${VIEW}.typ_1255c.gz"
+set PARASITIC_FILES(typ_0)            "${DESIGN_NAME}.${VIEW}.typ_0c.gz"
+
+set SPF_CORNER(wcl_cworst_t)          "cmax_T_m40c"
+set SPF_CORNER(wcl_rcworst_t)         "rcmax_T_m40c"
+
+set SPF_CORNER(wcl_cworst)            "cmax_m40c"
+set SPF_CORNER(wcl_rcworst)           "rcmax_m40c"
+set SPF_CORNER(wcl_cbest)             "cmin_m40c"
+set SPF_CORNER(wcl_rcbest)            "rcmin_m40c"
+
+set SPF_CORNER(wc_cworst)             "cmax_125c"
+set SPF_CORNER(wc_rcworst)            "rcmax_125c"
+set SPF_CORNER(wc_cbest)              "cmin_125c"
+set SPF_CORNER(wc_rcbest)             "rcmin_125c"
+
+set SPF_CORNER(wcz_cworst)            "cmax_0c"
+set SPF_CORNER(wcz_rcworst)           "rcmax_0c"
+set SPF_CORNER(wcz_cbest)             "cmin_0c"
+set SPF_CORNER(wcz_rcbest)            "rcmin_0c"
+
+set SPF_CORNER(ml_cworst)             "cmax_125c"
+set SPF_CORNER(ml_rcworst)            "rcmax_125c"
+set SPF_CORNER(ml_cbest)              "cmin_125c"
+set SPF_CORNER(ml_rcbest)             "rcmin_125c"
+
+set SPF_CORNER(lt_cworst)             "cmax_m40c"
+set SPF_CORNER(lt_rcworst)            "rcmax_m40c"
+set SPF_CORNER(lt_cbest)              "cmin_m40c"
+set SPF_CORNER(lt_rcbest)             "rcmin_m40c"
+
+set SPF_CORNER(bc_cworst)             "cmax_0c"
+set SPF_CORNER(bc_rcworst)            "rcmax_0c"
+set SPF_CORNER(bc_cbest)              "cmin_0c"
+set SPF_CORNER(bc_rcbest)             "rcmin_0c"
+
+set SPF_CORNER(typ_85)                "typ_85c"
+set SPF_CORNER(typ_125)               "typ_125c"
+set SPF_CORNER(typ_0)                 "typ_0c"
+
+#
+# ETM Corner Based Library Cell dbs. Section
+#
+# Provide a list of ETM corner based library cell dbs.
+#
+# The syntax will be dmsa_corner_ETM_Library_Dbs(corner)
+#		1. dmsa_corner_ETM_Library_Dbs(corner1)
+#		2. dmsa_corner_ETM_Library_Dbs(corner2)
+
+set dmsa_corner_ETM_Library_Dbs(corner)    ""
+
+
+### DMSA POCV : Enabled ###
+
+# Provide an array of DMSA Corner Based POCV File : best_case, nom, worst_case
+#
+# The syntax is: dmsa_corner_pocvm_file(corner) "top.pocvm" or dmsa_corner_pocvm_file(corner) "top1. pocvm top2.pocvm"
+
+#
+# ETM Corner Based Library Cell dbs. Section
+#
+# Provide a list of ETM corner based library cell dbs.
+#
+# The syntax will be dmsa_corner_ETM_Library_Dbs(corner)
+#		1. dmsa_corner_ETM_Library_Dbs(corner1)
+#		2. dmsa_corner_ETM_Library_Dbs(corner2)
+
+set dmsa_corner_ETM_Library_Dbs(corner)    ""
+
+
+### DMSA POCV : Enabled ###
+
+# Provide an array of DMSA Corner Based POCV File : best_case, nom, worst_case
+#
+# The syntax is: dmsa_corner_pocvm_file(corner) "top.pocvm" or dmsa_corner_pocvm_file(corner) "top1. pocvm top2.pocvm"
+#       1. dmsa_corner_pocvm_file(corner1)
+#       2. dmsa_corner_pocvm_file(corner2)
+
+#set dmsa_corner_pocvm_file(corner1)        ""
+#set dmsa_corner_pocvm_file(corner2)        ""
+
+### aocvm stage file
+if { [info exist mode ] && ( $mode=="func2" || $mode=="func3") } {
+
+set dmsa_corner_aocvm_file(typ_85)           "$vars(AOCV_12T_1P0V_TC85_LIBS) $vars(AOCV_9T_1P0V_TC85_LIBS) $vars(AOCV_7T_1P0V_TC85_LIBS) $vars(AOCV_RAM_1P0VP_1P0VC_TC85_LIBS) $vars(AOCV_ROM_1P0VP_1P0VC_TC85_LIBS)"
+
+
+} else {
+
+set dmsa_corner_aocvm_file(wcl_cworst)       "$vars(AOCV_12T_0P9V_WCL_LIBS) $vars(AOCV_9T_0P9V_WCL_LIBS) $vars(AOCV_7T_0P9V_WCL_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS)"
+set dmsa_corner_aocvm_file(wcl_cworst_t)     "$vars(AOCV_12T_0P9V_WCL_LIBS) $vars(AOCV_9T_0P9V_WCL_LIBS) $vars(AOCV_7T_0P9V_WCL_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS)"
+set dmsa_corner_aocvm_file(wcl_rcworst)      "$vars(AOCV_12T_0P9V_WCL_LIBS) $vars(AOCV_9T_0P9V_WCL_LIBS) $vars(AOCV_7T_0P9V_WCL_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS)"
+set dmsa_corner_aocvm_file(wcl_rcworst_t)    "$vars(AOCV_12T_0P9V_WCL_LIBS) $vars(AOCV_9T_0P9V_WCL_LIBS) $vars(AOCV_7T_0P9V_WCL_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS)"
+set dmsa_corner_aocvm_file(wcl_cbest)        "$vars(AOCV_12T_0P9V_WCL_LIBS) $vars(AOCV_9T_0P9V_WCL_LIBS) $vars(AOCV_7T_0P9V_WCL_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS)"
+set dmsa_corner_aocvm_file(wcl_rcbest)       "$vars(AOCV_12T_0P9V_WCL_LIBS) $vars(AOCV_9T_0P9V_WCL_LIBS) $vars(AOCV_7T_0P9V_WCL_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCL_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS)"
+																													
+set dmsa_corner_aocvm_file(wc_cworst)        "$vars(AOCV_12T_0P9V_WC_LIBS)  $vars(AOCV_9T_0P9V_WC_LIBS)  $vars(AOCV_7T_0P9V_WC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_WC_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WC_LIBS)"
+set dmsa_corner_aocvm_file(wc_rcworst)        "$vars(AOCV_12T_0P9V_WC_LIBS)  $vars(AOCV_9T_0P9V_WC_LIBS)  $vars(AOCV_7T_0P9V_WC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_WC_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WC_LIBS)"
+set dmsa_corner_aocvm_file(wc_cbest)         "$vars(AOCV_12T_0P9V_WC_LIBS)  $vars(AOCV_9T_0P9V_WC_LIBS)  $vars(AOCV_7T_0P9V_WC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_WC_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WC_LIBS)"
+set dmsa_corner_aocvm_file(wc_rcbest)        "$vars(AOCV_12T_0P9V_WC_LIBS)  $vars(AOCV_9T_0P9V_WC_LIBS)  $vars(AOCV_7T_0P9V_WC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_WC_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WC_LIBS)"
+																													
+set dmsa_corner_aocvm_file(wcz_cworst)       "$vars(AOCV_12T_0P9V_WCZ_LIBS) $vars(AOCV_9T_0P9V_WCZ_LIBS) $vars(AOCV_7T_0P9V_WCZ_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCZ_LIBS)"
+set dmsa_corner_aocvm_file(wcz_rcworst)      "$vars(AOCV_12T_0P9V_WCZ_LIBS) $vars(AOCV_9T_0P9V_WCZ_LIBS) $vars(AOCV_7T_0P9V_WCZ_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCZ_LIBS)"
+set dmsa_corner_aocvm_file(wcz_cbest)        "$vars(AOCV_12T_0P9V_WCZ_LIBS) $vars(AOCV_9T_0P9V_WCZ_LIBS) $vars(AOCV_7T_0P9V_WCZ_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCZ_LIBS)"
+set dmsa_corner_aocvm_file(wcz_rcbest)       "$vars(AOCV_12T_0P9V_WCZ_LIBS) $vars(AOCV_9T_0P9V_WCZ_LIBS) $vars(AOCV_7T_0P9V_WCZ_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_WCZ_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_WCZ_LIBS)"
+																													
+set dmsa_corner_aocvm_file(ml_cworst)        "$vars(AOCV_12T_0P9V_ML_LIBS) $vars(AOCV_9T_0P9V_ML_LIBS)   $vars(AOCV_7T_0P9V_ML_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_ML_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_ML_LIBS)"
+set dmsa_corner_aocvm_file(ml_rcworst)       "$vars(AOCV_12T_0P9V_ML_LIBS) $vars(AOCV_9T_0P9V_ML_LIBS)   $vars(AOCV_7T_0P9V_ML_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_ML_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_ML_LIBS)"
+set dmsa_corner_aocvm_file(ml_cbest)         "$vars(AOCV_12T_0P9V_ML_LIBS) $vars(AOCV_9T_0P9V_ML_LIBS)   $vars(AOCV_7T_0P9V_ML_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_ML_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_ML_LIBS)"
+set dmsa_corner_aocvm_file(ml_rcbest)        "$vars(AOCV_12T_0P9V_ML_LIBS) $vars(AOCV_9T_0P9V_ML_LIBS)   $vars(AOCV_7T_0P9V_ML_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_ML_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_ML_LIBS)"
+																													
+set dmsa_corner_aocvm_file(bc_cworst)        "$vars(AOCV_12T_0P9V_BC_LIBS) $vars(AOCV_9T_0P9V_BC_LIBS)   $vars(AOCV_7T_0P9V_BC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_BC_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_BC_LIBS)"
+set dmsa_corner_aocvm_file(bc_rcworst)       "$vars(AOCV_12T_0P9V_BC_LIBS) $vars(AOCV_9T_0P9V_BC_LIBS)   $vars(AOCV_7T_0P9V_BC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_BC_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_BC_LIBS)"
+set dmsa_corner_aocvm_file(bc_cbest)         "$vars(AOCV_12T_0P9V_BC_LIBS) $vars(AOCV_9T_0P9V_BC_LIBS)   $vars(AOCV_7T_0P9V_BC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_BC_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_BC_LIBS)"
+set dmsa_corner_aocvm_file(bc_rcbest)        "$vars(AOCV_12T_0P9V_BC_LIBS) $vars(AOCV_9T_0P9V_BC_LIBS)   $vars(AOCV_7T_0P9V_BC_LIBS)  $vars(AOCV_RAM_0P9VP_0P9VC_BC_LIBS)  $vars(AOCV_ROM_0P9VP_0P9VC_BC_LIBS)"
+																													
+set dmsa_corner_aocvm_file(lt_cworst)        "$vars(AOCV_12T_0P9V_LT_LIBS) $vars(AOCV_9T_0P9V_LT_LIBS)   $vars(AOCV_7T_0P9V_LT_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_LT_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_LT_LIBS)"
+set dmsa_corner_aocvm_file(lt_rcworst)       "$vars(AOCV_12T_0P9V_LT_LIBS) $vars(AOCV_9T_0P9V_LT_LIBS)   $vars(AOCV_7T_0P9V_LT_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_LT_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_LT_LIBS)"
+set dmsa_corner_aocvm_file(lt_cbest)         "$vars(AOCV_12T_0P9V_LT_LIBS) $vars(AOCV_9T_0P9V_LT_LIBS)   $vars(AOCV_7T_0P9V_LT_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_LT_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_LT_LIBS)"
+set dmsa_corner_aocvm_file(lt_rcbest)        "$vars(AOCV_12T_0P9V_LT_LIBS) $vars(AOCV_9T_0P9V_LT_LIBS)   $vars(AOCV_7T_0P9V_LT_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_LT_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_LT_LIBS)"
+
+set dmsa_corner_aocvm_file(typ_85)           "$vars(AOCV_12T_0P9V_TC85_LIBS) $vars(AOCV_9T_0P9V_TC85_LIBS) $vars(AOCV_7T_0P9V_TC85_LIBS) $vars(AOCV_RAM_0P9VP_0P9VC_TC85_LIBS) $vars(AOCV_ROM_0P9VP_0P9VC_TC85_LIBS)"
+set dmsa_corner_aocvm_file(typ_25)           "$vars(AOCV_12T_0P9V_TC_LIBS)   $vars(AOCV_9T_0P9V_TC_LIBS)   $vars(AOCV_7T_0P9V_TC_LIBS)   $vars(AOCV_RAM_0P9VP_0P9VC_TC_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_TC_LIBS)"
+set dmsa_corner_aocvm_file(typ_125)          "$vars(AOCV_12T_0P9V_ML_LIBS)   $vars(AOCV_9T_0P9V_ML_LIBS)   $vars(AOCV_7T_0P9V_ML_LIBS)   $vars(AOCV_RAM_0P9VP_0P9VC_ML_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_ML_LIBS)"
+set dmsa_corner_aocvm_file(typ_0)            "$vars(AOCV_12T_0P9V_BC_LIBS)   $vars(AOCV_9T_0P9V_BC_LIBS)   $vars(AOCV_7T_0P9V_BC_LIBS)   $vars(AOCV_RAM_0P9VP_0P9VC_BC_LIBS)   $vars(AOCV_ROM_0P9VP_0P9VC_BC_LIBS)"
+}
+
+
+set dmsa_mv_scaling_library1(corner1) "lib1"
+set dmsa_mv_scaling_library2(corner1) "lib2"
+
+set dmsa_mv_voltage(corner1)     "_1.09"
+set dmsa_mv_process(corner1)     "1"
+set dmsa_mv_temperature(corner1) "125"
+
+
+# Provide the UPF File
+#
+# The syntax is:
+#		1. dmsa_UPF_FILE
+
+#set dmsa_UPF_FILE		"/eda_files/proj/ict2100/frontend/release/release_rtl/fullmask_20220104/upf/chip_top_dc.upf"
+#set dmsa_UPF_FILE		"/eda_files/proj/ict2100/archive/chip_top_fdp/dsn/fe_release/top/flatten_sdc/chip_top_dc.upf"
+set dmsa_UPF_FILE		""
+
+# Provide a list of DMSA modes   : functional, test
+#
+# The syntax is:
+#               1.  set dmsa_modes "mode1 mode2 ..."
+
+
+# Provide an array of constraint files
+# The syntax will be dmsa_mode_constraint_files(mode)
+#		1. dmsa_mode_constraint_files(mode1)
+#		2. dmsa_mode_constraint_files(mode2)
+#
+
+
+
+set dmsa_mode_constraint_files(func)    "$sdc_func"
+set dmsa_mode_constraint_files(scan)    "$sdc_scan"
+set dmsa_mode_constraint_files(cdc)     "$sdc_cdc"
+set dmsa_mode_constraint_files(func1)   "$sdc_func1"
+set dmsa_mode_constraint_files(func2)   "$sdc_func2"
+set dmsa_mode_constraint_files(func3)   "$sdc_func3"
+
+
+
+#
+# Corner-Based Back Annotation Section
+#
+# The syntax is:
+#		1. PARASITIC_FILES(corner1)
+#		2. PARASITIC_PATHS(corner1)
+#
+
+# The recommended order is to put the block spefs first then the top so that block spefs are read 1st then top
+# For example 
+# PARASITIC_FILES(slow) "blk1.gpd blk2.gpd ... top.gpd"
+# PARASITIC_PATHS(slow) "u_blk1 u_blk2 ... top"
+# If you are loading the node coordinates by setting read_parasitics_load_locations true, it is more efficient
+# to read the top first so that block coordinates can be transformed as they are read in
+# Each PARASITIC_PATH entry corresponds to the related PARASITIC_FILE for the specific block"   
+# For toplevel PARASITIC file please use the toplevel design name in PARASITIC_PATHS variable."   
+
+
+#
+# Provide Mode/Corner Specific Derates
+#
+# The syntax is
+#		1. set dmsa_derate_clock_early_value(mode_corner) "_1.09"
+#		2. set dmsa_derate_clock_late_value(mode_corner) "_1.09"
+#		3. set dmsa_derate_data_early_value(mode_corner) "_1.09"
+#		4. set dmsa_derate_data_late_value(mode_corner) "_1.09"
+#set dmsa_derate_clock_early_value(mode_corner) "_1.09"
+#set dmsa_derate_clock_late_value(mode_corner) "_1.09"
+#set dmsa_derate_data_early_value(mode_corner) "_1.09"
+#set dmsa_derate_data_late_value(mode_corner) "_1.09"
+
+######################################
+# Setting Number of Hosts and Licenses
+######################################
+# Set the number of hosts and licenses to number of dmsa_corners * number of dmsa_modes
+set dmsa_num_of_hosts [expr [llength $dmsa_corners] * [llength $dmsa_modes]]
+set dmsa_num_of_licenses [expr [llength $dmsa_corners] * [llength $dmsa_modes]]
+
+#set dmsa_num_of_hosts  1
+#set dmsa_num_of_licenses  1
+
+if { $RUN_ONECORNE } {
+set dmsa_num_of_hosts  1
+set dmsa_num_of_licenses  1
+
+} else {
+set dmsa_num_of_hosts [expr [llength $dmsa_corners] * [llength $dmsa_modes]]
+set dmsa_num_of_licenses [expr [llength $dmsa_corners] * [llength $dmsa_modes]]
+
+}
+
+
+
+
+
+
+######################################
+# End
+######################################
+
+### End of PrimeTime Runtime Variables ###
+puts "RM-Info: Completed script [info script]\n"

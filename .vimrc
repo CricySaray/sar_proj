@@ -19,7 +19,7 @@ runtime! debian.vim
 " Set the backslash as the leader key.
 let mapleader = "\\"
 
-""" ABBR CONFIG ------------------------------------------------------------
+""" ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World
 iabbrev class public class{}<esc>i<cr><esc>k$Fsli
 iabbrev SS ######################################<esc>oi# author     : sar <esc>oi# descrip    : this is blahblah ... <esc>oi######################################<esc>oi
@@ -43,7 +43,7 @@ cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
 
-""" SETTING CONFIG ------------------------------------------------------------
+""" SETTING CONFIG --------------------------------------------------------------
 if has("syntax")
   syntax on
 endif
@@ -98,7 +98,7 @@ set laststatus=2
 set backspace=indent,eol,start
 
 
-""" MAPPINGS --------------------------------------------------------------- {{{
+""" MAPPINGS --------------------------------------------------------------------
 " .vimrc config
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
@@ -156,7 +156,7 @@ noremap <c-right> <c-w><
 let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', '\.pyc$', '\.odt$', '\.png$', '\.gif$', '\.db$']
 
 
-""" VIMSCRIPT & FUNCTIONS -------------------------------------------------------------- 
+""" VIMSCRIPT & FUNCTIONS -------------------------------------------------------
 
 " for ctags, it can detect whole vars name such as vars(xjbe,cts,max_trans)
 "		correspondingly, ~/.ctags file need modify suitable pattern to get correct var name!!!
@@ -280,7 +280,7 @@ func! BracketIndent()
 	let l:previous_char = l:line[col(".")-2] 
 	if l:previous_char == "{" && l:current_char == "}"
 		" below statement need modify according to different env
-		return "\<cr>\<cr>\<esc>\k\i\<tab>" 
+		return "\<cr>\<cr>\<esc>\k\i\<tab>"
 	else
 		return "\<cr>"
 	end
@@ -296,8 +296,13 @@ endfunc
 " 将tab键绑定为跳出括号
 inoremap <TAB> <c-r>=SkipPair()<CR>
 
+""" SIMPLE COMMAND OR AUTO COMMAND (AUTOCMD) ------------------------------------
+" show the table of contents of vimrc
+command! -nargs=0 TableOfVimrc :execute 'normal! :v/^""" [A-Z]\+/d<CR>'
+" Automatically load custom dictionary for automatic completion function
+autocmd FileType tcl set dictionary=~/.vim/dict/mydict.dict
 
-""" STATUS LINE CONFIG ------------------------------------------------------------ 
+""" STATUS LINE CONFIG ----------------------------------------------------------
 
 " set status line  display (no need for other plugins)
 set statusline=%n\ %F%m%r%h%w%=\ \ \ \ \ \ %l/%L,\ %c/%{col('$')-1}\ \ \ --%p%%--\

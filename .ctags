@@ -1,4 +1,4 @@
---langdef=tcl
---langmap=tcl:.tcl
---regex-tcl=/^\s*set\s+((vars|FP)\([^)]+\))?\s+/\1/v,vars,variables/
---extra=+q
+--langdef=all
+--langmap=all+*
+--langmap=all+:.
+--regex-all=/^\s*set\s+((vars|FP)\([a-zA-Z1-9_,]+\))?\s+/\1/v,vars,variables/

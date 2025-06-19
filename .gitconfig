@@ -2,11 +2,13 @@
 	name = cricy
 	email = cricysaray@qq.com
 [alias]
+	f = fetch proj
 	back = restore --stage
 	chi = check-ignore -v # check ignored file status
 	re = remote
 	ls = ls-files
 	a = add
+	aa = add --all
 	st = status
   s = status -s         # git st 等价于 git status
   c = commit -m

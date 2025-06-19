@@ -2,6 +2,7 @@
 	name = cricy
 	email = cricysaray@qq.com
 [alias]
+	m = merge proj/main
 	f = fetch proj
 	back = restore --stage
 	chi = check-ignore -v # check ignored file status

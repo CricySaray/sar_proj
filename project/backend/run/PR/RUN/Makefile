@@ -96,4 +96,4 @@ gui:
 	@cd $(PWD); source ../../block_setup.csh ; $(INN_SHELL) -files $(SCRIPTS)/run_$@.tcl -log $(LOG)/$@_$(log) .log ;
 	@echo "step: $@ ended at: `date`"
 clean:
-	@find . -mindepth 1 -name "*"|grep -v Makefile | xargs rm -rf
+	@find . -mindepth 1 -name "*" |grep -v Makefile | xargs rm -rf

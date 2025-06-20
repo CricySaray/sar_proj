@@ -13,14 +13,15 @@ open my $fo, '>', $ARGV[1] or die "ERROR: Cannot open output!!!";
 
 my @errorBlock;
 my ($in_block, $i);
-#my $ignoreExp = '\(TCLCMD-917\)|\(IMPLF-40\)|\(TA-1015\)|\(TCLCMD-927\)|\(IMPFP-3415\)';
 # this var $ignoreExp can't be empty!!! It will can't pick out any ERROR although original file has many ERRORS.
+#my $ignoreExp = '\(TCLCMD-917\)|\(IMPLF-40\)|\(TA-1015\)|\(TCLCMD-927\)|\(IMPFP-3415\)';
 my $ignoreExp = 'empty_sar';
+my $pickoutExp = '\*\*ERROR';
 
 sub arrayExp {
 	my ($matchFlag, $ignoreFlag) = (0, 1);
 	for (@_) {
-		$matchFlag = 1 if /\*\*ERROR/;
+		$matchFlag = 1 if /$pickoutExp/;
 		next;
 	}
 	for (@_) {

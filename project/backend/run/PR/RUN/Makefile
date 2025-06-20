@@ -88,7 +88,7 @@ chipfinish :eco
 	@$(cmd)
 	@echo "Step: $@ ended at: `date`"
 endif
-###
+
 gui:
 	@echo "--------------------------------------"
 	@echo "Step: $@ started at :`date` by: $(USER)"

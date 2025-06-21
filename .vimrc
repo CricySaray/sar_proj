@@ -308,3 +308,21 @@ autocmd FileType tcl set dictionary=~/.vim/dict/all_options_of_command.V1.dict,~
 " set status line  display (no need for other plugins)
 set statusline=%n\ %F%m%r%h%w%=\ \ \ \ \ \ %l/%L,\ %c/%{col('$')-1}\ \ \ --%p%%--\
 set laststatus=2
+
+""" PLUGINS MANAGER CONFIG ------------------------------------------------------
+"" Jetpack - vim-plug style
+packadd vim-jetpack
+call jetpack#begin()
+Jetpack 'tani/vim-jetpack', {'opt': 1} "bootstrap
+Jetpack 'tpope/vim-surround', { 'as' : 'surround'}
+Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
+Jetpack 'junegunn/fzf.vim'
+" Jetpack 'https://github.com/dense-analysis/ale'
+" Jetpack 'junegunn/fzf.vim'
+" Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
+" Jetpack 'neoclide/coc.nvim', { 'branch': 'release' }
+" Jetpack 'neoclide/coc.nvim', { 'branch': 'master', 'do': 'yarn install --frozen-lockfile' }
+" Jetpack 'vlime/vlime', { 'rtp': 'vim' }
+" Jetpack 'dracula/vim', { 'as': 'dracula' }
+" Jetpack 'tpope/vim-fireplace', { 'for': 'clojure' }
+call jetpack#end()

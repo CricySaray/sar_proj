@@ -1,0 +1,35 @@
+source ./last/lef list.set.tcl; # set lef list
+
+set in	[open "./last/StarRC_template.cmd" r]
+set out [open "./run/$env(view_rpt)/StarRc.cmd" w]
+while {[gets $in line] > -1}{
+	switch -regexp $line {
+		"LEF FILE.* foreach lef slef list {puts Sout "LEF FILE: $lef}}
+		NETLIST_FILE.* puts Sout "NETLIST FILE:Senv(run dir)/output/Senv（design).spef.gz”）^TOP DEF FILE.*{puts $out “TOP DEF FILE:Senv(def file）"}
+		NETLIST FORMAT.*pUtS SOUt NETLIST_FORMAT:SPEF"}NETLIST_COMPRESS_COMMAND.*pUtS Sout “NETLIST_COMPRESS_COMMAND:gZip”}
+		"^CORNERS FILE.*{puts $out “CoRNERS_FILE:Senv（corners file)"}SIMULTANEOUS MULTI CORNER.*pUtS SOUt"SIMULTANEOUS MULTI CORNER:YES"}SELECTED_CORNERS.*(puts Sout “SELECTED_CORNERS:$enV(selected_corners))
+		TCAD GRD FILE.*{
+		switch -regexp $env(corner）{"cbest.**（puts $out TCAD GRD FILE:/simulation/exchange/library/starrc/HHW LO40NLPV4_7M MTT3eK RDL28K CBEST.nxtgrd}"cworst.*（puts $outTCAD_GRD_FILE:/simulation/exchange/Library/starrc/HHW LO4eNLPV4_7M MTT30K_RDL28K CWORST.nxtgrd)
+		OPERATING TEMPERATURE.*
+		switch -regexp $env(corner)
+		*125c"putS $out “OPERATING_TEMPERATURE:125"}
+		*m40c"putS $out“OPERATING_TEMPERATURE:-40"}
+		NETLIST UNSCALED RES PROP.*pUtS SoUt “NETLIST UNSCALED RES PROP:YES"}
+		MAPPING_FILE.*{puts $out “MAPPING_FILE:$env（mapping_file)}
+		NETLIST_UNSCALED_COORDINATES.*
+		COUPLE TO_GROUND.*{pUtS SOUt“COUPLE TO GROUND:NO"}
+		{putS $out "NETLIST_UNSCALED_COORDINATES:YES"}
+		POWER NETS.*{PUtS $OUt“POWER NETS:DVDD AON DVDD ONO DVSS"}
+		NUM CORES.*
+		COUPLING ABS THRESHOLD.*PUtS SOUt“COUPLING ABS THRESHOLD:1e-15°}{puts $out "NUM_coRES :$env(num_cores)"}
+		COUPLING REL THRESHOLD.*PUtS SOUt “COUPLING REL THRESHOLD:0.01°}
+		REDUCTION MAX DELAY ERROR.*{pUtS $OUt“REDUCTION MAX DELAY ERROR:5.Oe-15°}
+		^EXTRACT_VIA CAPS.*putS Sout “EXTRACT VIA CAPS:YES"}
+		NETLIST INPUT DRIVERS.**（pUtS SoUt“NETLIST INPUT DRIVERS:YES"}
+		ENHANCED SHORT REPORTING.*PUtS SOUt“ENHANCED SHORT REPORTING:YES"}REPORT METAL FILL STATISTICS.*PUtS $OUt “REPORT METAL FILL STATISTICS:YES}
+		METAL FILL GDS FILE.*putS $out “METAL FILL GDS FILE: SenV(gds file)}
+		SHORTS LIMIT.*（pUtS $out “SHORTS LIMIT:100000°)
+		METAL FILL BLOCK NAME.*（pUtS $oUt“METAL FILL BLOCK NAME:SC5O18 TOP DM"}
+		METAL FILL POLYGON HANDLING.*PUtS SOUt“METAL FILL POLYGON HANDLING:FLOATING"}GDS LAYER MAP_FILE.*puts $out “GDS LAYER MAP FILE: $env（gds layer map file）}
+	}
+}

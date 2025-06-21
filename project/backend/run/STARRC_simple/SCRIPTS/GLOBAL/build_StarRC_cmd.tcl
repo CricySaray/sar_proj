@@ -6,8 +6,9 @@ while {[gets $in line] > -1}{
 	switch -regexp $line {
 		"LEF FILE.* foreach lef slef list {puts Sout "LEF FILE: $lef}}
 		NETLIST_FILE.* puts Sout "NETLIST FILE:Senv(run dir)/output/Senv（design).spef.gz”）^TOP DEF FILE.*{puts $out “TOP DEF FILE:Senv(def file）"}
-		NETLIST FORMAT.*pUtS SOUt NETLIST_FORMAT:SPEF"}NETLIST_COMPRESS_COMMAND.*pUtS Sout “NETLIST_COMPRESS_COMMAND:gZip”}
-		"^CORNERS FILE.*{puts $out “CoRNERS_FILE:Senv（corners file)"}SIMULTANEOUS MULTI CORNER.*pUtS SOUt"SIMULTANEOUS MULTI CORNER:YES"}SELECTED_CORNERS.*(puts Sout “SELECTED_CORNERS:$enV(selected_corners))
+		"NETLIST_FORMAT.*" {puts $out "NETLIST_FORMAT:SPEF"}
+		"^NETLIST_COMPRESS_COMMAND.*" {puts $out "NETLIST_COMPRESS_COMMAND:gzip"}
+		^CORNERS FILE.* {puts $out “CoRNERS_FILE:Senv（corners file)"}SIMULTANEOUS MULTI CORNER.*pUtS SOUt"SIMULTANEOUS MULTI CORNER:YES"}SELECTED_CORNERS.*(puts Sout “SELECTED_CORNERS:$enV(selected_corners))
 		TCAD GRD FILE.*{
 		switch -regexp $env(corner）{"cbest.**（puts $out TCAD GRD FILE:/simulation/exchange/library/starrc/HHW LO40NLPV4_7M MTT3eK RDL28K CBEST.nxtgrd}"cworst.*（puts $outTCAD_GRD_FILE:/simulation/exchange/Library/starrc/HHW LO4eNLPV4_7M MTT30K_RDL28K CWORST.nxtgrd)
 		OPERATING TEMPERATURE.*

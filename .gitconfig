@@ -2,6 +2,7 @@
 	name = cricy
 	email = cricysaray@qq.com
 [alias]
+	sm = submodule
 	m = merge proj/main
 	f = fetch proj
 	back = restore --stage

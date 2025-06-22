@@ -11,3 +11,4 @@
 !.ctags
 !.vim/
 !.vim/**
+.vim/pack/jetpack/opt/vim-jetpack

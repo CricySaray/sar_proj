@@ -2,6 +2,7 @@
 	name = cricy
 	email = cricysaray@qq.com
 [alias]
+	rr = rm -r --cached .
 	sm = submodule
 	m = merge proj/main
 	f = fetch proj

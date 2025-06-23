@@ -15,6 +15,7 @@
 	st = status
   s = status -s         # git st 等价于 git status
   c = commit -m
+	cm = commit -am 'auto: normal update'
 	cc = commit -m 'auto: normal update'
 	mo = commit --amend -m
   co = checkout

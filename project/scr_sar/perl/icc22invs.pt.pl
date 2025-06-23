@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## write_changes -format icc2tcl -out eco.icc2.tcl
 ## icc22invs.pt.tcl eco.icc2.tcl > eco.invs.tcl
-## source -e eco.invs.tcl in innovus ECO step
+## source -e eco.invs.tcl in innovus ECO step 
 $invs_orient{FN} = "MY";
 $invs_orient{FS} = "MX";
 $invs_orient{S}  = "R180";

@@ -1,5 +1,7 @@
 #-------------------------------------------------
 # some more ls aliases
+alias bat='batcat'
+alias fd='find ./ -type f -name '
 alias vi='vim .gitignore'
 alias vm='vim Makefile'
 alias p='pwd'
@@ -207,3 +209,6 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+source "$HOME/.cargo/env"

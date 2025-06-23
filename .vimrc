@@ -19,7 +19,8 @@ runtime! debian.vim
 " Set the backslash as the leader key.
 let mapleader = "\\"
 
-""" ABBR CONFIG -----------------------------------------------------------------
+""" INCREAMENTAL SETTINGS -------------------------------------------------------
+"" you can write some misc config when you are in client env such as VDI/Xclient
 
 
 """ ABBR CONFIG -----------------------------------------------------------------
@@ -320,6 +321,7 @@ Jetpack 'tani/vim-jetpack', {'opt': 1} "bootstrap
 Jetpack 'tpope/vim-surround', { 'as' : 'surround'}
 Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
 Jetpack 'junegunn/fzf.vim'
+Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }

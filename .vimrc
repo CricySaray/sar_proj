@@ -20,6 +20,9 @@ runtime! debian.vim
 let mapleader = "\\"
 
 """ ABBR CONFIG -----------------------------------------------------------------
+
+
+""" ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World
 iabbrev class public class{}<esc>i<cr><esc>k$Fsli
 iabbrev SS ######################################<esc>oi# author     : sar <esc>oi# descrip    : this is blahblah ... <esc>oi######################################<esc>oi

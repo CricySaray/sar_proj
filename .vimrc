@@ -72,6 +72,7 @@ set ruler " 打开状态栏标尺
 set shiftwidth=2 " 设定 << 和 >> 命令移动时的宽度为 3，同时，用=来格式化的时候也是根据这一项来设定indent的宽度为多少的。
 set softtabstop=2 " 使得按退格键时可以一次删掉 2 个空格
 set tabstop=2 " 设定 tab 长度为 2
+set expandtab
 " set shiftwidth=4 "when indenting with '>', use 4 spaces width
 set nobackup " 覆盖文件时不备份
 " set autochdir " 自动切换当前目录为当前文件所在的目录

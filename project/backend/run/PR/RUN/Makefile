@@ -1,6 +1,6 @@
 SHELL 		= /bin/csh -f
 VPATH 		?= ./FLAG
-SCRIPTS 	:= .. /SCRIPTS/GLOBAL
+SCRIPTS 	:= ../SCRIPTS/GLOBAL
 LOG 			:= ./LOG
 PWD 			:= $(shell dirname $(CURDIR)/$(lastword $(MAKEFILE_LIST)))# this can adapt different makefile in several dir
 log 			:= log
@@ -10,10 +10,10 @@ inn_dir 	:= /tools/cadence/ddi/22.13-s094/bin/
 INN_SHELL := \bsub -q $(q) -n $(cpu) -R "select[hname!='tianjin'] span[hosts=1]" -Is ${inn_dir}/innovus -cpus $(cpu)
 cmd				= cd $(PWD) ; source ../../block_setup.csh ; source ../../../eco_setup.csh ; setenv currEcoNum 102 ; setenv step $@ ; setenv laststep $(shell echo $< | awk-F "/" '{print $$NF}') ; $(INN_SHELL) -files $(SCRIPTS)/run_$@.tcl -log $(LOG)/$@.log
 PREFIX 		:= echo "--------------------------------------" ; \
-						 echo"Step: $@ started at : `date` by: $(USER)" ; \
+						 echo "Step: $@ started at : `date` by: $(USER)" ; \
 						 echo "--------------------------------------"
 SUFFIX 		:= echo "step: $@ ended at: `date` "
-BODY 			:= $(PREFIX) ; cd $(PWD) ; mkdir -p LOG DBS RPT FLAG ; $(cmd) ; $(SUFFIX)
+BODY 			:= $(PREFIX) ; cd $(PWD) ; mkdir -p WORK LOG DBS RPT FLAG ; $(cmd) ; $(SUFFIX)
 GEN_HTML 	:= setenv step $@ ; cd $(PWD) ; python3 ../../ENV/gen_block_summary_to_html.py -loc ../../
 init:
 	@$(BODY)

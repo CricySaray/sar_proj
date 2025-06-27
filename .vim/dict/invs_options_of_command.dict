@@ -28,8 +28,6 @@
 -StarN
 -Stretches
 -T
--U7/A
--Un-Merged
 -V
 -W
 -WelseN
@@ -85,7 +83,6 @@
 -activity_pattern
 -activity_refresh_args
 -add
--add:
 -addAntennaCell
 -addBlockBox
 -addBoundaryBlockage
@@ -247,12 +244,10 @@
 -append_log
 -append_to_vsrc_file
 -apply
--apply:
 -applyMaskShift
 -ar
 -arc
 -area
--area:
 -areaIo
 -area_blockage
 -area_only
@@ -439,7 +434,6 @@
 -bottomGap
 -bottomLayer
 -bottomNumSwitch
--bottomNumSwitch-rightNumSwitch
 -bottomOffset
 -bottomOrientation
 -bottomPattern
@@ -474,7 +468,6 @@
 -boxes_file
 -branch
 -break_at
--break_at:
 -break_at_conflict
 -break_core_ring_io_list
 -bringBackRow
@@ -564,7 +557,6 @@
 -cdl_map_file
 -cds_lib_file
 -cell
--cell/-cell_obs
 -cellEM
 -cellEnablePin
 -cellInstanceColor
@@ -609,7 +601,6 @@
 -celltype
 -cellview
 -center
--center:
 -centerLine
 -centerTapPins
 -center_line
@@ -741,7 +732,6 @@
 -clock_gates_enable
 -clock_gates_output
 -clock_gates_output_ratio
--clock_gates_output_ratio’
 -clock_gating_efficiency
 -clock_input_pin
 -clock_location
@@ -911,7 +901,7 @@
 -corePinTarget
 -corePinWidth
 -corePrefix
--corePrefixFILLER:
+-corePrefixFILLER
 -coreSpacing
 -coreToBottom
 -coreToBoundary
@@ -924,7 +914,6 @@
 -core_offset
 -core_row_cell
 -corner
--corner/-vertex
 -cornerCellList
 -cornerCellListByCorner
 -cornerOrientationList
@@ -1178,7 +1167,6 @@
 -delta_delay_threshold
 -delta_only
 -density
--density”
 -depth
 -derate
 -derate_cell
@@ -1235,7 +1223,6 @@
 -dimension
 -diodeCell
 -dir
--dir:
 -direct
 -direction
 -directionSide
@@ -1347,7 +1334,6 @@
 -droutePostRouteWidenWire
 -droutePostRouteWidenWireRule
 -drv
--drv/-setup/-hold
 -drvMargin
 -drvReports
 -drv_fields
@@ -1379,7 +1365,6 @@
 -e
 -each_endpoint
 -early
--early/-late
 -earlyClockFlow
 -earlyGlobalEffortLevel
 -earlyGlobalHonorMsvRouteConstraint
@@ -1451,7 +1436,6 @@
 -effective_voltage_waveform
 -effort
 -effortLevel
--effortLevel:
 -effort_level
 -eiv_average_per_window_list
 -eiv_eval_gnd_window
@@ -1834,17 +1818,13 @@
 -failure_mode
 -failure_point
 -fall
--fall/-rise
 -fall_clock
 -fall_delay
 -fall_from
--fall_from:
 -fall_slack
 -fall_slew
 -fall_through
--fall_through:
 -fall_to
--fall_to:
 -fall_waveform
 -falling
 -fanin
@@ -1956,7 +1936,6 @@
 -fix_vertical_max_length_violation
 -fixed
 -fixedGap
--fixedGap;
 -fixedHeight
 -fixedPin
 -fixedWidth
@@ -1979,9 +1958,7 @@
 -flexmodel_constraint_type
 -flip
 -flip1st
--flip1st：
 -flipY
--flipY;
 -flip_table
 -float_num
 -float_precision
@@ -2031,11 +2008,6 @@
 -frequency
 -from
 -from*
--from/-from_rise/-from_fall
--from/-through/-to
--from/-to
--from/to
--from:
 -fromBumpMasterName
 -fromEdge
 -fromFile
@@ -2181,7 +2153,6 @@
 -ground_pin_mapping
 -ground_pins
 -group
--group:
 -groupPhyLogicalDomains
 -groupToOutsideSpacing
 -groupWArea
@@ -2220,7 +2191,6 @@
 -header
 -height
 -help
--help​
 -hide
 -hier
 -hier1801
@@ -2239,7 +2209,6 @@
 -hierarchy_delimiter
 -hierarchy_separator
 -high
--high/-low
 -highFrequency
 -high_threshold
 -highlight
@@ -2261,7 +2230,6 @@
 -histogram_range
 -histograms
 -hold
--hold/-setup
 -holdTargetSlack
 -holdTargetSlackPerView
 -holdVioData
@@ -2612,7 +2580,6 @@
 -inside_cell_allow_shift
 -inside_cell_only
 -inst
--inst/-orientation
 -instBasename
 -instGroup
 -instList
@@ -2812,7 +2779,6 @@
 -last_restricted
 -latches
 -late
--late/early
 -late_*
 -late_estimated_worst_irDrop_factor
 -late_estimated_worst_irdrop_factor
@@ -2832,7 +2798,6 @@
 -latency_greater_than
 -lateral_movement_range
 -launch
--launch-capture
 -launch_latency
 -layer
 -layerChangeBotLayer
@@ -2916,7 +2881,6 @@
 -leftGap
 -leftNumSwitch
 -leftOffset
--leftOffset-rightOffset
 -leftOrientation
 -leftPattern
 -leftSide
@@ -2940,7 +2904,6 @@
 -legend_location
 -legend_on
 -length
--length:
 -lengththreshold
 -level
 -level1
@@ -2991,7 +2954,6 @@
 -lightness_level
 -limit
 -limitInCore
--limitInCore:
 -limit_number_of_steps
 -line
 -lineLength
@@ -3019,11 +2981,8 @@
 -list_zero_cap_net
 -lithoHalo
 -ll
--ll:
 -llx
--llx:
 -lly
--lly:
 -load
 -loadBlockage
 -loadCapacitance
@@ -3039,7 +2998,6 @@
 -load_tran_file
 -loading_cap
 -loc
--loc:
 -loc_type
 -local
 -localCheckerBoard
@@ -3060,7 +3018,6 @@
 -log_dir
 -log_file
 -logarithmic
--logarithmic-outfile
 -logic
 -logicOnlyImport
 -logic_level
@@ -3173,7 +3130,6 @@
 -maxDistanceX
 -maxDistanceY
 -maxF
--maxF:
 -maxFanOut
 -maxFanout
 -maxIOHeight
@@ -3240,7 +3196,6 @@
 -max_pins_per_drv
 -max_pointer_number
 -max_points
--max_points:
 -max_ports_per_net
 -max_report_NDR_net
 -max_root_distance
@@ -3311,7 +3266,6 @@
 -method
 -mgrid
 -min
--min/-max
 -minArea
 -minBusBit
 -minCut
@@ -3320,7 +3274,6 @@
 -minEnclosure
 -minEscapeDistance
 -minF
--minF:
 -minGaps
 -minHeight
 -minHole
@@ -3456,7 +3409,6 @@
 -negative
 -nested
 -net
--net/-layer/-type
 -netBuffer
 -netBundle
 -netCoverRatio
@@ -3500,8 +3452,6 @@
 -nldm
 -noAbut
 -noAbut1st
--noAbut1st:
--noAbut:
 -noAddFiller
 -noAdjustDieSize
 -noAntenna
@@ -3510,7 +3460,6 @@
 -noBuffer
 -noCheck
 -noCheckPinAccess
--noCheck：
 -noCompLogic
 -noCompress
 -noComps
@@ -3545,7 +3494,6 @@
 -noFixed
 -noFixedStdCellOverlap
 -noFlip
--noFlip:
 -noFloatingMetal
 -noGlobalNets
 -noHalo
@@ -3636,7 +3584,6 @@
 -no_flip_rows
 -no_frame
 -no_frame_fix_width
--no_frame_fix_width:
 -no_gui
 -no_hard_stop_at_to_pins
 -no_hierarchy
@@ -3707,7 +3654,6 @@
 -notMergedSummary
 -notUseTopFTermDomainForVoltage
 -not_fall_through
--not_fall_through:
 -not_from_cell
 -not_from_clock
 -not_from_clock_edge
@@ -3718,9 +3664,7 @@
 -not_in_clock_trees
 -not_merged_summary
 -not_rise_through
--not_rise_through:
 -not_through
--not_through:
 -not_through_cell
 -not_through_inst
 -not_through_net
@@ -3823,7 +3767,6 @@
 -offset_bottom
 -offset_end
 -offset_from_core
--offset_from_core:
 -offset_left
 -offset_right
 -offset_start
@@ -4015,8 +3958,6 @@
 -outer_shield_width
 -outfile
 -output
--output/-o
--output/o
 -outputCap
 -outputCriticalNetColorFromFileOnly
 -outputFile
@@ -4136,7 +4077,6 @@
 -path
 -pathReports
 -pathSeg
--pathSeg:
 -path_adjust_group
 -path_based_ssta
 -path_exceptions
@@ -4231,7 +4171,6 @@
 -physical_pin_only
 -physically_exclusive
 -pin
--pin/-net
 -pinBlk
 -pinCutSpace
 -pinDepth
@@ -4397,7 +4336,6 @@
 -point_to_point
 -poly
 -polygon
--polygon:
 -polygon_edge_end
 -polygon_edge_start
 -polygons
@@ -4423,11 +4361,9 @@
 -post
 -postCTS
 -postCts
--postCts/-postRoute
 -postECOSuffix
 -postMask
 -postRoute
--postRoute"
 -postRoute_cap
 -postRoute_clkcap
 -postRoute_clkres
@@ -4500,7 +4436,6 @@
 -preCTS
 -preCheck
 -preCts
--preCts/-postCts
 -prePlace
 -preRoute
 -preRoute_cap
@@ -4541,7 +4476,6 @@
 -prefixName
 -prefixOn
 -prefix_name
--prefix_name:
 -preliminary
 -preroute
 -prerouteAlign
@@ -4576,8 +4510,6 @@
 -probing_node_file
 -probing_region_file
 -process
--process/setNanoRouteMode
--process:
 -process_antenna
 -process_bulk_diffusion_ports
 -process_bulk_pins_for_body_bias
@@ -4738,7 +4670,6 @@
 -refHinsts
 -refInst
 -refLibs
--refLibs/-leafViewNames
 -refMaster
 -refObj
 -refType
@@ -4764,7 +4695,6 @@
 -refinePlace
 -reflib
 -regexp
--regexp:
 -region
 -region_pitch
 -register_endpoint
@@ -4821,7 +4751,6 @@
 -remove_tech
 -repRoutingOnly
 -repeat
--repeat=100ns
 -repeat_window
 -repeatedSymmetricAbuttedFPlan
 -replaceTieConnection
@@ -4831,7 +4760,6 @@
 -replace_str
 -replace_string
 -report
--report:
 -reportAllWithinChannelWidth
 -reportFile
 -reportFormat
@@ -4990,18 +4918,13 @@
 -ring
 -ring_target
 -rise
--rise/
--rise/-fall
 -rise_clock
 -rise_delay
 -rise_from
--rise_from:
 -rise_slack
 -rise_slew
 -rise_through
--rise_through:
 -rise_to
--rise_to:
 -rise_waveform
 -rising
 -rlrp_cell_report_layer
@@ -5319,7 +5242,6 @@
 -set_via_expansion_dir
 -settling_buffer
 -setup
--setup/-hold
 -setupOnly
 -setupRecovery
 -setupTargetSlack
@@ -5437,17 +5359,13 @@
 -site_name
 -site_parameter
 -size
--size:
 -sizex
--sizex:
 -sizey
--sizey:
 -skew
 -skewCoreOnly
 -skew_group
 -skew_groups
 -skewingSlackConstraint
--skewingSlackConstraint:
 -skewness
 -skip
 -skipAutoBusBitOrder
@@ -5515,7 +5433,6 @@
 -skiptw
 -slack
 -slackAdjustment
--slackAdjustment:
 -slackAdjustmentPriority
 -slackDriven
 -slackReports
@@ -5633,7 +5550,6 @@
 -specialRouteUserClass
 -specialShape
 -special_wire
--special_wire;
 -specialnets
 -specifiedIosOnly
 -specifyHoldEndpointsMargin
@@ -5719,8 +5635,6 @@
 -stapling_shift
 -starN
 -start
--start/-end
--start/end
 -startEnableChainAtCorner
 -startIoInstName
 -startOffset
@@ -5864,7 +5778,6 @@
 -suppressed
 -surrounding_tag
 -svr
--svr/-svrOnly
 -svrOnly
 -swapEffort
 -swapInst
@@ -5942,7 +5855,6 @@
 -targetOrigin
 -targetSearchDistance
 -targetSlack
--targetSlack:
 -targetViaLayerRange
 -target_application
 -target_file
@@ -6024,8 +5936,6 @@
 -thresholdparameter
 -thresholds
 -through
--through/-through_rise/-through_fall
--through:
 -through_cell
 -through_fall
 -through_file
@@ -6075,7 +5985,6 @@
 -timingSelfLoopsNoSkew
 -timing_aware
 -timing_aware_effort
--timing_aware_effort:
 -timing_debug_report
 -timing_driven
 -timing_net_delay_model
@@ -6084,8 +5993,6 @@
 -timingcheck
 -title
 -to
--to/-to_rise/-to_fall
--to:
 -toCoreEdge
 -toFlopsOf
 -toInstName
@@ -6261,7 +6168,6 @@
 -uncertainty
 -uncertainty_table
 -unchainByInstances
--unchainByInstances\
 -unclocked
 -unconnected_die_pkg_pins
 -unconnectedcell_ignore_file
@@ -6307,11 +6213,8 @@
 -upsize
 -upsizeInPowerOpt
 -ur
--ur:
 -urx
--urx:
 -ury
--ury:
 -use
 -useBoundaryCondition
 -useCdsThruForAssign
@@ -6425,7 +6328,6 @@
 -vector_profile_mode
 -ver
 -verbose
--verbose”
 -verbosity
 -verifyOnly
 -verifyWindow
@@ -6501,7 +6403,6 @@
 -vias
 -victim
 -view
--view:
 -viewSubType
 -view_fill
 -view_fills
@@ -6555,7 +6456,6 @@
 -warnings
 -warnthreshold
 -watch
--watch:
 -watch_box
 -watch_inst
 -watch_location_waveform
@@ -6564,7 +6464,6 @@
 -waveform_aware_type
 -waveform_files
 -weight
--weight:
 -well
 -wellCutCell
 -well_cap_file
@@ -6572,7 +6471,6 @@
 -what_if_report
 -what_if_shapes_file
 -width
--width:
 -widthFactor
 -widthRange
 -width_bottom

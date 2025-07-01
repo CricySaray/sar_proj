@@ -46,6 +46,9 @@ cabbrev ulvte %s/CPDLVT$/CPDULVT/
 cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
+cabbrev co %!column -t -s '|'
+cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
+cabbrev rt r ~/project/scr_sar/ref_content/head_of_proc.txt
 
 """ SETTING CONFIG --------------------------------------------------------------
 if has("syntax")
@@ -117,6 +120,8 @@ noremap - dd
 nnoremap <F2> :g/^\s*$/d<CR>
 nnoremap <F3> :tabnew .<CR>
 nnoremap <c-a> ggVG:ya
+nnoremap <s-d> k
+nnoremap <s-f> j
 
 " buffers config
 nnoremap <c-n> :bn <CR>
@@ -306,7 +311,7 @@ inoremap <TAB> <c-r>=SkipPair()<CR>
 command! -nargs=0 TableOfVimrc :execute 'normal! :v/^""" [A-Z]\+/d<CR>'
 " Automatically load custom dictionary for automatic completion function
 "		you can get completion using ctrl x + ctrl k
-autocmd FileType tcl set dictionary=~/.vim/dict/invs_commands.dict,~/.vim/dict/invs_options_of_command.dict,~/.vim/dict/pt_command_list.dict
+autocmd FileType tcl set dictionary=~/.vim/dict/invs_commands.dict,~/.vim/dict/invs_options_of_command.dict,~/.vim/dict/pt_command_list.dict,~/.vim/dict/invs_dbxxx_commands.dict
 
 """ STATUS LINE CONFIG ----------------------------------------------------------
 

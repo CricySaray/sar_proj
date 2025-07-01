@@ -1,13 +1,12 @@
+# API:
+set memExp    "TS"; #mem name regexp
+
+# DONT CHANGE IT AT WILL:
 set allSeqs [all_registers]
 set macros [get_object_name [get_cells -quiet -hierarchical -filter "is_black_box"]]
-
-#set mems [get_cells -quiet -hierarchical -filter "is_memory_cell"]
-#set ips [get_cells -quiet -hierarchical -filter "is_black_box"]
-#set ips [get_cells -quiet -hierarchical -filter "is_black_box && @ref_name !~ TS*"]
-
 set mems ""; set ips ""
 foreach m $macros {
-	if {[regexp TS $m]} {
+	if {[regexp $memExp $m]} {
 		lappend mems $m
 	} else {
 		lappend ips $m

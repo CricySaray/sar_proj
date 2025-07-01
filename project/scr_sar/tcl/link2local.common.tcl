@@ -28,4 +28,3 @@ if {$have == 0} {
 } else {
 	puts "Error: no INPUT dir!"
 }
-

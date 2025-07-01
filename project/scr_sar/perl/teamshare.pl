@@ -45,7 +45,14 @@ if (length($msg)) {
 		print "$msg\n";
 		print "teamshare -pop $id\n";
 	} else {
-		print "Error: No ids avilable!\n";
+		print "Error: No ids avilable! Delete old content of id($id) and push new content.\n";
+    `rm -rf $dir/$id`;
+		open FID, "> $dir/$id" or die "Error: Can not open $dir/$id for write\n";
+		print FID "$msg";
+		close FID;
+		`chmod 777 $dir/$id`;
+		print "$msg\n";
+		print "teamshare -pop $id\n";
 	}
 }
 

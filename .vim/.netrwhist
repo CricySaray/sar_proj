@@ -1,5 +1,6 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhistcnt =2
+let g:netrw_dirhistcnt =3
+let g:netrw_dirhist_3='/home/cricy/project/scr_sar/ref_content'
 let g:netrw_dirhist_2='/home/cricy/project'
 let g:netrw_dirhist_1='/home/cricy/project/scr_sar'
 let g:netrw_dirhist_0='/home/cricy/project/scr_sar/tcl'
@@ -9,4 +10,3 @@ let g:netrw_dirhist_7='/home/cricy/project/backend/run/STARRC_simple/RUN'
 let g:netrw_dirhist_6='/home/cricy/project/test_temp'
 let g:netrw_dirhist_5='/home/cricy'
 let g:netrw_dirhist_4='/home'
-let g:netrw_dirhist_3='/'

@@ -264,7 +264,7 @@ precmd() {
         STATUS_COLOR="\[\e[31m\]"  # 红色（失败）
     fi
     # 设置PS1（包含命令计数、时间和执行状态颜色）
-    PS1="${STATUS_COLOR}[\#]\u \[\e[1m\]\D{%Y/%m/%d} \t \[\e[0m\]$(parse_git_status) \[\e[34m\]\[\e[1m\]\w\[\e[0m\] \$ "
+    PS1="${STATUS_COLOR}[\#]\u \[\e[1m\]\D{%Y/%m/%d} \A\[\e[0m\]$(parse_git_status) \[\e[34m\]\[\e[1m\]\w\[\e[0m\] \$ "
 }
 PROMPT_COMMAND=precmd
 

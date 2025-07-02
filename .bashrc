@@ -62,6 +62,9 @@ alias unproxy='unset all_proxy'
 export DISPLAY=172.23.112.1:0
 
 #------------------------------------------------
+# export vars
+
+#------------------------------------------------
 # - fzf command config:
 # -- Customizing fzf options for completion
 # Use ~~ as the trigger sequence instead of the default **
@@ -217,3 +220,56 @@ fi
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 source "$HOME/.cargo/env"
 . "$HOME/.cargo/env"
+
+
+#-------------------------------------------------
+# prompt setting
+
+# Git 状态检查函数
+function parse_git_status() {
+    # 检查是否在 Git 仓库中
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        return ""
+    fi
+
+    local GIT_STATUS=""
+    local BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
+    
+    # 检查是否有未提交的修改
+    if ! git diff --no-ext-diff --quiet --exit-code; then
+        GIT_STATUS+="\[\e[31m\]✗\[\e[0m\]"  # 红色叉号表示有未暂存修改
+    fi
+    
+    # 检查是否有已暂存但未提交的文件
+    if ! git diff --no-ext-diff --cached --quiet --exit-code; then
+        GIT_STATUS+="\[\e[33m\]+\[\e[0m\]"  # 黄色加号表示有已暂存文件
+    fi
+    
+    # 检查本地提交是否领先于远程
+    local UPSTREAM=$(git rev-parse --abbrev-ref @{upstream} 2>/dev/null)
+    if [ -n "$UPSTREAM" ]; then
+        local AHEAD=$(git rev-list --count @{upstream}..HEAD 2>/dev/null)
+        if [ "$AHEAD" -gt 0 ]; then
+            GIT_STATUS+="\[\e[32m\]↑${AHEAD}\[\e[0m\]"  # 绿色箭头表示有未推送提交
+        fi
+    fi
+    
+    # 如果有状态，添加分支名并用括号包裹
+    if [ -n "$GIT_STATUS" ]; then
+        echo " (\[\e[36m\]${BRANCH}\[\e[0m\]${GIT_STATUS})"
+    else
+        echo " (\[\e[36m\]${BRANCH}\[\e[0m\])"
+    fi
+}
+precmd() {
+    # 根据上一次命令执行状态设置颜色
+    if [ $? -eq 0 ]; then
+        STATUS_COLOR="\[\e[32m\]"  # 绿色（成功）
+    else
+        STATUS_COLOR="\[\e[31m\]"  # 红色（失败）
+    fi
+    # 设置PS1（包含命令计数、时间和执行状态颜色）
+    PS1="${STATUS_COLOR}[\#]\u \[\e[1m\]\D{%Y/%m/%d} \t \[\e[0m\]$(parse_git_status) \[\e[34m\]\[\e[1m\]\w\[\e[0m\] \$ "
+}
+PROMPT_COMMAND=precmd
+

@@ -1,3 +1,15 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Wed Jul  2 20:38:41 CST 2025
+# label     : task_proc
+#   -> (atomic_proc|display_proc|task_proc)
+#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
+#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
+#   -> task_proc  : composed of multiple atomic procs, focus on logical integrity, process control, error recovery, and the output of files and reports when solving problems.
+# descrip   : what?
+# ref       : link url
+# --------------------------
 # API:
 set fi [open "$1" "r"]
 

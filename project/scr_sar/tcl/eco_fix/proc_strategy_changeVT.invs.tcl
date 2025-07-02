@@ -1,3 +1,14 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Wed Jul  2 20:38:55 CST 2025
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc)
+#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
+#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
+# descrip   : strategy of fixing transition: change VT type of a cell. you can specify the weight of every VT type and speed index of VT. weight:0 will be forbidden to use
+# ref       : link url
+# --------------------------
 proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
   # $weight:0 is stand for no using
   # $speed: the fastest must be in front. like ULVT must be the first

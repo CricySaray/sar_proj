@@ -1,3 +1,14 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Wed Jul  2 20:20:11 CST 2025
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc)
+#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
+#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
+# descrip   : get cell drive capacibility and VT type of a inst. ONLY one instance!!!
+# ref       : link url
+# --------------------------
 proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
   # NOTE: $regExp need specific pattern to match info correctly!!! search doubao AI
   # \ need use \\ to adapt. like : \\d+

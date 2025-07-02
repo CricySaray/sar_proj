@@ -1,6 +1,6 @@
 proc get_net_length {{net ""}} {
 	if {$net == "0x0" || [dbget top.nets.name $net -e] == ""} { 
-		return "0x0"
+		return "0x0:1"
 	} else {
     set wires_split_length [dbget [dbget top.nets.name $net -u -p].wires.length]
     set net_length 0

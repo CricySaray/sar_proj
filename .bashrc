@@ -3,6 +3,7 @@
 alias cr='cd ~/project/backend/run/PR/RUN/'
 alias ct='cd ~/project/test_temp/'
 
+alias his='history'
 alias bat='batcat'
 alias fd='find ./ -type f -name '
 alias vi='vim .gitignore'

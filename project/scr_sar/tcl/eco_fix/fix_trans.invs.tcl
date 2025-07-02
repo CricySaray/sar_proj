@@ -9,7 +9,7 @@ set fi [open "$1" "r"]
 #   driver pin and driver cell type and net len
 #   load cell type and net len
 # cosider method:
-#   change VT (set priority editable for design that mustn't use LVT)
+# V change VT (set priority editable for design that mustn't use LVT)
 #   change drive (set range of useable drive)
 #   change loader drive or VT
 #
@@ -36,3 +36,5 @@ source -v ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source -v ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
 source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList]
 source -v ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instName cellName driveLevel VTtype]
+source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
+

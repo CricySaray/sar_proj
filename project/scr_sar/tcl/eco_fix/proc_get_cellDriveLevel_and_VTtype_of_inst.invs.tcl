@@ -2,14 +2,14 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
   # NOTE: $regExp need specific pattern to match info correctly!!! search doubao AI
   # \ need use \\ to adapt. like : \\d+
   if {$inst == "" || $inst == "0x0" || [dbget top.insts.name $inst -e] == ""} {
-    return "0x0" 
+    return "0x0:1"
   } else {
     set cellName [dbget [dbget top.insts.name $inst -p].cell.name] 
     # NOTE: expression of get drive level need modify by different design and standard cell library.
     set runError [catch {regexp $regExp $cellName wholeName levelNum VTtype} errorInfo]
-    if {$runError || $levelNum == ""} {
+    if {$runError || $wholeName == ""} {
       # if error, check your regexp expression
-      return "0x0" 
+      return "0x0:2" 
     } else {
       if {$VTtype == ""} {set VTtype "SVT"}
       set instName_cellName_driveLevel_VTtype_List [list ]

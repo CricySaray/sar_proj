@@ -231,20 +231,16 @@ function parse_git_status() {
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         return ""
     fi
-
     local GIT_STATUS=""
     local BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
-    
     # 检查是否有未提交的修改
     if ! git diff --no-ext-diff --quiet --exit-code; then
         GIT_STATUS+="\[\e[31m\]✗\[\e[0m\]"  # 红色叉号表示有未暂存修改
     fi
-    
     # 检查是否有已暂存但未提交的文件
     if ! git diff --no-ext-diff --cached --quiet --exit-code; then
         GIT_STATUS+="\[\e[33m\]+\[\e[0m\]"  # 黄色加号表示有已暂存文件
     fi
-    
     # 检查本地提交是否领先于远程
     local UPSTREAM=$(git rev-parse --abbrev-ref @{upstream} 2>/dev/null)
     if [ -n "$UPSTREAM" ]; then
@@ -253,7 +249,6 @@ function parse_git_status() {
             GIT_STATUS+="\[\e[32m\]↑${AHEAD}\[\e[0m\]"  # 绿色箭头表示有未推送提交
         fi
     fi
-    
     # 如果有状态，添加分支名并用括号包裹
     if [ -n "$GIT_STATUS" ]; then
         echo " (\[\e[36m\]${BRANCH}\[\e[0m\]${GIT_STATUS})"

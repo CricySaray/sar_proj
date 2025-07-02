@@ -42,7 +42,6 @@ alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
 # GIT alias 
-
 alias vg='vim ~/.gitconfig'
 # 在.bashrc或.zshrc中添加
 if [ -f /usr/share/bash-completion/completions/git ]; then
@@ -60,9 +59,6 @@ alias unproxy='unset all_proxy'
 #------------------------------------------------
 # export vars
 export DISPLAY=172.23.112.1:0
-
-#------------------------------------------------
-# export vars
 
 #------------------------------------------------
 # - fzf command config:

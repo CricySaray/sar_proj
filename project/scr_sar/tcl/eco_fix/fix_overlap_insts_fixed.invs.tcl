@@ -12,7 +12,7 @@
 #             can exclude endcap/welltap and block cell
 # ref       : link url
 # --------------------------
-proc fix_overlap_insts_fixed {{test "test"} {only_touch_violInsts "false"} {overlap_marker_name "SPOverlapViolation"}} {
+proc fix_overlap_insts_fixed {{test "test"} {only_refinePlace_violInsts "false"} {overlap_marker_name "SPOverlapViolation"}} {
   set default_dontTouchExp "ENDCAP|WELLTAP"; #regexp can match {/ENDCAP|/WELLTAP}
   set default_dontTouchBlock [dbget [dbget top.insts.cell.subClass block -p2].name]
   set default_removeList [concat $default_dontTouchExp $default_dontTouchBlock]
@@ -36,7 +36,7 @@ proc fix_overlap_insts_fixed {{test "test"} {only_touch_violInsts "false"} {over
       dbSet $insts_ptr.pstatus placed
       setPlaceMode -place_detail_eco_max_distance 10
       puts "$putPrompt begin refinePlace for overlap insts..."
-      if {$only_touch_violInsts == "true"} {refinePlace -inst [dbget $insts_ptr.name]
+      if {$only_refinePlace_violInsts == "true"} {refinePlace -inst [dbget $insts_ptr.name]
       } else { refinePlace -eco true }
       puts "$putPrompt begin ecoRoute for overlap insts..."
       ecoRoute

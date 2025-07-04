@@ -70,7 +70,17 @@ proc fix_trans {{viol_pin_file ""} {ecoName "test_econame"}} {
       } else {
         set input_pin $pin_viol 
       }
-      
+      # begin deal with different situation
+      ## only load one cell
+      ### loader is a buffer, but driver is a logic cell
+      ### loader is a logic cell, driver is a buffer(simple, upsize drive capacibility, but consider previous cell drive range)
+      ### loader is a buffer, and driver is a buffer too
+      ### loader is a logic cell, and driver is a logic cell
+      ### CLK cell : need specific cell type buffer/inverter
+
+
+      ## load several cells
+      ### primarily focus on driver capacibility and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
      }
   }
 }

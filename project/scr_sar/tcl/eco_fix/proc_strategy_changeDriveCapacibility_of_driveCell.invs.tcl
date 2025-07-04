@@ -10,7 +10,9 @@
 # descrip   : strategy of fixing transition: change drive capacibility of cell. ONLY one celltype
 # ref       : link url
 # --------------------------
-proc strategy_changeDriveCapacibility {{celltype ""} {driveRange {1 16}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
+proc strategy_changeDriveCapacibility {{celltype ""} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {driveRange {1 16}} {changeStairs 1}} {
+  # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
+  #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
     return "0x0:1" 
   } else {
@@ -19,11 +21,14 @@ proc strategy_changeDriveCapacibility {{celltype ""} {driveRange {1 16}} {regExp
     if {$runError || $wholename == ""} {
       return "0x0:2" 
     } else {
+      set toDrive 0
       set driveRangeRight [lsort -integer -increasing $driveRange]
       if {$driveLevel < [lindex $driveRangeRight 0] || $driveLevel > [lindex $driveRangeRight 1]} {
         return "0x0:3"; # out of driveRange, not to change Drive Capcibility 
-      } else {
-        
+      } else { ; # simple version, provided fixed drive capacibility for 
+        set toDrive [expr $driveLevel * ($changeStairs * 2)]
+        regsub "D$driveLevel" $celltype "D$toDrive" toCelltype
+        return $toCelltype
       }
     }
   }

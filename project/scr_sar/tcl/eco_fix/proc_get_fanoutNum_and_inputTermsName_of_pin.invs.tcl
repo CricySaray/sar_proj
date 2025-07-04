@@ -6,7 +6,7 @@
 #   -> (atomic_proc|display_proc)
 #   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
 #   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
-# descrip   : get number of fanout and name of input terms of a pin. ONLY one pin!!!
+# descrip   : get number of fanout and name of input terms of a pin. ONLY one pin!!! this pin is output
 # ref       : link url
 # --------------------------
 proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {

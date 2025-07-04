@@ -73,7 +73,7 @@ if {$debug} {puts "signal term name_rect_area \n$name_rect_area_biggerThanAreaTh
         if {$ifAddforNoNetPin} {
           foreach name_rect_area $name_rect_area_woNet_D3List {
             regexp {.*\/(.*)} [lindex $name_rect_area 0] wholename termName
-            set cmd_signalTerms_woNet "createPhysicalPin $termName -layer $layer -rect [lindex $name_rect_area 1]"
+            set cmd_signalTerms_woNet "createPhysicalPin $wholename -layer $layer -rect [lindex $name_rect_area 1]"
             puts "# --- signal term physicalPin (without net) : $cmd_signalTerms_woNet (area: [lindex $name_rect_area 2])"
             if {!$testForPrintCommand} {
               set runErr [catch {eval $cmd_signalTerms_woNet} errorInfo]
@@ -141,7 +141,7 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
           return "0x0:9"; # have pg term whis is not connect net. please globalConnectNet
         }
         foreach name_rect_area_net $name_rect_area_net_D4List_pg {
-          set cmd_pgTerms_wiNet "createPhysicalPin [lindex $name_rect_area_net 3] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
+          set cmd_pgTerms_wiNet "createPhysicalPin [lindex $name_rect_area_net 0] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
           puts "# --- pg term physicalPin (with net) : $cmd_pgTerms_wiNet (area: [lindex $name_rect_area_net 2])"
           if {!$testForPrintCommand} {
             set runErr [catch {eval $cmd_pgTerms_wiNet} errorInfo]

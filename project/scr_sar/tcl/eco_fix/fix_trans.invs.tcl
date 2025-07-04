@@ -50,3 +50,27 @@ source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutN
 source -v ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instName cellName driveLevel VTtype]
 source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
 
+proc fix_trans {{viol_pin_file ""} {ecoName "test_econame"}} {
+  if {$viol_pin_file == "" || [glob -nocomplain $viol_pin_file] == ""} {
+    return "0x0:1"; # check your file 
+  } else {
+    set violValue_driver_onylOneLoader_D3List [list ]
+    set violValue_driver_severalLoader_D3List [list ]
+    while {[gets $viol_pin_file line] > -1} {
+      set value_viol [lindex $line 0]
+      set pin_viol   [lindex $line 1]
+      if {[if_driver_or_load $pin]} {
+        set output_pin $pin_viol 
+        set num_termName_D2List [get_fanoutNum_and_inputTermsName_of_pin $output_pin]
+        if {[lindex $num_termName_D2List 0] == 1} { ; # load cell is only one. you can use option: -relativeDistToSink to ecoAddRepeater
+          lappend violValue_driver_onylOneLoader_D3List [list $value_viol $output_pin [lindex $num_termName_D2List 1]]
+        } else { ; # load cell are several, need consider other method
+          lappend violValue_driver_severalLoader_D3List [list $value_viol $output_pin [lindex $num_termName_D2List 1]]
+        }
+      } else {
+        set input_pin $pin_viol 
+      }
+      
+     }
+  }
+}

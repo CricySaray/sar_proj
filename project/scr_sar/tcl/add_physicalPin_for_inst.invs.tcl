@@ -141,7 +141,7 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
           return "0x0:9"; # have pg term whis is not connect net. please globalConnectNet
         }
         foreach name_rect_area_net $name_rect_area_net_D4List_pg {
-          set cmd_pgTerms_wiNet "createPhysicalPin [lindex $name_rect_area_net 3] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
+          set cmd_pgTerms_wiNet "createPhysicalPin [lindex $name_rect_area_net 0] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
           puts "# --- pg term physicalPin (with net) : $cmd_pgTerms_wiNet (area: [lindex $name_rect_area_net 2])"
           if {!$testForPrintCommand} {
             set runErr [catch {eval $cmd_pgTerms_wiNet} errorInfo]

@@ -25,7 +25,6 @@ let mapleader = "\\"
 
 """ ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World
-iabbrev class public class{}<esc>i<cr><esc>k$Fsli
 iabbrev SS ######################################<esc>oi# author     : sar <esc>oi# descrip    : this is blahblah ... <esc>oi######################################<esc>oi
 iabbrev ec ecoChangeCell
 iabbrev ea ecoAddRepeater
@@ -104,6 +103,7 @@ set wildmode=list:longest
 set wildignore=*.docx,*.jpg,*.png,*.gif,*.pdf,*.pyc,*.exe,*.flv,*.img,*.xlsx
 set laststatus=2
 set backspace=indent,eol,start
+set textwidth=0
 
 
 """ MAPPINGS --------------------------------------------------------------------
@@ -167,6 +167,31 @@ let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', 
 
 
 """ VIMSCRIPT & FUNCTIONS -------------------------------------------------------
+
+
+" ---------------------------
+" switch paste mode and show status of paste
+function! TogglePaste()
+    set invpaste
+    if &paste
+        echo "- paste mode on -"
+    else
+        echo "- paste mode off -"
+    endif
+endfunction
+nnoremap <leader>p :call TogglePaste()<CR>
+inoremap <leader>p <C-o>:call TogglePaste()<CR>
+
+" ---------------------------
+" replace all same name to new name, It can automatically identify the boundaries of variables
+function! s:SmartReplace()
+  let old_name = expand("<cword>")
+  let new_name = input("replace to: ", old_name)
+  if new_name != '' && new_name != old_name
+    execute '%s/\<' . old_name . '\>/' . new_name . '/g'
+  endif
+endfunction
+nnoremap <leader>r :call <SID>SmartReplace()<CR>
 
 " for ctags, it can detect whole vars name such as vars(xjbe,cts,max_trans)
 "		correspondingly, ~/.ctags file need modify suitable pattern to get correct var name!!!
@@ -328,6 +353,7 @@ Jetpack 'tpope/vim-surround', { 'as' : 'surround'}
 Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
 Jetpack 'junegunn/fzf.vim'
 Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
+Jetpack 'godlygeek/tabular'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
@@ -337,3 +363,8 @@ Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
 " Jetpack 'dracula/vim', { 'as': 'dracula' }
 " Jetpack 'tpope/vim-fireplace', { 'for': 'clojure' }
 call jetpack#end()
+" --------
+" setting for plugs 
+" for godlygeek/tabular
+" 对齐 Tcl 变量的值（第三个参数），左侧不留空格
+vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>

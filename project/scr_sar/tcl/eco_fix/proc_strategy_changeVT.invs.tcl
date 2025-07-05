@@ -42,7 +42,7 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
           }
         }
         # NOTE: these VT type set now is only for TSMC cell pattern
-        # TSMC cell VT type pattern: 
+        # TSMC cell VT type pattern: (special situation!!!)
         #   SVT: xxxCPD
         #   LVT: xxxCPDLVT
         #   ULVT: xxxCPDULVT

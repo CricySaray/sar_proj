@@ -10,7 +10,7 @@
 # descrip   : strategy of fixing transition: change drive capacibility of cell. ONLY one celltype
 # ref       : link url
 # --------------------------
-proc strategy_changeDriveCapacibility {{celltype ""} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {driveRange {1 16}} {changeStairs 1}} {
+proc strategy_changeDriveCapacibility {{celltype ""} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
@@ -27,9 +27,23 @@ proc strategy_changeDriveCapacibility {{celltype ""} {regExp "D(\\d+).*CPD(U?L?H
         return "0x0:3"; # out of driveRange, not to change Drive Capcibility 
       } else { ; # simple version, provided fixed drive capacibility for 
         set toDrive [expr $driveLevel * ($changeStairs * 2)]
-        regsub "D$driveLevel" $celltype "D$toDrive" toCelltype
+        regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
         return $toCelltype
       }
+    }
+  }
+}
+# small proc to get drive index
+proc get_cell_driveCapacibility {{celltype ""}} {
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
+    return "0x0:1" 
+  } else {
+    #get now Drive Capacibility
+    set runError [catch {regexp $regExp $celltype wholename driveLevel VTtype} errorInfo]
+    if {$runError || $wholename == ""} {
+      return "0x0:2" 
+    } else {
+      return $driveLevel
     }
   }
 }

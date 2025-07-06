@@ -27,23 +27,14 @@ proc strategy_changeDriveCapacibility {{celltype ""} {changeStairs 1} {driveRang
         return "0x0:3"; # out of driveRange, not to change Drive Capcibility 
       } else { ; # simple version, provided fixed drive capacibility for 
         set toDrive [expr $driveLevel * ($changeStairs * 2)]
-        regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
-        return $toCelltype
+        if {[regexp BWP $celltype]} { ; # TSMC standard cell keyword
+          regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
+          return $toCelltype
+        } elseif {[regexp {.*X\d+.*A[RHL]\d+} $celltype]} { ; # M31 standard cell keyword
+          regsub "X${driveLevel}" $celltype "X${toDrive}" toCelltype
+          return $toCelltype
+        }
       }
-    }
-  }
-}
-# small proc to get drive index
-proc get_cell_driveCapacibility {{celltype ""}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
-    return "0x0:1" 
-  } else {
-    #get now Drive Capacibility
-    set runError [catch {regexp $regExp $celltype wholename driveLevel VTtype} errorInfo]
-    if {$runError || $wholename == ""} {
-      return "0x0:2" 
-    } else {
-      return $driveLevel
     }
   }
 }

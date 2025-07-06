@@ -55,10 +55,9 @@ source -v ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer
 source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
 source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; 
 source -v ./proc_strategy_changeDriveCapacibility_of_driveCell.invs.tcl; # strategy_changeDriveCapacibility - return toCelltype
-                                                                         # get_cell_driveCapacibility
 source -v ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 
-proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1} {canChangeVTandDriveCapacibility 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10}} {
+proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1} {canChangeVTandDriveCapacibility 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]9)"}} {
   if {$viol_pin_file == "" || [glob -nocomplain $viol_pin_file] == ""} {
     return "0x0:1"; # check your file 
   } else {
@@ -93,11 +92,12 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1
         set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
         set netLength [get_net_length $netName]
         regsub {(.*)\/.*} [lindex $viol_driverPin_loadPin 1] wholename instname
-        set driveCelltype [dbget [dbget top.insts.name $instname -p].cell.name]
-        set driveCapacibility [get_cell_driveCapacibility $driveCelltype]
+        set inst_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $instname $cellRegExp]
+        set driveCelltype [lindex $inst_celltype_driveLevel_VTtype 1]
+        set driveCapacibility [lindex $inst_celltype_driveLevel_VTtype 2]
         #### onlyChangeVT / changeVTandSizeupDriveCapacibility / onlySizeupDriveCapacibility
         if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] <= -0.009} { ; # only changeVT
-          set toCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} {"X(\\d+).*(A\[HRL\]9)"}]
+          set toCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $driveCelltype]
         } elseif {$canChangeDriveCapacibility && $netLength <= $logicToBufferDistanceThreshold} { ; #only changeDriveCapacibility
           if {$driveCapacibility <= 1} {
@@ -107,7 +107,7 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1
           }
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toCelltype]
         } elseif {$canChangeVTandDriveCapacibility && <= [expr $logicToBufferDistanceThreshold + 5]} { ; # change VT and DriveCapacibility
-          set toCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} {"X(\\d+).*(A\[HRL\]9)"}]
+          set toCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
           if {$toCelltype <= 1} {
             set toCelltype [strategy_changeDriveCapacibility $toCelltype 2]
           } elseif {$driveCapacibility >= 2} {

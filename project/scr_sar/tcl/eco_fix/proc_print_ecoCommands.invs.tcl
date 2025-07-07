@@ -1,18 +1,34 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Mon Jul  7 20:42:42 CST 2025
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc)
+#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
+#                    providing a variety of error prompt codes for easy debugging
+#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
+#                    focusing on data display and aesthetics
+#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
+#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
+#                   process control, error recovery, and the output of files and reports when solving problems.
+# descrip   : print eco command refering to args, you can specify instname/celltype/terms/newInstNamePrefix/loc/relativeDistToSink to control one to print
+# ref       : link url
+# --------------------------
 proc print_ecoCommand {args} {
-  set type                "change"
+  set type                "change"; # change|add|delete
   set inst                ""
   set terms               ""
   set celltype            ""
   set newInstNamePrefix   "sar_fix_tran_070521"
   set loc                 {}
-  set relativeDistToSink  0
+  set relativeDistToSink  ""
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
   if {$type == ""} {
-    return "0x0:1"; # check your input
+    return "0x0:1"; # check your input $type
   } else {
     if {$type == "change"} {
       if {$inst == "" || $celltype == "" || [dbget top.insts.name $inst -e] == "" || [dbget head.libCells.name $celltype -e] == ""} {
@@ -25,18 +41,38 @@ proc print_ecoCommand {args} {
       }
       if {$newInstNamePrefix != ""} {
         if {[llength $loc] && [ifInBoxes $loc]} {
-          if {$relativeDistToSink > 0 && $relativeDistToSink < 1} {
-            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
+          if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
+          } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
+            return "0x0:5"; # check $relativeDistToSink 
+          } else {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\}" 
           }
-          return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\}" 
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:4"; # check your loc value, it is out of fplan boxes
-        } elseif {![llength $loc] && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
+        } elseif {![llength $loc] && $relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
           return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
+        } else {
+          return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\}"
         }
-        return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\}"
       } else {
-        return "ecoAddRepeater -cell $celltype -term \{$terms\}"
+        if {[llength $loc] && [ifInBoxes $loc]} {
+          if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
+          } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
+            return "0x0:5"; # check $relativeDistToSink 
+          } else {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\}" 
+          }
+        } elseif {[llength $loc] && ![ifInBoxes $loc]} {
+          return "0x0:6"; # check your loc value, it is out of fplan boxes
+        } elseif {![llength $loc] && $relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
+          return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
+        } elseif {$relativeDistToSink != "" && $relativeDistToSink <= 0 || $relativeDistToSink >= 1} {
+          return "0x0:7"; # $relativeDistToSink range error
+        } else {
+          return "ecoAddRepeater -cell $celltype -term \{$terms\}"
+        }
       }
     } elseif {$type == "delete"} {
       if {$inst == "" || [dbget top.insts.name $inst -e] == ""} {
@@ -44,7 +80,7 @@ proc print_ecoCommand {args} {
       }
       return "ecoDeleteRepeater -inst $inst" 
     } else {
-      return "0x0:0" 
+      return "0x0:0"; # have no choice in type
     }
   }
 }

@@ -20,8 +20,8 @@
 	mo = commit --amend -m
   co = checkout
   br = branch
-	df = diff --color
-	ds = diff --color --stat
+	df = diff --color # view specific contents
+	ds = diff --color --stat # view statistics
   tree = log --all --graph --decorate --oneline
   p = push --set-upstream proj main
   cleanup = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d

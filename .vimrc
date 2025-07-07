@@ -23,6 +23,9 @@ let mapleader = "\\"
 "" you can write some misc config when you are in client env such as VDI/Xclient
 
 
+""" KEYWORDS TO HIGHLIGHT -------------------------------------------------------
+
+
 """ ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World
 iabbrev SS ######################################<esc>oi# author     : sar <esc>oi# descrip    : this is blahblah ... <esc>oi######################################<esc>oi

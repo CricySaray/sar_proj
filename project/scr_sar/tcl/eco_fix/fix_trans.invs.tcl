@@ -51,7 +51,7 @@ source -v ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source -v ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
 source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList]
 source -v ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instName cellName driveLevel VTtype]
-source -v ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|other
+source -v ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|sequential|gating|other
 source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
 source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; 
 source -v ./proc_strategy_changeDriveCapacibility_of_driveCell.invs.tcl; # strategy_changeDriveCapacibility - return toCelltype

@@ -10,7 +10,7 @@
 #                    focusing on data display and aesthetics
 #   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
 #                   process control, error recovery, and the output of files and reports when solving problems.
-# descrip   : get class of cell, like logic/buffer/inverter/CLKcell/other
+# descrip   : get class of cell, like logic/sequential/buffer/inverter/CLKcell/gating/other
 # ref       : link url
 # --------------------------
 proc get_cell_class {{inst ""}} {
@@ -19,10 +19,14 @@ proc get_cell_class {{inst ""}} {
   } else {
     if {[get_property [get_cells $inst] is_combinational]} {
       return "logic" 
+    } elseif {[get_property [get_cells $inst] is_sequential]} {
+      return "sequential"
     } elseif {[get_property [get_cells $inst] is_buffer]} {
       return "buffer" 
     } elseif {[get_property [get_cells $inst] is_inverter]} {
       return "inverter" 
+    } elseif {[get_property [get_cells $inst] is_integrated_clock_gating_cell]} {
+      return "gating"
     } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
       return "CLKcell" 
     } else {

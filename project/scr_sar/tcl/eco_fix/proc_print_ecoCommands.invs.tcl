@@ -31,10 +31,13 @@ proc print_ecoCommand {args} {
           return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\}" 
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:4"; # check your loc value, it is out of fplan boxes
+        } elseif {![llength $loc] && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
+          return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
         }
         return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\}"
+      } else {
+        return "ecoAddRepeater -cell $celltype -term \{$terms\}"
       }
-      return "ecoAddRepeater -cell $celltype -term \{$terms\}"
     } elseif {$type == "delete"} {
       if {$inst == "" || [dbget top.insts.name $inst -e] == ""} {
         return "0x0:5"; # delete: error instname

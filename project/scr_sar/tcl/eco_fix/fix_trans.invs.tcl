@@ -53,11 +53,11 @@ source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutN
 source -v ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instName cellName driveLevel VTtype]
 source -v ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|sequential|gating|other
 source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
-source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; 
+source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
 source -v ./proc_strategy_changeDriveCapacibility_of_driveCell.invs.tcl; # strategy_changeDriveCapacibility - return toCelltype
 source -v ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 
-proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1} {canChangeVTandDriveCapacibility 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]9)"}} {
+proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1} {canChangeVTandDriveCapacibility 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]9)"} {newInstNamePrefix "sar_fix_trans_clk_070716"}} {
   if {$viol_pin_file == "" || [glob -nocomplain $viol_pin_file] == ""} {
     return "0x0:1"; # check your file 
   } else {
@@ -95,6 +95,7 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1
         set inst_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $instname $cellRegExp]
         set driveCelltype [lindex $inst_celltype_driveLevel_VTtype 1]
         set driveCapacibility [lindex $inst_celltype_driveLevel_VTtype 2]
+        set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet [lindex $violValue_driverPin_onylOneLoaderPin_D3List 2]]] -p].cell.name]
         #### onlyChangeVT / changeVTandSizeupDriveCapacibility / onlySizeupDriveCapacibility
         if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] <= -0.009} { ; # only changeVT
           set toCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
@@ -115,7 +116,8 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacibility 1
           }
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toCelltype]
         } elseif {$canAddRepeater && $netLength < [expr $logicToBufferDistanceThreshold + 5]} { ; # add Repeater near logic cell
-          set addCelltype [] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacibility and VTtype)
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 "BUFX4AR9" "X(\\d+).*(A\[RHL\]\\d+)$"] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacibility and VTtype)
+          set cmd1 [print_ecoCommand -type add -celltype $addCelltype -terms [lindex viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
         }
       }
       ### loader is a logic cell, driver is a buffer(simple, upsize drive capacibility, but consider previous cell drive range)

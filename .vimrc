@@ -24,6 +24,10 @@ let mapleader = "\\"
 
 
 """ KEYWORDS TO HIGHLIGHT -------------------------------------------------------
+syn keyword songExp "SONG"
+hi songExp term=standout cterm=bold ctermfg=223 ctermbg=235 gui=bold guifg=fg guibg=bg
+highlight def link songExp CursorLineSign
+
 
 
 """ ABBR CONFIG -----------------------------------------------------------------

@@ -15,12 +15,12 @@
 " It is recommended to make changes after sourcing debian.vim since it alters
 " the value of the 'compatible' option.
 runtime! debian.vim
-
 " Set the backslash as the leader key.
 let mapleader = "\\"
 
 """ INCREAMENTAL SETTINGS -------------------------------------------------------
 "" you can write some misc config when you are in client env such as VDI/Xclient
+cabbrev co %!column -t -s '\|'
 
 
 """ KEYWORDS TO HIGHLIGHT -------------------------------------------------------
@@ -28,6 +28,12 @@ syn keyword songExp "SONG"
 hi songExp term=standout cterm=bold ctermfg=223 ctermbg=235 gui=bold guifg=fg guibg=bg
 highlight def link songExp CursorLineSign
 
+
+augroup highlight_songnote
+  autocmd!
+  autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
+  autocmd BufEnter * hi link SongNote SpellCap
+augroup END
 
 
 """ ABBR CONFIG -----------------------------------------------------------------
@@ -52,7 +58,6 @@ cabbrev ulvte %s/CPDLVT$/CPDULVT/
 cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
-cabbrev co %!column -t -s '|'
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
 cabbrev rt r ~/project/scr_sar/ref_content/head_of_proc.txt
 
@@ -114,6 +119,9 @@ set textwidth=0
 
 
 """ MAPPINGS --------------------------------------------------------------------
+
+cnoremap dd !date +"%Y/%m/%d %H:%M:%S %A"
+
 " .vimrc config
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
@@ -126,6 +134,7 @@ inoremap <c-e> <esc>A
 noremap - dd
 nnoremap <F2> :g/^\s*$/d<CR>
 nnoremap <F3> :tabnew .<CR>
+nnoremap <F4> a<c-r>=strftime('%Y/%m/%d %H:%M:%S %A')<CR><Esc>
 nnoremap <c-a> ggVG:ya
 nnoremap <s-d> k
 nnoremap <s-f> j

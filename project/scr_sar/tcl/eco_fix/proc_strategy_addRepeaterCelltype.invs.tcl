@@ -41,14 +41,9 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
     }
   }
 }
+source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # proc: whichProcess_fromStdCellPattern
 proc changeDriveCapacibility_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDriveCapacibility 0} {toDriverCapacibility 0}} {
-  if {[regexp BWP $refType]} { 
-    set processType "TSMC"
-  } elseif {[regexp {A[HRL]\d+$} $refType]} { 
-    set processType "HH"
-  } else {
-    return "0x0:1"; # can't identify where the celltype is come from
-  }
+  set processType [whichProcess_fromStdCellPattern $refType]
   if {$processType == "TSMC"} { ; # TSMC
     regsub D${originalDriveCapacibility}BWP $refType D${toDriverCapacibility}BWP toCelltype
     return $toCelltype

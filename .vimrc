@@ -15,15 +15,21 @@
 " It is recommended to make changes after sourcing debian.vim since it alters
 " the value of the 'compatible' option.
 runtime! debian.vim
-
 " Set the backslash as the leader key.
 let mapleader = "\\"
 
 """ INCREAMENTAL SETTINGS -------------------------------------------------------
 "" you can write some misc config when you are in client env such as VDI/Xclient
+cabbrev co %!column -t -s '\|'
 
 
 """ KEYWORDS TO HIGHLIGHT -------------------------------------------------------
+
+augroup highlight_songnote
+  autocmd!
+  autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
+  autocmd BufEnter * hi link SongNote SpellCap
+augroup END
 
 
 """ ABBR CONFIG -----------------------------------------------------------------
@@ -48,7 +54,6 @@ cabbrev ulvte %s/CPDLVT$/CPDULVT/
 cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
-cabbrev co %!column -t -s '|'
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
 cabbrev rt r ~/project/scr_sar/ref_content/head_of_proc.txt
 

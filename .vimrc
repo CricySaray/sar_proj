@@ -110,6 +110,9 @@ set textwidth=0
 
 
 """ MAPPINGS --------------------------------------------------------------------
+
+cnoremap dd !date +"%Y/%m/%d %H:%M:%S %A"
+
 " .vimrc config
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
@@ -122,6 +125,7 @@ inoremap <c-e> <esc>A
 noremap - dd
 nnoremap <F2> :g/^\s*$/d<CR>
 nnoremap <F3> :tabnew .<CR>
+nnoremap <F4> a<c-r>=strftime('%Y/%m/%d %H:%M:%S %A')<CR><Esc>
 nnoremap <c-a> ggVG:ya
 nnoremap <s-d> k
 nnoremap <s-f> j

@@ -22,6 +22,8 @@
   br = branch
 	df = diff --color # view specific contents
 	ds = diff --color --stat # view statistics
+  dfl = diff HEAD~1..HEAD
+  dfls = diff HEAD~1..HEAD --stat
   tree = log --all --graph --decorate --oneline
   p = push --set-upstream proj main
   cleanup = !git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d

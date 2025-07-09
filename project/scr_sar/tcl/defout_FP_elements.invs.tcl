@@ -19,7 +19,7 @@
 # ref       : link url
 # --------------------------
 proc defout_FP_elements {{ifRun "test"} {path "./"} {suffix ""} {types {term rblkg pblkg endcap welltap block pad padSpacer cornerBottomRight}}} {
-  editSelect -net {DVSS DVDD_ONO DVDD_AON}
+  editSelect -net {DVSS DVDD_ONO DVDD_AON} -object_type {Wire Via}
   if {[lsearch -exact $types "term"] > -1} {
     select_obj [dbget top.terms.]
     set types [lsearch -not -all -inline $types "term"]

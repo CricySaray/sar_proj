@@ -49,6 +49,12 @@ proc defout_FP_elements {{ifRun "test"} {path "./"} {suffix ""} {types {term rbl
     }
   }
   if {$ifRun == "run"} {
+    set lefDefOutVersion 5.8
+    set defOutLefNDR 1
+    set defOutLefVia 1
+    set defLefDefOutVersion 5.8
+    set dbgDefOutFixedViasShape 1
+    set gdsUnit [dbget head.dbUnits]
     defOut -selected -routing $path/FP_[clock format [clock second] -format "%Y%m%d_%H%M"]_$suffix.def.gz
   } else {
     puts "testing..." 

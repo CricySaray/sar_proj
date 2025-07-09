@@ -33,7 +33,11 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
     
     # 记录成功日志
     echo "$(date) : 提交并推送成功" >> "$LOG_FILE"
+    echo "$(date) : ----------------------------------"
+    echo " "
 else
     # 记录无变更日志
     echo "$(date) : 未检测到变更" >> "$LOG_FILE"
+    echo "$(date) : ----------------------------------"
+    echo " "
 fi

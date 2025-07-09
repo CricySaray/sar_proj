@@ -32,7 +32,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
     git push --set-upstream proj main >> "$LOG_FILE"
     
     # 记录成功日志
-    echo "$(date) : commit" >> "$LOG_FILE"
+    echo "$(date) : commit and push successfully" >> "$LOG_FILE"
     echo "$(date) : ----------------------------------" >> "$LOG_FILE"
     echo " " >> "$LOG_FILE"
 else

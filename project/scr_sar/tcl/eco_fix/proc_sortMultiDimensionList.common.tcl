@@ -6,6 +6,7 @@
 #   options - 排序选项列表，每个元素是对应列的排序选项列表
 # 返回:
 #   排序后的二维列表
+package require lambda
 proc sortMultiDimensionalList {list weights options} {
   # 创建比较函数
   set compareCmd [list]
@@ -27,6 +28,7 @@ puts $indices
   # 如果所有列都相等
   lappend compareCmd "    return 0"
   lappend compareCmd "}"
+puts $compareCmd
 
   # 编译比较函数
   set compareFunc [uplevel 1 $compareCmd]

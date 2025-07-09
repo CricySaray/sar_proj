@@ -7,9 +7,9 @@ LOG_FILE="/home/cricy/log/git_auto_commit.log"
 cd "$REPO_PATH" || exit
 if [[ -n $(git ls-files --others --exclude-standard) ]]; then
   echo "have untracked files, begin add to stage" >> "$LOG_FILE"
-  git add --all
+  git add --all >> "$LOG_FILE"
 else
-  echo "DONT find untracked files, continue..."
+  echo "DONT find untracked files, continue..." >> "$LOG_FILE"
 fi
 
 # 检查是否有未提交的变更

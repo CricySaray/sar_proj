@@ -6,7 +6,7 @@ LOG_FILE="/home/cricy/log/git_auto_commit.log"
 # 切换到仓库目录
 cd "$REPO_PATH" || exit
 if [[ -n $(git ls-files --others --exclude-standard) ]]; then
-  echo "have untracked files, begin add to stage"
+  echo "have untracked files, begin add to stage" >> "$LOG_FILE"
   git add --all
 else
   echo "DONT find untracked files, continue..."

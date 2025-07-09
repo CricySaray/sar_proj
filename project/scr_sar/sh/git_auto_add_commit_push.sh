@@ -5,7 +5,7 @@ REPO_PATH="/home/cricy/"
 LOG_FILE="/home/cricy/log/git_auto_commit.log"
 # 切换到仓库目录
 cd "$REPO_PATH" || exit
-DATE="[$(date)]"
+DATE="[$(date +'%Y/%m/%d %H:%M:%S')]"
 if [[ -n $(git ls-files --others --exclude-standard) ]]; then
   echo "$DATE : have untracked files, begin add to stage" >> "$LOG_FILE"
   git status -s >> "$LOG_FILE"

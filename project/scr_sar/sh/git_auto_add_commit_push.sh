@@ -32,12 +32,12 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
     git push --set-upstream proj main >> "$LOG_FILE"
     
     # 记录成功日志
-    echo "$(date) : 提交并推送成功" >> "$LOG_FILE"
+    echo "$(date) : commit" >> "$LOG_FILE"
     echo "$(date) : ----------------------------------" >> "$LOG_FILE"
     echo " " >> "$LOG_FILE"
 else
     # 记录无变更日志
-    echo "$(date) : 未检测到变更" >> "$LOG_FILE"
+    echo "$(date) : No changed files detected" >> "$LOG_FILE"
     echo "$(date) : ----------------------------------" >> "$LOG_FILE"
     echo " " >> "$LOG_FILE"
 fi

@@ -366,6 +366,7 @@ Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
 Jetpack 'junegunn/fzf.vim'
 Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
 Jetpack 'godlygeek/tabular'
+Jetpack 'morhetz/gruvbox'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }

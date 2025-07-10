@@ -231,18 +231,25 @@ proc calculate_area_of_box {{box {}}} {
     }
   }
 }
-proc modify_boxes_and_get_area_toD3List {{name_rect_D2List {}} {off {0 0 0 0} } {AreaThreshold 0} {compareOriginBoxArea 1} {debug 1}} {
+proc modify_boxes_and_get_area_toD3List {{name_rect_D2List {}} {off {0 0 0 0} } {AreaThreshold 0} {compareOriginBoxArea 1} {debug 1} {promptWARN "songWARN"}} {
   set off_top [lindex $off 0]
   set off_bottom [lindex $off 1]
   set off_left [lindex $off 2]
   set off_right [lindex $off 3]
+  set manufacturingGrid [dbget head.mfgGrid]
   # Anonymous function, for convenience
+  set notOnManufacturingGridMsg "Not on the manufacturing Grid!!!"
   set ceilValue [list apply {{x} {set manufacturingGrid [dbget head.mfgGrid]; expr ceil([expr [lindex $x 0] / $manufacturingGrid]) * $manufacturingGrid}}]
   set floorValue [list apply {{x} {set manufacturingGrid [dbget head.mfgGrid]; expr floor([expr [lindex $x 0] / $manufacturingGrid]) * $manufacturingGrid}}]
   set modified_name_rect_D2List [lmap name_rect $name_rect_D2List {
     set modified_rect_lb [lrange [lindex [dbShape [lindex $name_rect 1] SIZEX $off_left SIZEY $off_bottom] 0] 0 1]
     set modified_rect_ur [lrange [lindex [dbShape [lindex $name_rect 1] SIZEX $off_right SIZEY $off_top] 0] 2 3]
     # solve the problem of not being in manufacturing grid
+    foreach value [concat $modified_rect_lb $modified_rect_ur] {
+      if {[expr int([expr $value / $manufacturingGrid]) != [expr $value / $manufacturingGrid]]} {
+        puts "$promptWARN : $name_rect (value: $value): $notOnManufacturingGridMsg" 
+      } 
+    }
     set modified_rect_lb [list [eval $ceilValue [lindex $modified_rect_lb 0]] [eval $ceilValue [lindex $modified_rect_lb 1]]] 
     set modified_rect_ur [list [eval $floorValue [lindex $modified_rect_ur 0]] [eval $floorValue [lindex $modified_rect_ur 1]]] 
     set modified_rect [concat $modified_rect_lb $modified_rect_ur]

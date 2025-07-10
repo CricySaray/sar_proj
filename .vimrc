@@ -348,7 +348,7 @@ inoremap <TAB> <c-r>=SkipPair()<CR>
 command! -nargs=0 TableOfVimrc :execute 'normal! :v/^""" [A-Z]\+/d<CR>'
 " Automatically load custom dictionary for automatic completion function
 "		you can get completion using ctrl x + ctrl k
-autocmd FileType tcl set dictionary=~/.vim/dict/invs_commands.dict,~/.vim/dict/invs_options_of_command.dict,~/.vim/dict/pt_command_list.dict,~/.vim/dict/invs_dbxxx_commands.dict
+autocmd FileType tcl set dictionary=~/.vim/dict/invs_commands.dict,~/.vim/dict/invs_options_of_command.dict,~/.vim/dict/pt_command_list.dict,~/.vim/dict/invs_dbxxx_commands.dict,~/.vim/dict/PT_variables_and_attributes_2023_12.dict
 
 """ STATUS LINE CONFIG ----------------------------------------------------------
 
@@ -369,6 +369,7 @@ Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
 Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>'}
 Jetpack 'morhetz/gruvbox'
 Jetpack 'luochen1990/rainbow'
+Jetpack 'andymass/vim-matchup'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
@@ -410,3 +411,4 @@ let g:rainbow_conf = {
 " 终端颜色 (ctermfgs)：
 " 使用了 ANSI 256 色代码，确保在支持 256 色的终端中也能呈现良好的对比度
 " 这些颜色在深灰色背景上会更加突出，同时保持了莫兰迪色系的柔和特性，减轻长时间编程的视觉疲劳。
+" 括号匹配与行号高亮配置

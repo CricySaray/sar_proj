@@ -1,3 +1,21 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/07/10 12:47:04 Thursday
+# label     : display_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc)
+#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
+#                    providing a variety of error prompt codes for easy debugging
+#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
+#                    focusing on data display and aesthetics
+#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
+#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
+#                   process control, error recovery, and the output of files and reports when solving problems.
+#   -> dump_proc  : dump data with specific format from db(invs/pt/starrc/pv...)
+# descrip   : print eco command according to selected obj(pin or inst) in invsGUI. 
+#             It is convenient to write eco command by hand.
+# ref       : link url
+# --------------------------
 proc to_eco_command_from_selected_obj_in_gui {{objs ""}} {
   if {$objs == ""} { set objs [dbget selected.name -e] }
   if {$objs == ""} {

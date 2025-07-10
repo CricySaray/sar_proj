@@ -22,14 +22,12 @@ let mapleader = "\\"
 "" you can write some misc config when you are in client env such as VDI/Xclient
 cabbrev co %!column -t -s '\|'
 
-
 """ KEYWORDS TO HIGHLIGHT -------------------------------------------------------
 augroup highlight_songnote
   autocmd!
   autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
   autocmd BufEnter * hi link SongNote Cursor
 augroup END
-
 
 """ ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World
@@ -115,6 +113,7 @@ set textwidth=0
 
 """ MAPPINGS --------------------------------------------------------------------
 
+" inserting info
 cnoremap dd !date +"%Y/%m/%d %H:%M:%S %A"
 
 " .vimrc config
@@ -255,6 +254,8 @@ func! AutoComplete()
     :inoremap } <c-r>=ClosePair('}')<CR>
     :inoremap [ []<Left>
     :inoremap ] <c-r>=ClosePair(']')<CR>
+    :inoremap < <><Left>
+    :inoremap > <c-r>=ClosePair('>')<CR>
     :inoremap " <c-r>=DQuote()<CR>
     :inoremap ' <c-r>=SQuote()<CR>
 	" 将BackSpace键映射为RemovePairs函数
@@ -364,8 +365,10 @@ Jetpack 'tpope/vim-surround', { 'as' : 'surround'}
 Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
 Jetpack 'junegunn/fzf.vim'
 Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
-Jetpack 'godlygeek/tabular'
+" vnoremap setting : 对齐 Tcl 变量的值（第三个参数），左侧不留空格
+Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>'}
 Jetpack 'morhetz/gruvbox'
+Jetpack 'luochen1990/rainbow'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
@@ -375,8 +378,34 @@ Jetpack 'morhetz/gruvbox'
 " Jetpack 'dracula/vim', { 'as': 'dracula' }
 " Jetpack 'tpope/vim-fireplace', { 'for': 'clojure' }
 call jetpack#end()
+
 " --------
 " setting for plugs 
-" for godlygeek/tabular
-" 对齐 Tcl 变量的值（第三个参数），左侧不留空格
-vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>
+"" for luochen1990/rainbow
+let g:rainbow_active = 1
+let g:rainbow_conf = {
+\    'guifgs': ['#FF7575', '#FFD166', '#06D6A0', '#118AB2', '#9381FF', '#FF9B85', '#B8C5D6', '#E9D985'],
+\    'ctermfgs': ['203', '220', '48', '33', '105', '216', '152', '222'],
+\    'guis': [''],
+\    'cterms': [''],
+\    'operators': '_,_',
+\    'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
+\    'separately': {
+\        '*': {},
+\        'tcl': {
+\            'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
+\            'guifgs': ['#FF7575', '#FFD166', '#06D6A0', '#118AB2', '#9381FF', '#FF9B85', '#B8C5D6', '#E9D985']
+\        }
+\    }
+\}
+GUI 颜色 (guifgs)：
+#FF7575 (柔和的珊瑚红)
+#FFD166 (温暖的黄色)
+#06D6A0 (清新的薄荷绿)
+#118AB2 (明亮的靛蓝色)
+#9381FF (淡紫色)
+#FF9B85 (浅粉色)
+#B8C5D6 (淡蓝灰色)
+#E9D985 (米黄色)
+终端颜色 (ctermfgs)：
+使用了 ANSI 256 色代码，确保在支持 256 色的终端中也能呈现良好的对比度

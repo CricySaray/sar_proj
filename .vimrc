@@ -27,7 +27,7 @@ cabbrev co %!column -t -s '\|'
 augroup highlight_songnote
   autocmd!
   autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
-  autocmd BufEnter * hi link SongNote SpellCap
+  autocmd BufEnter * hi link SongNote Cursor
 augroup END
 
 

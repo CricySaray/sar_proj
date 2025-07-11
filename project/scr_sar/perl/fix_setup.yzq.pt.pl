@@ -1,4 +1,23 @@
 #!/usr/bin/perl -w
+# --------------------------
+# from      : yzq
+# date      : 2025/07/11 20:03:11 Friday
+# label     : task_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
+#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
+#                    providing a variety of error prompt codes for easy debugging
+#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
+#                    focusing on data display and aesthetics
+#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
+#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
+#                   process control, error recovery, and the output of files and reports when solving problems.
+#   -> dump_proc  : dump data with specific format from db(invs/pt/starrc/pv...)
+#   -> check_proc : only for checking for some stage(FP/place/cts/route/finish...)
+#   -> misc_proc  : some other uses of procs
+# descrip   : Fix the setup based on the rpt. It has an automatic path deduplication function, so there will be 
+#             no repeated VT replacement. It can merge the rpts of all views into a single file and fix them all at once, which saves time.
+# ref       : link url
+# --------------------------
 use strict;
 use List::Util qw(sum min max);
 
@@ -63,7 +82,24 @@ foreach my $key (keys %pathHash) {
     $inst =~ s/$ARGV[2]\/// if defined $ARGV[2];
     my $refNew = $refOrg;
     if (exists $instHash{$inst}) {
-      print $fo "#Already sized before and should be enough, "
+      if ($delay > adb($slack) * 2) {
+        print $fo "#Already sized before and should be enough, stop. ($refOrg $delay $inst)\n";
+        last;
+      } else {
+        print $fo "#Already sized before but maybe not enough, continue. ($refOrg $delay $inst)\n";
+        next;
+      }
+    } else {
+      $instHash{$inst} = $delay; 
+    }
+    $refNew =~ s/CPDLVT$/CPDULVT/; $refNew =~ s/CPD$/CPDLVT/;
+    if ($delay > abs($slack) * 2) {
+      print $fo "ecoChangeCell -inst $inst -cell $refNew; #($delay $refOrg) (Enough, stopped)\n";
+      last; 
+    } else {
+      print $fo "ecoChangeCell -inst $inst -cell $refNew; #($delay $refOrg)\n"; 
     }
   }
 }
+print $fo "\nsetEcoMode -reset\n";
+close $fo; close $fo2;

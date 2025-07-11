@@ -19,16 +19,26 @@ proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
     set maxMarginPin ""
     set succeed 0
 
+    set DEL_cells []; # please sort it
     foreach point $points {
       if {[regexp {ISO|LVL} [get_attribute [get_cells -of $point] ref_name]]} {
         puts "ISO or LVL encountered, trace backwards!!!" 
       }
       set pathObj [get_timing_paths -delay_type max -thr $point]
       set margin [get_attribute $pathObj slack]
-      if {"" == $margin} {set margin 10000}
+      if {$margin == ""} {set margin 10000}
       if {$margin > $maxMargin} {set maxMargin $margin; set maxMarginPin $point}
       if {[expr $margin + $vio * 2.5] >= 0 && $margin > 0.012} {
-        if {[regexp ]} 
+        if {[regexp {U_AFE_SUB_WRAP|U_DDR_SUB_WRAP|U_CPU_SUB_WRAP} $point]} {
+          if {$vio < 0.14} {
+             
+          }
+        } else {
+          if {$vio < -0.11} {
+            set number [expr int(ceil(abs($vio) / 0.11))]
+            set type  
+          }
+        }
       }
     }
   }

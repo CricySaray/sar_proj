@@ -21,7 +21,7 @@
 #             endpoints from PT). This prepares for the second step.
 # ref       : link url
 # --------------------------
-# run HOLD session
+# songNOTE: run HOLD session
 proc gen_hold_path {{filepath ""} {{timestamp ""}}} {
   if {![file exists $filepath/hold_endpt_$timestamp.list]} { puts "no hold endpt file."; return}
   set fi [open $filepath/hold_endpt_$timestamp.list r]
@@ -64,7 +64,7 @@ proc gen_hold_path {{filepath ""} {{timestamp ""}}} {
 #             without being too aggressive.
 # ref       : link url
 # --------------------------
-# run SETUP session
+# songNOTE: run SETUP session
 proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
   catch {unset candidate} 
   if {![file exist $filepath/hold_path_$timestamp.list]} { puts "no hold path file."; return}

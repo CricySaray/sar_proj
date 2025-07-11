@@ -379,7 +379,6 @@ Jetpack 'andymass/vim-matchup'
 " Jetpack 'dracula/vim', { 'as': 'dracula' }
 " Jetpack 'tpope/vim-fireplace', { 'for': 'clojure' }
 call jetpack#end()
-
 " --------
 " setting for plugs 
 "" for luochen1990/rainbow
@@ -412,3 +411,5 @@ let g:rainbow_conf = {
 " 使用了 ANSI 256 色代码，确保在支持 256 色的终端中也能呈现良好的对比度
 " 这些颜色在深灰色背景上会更加突出，同时保持了莫兰迪色系的柔和特性，减轻长时间编程的视觉疲劳。
 " 括号匹配与行号高亮配置
+" ~/.vimrc 配置
+

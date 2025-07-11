@@ -1,8 +1,9 @@
 #-------------------------------------------------
 # some more ls aliases
-alias cr='cd ~/project/backend/run/PR/RUN/'
+alias cr='cd ~/project/backend/run'
 alias ct='cd ~/project/test_temp/'
 
+alias tk='touch .gitkeep'; # for updating empty dir to git
 alias his='history'
 alias bat='batcat'
 alias fd='find ./ -type f -name '

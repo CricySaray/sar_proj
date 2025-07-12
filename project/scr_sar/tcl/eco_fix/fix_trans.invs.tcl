@@ -120,6 +120,7 @@ puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n]
         set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
   puts "$netLength $loadCelltype $driveCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]"
         #### onlyChangeVT / changeVTandSizeupDriveCapacity / onlySizeupDriveCapacity
+        set cmd1 ""
         if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] >= -0.009} { ; # only changeVT,
 puts "in 1"
           set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
@@ -127,24 +128,28 @@ puts "in 1"
         } elseif {$canChangeDriveCapacity && $netLength <= $logicToBufferDistanceThreshold} { ; #only changeDriveCapacity
 puts "in 2"
           if {$driveCapacity <= 1} {
-            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 2]
+            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 2 {1 12} $cellRegExp]
           } elseif {$driveCapacity >= 2} {
-            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 1]
+            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 1 {1 12} $cellRegExp]
           }
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
         } elseif {$canChangeVTandDriveCapacity && $netLength <= [expr $logicToBufferDistanceThreshold + 5]} { ; # change VT and DriveCapacity
 puts "in 3"
           set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
           if {$driveCapacity <= 1} {
-            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2]
+            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 {1 12} $cellRegExp]
           } elseif {$driveCapacity >= 2} {
-            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 1]
+            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 1 {1 12} $cellRegExp]
           }
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
         } elseif {$canAddRepeater && $netLength < [expr $logicToBufferDistanceThreshold + 5]} { ; # add Repeater near logic cell
 puts "in 4"
           set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
-          set cmd1 [print_ecoCommand -type add -celltype $addCelltype -terms [lindex viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+          set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+        } else { ; # not in above situation
+          puts "Not in above situation, so NOTICE"
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "refDriver" 0 "BUFX4AR9" $cellRegExp ]
+          set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
         }
         puts $cmd1
 puts "# -----------------"

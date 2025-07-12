@@ -11,7 +11,7 @@
 # ref       : link url
 # --------------------------
 # API:
-set fi [open "$1" "r"]
+#set fi [open "$1" "r"]
 
 # ------
 # need :
@@ -49,7 +49,7 @@ set fi [open "$1" "r"]
 # 01 get info of viol cell: pin cellname celltype driveNum netlength
 source -v ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source -v ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
-source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList]
+source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList] || get_driverPin - return drivePin
 source -v ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instName cellName driveLevel VTtype]
 source -v ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|sequential|gating|other
 source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
@@ -57,29 +57,49 @@ source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCe
 source -v ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 source -v ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 
-proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"}} {
+# The principle of minimum information
+proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"}} {
+  # $violValue_pin_columnIndex  : for example : {3 1}
+  #   violPin   xxx   violValue   xxx   xxx
+  #   you can specify column of violValue and violPin
   if {$viol_pin_file == "" || [glob -nocomplain $viol_pin_file] == ""} {
     return "0x0:1"; # check your file 
   } else {
+    set fi [open $viol_pin_file r]
     set violValue_driverPin_onylOneLoaderPin_D3List [list ]; # one to one
     set violValue_driver_severalLoader_D3List [list ]; # one to more
     # ------
     # sort two class for all viol situations
-    while {[gets $viol_pin_file line] > -1} {
-      set value_viol [lindex $line 0]
-      set pin_viol   [lindex $line 1]
-      if {[if_driver_or_load $pin]} {
-        set output_pin $pin_viol 
-        set num_termName_D2List [get_fanoutNum_and_inputTermsName_of_pin $output_pin]
+    set i 0
+    while {[gets $fi line] > -1} {
+      incr i
+      set viol_value [lindex $line [expr [lindex $violValue_pin_columnIndex 0] - 1]]
+      set viol_pin   [lindex $line [expr [lindex $violValue_pin_columnIndex 1] - 1]]
+      if {![string is double $viol_value] || [dbget top.insts.instTerms.name $viol_pin -e] == ""} {
+        return "0x0:2"; # column([lindex $violValue_pin_columnIndex 0]) is not number
+      }
+      if {![if_driver_or_load $viol_pin]} { ; # only extract viol loadPin
+        set load_pin $viol_pin 
+        set drive_pin [get_driverPin $load_pin]
+        set num_termName_D2List [get_fanoutNum_and_inputTermsName_of_pin $drive_pin]
         if {[lindex $num_termName_D2List 0] == 1} { ; # load cell is only one. you can use option: -relativeDistToSink to ecoAddRepeater
-          lappend violValue_driverPin_onylOneLoaderPin_D3List [list $value_viol $output_pin [lindex $num_termName_D2List 1]]
-        } else { ; # load cell are several, need consider other method
-          lappend violValue_driver_severalLoader_D3List [list $value_viol $output_pin [lindex $num_termName_D2List 1]]
+          lappend violValue_driverPin_onylOneLoaderPin_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
+        } elseif {[lindex $num_termName_D2List 0] > 1} { ; # load cell are several, need consider other method
+          lappend violValue_driver_severalLoader_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
         }
       } else {
-        set input_pin $pin_viol 
+        puts "(Line $i) drivePin - not extract! : $line"
       }
     }
+    close $fi
+    # report some info of two D3 List
+    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing $violValue_driverPin_onylOneLoaderPin_D3List]
+    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -unique $violValue_driverPin_onylOneLoaderPin_D3List]
+    set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
+    set violValue_driver_severalLoader_D3List [lsort -unique $violValue_driver_severalLoader_D3List]
+puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n]
+    puts "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
+    puts "1 v more number: [llength $violValue_driver_severalLoader_D3List]"
     # ------
     # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
     
@@ -88,19 +108,24 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacity 1} {c
     ## only load one cell
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
       ### 1 loader is a buffer, but driver is a logic cell
-      if {[get_cell_class [lindex $viol_driverPin_loadPin 2]] == "buffer" && [get_cell_class [lindex $viol_driverPin_loadPin 1]] == "logic"} {
+      puts [get_cell_class [lindex $viol_driverPin_loadPin 1]]
+      puts [get_cell_class [lindex $viol_driverPin_loadPin 2]]
+      if {[get_cell_class [lindex $viol_driverPin_loadPin 2]] != "" && [get_cell_class [lindex $viol_driverPin_loadPin 1]] != ""} {
         set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
         set netLength [get_net_length $netName] ; # net length: um
-        regsub {(.*)\/.*} [lindex $viol_driverPin_loadPin 1] wholename instname
+        set instname [dbget [dbget top.insts.instTerms.name [lindex $viol_driverPin_loadPin 1] -p2].name]
         set inst_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $instname $cellRegExp]
         set driveCelltype [lindex $inst_celltype_driveLevel_VTtype 1]
         set driveCapacity [lindex $inst_celltype_driveLevel_VTtype 2]
-        set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet [lindex $violValue_driverPin_onylOneLoaderPin_D3List 2]]] -p].cell.name]
+        set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
+  puts "$netLength $loadCelltype $driveCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]"
         #### onlyChangeVT / changeVTandSizeupDriveCapacity / onlySizeupDriveCapacity
         if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] >= -0.009} { ; # only changeVT,
+puts "in 1"
           set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $driveCelltype]
         } elseif {$canChangeDriveCapacity && $netLength <= $logicToBufferDistanceThreshold} { ; #only changeDriveCapacity
+puts "in 2"
           if {$driveCapacity <= 1} {
             set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 2]
           } elseif {$driveCapacity >= 2} {
@@ -108,6 +133,7 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacity 1} {c
           }
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
         } elseif {$canChangeVTandDriveCapacity && $netLength <= [expr $logicToBufferDistanceThreshold + 5]} { ; # change VT and DriveCapacity
+puts "in 3"
           set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
           if {$driveCapacity <= 1} {
             set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2]
@@ -116,9 +142,12 @@ proc fix_trans {{viol_pin_file ""} {canChangeVT 1} {canChangeDriveCapacity 1} {c
           }
           set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
         } elseif {$canAddRepeater && $netLength < [expr $logicToBufferDistanceThreshold + 5]} { ; # add Repeater near logic cell
+puts "in 4"
           set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           set cmd1 [print_ecoCommand -type add -celltype $addCelltype -terms [lindex viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
         }
+        puts $cmd1
+puts "# -----------------"
       }
       ### loader is a logic cell, driver is a buffer(simple, upsize drive capacity, but consider previous cell drive range)
       ### loader is a buffer, and driver is a buffer too

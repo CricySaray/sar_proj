@@ -30,7 +30,7 @@ $status_command_list{"set_clock_sense"}					= "pass";
 $status_command_list{"set_max_transition"}			= "pass";
 $status_command_list{"set_max_fanout"}					= "pass";
 $status_command_list{"set_max_capacitance"}			= "comment";
-$status_command_list{"set_min_capacitance"}			= "comment"
+$status_command_list{"set_min_capacitance"}			= "comment";
 # forbidden
 $status_command_list{"set_ideal_network"}				= "comment";
 $status_command_list{"set_ideal_net"}						= "comment";
@@ -58,8 +58,9 @@ while(<F>) {
 	$sdc_txt .= $_;
 }
 close F;
+
 my %exist_command_list;
-my @sdc_cmds =split/\n/,$sdc_txt;
+my @sdc_cmds = split/\n/,$sdc_txt;
 foreach my $cmd ( @sdc_cmds ) {
 	next if $cmd =~ /^\s*$/;
 	next if $cmd =~ /^\s*#/;
@@ -79,6 +80,7 @@ foreach my $cmd ( @sdc_cmds ) {
 		}
 	}
 }
+
 open(F,"$ARGV[0]");
 open(N,">new.sdc");
 while(<F>) {

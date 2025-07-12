@@ -10,6 +10,7 @@
 # ref       : link url
 # --------------------------
 proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {
+  # this pin must be output pin
   if {$pin == "" || $pin == "0x0" || [dbget top.insts.instTerms.name $pin -e] == ""} {
     return "0x0:1"
   } else {
@@ -25,5 +26,13 @@ proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {
     lappend numToInputTermName $fanoutNum
     lappend numToInputTermName $inputTermsName
     return $numToInputTermName
+  }
+}
+proc get_driverPin {{pin ""}} {
+  if {$pin == "" || [dbget top.insts.instTerms.name $pin -e] == ""} {
+    return "0x0:1"; # no pin
+  } else {
+    set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isOutput 1 -p].name ] 0]
+    return $driver
   }
 }

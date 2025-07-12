@@ -30,7 +30,7 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
       } else {
         # get changeable VT type according to provided cell type 
         set changeableVT [lsearch -exact -index 0 -all -inline -not $avaiableVTsorted $VTtype]
-        puts $changeableVT
+        #puts $changeableVT
         # judge if changeable VT types have faster type than nowVTtype of provided cell type
         set nowSpeedIndex [lsearch -exact $speed $VTtype]
         set moreFastVTinSpeed [lreplace $speed $nowSpeedIndex end]

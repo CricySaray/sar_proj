@@ -6,6 +6,7 @@
 !.bashrc
 !.tmux.conf
 !.gitignore
+!.invs_alias.tcl
 !.gitconfig
 !.teamshare/
 !.ctags

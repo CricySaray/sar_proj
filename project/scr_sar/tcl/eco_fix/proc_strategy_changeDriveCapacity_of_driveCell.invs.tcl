@@ -37,7 +37,7 @@ proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1
         regexp $regExp $celltype wholename driveLevel VTtype
         set driveLevel
       }]
-  puts $availableDriveCapacityList
+  #puts $availableDriveCapacityList
       if {$toDrive_temp <= 8} {
         set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 1]
       } else {

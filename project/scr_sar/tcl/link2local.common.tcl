@@ -24,13 +24,13 @@ if {$have == 0} {
 		if {$link != ""} {
 			set local [exec readlink $link]
 			set ifexist [catch {glob $local}]
-			if {$ifexist == 0} {
+			if {!$ifexist} {
 				puts $link
 				set localAbs [file normalize $local]
 				set rmif [catch {exec rm $link} rmError]
-				if {$rmif == 0} {puts "exec rm $link  : ok!"} else {puts "exec rm $link  : Error! \n Detail: $rmError"}
+				if {!$rmif} {puts "exec rm $link  : ok!"} else {puts "exec rm $link  : Error! \n Detail: $rmError"}
 				set cpif [catch {exec cp -p $localAbs ./} cpError]
-				if {$cpif == 0} {puts "cp -p $localAbs ./ : ok!"} else {puts "cp -p $localAbs ./ : Error! \n Detail: $cpError"}
+				if {!$cpif} {puts "cp -p $localAbs ./ : ok!"} else {puts "cp -p $localAbs ./ : Error! \n Detail: $cpError"}
 			}
 		}
 	}

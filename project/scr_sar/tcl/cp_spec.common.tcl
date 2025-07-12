@@ -1,6 +1,7 @@
 #!/bin/tclsh
 # --------------------------
 # from      : jiangyuan
+# updated   : sar song
 # date      : 2025/07/08 12:26:55 Tuesday
 # label     : misc_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|misc_proc)

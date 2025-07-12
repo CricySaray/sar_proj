@@ -171,7 +171,6 @@ noremap <c-down> <c-w>-
 noremap <c-left> <c-w>>
 noremap <c-right> <c-w><
 
-
 " Have nerdtree ignore certain files and directories.
 let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', '\.pyc$', '\.odt$', '\.png$', '\.gif$', '\.db$']
 
@@ -198,7 +197,12 @@ function! s:SmartReplace()
   let old_name = expand("<cword>")
   let new_name = input("replace to: ", old_name)
   if new_name != '' && new_name != old_name
-    execute '%s/\<' . old_name . '\>/' . new_name . '/g'
+    " To avoid accidentally replacing keywords that appear in attributes (where they shouldn't be modified), 
+		" you can restrict matches to instances where the keyword is preceded by a space or the `$` symbol. 
+    " This ensures that only variables in valid contexts (like code, not attribute names) are replaced.
+    " songNOTE: I have only tested it with languages like TCL and Perl so far. There might be other 
+		" 			variable prefixes in other languages, but it won't be too late to add support for them when we encounter such cases.
+    execute '%s/\(^\|[ $@%&\]})[{(]\)\zs\<'. old_name .'\>/' . new_name . '/g'
   endif
 endfunction
 nnoremap <leader>r :call <SID>SmartReplace()<CR>
@@ -245,93 +249,96 @@ augroup END
 " 仅对指定文件格式设置自动补全功能
 " autocmd FileType c,cpp,sh,java,html,js,css,py exec AutoComplete()
 " 对所有文件格式设置自动补全功能
-autocmd FileType * exec AutoComplete()
-func! AutoComplete()
-    "相关映射
-    :inoremap ( ()<Left>
-    :inoremap ) <c-r>=ClosePair(')')<CR>
-    :inoremap { {}<Left>
-    :inoremap } <c-r>=ClosePair('}')<CR>
-    :inoremap [ []<Left>
-    :inoremap ] <c-r>=ClosePair(']')<CR>
-    :inoremap < <><Left>
-    :inoremap > <c-r>=ClosePair('>')<CR>
-    :inoremap " <c-r>=DQuote()<CR>
-    :inoremap ' <c-r>=SQuote()<CR>
-	" 将BackSpace键映射为RemovePairs函数
-    :inoremap <BS> <c-r>=RemovePairs()<CR>
-	" 将回车键映射为BracketIndent函数
-	:inoremap <CR> <c-r>=BracketIndent()<CR>
-endfunc
+if 0 " if you have no auto-pair vimplug, you can use it
+  autocmd FileType * exec AutoComplete()
+  echo "sjldkfjsldkfjalksjdflaksjdfljasd l"
+  func! AutoComplete()
+      "相关映射
+      :inoremap ( ()<Left>
+      :inoremap ) <c-r>=ClosePair(')')<CR>
+      :inoremap { {}<Left>
+      :inoremap } <c-r>=ClosePair('}')<CR>
+      :inoremap [ []<Left>
+      :inoremap ] <c-r>=ClosePair(']')<CR>
+      :inoremap < <><Left>
+      :inoremap > <c-r>=ClosePair('>')<CR>
+      :inoremap " <c-r>=DQuote()<CR>
+      :inoremap ' <c-r>=SQuote()<CR>
+    " 将BackSpace键映射为RemovePairs函数
+      :inoremap <BS> <c-r>=RemovePairs()<CR>
+    " 将回车键映射为BracketIndent函数
+    :inoremap <CR> <c-r>=BracketIndent()<CR>
+  endfunc
 
-func! ClosePair(char)
-    if getline('.')[col('.') - 1] == a:char
-        return "\<Right>"
+  func! ClosePair(char)
+      if getline('.')[col('.') - 1] == a:char
+          return "\<Right>"
+      else
+          return a:char
+      endif
+  endfunc
+  "自动补全双引号
+  func! DQuote()
+      if getline('.')[col('.') - 1] == '"'
+          return "\<Right>"
+      else
+      if getline('.')[col('.') - 2] == '"'
+        return '"'
+      else
+        return "\"\"\<Left>"
+      endif
+  endfunc
+  "自动补全单引号
+  func! SQuote()
+      if getline('.')[col('.') - 1] == "'"
+          return "\<Right>"
+      else
+      if getline('.')[col('.') - 2] == "'"
+        return "'"
+      else
+            return "''\<Left>"
+      endif
+  endfunc
+  " 按BackSpace键时判断当前字符和前一字符是否为括号对或一对引号，如果是则两者均删除，并保留BackSpace正常功能
+  func! RemovePairs()
+    let l:line = getline(".") " 取得当前行
+    let l:current_char = l:line[col(".")-1] " 取得当前光标字符
+    let l:previous_char = l:line[col(".")-2] " 取得光标前一个字符 
+    if (l:previous_char == '"' || l:previous_char == "'") && l:previous_char == l:current_char
+      return "\<delete>\<bs>"
+    elseif index(["(", "[", "{"], l:previous_char) != -1
+      " 将光标定位到前括号上并取得它的索引值
+      execute "normal! h" 
+      let l:front_col = col(".")
+      " 将光标定位到后括号上并取得它的行和索引值
+      execute "normal! %" 
+      let l:line1 = getline(".")
+      let l:back_col = col(".")
+      " 将光标重新定位到前括号上
+      execute "normal! %"
+      " 当行相同且后括号的索引比前括号大1则匹配成功
+      if l:line1 == l:line && l:back_col == l:front_col + 1
+        return "\<right>\<delete>\<bs>"
+      else
+        return "\<right>\<bs>"
+      end
     else
-        return a:char
-    endif
-endfunc
-"自动补全双引号
-func! DQuote()
-    if getline('.')[col('.') - 1] == '"'
-        return "\<Right>"
+        return "\<bs>" 
+    end
+  endfunc 
+  " 在大括号内换行时进行缩进
+  func! BracketIndent()
+    let l:line = getline(".")
+    let l:current_char = l:line[col(".")-1] 
+    let l:previous_char = l:line[col(".")-2] 
+    if l:previous_char == "{" && l:current_char == "}"
+      " below statement need modify according to different env
+      return "\<cr>\<cr>\<esc>\k\i\<tab>"
     else
-		if getline('.')[col('.') - 2] == '"'
-			return '"'
-		else
-			return "\"\"\<Left>"
-    endif
-endfunc
-"自动补全单引号
-func! SQuote()
-    if getline('.')[col('.') - 1] == "'"
-        return "\<Right>"
-    else
-		if getline('.')[col('.') - 2] == "'"
-			return "'"
-		else
-	        return "''\<Left>"
-    endif
-endfunc
-" 按BackSpace键时判断当前字符和前一字符是否为括号对或一对引号，如果是则两者均删除，并保留BackSpace正常功能
-func! RemovePairs()
-	let l:line = getline(".") " 取得当前行
-	let l:current_char = l:line[col(".")-1] " 取得当前光标字符
-	let l:previous_char = l:line[col(".")-2] " 取得光标前一个字符 
-	if (l:previous_char == '"' || l:previous_char == "'") && l:previous_char == l:current_char
-		return "\<delete>\<bs>"
-	elseif index(["(", "[", "{"], l:previous_char) != -1
-		" 将光标定位到前括号上并取得它的索引值
-		execute "normal! h" 
-		let l:front_col = col(".")
-		" 将光标定位到后括号上并取得它的行和索引值
-		execute "normal! %" 
-		let l:line1 = getline(".")
-		let l:back_col = col(".")
-		" 将光标重新定位到前括号上
-		execute "normal! %"
-		" 当行相同且后括号的索引比前括号大1则匹配成功
-		if l:line1 == l:line && l:back_col == l:front_col + 1
-			return "\<right>\<delete>\<bs>"
-		else
-			return "\<right>\<bs>"
-		end
-	else
-	  	return "\<bs>" 
-	end
-endfunc 
-" 在大括号内换行时进行缩进
-func! BracketIndent()
-	let l:line = getline(".")
-	let l:current_char = l:line[col(".")-1] 
-	let l:previous_char = l:line[col(".")-2] 
-	if l:previous_char == "{" && l:current_char == "}"
-		" below statement need modify according to different env
-		return "\<cr>\<cr>\<esc>\k\i\<tab>"
-	else
-		return "\<cr>"
-	end
-endfunc
+      return "\<cr>"
+    end
+  endfunc
+endif
 "设置跳出自动补全的括号
 func! SkipPair()
     if getline('.')[col('.') - 1] == ')' || getline('.')[col('.') - 1] == ']' || getline('.')[col('.') - 1] == '"' || getline('.')[col('.') - 1] == "'" || getline('.')[col('.') - 1] == '}'
@@ -340,8 +347,10 @@ func! SkipPair()
         return "\t"
     endif
 endfunc
-" 将tab键绑定为跳出括号
 inoremap <TAB> <c-r>=SkipPair()<CR>
+" 将tab键绑定为跳出括号
+" end of completion for punction
+" ---------------------------
 
 """ SIMPLE COMMAND OR AUTO COMMAND (AUTOCMD) ------------------------------------
 " show the table of contents of vimrc
@@ -370,6 +379,7 @@ Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabular
 Jetpack 'morhetz/gruvbox'
 Jetpack 'luochen1990/rainbow'
 Jetpack 'andymass/vim-matchup'
+Jetpack 'jiangmiao/auto-pairs'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
@@ -381,6 +391,11 @@ Jetpack 'andymass/vim-matchup'
 call jetpack#end()
 " --------
 " setting for plugs 
+"" for jiangmiao/auto-pairs
+let g:AutoPairsFlyMode = 0
+let g:AutoPairs = {'<':'>', '(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
+let g:AutoPairsShortcutBackInsert = '<M-b>'
+
 "" for luochen1990/rainbow
 let g:rainbow_active = 1
 let g:rainbow_conf = {
@@ -412,4 +427,3 @@ let g:rainbow_conf = {
 " 这些颜色在深灰色背景上会更加突出，同时保持了莫兰迪色系的柔和特性，减轻长时间编程的视觉疲劳。
 " 括号匹配与行号高亮配置
 " ~/.vimrc 配置
-

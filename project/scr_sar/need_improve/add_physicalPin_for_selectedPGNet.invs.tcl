@@ -1,1 +1,0 @@
-../tcl/add_physicalPin_for_selectedPGNet.invs.tcl

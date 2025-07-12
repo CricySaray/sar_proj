@@ -15,7 +15,7 @@
 # descrip   : add endcap and welltap in floorplan
 # ref       : link url
 # --------------------------
-proc add_endcap_welltap_cell {{powerdomains ""} {tapcell ""} {top {}} {bottom {}} {left {}} {right {}} {lefttop {}} {leftbottom {}} {righttop {}} {rightbottom}} {
+proc add_endcap_welltap_cell {{powerdomains "PDM_AON PDM_TOP"} {tapcell ""} {top {}} {bottom {}} {left {}} {right {}} {lefttop {}} {leftbottom {}} {righttop {}} {rightbottom {}}} {
   if {![llength $tapcell] || ![llength $top] || ![llength $bottom] || ![llength $left] ![llength $right] || ![llength $lefttop] || ![llength $leftbottom] || ![llength $righttop] ||![llength $rightbottom]} {
     return "0x0:1" ; # check your input 
   } else {

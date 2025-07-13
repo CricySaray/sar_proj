@@ -22,10 +22,16 @@ proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1
     if {$runError || $wholename == ""} {
       return "0x0:2" 
     } else {
+#puts "driveLevel : $driveLevel"
+if {$driveLevel == "05"} {
+  set driveLevelNum 0.5
+} else {
+  set driveLevelNum [expr int($driveLevel)]
+}
       set toDrive 0
       set driveRangeRight [lsort -integer -increasing $driveRange]
       # simple version, provided fixed drive capacibility for 
-      set toDrive_temp [expr $driveLevel * ($changeStairs * 2)]
+      set toDrive_temp [expr int([expr $driveLevelNum * ($changeStairs * 2)])]
       set processType [whichProcess_fromStdCellPattern $celltype]
       if {$processType == "TSMC"} {
         regsub D$driveLevel $celltype D* searchCelltypeExp
@@ -35,13 +41,16 @@ proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1
       set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
       set availableDriveCapacityList [lmap celltype $availableCelltypeList {
         regexp $regExp $celltype wholename driveLevel VTtype
-        set driveLevel
+        if {$driveLevel == "05"} {continue} else { set driveLevel [expr int($driveLevel)]}
       }]
   #puts $availableDriveCapacityList
       if {$toDrive_temp <= 8} {
         set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 1]
       } else {
         set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 0]
+      }
+      if {$toDrive > [lindex $driveRangeRight end] || $toDrive < [lindex $driveRangeRight 0] } {
+        return "0x0:3"; # toDrive is out of acceptable driveCapacity list ($driveRange)
       }
       if {[regexp BWP $celltype]} { ; # TSMC standard cell keyword
         regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype

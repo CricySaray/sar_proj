@@ -1,12 +1,9 @@
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
-# date      : Wed Jul  2 20:38:41 CST 2025
+# date      : 2025/07/13 15:25:05 Sunday
 # label     : task_proc
-#   -> (atomic_proc|display_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
-#   -> task_proc  : composed of multiple atomic procs, focus on logical integrity, process control, error recovery, and the output of files and reports when solving problems.
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
 # descrip   : what?
 # ref       : link url
 # --------------------------
@@ -56,9 +53,10 @@ source -v ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-cha
 source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
 source -v ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 source -v ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
+source -v ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
 
 # The principle of minimum information
-proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"}} {
+proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"} {sumFile "sor_summary_of_result.list"} {cantExtractFile "sor_cantExtract.list"} {cmdFile "sor_commands_to_eco.tcl"} {debug 0}} {
   # $violValue_pin_columnIndex  : for example : {3 1}
   #   violPin   xxx   violValue   xxx   xxx
   #   you can specify column of violValue and violPin
@@ -88,29 +86,58 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
           lappend violValue_driver_severalLoader_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
         }
       } else {
-        puts "(Line $i) drivePin - not extract! : $line"
+        lappend cantExtractList "(Line $i) drivePin - not extract! : $line"
       }
     }
     close $fi
     # report some info of two D3 List
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing $violValue_driverPin_onylOneLoaderPin_D3List]
-    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -unique $violValue_driverPin_onylOneLoaderPin_D3List]
+    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
-    set violValue_driver_severalLoader_D3List [lsort -unique $violValue_driver_severalLoader_D3List]
-puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n]
-    puts "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
-    puts "1 v more number: [llength $violValue_driver_severalLoader_D3List]"
+    set violValue_driver_severalLoader_D3List [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]
+if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # ------
     # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
     
     # ------
+    # info collections
+    ## cant change info
+    set cantChangePrompts {
+      "# error/warning symbols"
+      "# changeVT:"
+      "## V - the celltype to changeVT is forbidden to use, like {AL9 0} which of weight:0 is forbidden to use"
+      "## F - don't have faster VT to change, like celltype is LVT or ULVT, which is no faster VT than LVT or ULVT"
+      "# changeDriveCapacity"
+      "## O - out of acceptable drive capacity list. if you specify the range of useful drive capacity like {1 12}, toChangeCelltype capacity can't be out of it."
+      "# addRepeaterCelltype"
+      "## N - toAddCelltype is not acceptable celltype from std cell library"
+    }
+    set cantChangeList_1v1 [list [list sym violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
+    ## changed info
+    set fixedPrompts {
+      "# symbols of methods for changed cell"
+      "# changeVT:"
+      "## T - changedVT, below is toChangeCelltype"
+      "# changeDriveCapacity"
+      "## D - changedDriveCapacity, below is toChangeCelltype"
+      "# addRepeaterCell"
+      "## A - addedRepeaterCell, below is toAddCelltype"
+    }
+    set fixedList_1v1 [list [list sym celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
+    # ------
+    set cmdList $fixedPrompts
+    lappend cmdList "setEcoMode -reset"
+    lappend cmdList "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
+    lappend cmdList " "
+
     # begin deal with different situation
     ## only load one cell
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
       ### 1 loader is a buffer, but driver is a logic cell
-      puts [get_cell_class [lindex $viol_driverPin_loadPin 1]]
-      puts [get_cell_class [lindex $viol_driverPin_loadPin 2]]
-      if {[get_cell_class [lindex $viol_driverPin_loadPin 2]] != "" && [get_cell_class [lindex $viol_driverPin_loadPin 1]] != ""} {
+if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
+      set driveCellClass [get_cell_class [lindex $viol_driverPin_loadPin 1]]
+      set loadCellClass  [get_cell_class [lindex $viol_driverPin_loadPin 2]]
+      if {$driveCellClass != "" && $loadCellClass != ""} {
         set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
         set netLength [get_net_length $netName] ; # net length: um
         set instname [dbget [dbget top.insts.instTerms.name [lindex $viol_driverPin_loadPin 1] -p2].name]
@@ -118,50 +145,155 @@ puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n]
         set driveCelltype [lindex $inst_celltype_driveLevel_VTtype 1]
         set driveCapacity [lindex $inst_celltype_driveLevel_VTtype 2]
         set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
-  puts "$netLength $loadCelltype $driveCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]"
+        set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
+                                $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
+                                $loadCellClass $loadCelltype [lindex $viol_driverPin_loadPin 2] ]
+if {$debug} { puts "$netLength $driveCelltype $loadCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         #### onlyChangeVT / changeVTandSizeupDriveCapacity / onlySizeupDriveCapacity
         set cmd1 ""
+        set toChangeCelltype ""
+        set toAddCelltype ""
         if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] >= -0.009} { ; # only changeVT,
-puts "in 1"
+if {$debug} { puts "in 1: only change VT" }
           set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
-          set cmd1 [print_ecoCommand -type change -inst $instname -celltype $driveCelltype]
+          if {[regexp -- {0x0:3} $toChangeCelltype]} {
+            lappend cantChangeList_1v1 [concat "V" $allInfoList]
+            set cmd1 "cantChange"
+          } elseif {[regexp -- {0x0:4} $toChangeCelltype]} {
+            lappend cantChangeList_1v1 [concat "F" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            lappend fixedList_1v1 [concat "T" $toChangeCelltype $allInfoList]
+            set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
+          }
         } elseif {$canChangeDriveCapacity && $netLength <= $logicToBufferDistanceThreshold} { ; #only changeDriveCapacity
-puts "in 2"
-          if {$driveCapacity <= 1} {
+if {$debug} { puts "in 2: only change DriveCapacity" }
+          if {$driveCapacity == 0.5} {
+            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 3 {1 12} $cellRegExp]
+          } elseif {$driveCapacity == 1} {
             set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 2 {1 12} $cellRegExp]
           } elseif {$driveCapacity >= 2} {
             set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 1 {1 12} $cellRegExp]
           }
-          set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
-        } elseif {$canChangeVTandDriveCapacity && $netLength <= [expr $logicToBufferDistanceThreshold + 5]} { ; # change VT and DriveCapacity
-puts "in 3"
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
-          if {$driveCapacity <= 1} {
-            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 {1 12} $cellRegExp]
-          } elseif {$driveCapacity >= 2} {
-            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 1 {1 12} $cellRegExp]
+          if {[regexp -- {0x0:3} $toChangeCelltype]} {
+            lappend cantChangeList_1v1 [concat "O" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            lappend fixedList_1v1 [concat "D" $toChangeCelltype $allInfoList]
+            set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
           }
-          set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
+        } elseif {$canChangeVTandDriveCapacity && $netLength <= [expr $logicToBufferDistanceThreshold + 5]} { ; # change VT and DriveCapacity
+if {$debug} { puts "in 3: change VT and DriveCapacity" }
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
+          if {[regexp -- {0x0:3} $toChangeCelltype]} {
+            lappend cantChangeList_1v1 [concat "V" $allInfoList]
+            set cmd1 "cantChange"
+          } elseif {[regexp -- {0x0:4} $toChangeCelltype]} {
+            lappend cantChangeList_1v1 [concat "F" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            if {$driveCapacity <= 1} {
+              set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 {1 12} $cellRegExp]
+            } elseif {$driveCapacity >= 2} {
+              set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 1 {1 12} $cellRegExp]
+            }
+            if {[regexp -- {0x0:3} $toChangeCelltype]} {
+              lappend cantChangeList_1v1 [concat "O" $allInfoList]
+              set cmd1 "cantChange"
+            } else {
+              lappend fixedList_1v1 [concat "T_D" $toChangeCelltype $allInfoList]
+              set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
+            }
+          }
         } elseif {$canAddRepeater && $netLength < [expr $logicToBufferDistanceThreshold + 5]} { ; # add Repeater near logic cell
-puts "in 4"
+if {$debug} { puts "in 4: add Repeater" }
           set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
-          set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+          if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
+            lappend cantChangeList_1v1 [concat "N" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            lappend fixedList_1v1 [concat "A" $toAddCelltype $allInfoList]
+            set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+          }
         } else { ; # not in above situation
-          puts "Not in above situation, so NOTICE"
+if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
+if {$debug} { puts "Not in above situation, so NOTICE" }
           set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "refDriver" 0 "BUFX4AR9" $cellRegExp ]
-          set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+          if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
+            lappend cantChangeList_1v1 [concat "N" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            lappend fixedList_1v1 [concat "A" $toAddCelltype $allInfoList]
+            set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+          }
         }
-        puts $cmd1
-puts "# -----------------"
+        if {$cmd1 != "cantChange"} { lappend cmdList "# [lindex $fixedList_1v1 end]"; lappend cmdList $cmd1 }
+if {$debug} { puts "# -----------------" }
       }
       ### loader is a logic cell, driver is a buffer(simple, upsize drive capacity, but consider previous cell drive range)
       ### loader is a buffer, and driver is a buffer too
       ### loader is a logic cell, and driver is a logic cell
       ### !!!CLK cell : need specific cell type buffer/inverter
     }
+    lappend cmdList " "
+    lappend cmdList "setEcoMode -reset"
+
+    # summary of result
+    set fixedMethodSortNumber [lmap item $fixedList_1v1 {
+      set symbol [lindex $item 0]
+    }]
+    set methods [lsort -unique $fixedMethodSortNumber]
+    foreach m $methods { set num_$m 0 }
+    foreach item $fixedMethodSortNumber {
+      foreach method $methods {
+        if {$item == $method} {
+          incr num_$method; # calculate number of every method
+        }
+      }
+    }
+    # print to window
+    ## file that can't extract cuz it is drivePin
+    set ce [open $cantExtractFile w]
+    pw $ce "CANT EXTRACT:"
+    pw $ce ""
+    pw $ce [join $cantExtractList \n]
+    close $ce
+    ## file of cmds 
+    set co [open $cmdFile w]
+    pw $co [join $cmdList \n]
+    close $co
+    ## file of summary
+    set sf [open $sumFile w]
+    pw $sf "Summary of fixed:"
+    pw $sf ""
+    pw $sf "FIXED CELL LIST"
+    pw $sf [join $fixedPrompts \n]
+    pw $sf ""
+    pw $sf [print_formatedTable $fixedList_1v1]
+    pw $sf ""
+    pw $sf "sym   num"
+    foreach m $methods { set num [eval set -nonewline \${num_${m}}]; lappend method_number [list $m $num] }
+    pw $sf [print_formatedTable $method_number]
+    pw $sf ""
+    pw $sf "CANT CHANGE LIST"
+    pw $sf [join $cantChangePrompts \n]
+    pw $sf ""
+    pw $sf [print_formatedTable $cantChangeList_1v1]
+    pw $sf ""
+    pw $sf ""
+    pw $sf "TWO SITUATIONS OF ALL VIOLATIONS:"
+    pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
+    pw $sf "1 v more number: [llength $violValue_driver_severalLoader_D3List]"
+    pw $sf ""
+    close $sf
 
 
     ## load several cells
     ### primarily focus on driver capacity and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
   }
+}
+# puts message to file and print to window
+proc pw {{fileId ""} {message ""}} {
+  puts $message
+  puts $fileId $message
 }

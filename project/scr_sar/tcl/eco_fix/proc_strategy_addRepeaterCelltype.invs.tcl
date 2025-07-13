@@ -13,6 +13,8 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
         set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $forceSpecifyDriveCapacibility]
         if {$toCelltype == "0x0:1"} {
           return "0x0:3"; # can't identify where the celltype is come from
+        } elseif {[dbget head.libCells.name $toCelltype -e] == ""} {
+          return "0x0:6"; # forceSpecifyDriveCapacibility: toCelltype is not acceptable celltype in std cell libray
         } else {
           return $toCelltype
         }
@@ -22,6 +24,8 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
           set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $levelNumD]
           if {$toCelltype == "0x0:1"} {
             return "0x0:4";  # can't identify where the celltype is come from
+          } elseif {[dbget head.libCells.name $toCelltype -e] == ""} {
+            return "0x0:7"; # refDriver: toCelltype is not acceptable celltype in std cell libray
           } else {
             return $toCelltype 
           }
@@ -30,6 +34,8 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
           set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $levelNumL] 
           if {$toCelltype == "0x0:1"} {
             return "0x0:5"; # can't identify where the celltype is come from
+          } elseif {[dbget head.libCells.name $toCelltype -e] == ""} {
+            return "0x0:8"; # refLoader: toCelltype is not acceptable celltype in std cell libray
           } else {
             return $toCelltype 
           }
@@ -50,6 +56,8 @@ proc changeDriveCapacibility_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {origin
   } elseif {$processType == "HH"} { ; # HH40 huahonghongli
     regsub X${originalDriveCapacibility} $refType X${toDriverCapacibility} toCelltype
     return $toCelltype
+  } else {
+    return "0x0:1"
   }
   
 }

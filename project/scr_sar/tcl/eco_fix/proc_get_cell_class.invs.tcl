@@ -26,18 +26,18 @@ proc get_cell_class {{instOrPin ""}} {
   }
 }
 proc logic_of_mux {inst} {
-  if {[get_property [get_cells $inst] is_combinational]} {
-    return "logic" 
-  } elseif {[get_property [get_cells $inst] is_sequential]} {
+  if {[get_property [get_cells $inst] is_sequential]} {
     return "sequential"
+  } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
+    return "CLKcell" 
   } elseif {[get_property [get_cells $inst] is_buffer]} {
     return "buffer" 
   } elseif {[get_property [get_cells $inst] is_inverter]} {
     return "inverter" 
   } elseif {[get_property [get_cells $inst] is_integrated_clock_gating_cell]} {
     return "gating"
-  } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
-    return "CLKcell" 
+  } elseif {[get_property [get_cells $inst] is_combinational]} {
+    return "logic" 
   } else {
     return "other" 
   }

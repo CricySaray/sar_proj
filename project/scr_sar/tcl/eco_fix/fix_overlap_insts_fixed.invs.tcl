@@ -12,14 +12,18 @@
 #             can exclude endcap/welltap and block cell
 # ref       : link url
 # --------------------------
-proc fix_overlap_insts_fixed {{test "test"} {only_refinePlace_violInsts "false"} {overlap_marker_name "SPOverlapViolation"}} {
+proc fix_overlap_insts_fixed {{test "test"} {only_refinePlace_violInsts "false"} {overlap_marker_name {SPOverlapViolation SPFillerGapViolation}}} {
   set default_dontTouchExp "ENDCAP|WELLTAP"; #regexp can match {/ENDCAP|/WELLTAP}
   set default_dontTouchBlock [dbget [dbget top.insts.cell.subClass block -p2].name]
-  set default_removeList [concat $default_dontTouchExp $default_dontTouchBlock]
+  set default_dontTouchISOcell [dbget [dbget top.insts.cell.name ISO* -p2].name]
+  set default_removeList [concat $default_dontTouchExp $default_dontTouchBlock $default_dontTouchISOcell]
   set default_removeExp "[join $default_removeList |]"
   set putPrompt "songINFO:"
   #checkPlace
-  set violobjs [dbget top.markers.subType $overlap_marker_name -p]
+  set violobjs [list ]
+  foreach marker $overlap_marker_name {
+    set violobjs [concat $violobjs [dbget top.markers.subType $marker -p -e]]
+  }
   set violBoxes [dbget $violobjs.box]
   deselectAll
   set insts [dbget [dbQuery -areas $violBoxes -objType {inst} -enclosed_only].name]

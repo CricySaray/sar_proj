@@ -23,10 +23,11 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
       return "0x0:2" 
     } else {
       if {$VTtype == ""} {set VTtype "SVT"}
+      if {$levelNum == "05"} {set levelNumTemp 0.5} else {set levelNumTemp [expr int($levelNum)]}
       set instName_cellName_driveLevel_VTtype_List [list ]
       lappend instName_cellName_driveLevel_VTtype_List $inst
       lappend instName_cellName_driveLevel_VTtype_List $cellName
-      lappend instName_cellName_driveLevel_VTtype_List $levelNum
+      lappend instName_cellName_driveLevel_VTtype_List $levelNumTemp
       lappend instName_cellName_driveLevel_VTtype_List $VTtype
       return $instName_cellName_driveLevel_VTtype_List
     }

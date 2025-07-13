@@ -4,6 +4,10 @@
 # date      : DATE
 # label     : 
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
+# descrip   : what?
+# ref       : link url
+# --------------------------
+
 #   -> atomic_proc : Specially used for calling and information transmission of other procs, 
 #                    providing a variety of error prompt codes for easy debugging
 #   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
@@ -14,6 +18,3 @@
 #   -> dump_proc  : dump data with specific format from db(invs/pt/starrc/pv...)
 #   -> check_proc : only for checking for some stage(FP/place/cts/route/finish...)
 #   -> misc_proc  : some other uses of procs
-# descrip   : what?
-# ref       : link url
-# --------------------------

@@ -52,7 +52,23 @@ cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
-cabbrev rt r ~/project/scr_sar/ref_content/head_of_proc.txt
+" insert head of proc for tcl or perl, can change DATE to time now
+function! InsertProcessHead()
+  " 读取文件的前9行到当前位置
+  execute 'r! sed -n ''1,9p'' ~/project/scr_sar/ref_content/head_of_proc.txt'
+  " 获取当前行号（即新插入内容的第一行）
+  let end_line = line('.')
+  " 计算结束行号（当前行 + 9）
+  let start_line = end_line - 9
+  " 构建并执行替换命令（将DATE替换为当前日期时间）
+  let date_str = strftime('%Y/%m/%d %H:%M:%S %A')
+  execute start_line . ',' . end_line . 's/DATE/' . escape(date_str, '/') . '/g'
+endfunction
+command! Rt call InsertProcessHead()
+
+
+""" VIM VARIABLES SETTING -------------------------------------------------------
+let g:vimdate = strftime('%Y/%m/%d %H:%M:%S %A')
 
 """ SETTING CONFIG --------------------------------------------------------------
 if has("syntax")

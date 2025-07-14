@@ -4,8 +4,6 @@
 # date      : Wed Jul  2 20:38:55 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
 # descrip   : strategy of fixing transition: change VT type of a cell. you can specify the weight of every VT type and speed index of VT. weight:0 will be forbidden to use
 # ref       : link url
 # --------------------------

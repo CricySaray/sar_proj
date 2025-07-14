@@ -68,7 +68,6 @@ command! Rt call InsertProcessHead()
 
 
 """ VIM VARIABLES SETTING -------------------------------------------------------
-let g:vimdate = strftime('%Y/%m/%d %H:%M:%S %A')
 
 """ SETTING CONFIG --------------------------------------------------------------
 if has("syntax")
@@ -265,9 +264,9 @@ augroup END
 " 仅对指定文件格式设置自动补全功能
 " autocmd FileType c,cpp,sh,java,html,js,css,py exec AutoComplete()
 " 对所有文件格式设置自动补全功能
-if 0 " if you have no auto-pair vimplug, you can use it
+let g:my_custom_settings = 0
+if g:my_custom_settings == 1 " if you have no auto-pair vimplug, you can use it
   autocmd FileType * exec AutoComplete()
-  echo "sjldkfjsldkfjalksjdflaksjdfljasd l"
   func! AutoComplete()
       "相关映射
       :inoremap ( ()<Left>
@@ -297,8 +296,7 @@ if 0 " if you have no auto-pair vimplug, you can use it
   func! DQuote()
       if getline('.')[col('.') - 1] == '"'
           return "\<Right>"
-      else
-      if getline('.')[col('.') - 2] == '"'
+      elseif getline('.')[col('.') - 2] == '"'
         return '"'
       else
         return "\"\"\<Left>"
@@ -308,8 +306,7 @@ if 0 " if you have no auto-pair vimplug, you can use it
   func! SQuote()
       if getline('.')[col('.') - 1] == "'"
           return "\<Right>"
-      else
-      if getline('.')[col('.') - 2] == "'"
+      elseif getline('.')[col('.') - 2] == "'"
         return "'"
       else
             return "''\<Left>"

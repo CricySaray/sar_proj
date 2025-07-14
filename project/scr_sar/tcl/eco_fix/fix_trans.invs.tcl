@@ -212,7 +212,7 @@ if {$debug} { puts "in 4: add Repeater" }
             lappend cantChangeList_1v1 [concat "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            lappend fixedList_1v1 [concat "A" $toAddCelltype $allInfoList]
+            lappend fixedList_1v1 [concat "A_0.9" $toAddCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
           }
         } else { ; # not in above situation
@@ -223,7 +223,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             lappend cantChangeList_1v1 [concat "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            lappend fixedList_1v1 [concat "A" $toAddCelltype $allInfoList]
+            lappend fixedList_1v1 [concat "A_0.9" $toAddCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
           }
         }

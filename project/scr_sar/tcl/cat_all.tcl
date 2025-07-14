@@ -57,4 +57,4 @@ proc cat_all { filename } {
   close $fi; close $fo
 }
 
-cat_all fix_trans.invs.tcl
+cat_all select_insts_of_object_from_file.invsGUI.tcl

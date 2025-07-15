@@ -20,43 +20,48 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
   #checkPlace
   set violobjs [list ]
   if {$preCheckPlace} { 
-    set cmd_precheck "checkPlace -clearMarker -ignoreOutOfCore"
+    setPlaceMode -place_detail_legalization_inst_gap 1
+    set cmd_precheck "checkPlace -ignoreOutOfCore"
     puts "$promptINFO $cmd_precheck"
     eval $cmd_precheck
   }
   foreach marker $overlap_marker_name {
     set violobjs [concat $violobjs [dbget top.markers.subType $marker -p -e]]
   }
-  set violBoxes [dbget $violobjs.box]
-  deselectAll
-  set insts [dbget [dbQuery -areas $violBoxes -objType {inst} -enclosed_only].name]
-  #puts "$insts"
-  # remove block insts and endcap/welltap insts
-  foreach inst $insts {
-    if {[regexp $default_removeExp $inst]} {set insts [lreplace $insts [lsearch -exact $insts "$inst"] [lsearch -exact $insts "$inst"]]}
-  }
-  #puts "after: $insts"
-  select_obj $insts
-  set insts_ptr [dbget selected.]
-  # $testOrRun have low priority, $ifRunRefinePlace and $ifRunEcoRoute have higher priority!!
-  if {$testOrRun == "run"} {
-    if {$insts_ptr != ""} {
-      puts "$promptINFO set insts placed (unfixed)"
-      dbSet $insts_ptr.pstatus placed
-      setPlaceMode -place_detail_eco_max_distance 10
-      if {$ifRunRefinePlace} {
-        puts "$promptINFO begin refinePlace for overlap insts..."
-        if {$only_refinePlace_violInsts == "true"} {refinePlace -inst [dbget $insts_ptr.name]
-        } else { refinePlace -eco true }
-      }
-      if {$ifRunEcoRoute} {
-        puts "$promptINFO begin ecoRoute for overlap insts..."
-        ecoRoute
-      }
-      puts "$promptINFO reset insts fixed"
-      dbSet $insts_ptr.pstatus fixed
-    } else { puts "$promptINFO no Overlap insts!!!"}
-  } elseif {$testOrRun == "test"} {
-    puts "$promptINFO testing ... " 
+  if {![llength $violobjs]} {
+    return 0
+  } else {
+    set violBoxes [dbget $violobjs.box]
+    deselectAll
+    set insts [dbget [dbQuery -areas $violBoxes -objType {inst} -enclosed_only].name]
+    #puts "$insts"
+    # remove block insts and endcap/welltap insts
+    foreach inst $insts {
+      if {[regexp $default_removeExp $inst]} {set insts [lreplace $insts [lsearch -exact $insts "$inst"] [lsearch -exact $insts "$inst"]]}
+    }
+    #puts "after: $insts"
+    select_obj $insts
+    set insts_ptr [dbget selected.]
+    # $testOrRun have low priority, $ifRunRefinePlace and $ifRunEcoRoute have higher priority!!
+    if {$testOrRun == "run"} {
+      if {$insts_ptr != ""} {
+        puts "$promptINFO set insts placed (unfixed)"
+        dbSet $insts_ptr.pstatus placed
+        setPlaceMode -place_detail_eco_max_distance 10
+        if {$ifRunRefinePlace} {
+          puts "$promptINFO begin refinePlace for overlap insts..."
+          if {$only_refinePlace_violInsts == "true"} {refinePlace -inst [dbget $insts_ptr.name]
+          } else { refinePlace -eco true }
+        }
+        if {$ifRunEcoRoute} {
+          puts "$promptINFO begin ecoRoute for overlap insts..."
+          ecoRoute
+        }
+        puts "$promptINFO reset insts fixed"
+        dbSet $insts_ptr.pstatus fixed
+      } else { puts "$promptINFO no Overlap insts!!!"}
+    } elseif {$testOrRun == "test"} {
+      puts "$promptINFO testing ... " 
+    }
   }
 }

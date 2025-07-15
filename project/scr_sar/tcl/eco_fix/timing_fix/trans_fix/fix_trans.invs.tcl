@@ -54,6 +54,7 @@ source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCe
 source -v ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 source -v ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 source -v ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
+source -v ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
 
 # The principle of minimum information
 proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"} {sumFile "sor_summary_of_result.list"} {cantExtractFile "sor_cantExtract.list"} {cmdFile "sor_commands_to_eco.tcl"} {debug 0}} {
@@ -66,7 +67,7 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
     set fi [open $viol_pin_file r]
     set violValue_driverPin_onylOneLoaderPin_D3List [list ]; # one to one
     set violValue_driver_severalLoader_D3List [list ]; # one to more
-    # ------
+    # ------------------------------------
     # sort two class for all viol situations
     set i 0
     while {[gets $fi line] > -1} {
@@ -96,10 +97,10 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
     set violValue_driver_severalLoader_D3List [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]
 if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
-    # ------
+    # -----------------------
     # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
     
-    # ------
+    # ----------------------
     # info collections
     ## cant change info
     set cantChangePrompts {
@@ -130,6 +131,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     lappend cmdList "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
     lappend cmdList " "
 
+    # ---------------------------------
     # begin deal with different situation
     ## only load one cell
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
@@ -238,6 +240,7 @@ if {$debug} { puts "# -----------------" }
     lappend cmdList " "
     lappend cmdList "setEcoMode -reset"
 
+    # --------------------
     # summary of result
     set fixedMethodSortNumber [lmap item $fixedList_1v1 {
       set symbol [lindex $item 0]
@@ -292,8 +295,4 @@ if {$debug} { puts "# -----------------" }
     ### primarily focus on driver capacity and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
   }
 }
-# puts message to file and print to window
-proc pw {{fileId ""} {message ""}} {
-  puts $message
-  puts $fileId $message
-}
+

@@ -7,7 +7,7 @@
 # descrip   : add endcap and welltap in floorplan
 # ref       : link url
 # --------------------------
-proc add_endcap_welltap_cell {{runOrVerifyOrDelete "veri"} {powerdomains "PDM_AON PDM_TOP"} {tapcell ""} {top {}} {bottom {}} {left {}} {right {}} {lefttop {}} {leftbottom {}} {righttop {}} {rightbottom {}}} {
+proc add_endcap_welltap_cell {{runOrVerifyOrDelete "veri"} {endcapPrefix "boundary"} {tapwellPrefix "tap"} {powerdomains {}} {tapcell ""} {top {}} {bottom {}} {left {}} {right {}} {lefttop {}} {leftbottom {}} {righttop {}} {rightbottom {}}} {
   # $runOrVerifyOrDelete: run|veri|del
   #               delrun : delete and readd endcap and welltap
   #               run : add and verify endcap and welltap
@@ -25,8 +25,8 @@ proc add_endcap_welltap_cell {{runOrVerifyOrDelete "veri"} {powerdomains "PDM_AO
       -place_detail_legalization_inst_gap 2
       
     if { $runOrVerifyOrDelete == "delrun" || $runOrVerifyOrDelete == "del"} {
-      deleteFiller -prefix ENDCAP
-      deleteFiller -prefix WELLTAP
+      deleteFiller -prefix $endcapPrefix
+      deleteFiller -prefix $tapwellPrefix
     }
 
     setEndCapMode -reset
@@ -50,12 +50,14 @@ proc add_endcap_welltap_cell {{runOrVerifyOrDelete "veri"} {powerdomains "PDM_AO
     
     if { $runOrVerifyOrDelete == "run" || $runOrVerifyOrDelete == "delrun"} {
       if {$powerdomains == ""} {
-        addEndCap   -prefix ENDCAP
-        addWellTap  -prefix WELLTAP -cellInterval 81.48 -checkerBoard -avoidAbutment -cell $tapcell
-      } else {
+        addEndCap   -prefix $endcapPrefix
+        addWellTap  -prefix $tapwellPrefix -cellInterval 81.48 -checkerBoard -avoidAbutment -cell $tapcell
+      } elseif {[llength $powerdomains] == [llength [lmap pd $powerdomains {set temp [dbget top.pds.name $pd -e]; if {$temp != ""} {set temp} else {continue}}]]} {
         foreach pd $powerdomains {
           addEndCap   -prefix ENDCAP  -powerDomain $pd
           addWellTap  -prefix WELLTAP -powerDomain $pd -cellInterval 81.48 -checkerBoard -avoidAbutment -cell $tapcell
+        } else {
+          return "0x0:2"; # check your $powerdomains input 
         }
       }
     }

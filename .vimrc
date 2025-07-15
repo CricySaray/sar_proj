@@ -27,6 +27,8 @@ augroup highlight_songnote
   autocmd!
   autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
   autocmd BufEnter * hi link SongNote Cursor
+  autocmd BufEnter * syn match tclpw "pw " containedin=.*
+  autocmd BufEnter * hi link tclpw Special
 augroup END
 
 """ ABBR CONFIG -----------------------------------------------------------------

@@ -53,7 +53,7 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
       if {[regexp BWP $celltype]} { ; # TSMC standard cell keyword
         regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
         return $toCelltype
-      } elseif {[regexp {.*X\d+.*A[RHL]\d+} $celltype]} { ; # M31 standard cell keyword
+      } elseif {[regexp {.*X\d+.*A[RHL]\d+} $celltype]} { ; # M31 standard cell keyword/ HH40
         regsub "X${driveLevel}" $celltype "X${toDrive}" toCelltype
         return $toCelltype
       }

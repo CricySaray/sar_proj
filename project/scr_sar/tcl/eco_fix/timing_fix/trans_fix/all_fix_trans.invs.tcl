@@ -170,6 +170,7 @@ if {$debug} { puts "in 1: only change VT" }
         } elseif {$canChangeDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.04 && $netLength <= $logicToBufferDistanceThreshold} { ; # songNOTE: situation 02 only changeDriveCapacity
 if {$debug} { puts "in 2: only change DriveCapacity" }
           set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+puts "in 2: $driveCelltype $toChangeCelltype"
 if {$debug} { puts $toChangeCelltype }
           if {$driveCapacity == 0.5} {
             set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 0 3 {1 12} $cellRegExp]
@@ -217,7 +218,7 @@ if {$debug} { puts "in 4: add Repeater" }
           } else {
             if {$driveCellClass == "logic"} {
               set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
-puts  "$driveCelltype --  $toChangeCelltype song"
+puts  "in 4: $driveCelltype --  $toChangeCelltype song"
               if {$driveCapacity < 4} {
                 set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -238,6 +239,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
               }
             } elseif {$driveCellClass == "buffer" || $driveCellClass == "inverter"} {
               set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+puts  "in 4: $driveCelltype --  $toChangeCelltype song"
               if {$driveCapacity < 3} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 3 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -585,7 +587,7 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
       set ifInAvailableVTList [lsearch -index 0 $availableVTsorted $VTtype]
       set availableVTnameList [lmap vt_weight $availableVTsorted {set temp [lindex $vt_weight 0]}]
 
-#puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype-"
+puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype $celltype -"
       if {$availableVTnameList == $VTtype} {
         return $celltype; # if list only have now vt type, return now celltype
       } elseif {$ifInAvailableVTList == -1} {

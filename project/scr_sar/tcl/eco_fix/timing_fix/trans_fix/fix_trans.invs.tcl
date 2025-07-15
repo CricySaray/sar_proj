@@ -99,9 +99,9 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
     close $fi
     # report some info of two D3 List
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing $violValue_driverPin_onylOneLoaderPin_D3List]
-    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]
+    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
-    set violValue_driver_severalLoader_D3List [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]
+    set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]]
 if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # -----------------------
     # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List

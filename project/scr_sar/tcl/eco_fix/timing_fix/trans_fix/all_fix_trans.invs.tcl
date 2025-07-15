@@ -88,9 +88,9 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
     close $fi
     # report some info of two D3 List
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing $violValue_driverPin_onylOneLoaderPin_D3List]
-    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]
+    set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
-    set violValue_driver_severalLoader_D3List [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]
+    set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]]
 if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # -----------------------
     # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
@@ -218,7 +218,7 @@ if {$debug} { puts "in 4: add Repeater" }
             if {$driveCellClass == "logic"} {
               if {$driveCapacity < 4} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 4 0 {1 12} $cellRegExp] 
-puts "$driveCelltype - $toChangeCelltype"
+if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -inst $driveInstname -celltype $toChangeCelltype]; # pre fix: first, change driveInst DriveCapacity, second add repeater
                 lappend fixedList_1v1 [concat "DA_0.9" ${toChangeCelltype}_$toAddCelltype $allInfoList]
                 set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]

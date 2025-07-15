@@ -14,12 +14,10 @@
 !.vim/**
 .vim/pack/jetpack/opt/vim-jetpack
 .vim/pack/jetpack/opt/diffchar.vim
-# temp file
 *.swp
 *.swo
 *.swn
 .*.swp
 .*.swo
 .*.swn
-# backup file
 *~

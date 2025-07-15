@@ -8,3 +8,10 @@
 !backend/**
 !ref_from_others/
 !ref_from_others/**
+*.swp
+*.swo
+*.swn
+.*.swp
+.*.swo
+.*.swn
+*~

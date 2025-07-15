@@ -229,7 +229,7 @@ if {$debug} { puts "in 4: add Repeater" }
           } else {
             if {$driveCellClass == "logic"} {
               set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
-puts  "in 4: $driveCelltype --  $toChangeCelltype song"
+#puts  "in 4: $driveCelltype --  $toChangeCelltype song"
               if {$driveCapacity < 4} {
                 set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -250,7 +250,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
               }
             } elseif {$driveCellClass == "buffer" || $driveCellClass == "inverter"} {
               set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
-puts  "in 4: $driveCelltype --  $toChangeCelltype song"
+#puts  "in 4: $driveCelltype --  $toChangeCelltype song"
               if {$driveCapacity < 3} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 3 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}

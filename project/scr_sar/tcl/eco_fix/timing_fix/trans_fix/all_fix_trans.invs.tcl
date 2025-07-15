@@ -580,14 +580,14 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
     } else {
       set processType [whichProcess_fromStdCellPattern $celltype]
       if {$VTtype == ""} {set VTtype "SVT"; puts "notice: blank vt type"} 
-      set weight0VTList [lmap vt_weight [lsort -unique -index 0 [lsearch -inline -index 1 -regexp $weight "0"]] {set vt [lindex $vt_weight 0]}]
+      set weight0VTList [lmap vt_weight [lsort -unique -index 0 [lsearch -all -inline -index 1 -regexp $weight "0"]] {set vt [lindex $vt_weight 0]}]
       set avaiableVT [lsearch -all -inline -index 1 -regexp $weight "\[1-9\]"]; # remove weight:0 VT
       # user-defined avaiable VT type
       set availableVTsorted [lsort -index 1 -integer -decreasing $avaiableVT]
       set ifInAvailableVTList [lsearch -index 0 $availableVTsorted $VTtype]
       set availableVTnameList [lmap vt_weight $availableVTsorted {set temp [lindex $vt_weight 0]}]
 
-puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype $celltype -"
+#puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype $celltype -"
       if {$availableVTnameList == $VTtype} {
         return $celltype; # if list only have now vt type, return now celltype
       } elseif {$ifInAvailableVTList == -1} {

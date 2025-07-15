@@ -8,6 +8,7 @@
 # ref       : link url
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
 proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
@@ -19,12 +20,12 @@ proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1
     if {$runError || $wholename == ""} {
       return "0x0:2" 
     } else {
-#puts "driveLevel : $driveLevel"
-if {$driveLevel == "05"} {
-  set driveLevelNum 0.5
-} else {
-  set driveLevelNum [expr int($driveLevel)]
-}
+      #puts "driveLevel : $driveLevel"
+      if {$driveLevel == "05"} {
+        set driveLevelNum 0.5
+      } else {
+        set driveLevelNum [expr int($driveLevel)]
+      }
       set toDrive 0
       set driveRangeRight [lsort -integer -increasing $driveRange]
       # simple version, provided fixed drive capacibility for 
@@ -42,9 +43,9 @@ if {$driveLevel == "05"} {
       }]
   #puts $availableDriveCapacityList
       if {$toDrive_temp <= 8} {
-        set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 1]
+        set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 1]
       } else {
-        set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 0]
+        set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 0]
       }
       if {$toDrive > [lindex $driveRangeRight end] || $toDrive < [lindex $driveRangeRight 0] } {
         return "0x0:3"; # toDrive is out of acceptable driveCapacity list ($driveRange)
@@ -58,40 +59,4 @@ if {$driveLevel == "05"} {
       }
     }
   }
-}
-
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:05:01 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
-# descrip   : find the nearest number from list, you can control which one of bigger or smaller
-# ref       : link url
-# --------------------------
-proc find_nearest {{realList {}} number {returnBigOneFlag 1}} {
-  set s [lsort -unique -increasing -real $realList]
-  set idx [lsearch -exact $s $number]
-  if {$idx != -1} {
-    return $number ; # number is not equal every real digit of list
-  }
-  if {$number < [lindex $s 0] || $number > [lindex $s end]} {
-    return "0x0:1"; # your number is not in the range of list
-  }
-  foreach i $s {
-    set next_i [lindex $s [expr [lsearch $s $i] + 1]]
-    if {$i < $number && $number < $next_i} {
-      set lowerIdx [lsearch $s $i]
-      break
-    } 
-  }
-  set upperIdx [expr {$lowerIdx + 1}]
-  return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
 }

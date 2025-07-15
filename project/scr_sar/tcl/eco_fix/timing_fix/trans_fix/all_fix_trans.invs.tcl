@@ -37,6 +37,9 @@
 #   can't fix :
 #     viol value | viol pin | reason to unfix
 #
+# songNOTE: DEFENSIVE FIX:
+#   if inst is mem/IP, it can't be changed DriveCapacibility and can't move location
+#
 # return time
 #
 # fix long net:
@@ -47,6 +50,7 @@
 
 # The principle of minimum information
 proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"} {sumFile "sor_summary_of_result.list"} {cantExtractFile "sor_cantExtract.list"} {cmdFile "sor_commands_to_eco.tcl"} {debug 0}} {
+  # songNOTE: only deal with loadPin viol situation, ignore drivePin viol situation
   # $violValue_pin_columnIndex  : for example : {3 1}
   #   violPin   xxx   violValue   xxx   xxx
   #   you can specify column of violValue and violPin
@@ -56,7 +60,7 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
     set fi [open $viol_pin_file r]
     set violValue_driverPin_onylOneLoaderPin_D3List [list ]; # one to one
     set violValue_driver_severalLoader_D3List [list ]; # one to more
-    # ------
+    # ------------------------------------
     # sort two class for all viol situations
     set i 0
     while {[gets $fi line] > -1} {
@@ -86,10 +90,10 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
     set violValue_driver_severalLoader_D3List [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]
 if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
-    # ------
+    # -----------------------
     # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
     
-    # ------
+    # ----------------------
     # info collections
     ## cant change info
     set cantChangePrompts {
@@ -111,7 +115,9 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "# changeDriveCapacity"
       "## D - changedDriveCapacity, below is toChangeCelltype"
       "# addRepeaterCell"
-      "## A - addedRepeaterCell, below is toAddCelltype"
+      "## A_0.9 - near the driver - addedRepeaterCell, below is toAddCelltype"
+      "## A_0.5 - in the middle of driver and sink - addedRepeaterCell, below is toAddCelltype"
+      "## A_0.1 - near the sink   - addedRepeaterCell, below is toAddCelltype"
     }
     set fixedList_1v1 [list [list sym celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
     # ------
@@ -120,6 +126,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     lappend cmdList "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
     lappend cmdList " "
 
+    # ---------------------------------
     # begin deal with different situation
     ## only load one cell
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
@@ -127,7 +134,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
 if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
       set driveCellClass [get_cell_class [lindex $viol_driverPin_loadPin 1]]
       set loadCellClass  [get_cell_class [lindex $viol_driverPin_loadPin 2]]
-      if {$driveCellClass != "" && $loadCellClass != ""} {
+      if {$driveCellClass != "" && $loadCellClass != ""} { ; # songNOTE: now dont split between different cell classes
         set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
         set netLength [get_net_length $netName] ; # net length: um
         set instname [dbget [dbget top.insts.instTerms.name [lindex $viol_driverPin_loadPin 1] -p2].name]
@@ -143,9 +150,10 @@ if {$debug} { puts "$netLength $driveCelltype $loadCelltype [lindex $viol_driver
         set cmd1 ""
         set toChangeCelltype ""
         set toAddCelltype ""
-        if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] >= -0.009} { ; # only changeVT,
+        if {$canChangeVT && [lindex $viol_driverPin_loadPin 0] >= -0.009} { ; # songNOTE: situation 01 only changeVT,
+          # TODO: this situation need judge if the celltype has been fastest VT. if it has, you need consider other methods
 if {$debug} { puts "in 1: only change VT" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "V" $allInfoList]
             set cmd1 "cantChange"
@@ -156,14 +164,16 @@ if {$debug} { puts "in 1: only change VT" }
             lappend fixedList_1v1 [concat "T" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
           }
-        } elseif {$canChangeDriveCapacity && $netLength <= $logicToBufferDistanceThreshold} { ; #only changeDriveCapacity
+        } elseif {$canChangeDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.04 && $netLength <= $logicToBufferDistanceThreshold} { ; # songNOTE: situation 02 only changeDriveCapacity
 if {$debug} { puts "in 2: only change DriveCapacity" }
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+puts $toChangeCelltype
           if {$driveCapacity == 0.5} {
-            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 3 {1 12} $cellRegExp]
+            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 3 {1 12} $cellRegExp]
           } elseif {$driveCapacity == 1} {
-            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 2 {1 12} $cellRegExp]
+            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 {1 12} $cellRegExp]
           } elseif {$driveCapacity >= 2} {
-            set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 1 {1 12} $cellRegExp]
+            set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 1 {1 12} $cellRegExp]
           }
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "O" $allInfoList]
@@ -172,9 +182,9 @@ if {$debug} { puts "in 2: only change DriveCapacity" }
             lappend fixedList_1v1 [concat "D" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
           }
-        } elseif {$canChangeVTandDriveCapacity && $netLength <= [expr $logicToBufferDistanceThreshold + 5]} { ; # change VT and DriveCapacity
+        } elseif {$canChangeVTandDriveCapacity && $netLength <= [expr $logicToBufferDistanceThreshold + 5]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "V" $allInfoList]
             set cmd1 "cantChange"
@@ -195,25 +205,25 @@ if {$debug} { puts "in 3: change VT and DriveCapacity" }
               set cmd1 [print_ecoCommand -type change -inst $instname -celltype $toChangeCelltype]
             }
           }
-        } elseif {$canAddRepeater && $netLength < [expr $logicToBufferDistanceThreshold + 5]} { ; # add Repeater near logic cell
+        } elseif {$canAddRepeater && $netLength < [expr $logicToBufferDistanceThreshold + 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
 if {$debug} { puts "in 4: add Repeater" }
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
-            lappend cantChangeList_1v1 [concat "N" $allInfoList]
+            lappend cantChangeList_1v1 [concat "N_forceDrive" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            lappend fixedList_1v1 [concat "A" $toAddCelltype $allInfoList]
+            lappend fixedList_1v1 [concat "A_0.9" $toAddCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
           }
-        } else { ; # not in above situation
+        } else { ; # songNOTE: situation 05 not in above situation
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "refDriver" 0 "BUFX4AR9" $cellRegExp ]
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "refDriver" 0 {4 12} 1 "BUFX4AR9" $cellRegExp ]
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            lappend fixedList_1v1 [concat "A" $toAddCelltype $allInfoList]
+            lappend fixedList_1v1 [concat "A_0.9" $toAddCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
           }
         }
@@ -228,6 +238,7 @@ if {$debug} { puts "# -----------------" }
     lappend cmdList " "
     lappend cmdList "setEcoMode -reset"
 
+    # --------------------
     # summary of result
     set fixedMethodSortNumber [lmap item $fixedList_1v1 {
       set symbol [lindex $item 0]
@@ -282,11 +293,7 @@ if {$debug} { puts "# -----------------" }
     ### primarily focus on driver capacity and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
   }
 }
-# puts message to file and print to window
-proc pw {{fileId ""} {message ""}} {
-  puts $message
-  puts $fileId $message
-}
+
 # source -v ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 #!/bin/tclsh
 # --------------------------
@@ -294,8 +301,6 @@ proc pw {{fileId ""} {message ""}} {
 # date      : Wed Jul  2 20:38:55 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
 # descrip   : get net length. ONLY one net!!!
 # ref       : link url
 # --------------------------
@@ -320,8 +325,6 @@ alias gl "get_net_length"
 # date      : Wed Jul  2 20:38:55 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
 # descrip   : judge if a pin is output! ONLY one pin 
 # ref       : link url
 # --------------------------
@@ -344,8 +347,6 @@ proc if_driver_or_load {{pin ""}} {
 # date      : Wed Jul  2 20:38:55 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
 # descrip   : get number of fanout and name of input terms of a pin. ONLY one pin!!! this pin is output
 # ref       : link url
 # --------------------------
@@ -384,8 +385,6 @@ proc get_driverPin {{pin ""}} {
 # date      : Wed Jul  2 20:20:11 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
 # descrip   : get cell drive capacibility and VT type of a inst. ONLY one instance!!!
 # ref       : link url
 # --------------------------
@@ -421,12 +420,6 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
 # date      : Sun Jul  6 00:41:35 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
 # descrip   : get class of cell, like logic/sequential/buffer/inverter/CLKcell/gating/other
 # ref       : link url
 # --------------------------
@@ -465,14 +458,14 @@ proc logic_of_mux {inst} {
 # --------------------------
 # author    : sar song
 # date      : Wed Jul  2 20:38:55 CST 2025
+# update    : 2025/07/15 16:51:34 Tuesday
+#             add switch $ifForceValid: if you turn on it, it will change vt to one which weight is not 0. That is legalize VT
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
 # descrip   : strategy of fixing transition: change VT type of a cell. you can specify the weight of every VT type and speed index of VT. weight:0 will be forbidden to use
 # ref       : link url
 # --------------------------
-proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
+proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {ifForceValid 1}} {
   # $weight:0 is stand for no using
   # $speed: the fastest must be in front. like ULVT must be the first
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
@@ -483,16 +476,50 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
     if {$runError || $wholeName == ""} {
       return "0x0:2"; # check if $regExp pattern is correct 
     } else {
-      if {$VTtype == ""} {set VTtype "SVT"} 
+      set processType [whichProcess_fromStdCellPattern $celltype]
+      if {$VTtype == ""} {set VTtype "SVT"; puts "notice: blank vt type"} 
+      set weight0VTList [lmap vt_weight [lsort -unique -index 0 [lsearch -inline -index 1 -regexp $weight "0"]] {set vt [lindex $vt_weight 0]}]
       set avaiableVT [lsearch -all -inline -index 1 -regexp $weight "\[1-9\]"]; # remove weight:0 VT
       # user-defined avaiable VT type
-      set avaiableVTsorted [lsort -index 1 -integer -decreasing $avaiableVT]
-      set nowVTindex [lsearch -all -index 0 $avaiableVTsorted $VTtype]
-      if {$nowVTindex == ""} {
-        return "0x0:3"; # cell type can't be allowed to use, don't change VT type
+      set availableVTsorted [lsort -index 1 -integer -decreasing $avaiableVT]
+      set ifInAvailableVTList [lsearch -index 0 $availableVTsorted $VTtype]
+      set availableVTnameList [lmap vt_weight $availableVTsorted {set temp [lindex $vt_weight 0]}]
+
+puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype-"
+      if {$availableVTnameList == $VTtype} {
+        return $celltype; # if list only have now vt type, return now celltype
+      } elseif {$ifInAvailableVTList == -1} {
+        if {$ifForceValid} {
+          if {[lsearch -inline $weight0VTList $VTtype] != ""} {
+            set speedList_notWeight0 $speed
+            foreach weight0 $weight0VTList {
+              set speedList_notWeight0 [lsearch -exact -inline -all -not $speedList_notWeight0 $weight0]
+            }
+    puts "$celltype -$speedList_notWeight0- "
+            if {$processType == "TSMC"} {
+              set useVT [lindex $speedList_notWeight0 end]
+              if {$useVT == ""} {
+                return "0x0:4"; # don't have faster VT
+              } else {
+                #return $useVT 
+                if {$useVT == "SVT"} {
+                  return [regsub "$VTtype" $celltype ""]
+                } elseif {$VTtype == "SVT"} {
+                  return [regsub "$" $celltype $useVT] 
+                } else {
+                  return [regsub $VTtype $celltype $useVT] 
+                }
+              }
+            } elseif {$processType == "HH"} {
+              return [regsub $VTtype $celltype [lindex $speedList_notWeight0 end]] 
+            }
+          } 
+        } else {
+          return "0x0:3"; # cell type can't be allowed to use, don't change VT type
+        }
       } else {
         # get changeable VT type according to provided cell type 
-        set changeableVT [lsearch -exact -index 0 -all -inline -not $avaiableVTsorted $VTtype]
+        set changeableVT [lsearch -exact -index 0 -all -inline -not $availableVTsorted $VTtype]
         #puts $changeableVT
         # judge if changeable VT types have faster type than nowVTtype of provided cell type
         set nowSpeedIndex [lsearch -exact $speed $VTtype]
@@ -502,32 +529,74 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
           if {[lsearch -exact $moreFastVTinSpeed [lindex $vt 0]] > -1} {
             set useVT "[lindex $vt 0]"
             break
+          } else {
+            return $celltype ; # if have no faster vt, it will return original celltype
           }
         }
-        # NOTE: these VT type set now is only for TSMC cell pattern
-        # TSMC cell VT type pattern: (special situation!!!)
-        #   SVT: xxxCPD
-        #   LVT: xxxCPDLVT
-        #   ULVT: xxxCPDULVT
-        if {$useVT == ""} {
-          return "0x0:4"; # don't have faster VT
-        } else {
-          #return $useVT 
-          if {$useVT == "SVT"} {
-            return [regsub "$VTtype" $celltype ""]
-          } elseif {$VTtype == "SVT"} {
-            return [regsub "$" $celltype $useVT] 
+        if {$processType == "TSMC"} {
+          # NOTE: these VT type set now is only for TSMC cell pattern
+          # TSMC cell VT type pattern: (special situation!!!)
+          #   SVT: xxxCPD
+          #   LVT: xxxCPDLVT
+          #   ULVT: xxxCPDULVT
+          if {$useVT == ""} {
+            return "0x0:4"; # don't have faster VT
           } else {
-            return [regsub $VTtype $celltype $useVT] 
+            #return $useVT 
+            if {$useVT == "SVT"} {
+              return [regsub "$VTtype" $celltype ""]
+            } elseif {$VTtype == "SVT"} {
+              return [regsub "$" $celltype $useVT] 
+            } else {
+              return [regsub $VTtype $celltype $useVT] 
+            }
           }
+        } elseif {$processType == "HH"} {
+          # HH40 :
+          # AR9 AL9 AH9
+          return [regsub $VTtype $celltype $useVT] 
         }
       }
     }
   }
 }
+# source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Tue Jul  8 11:22:06 CST 2025
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc)
+# descrip   : judge which process specified celltype is 
+# ref       : link url
+# --------------------------
+proc whichProcess_fromStdCellPattern {{celltype ""}} {
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
+    return "0x0:1"; # can't find celltype in this design and library 
+  } else {
+    if {[regexp BWP $celltype]} {
+      set processType "TSMC" 
+    } elseif {[regexp {A[HRL]\d+$} $celltype]} {
+      set processType "HH" 
+    } else {
+      return "0x0:1"; # can't indentify where the celltype is come from
+    }
+    return $processType
+  }
+}
+
 
 # source -v ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
-proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {method "refDriver|refLoader|auto"} {forceSpecifyDriveCapacibility 4} {refType "BUFD4BWP6T16P96CPD"} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/07/15 13:30:32 Tuesday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
+# descrip   : strategy of fixing transition: add repeater cell to fix long net or weak drive capacity
+# ref       : link url
+# --------------------------
+proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {method "refDriver|refLoader|auto"} {forceSpecifyDriveCapacibility 4} {driveRange {4 16}} {ifGetBigDriveNumInAvaialbeDriveCapacityList 1} {refType "BUFD4BWP6T16P96CPD"} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} } {
   if {$driverCelltype == "" || $loaderCelltype == "" || [dbget top.insts.cell.name $driverCelltype -e] == "" || [dbget top.insts.cell.name $loaderCelltype -e] == ""} {
     return "0x0:1"; # check your input 
   } else {
@@ -537,7 +606,14 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
     if {$runError1 || $runError2} {
       return "0x0:2"; # check regexp expression 
     } else {
+      # check driveRange correction
+      if {[dbget head.libCells.name [changeDriveCapacibility_of_celltype $refType $levelNumR [lindex $driveRange 0]] -e] == "" || [dbget head.libCells.name [changeDriveCapacibility_of_celltype $refType $levelNumR [lindex $driveRange 1]] -e] == ""} {
+        return "0x0:3"; # check your $driveRange , have no celltype in std cell library for min or max driveCapacity from driveRange 
+      } else {
+        set driveRangeRight [lsort -integer -increasing $driveRange] 
+      }
       # if specify the value of drvie capacibility
+      # force mode will ignore $driveRange
       if {$forceSpecifyDriveCapacibility} {
         set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $forceSpecifyDriveCapacibility]
         if {$toCelltype == "0x0:1"} {
@@ -548,24 +624,48 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
           return $toCelltype
         }
       }
+      # refDriver and refLoader have low priority
+      set processType [whichProcess_fromStdCellPattern $refType]
+      if {$processType == "TSMC"} {
+        regsub D$levelNumR $refType D* searchCelltypeExp
+      } elseif {$processType == "HH"} {
+        regsub X$levelNumR $refType X* searchCelltypeExp
+      }
+      set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
+      set availableDriveCapacityIntegerList [lmap celltype $availableCelltypeList {
+        regexp $regExp $celltype wholename driveLevel VTtype
+        if {$driveLevel == "05"} {continue} else { set driveLevel [expr int($driveLevel)]}
+      }]
       switch $method {
         "refDriver" {
-          set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $levelNumD]
-          if {$toCelltype == "0x0:1"} {
+          if {$levelNumD == "05"} {set levelNumD 0.5}; # fix situation that it has 0.5 drive capacity at HH40 process/ M31 std cell library
+          set toDriveNum [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $levelNumD $ifGetBigDriveNumInAvaialbeDriveCapacityList 1]
+          if {$toDriveNum == "0x0:1"} {
             return "0x0:4";  # can't identify where the celltype is come from
-          } elseif {[dbget head.libCells.name $toCelltype -e] == ""} {
-            return "0x0:7"; # refDriver: toCelltype is not acceptable celltype in std cell libray
+          } elseif {$toDriveNum <  [lindex $driveRangeRight 0]} {
+            set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR [lindex $driveRangeRight 0]]
+            return $toCelltype 
+          } elseif {$toDriveNum > [lindex $driveRangeRight 1]} {
+            set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR [lindex $driveRangeRight 1]]
+            return $toCelltype 
           } else {
+            set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $toDriveNum]
             return $toCelltype 
           }
         } 
         "refLoader" {
-          set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $levelNumL] 
-          if {$toCelltype == "0x0:1"} {
-            return "0x0:5"; # can't identify where the celltype is come from
-          } elseif {[dbget head.libCells.name $toCelltype -e] == ""} {
-            return "0x0:8"; # refLoader: toCelltype is not acceptable celltype in std cell libray
+          if {$levelNumL == "05"} {set levelNumD 0.5}; # fix situation that it has 0.5 drive capacity at HH40 process/ M31 std cell library
+          set toDriveNum [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $levelNumL $ifGetBigDriveNumInAvaialbeDriveCapacityList 1]
+          if {$toDriveNum == "0x0:1"} {
+            return "0x0:5";  # can't identify where the celltype is come from
+          } elseif {$toDriveNum <  [lindex $driveRangeRight 0]} {
+            set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR [lindex $driveRangeRight 0]]
+            return $toCelltype 
+          } elseif {$toDriveNum > [lindex $driveRangeRight 1]} {
+            set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR [lindex $driveRangeRight 1]]
+            return $toCelltype 
           } else {
+            set toCelltype [changeDriveCapacibility_of_celltype $refType $levelNumR $toDriveNum]
             return $toCelltype 
           }
         }
@@ -596,13 +696,6 @@ proc changeDriveCapacibility_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {origin
 # date      : Tue Jul  8 11:22:06 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
 # descrip   : judge which process specified celltype is 
 # ref       : link url
 # --------------------------
@@ -621,6 +714,41 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
   }
 }
 
+# source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList list num big?
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Tue Jul  8 11:05:01 CST 2025
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc)
+# descrip   : find the nearest number from list, you can control which one of bigger or smaller
+# ref       : link url
+# --------------------------
+proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {
+  # $ifClamp: When out of range, take the boundary value.
+  set s [lsort -unique -increasing -real $realList]
+  set idx [lsearch -exact $s $number]
+  if {$idx != -1} {
+    return $number ; # number is not equal every real digit of list
+  }
+  if {$ifClamp && $number < [lindex $s 0]} {
+    return [lindex $s 0] 
+  } elseif {$ifClamp && $number > [lindex $s 1]} {
+    return [lindex $s 1] 
+  } elseif {$number < [lindex $s 0] || $number > [lindex $s end]} {
+    return "0x0:1"; # your number is not in the range of list
+  }
+  foreach i $s {
+    set next_i [lindex $s [expr [lsearch $s $i] + 1]]
+    if {$i < $number && $number < $next_i} {
+      set lowerIdx [lsearch $s $i]
+      break
+    } 
+  }
+  set upperIdx [expr {$lowerIdx + 1}]
+  return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
+}
+
 
 # source -v ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 #!/bin/tclsh
@@ -629,9 +757,6 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
 # date      : Wed Jul  2 20:38:25 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, focusing on data display and aesthetics
-#   -> task_proc  : composed of multiple atomic_proc s, focus on logical integrity, process control, error recovery, and the output of files and reports when solving problems.
 # descrip   : strategy of fixing transition: change drive capacibility of cell. ONLY one celltype
 # ref       : link url
 # --------------------------
@@ -646,12 +771,12 @@ proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1
     if {$runError || $wholename == ""} {
       return "0x0:2" 
     } else {
-#puts "driveLevel : $driveLevel"
-if {$driveLevel == "05"} {
-  set driveLevelNum 0.5
-} else {
-  set driveLevelNum [expr int($driveLevel)]
-}
+      #puts "driveLevel : $driveLevel"
+      if {$driveLevel == "05"} {
+        set driveLevelNum 0.5
+      } else {
+        set driveLevelNum [expr int($driveLevel)]
+      }
       set toDrive 0
       set driveRangeRight [lsort -integer -increasing $driveRange]
       # simple version, provided fixed drive capacibility for 
@@ -669,9 +794,9 @@ if {$driveLevel == "05"} {
       }]
   #puts $availableDriveCapacityList
       if {$toDrive_temp <= 8} {
-        set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 1]
+        set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 1]
       } else {
-        set toDrive [find_nearest $availableDriveCapacityList $toDrive_temp 0]
+        set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 0]
       }
       if {$toDrive > [lindex $driveRangeRight end] || $toDrive < [lindex $driveRangeRight 0] } {
         return "0x0:3"; # toDrive is out of acceptable driveCapacity list ($driveRange)
@@ -686,42 +811,6 @@ if {$driveLevel == "05"} {
     }
   }
 }
-
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:05:01 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
-# descrip   : find the nearest number from list, you can control which one of bigger or smaller
-# ref       : link url
-# --------------------------
-proc find_nearest {{realList {}} number {returnBigOneFlag 1}} {
-  set s [lsort -unique -increasing -real $realList]
-  set idx [lsearch -exact $s $number]
-  if {$idx != -1} {
-    return $number ; # number is not equal every real digit of list
-  }
-  if {$number < [lindex $s 0] || $number > [lindex $s end]} {
-    return "0x0:1"; # your number is not in the range of list
-  }
-  foreach i $s {
-    set next_i [lindex $s [expr [lsearch $s $i] + 1]]
-    if {$i < $number && $number < $next_i} {
-      set lowerIdx [lsearch $s $i]
-      break
-    } 
-  }
-  set upperIdx [expr {$lowerIdx + 1}]
-  return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
-}
 # source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 #!/bin/tclsh
 # --------------------------
@@ -729,13 +818,6 @@ proc find_nearest {{realList {}} number {returnBigOneFlag 1}} {
 # date      : Tue Jul  8 11:22:06 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
 # descrip   : judge which process specified celltype is 
 # ref       : link url
 # --------------------------
@@ -754,6 +836,41 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
   }
 }
 
+# source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : Tue Jul  8 11:05:01 CST 2025
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc)
+# descrip   : find the nearest number from list, you can control which one of bigger or smaller
+# ref       : link url
+# --------------------------
+proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {
+  # $ifClamp: When out of range, take the boundary value.
+  set s [lsort -unique -increasing -real $realList]
+  set idx [lsearch -exact $s $number]
+  if {$idx != -1} {
+    return $number ; # number is not equal every real digit of list
+  }
+  if {$ifClamp && $number < [lindex $s 0]} {
+    return [lindex $s 0] 
+  } elseif {$ifClamp && $number > [lindex $s 1]} {
+    return [lindex $s 1] 
+  } elseif {$number < [lindex $s 0] || $number > [lindex $s end]} {
+    return "0x0:1"; # your number is not in the range of list
+  }
+  foreach i $s {
+    set next_i [lindex $s [expr [lsearch $s $i] + 1]]
+    if {$i < $number && $number < $next_i} {
+      set lowerIdx [lsearch $s $i]
+      break
+    } 
+  }
+  set upperIdx [expr {$lowerIdx + 1}]
+  return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
+}
+
 
 # source -v ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 #!/bin/tclsh
@@ -762,13 +879,6 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
 # date      : Mon Jul  7 20:42:42 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
 # descrip   : print eco command refering to args, you can specify instname/celltype/terms/newInstNamePrefix/loc/relativeDistToSink to control one to print
 # ref       : link url
 # --------------------------
@@ -902,5 +1012,20 @@ proc print_formatedTable {{dataList {}}} {
   }
   close $pipe
   return [join $formattedLines \n]
+}
+
+# source -v ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/07/15 10:09:06 Tuesday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
+# descrip   : puts message to file and window
+# ref       : link url
+# --------------------------
+proc pw {{fileId ""} {message ""}} {
+  puts $message
+  puts $fileId $message
 }
 

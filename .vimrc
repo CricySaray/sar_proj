@@ -126,6 +126,10 @@ set wildignore=*.docx,*.jpg,*.png,*.gif,*.pdf,*.pyc,*.exe,*.flv,*.img,*.xlsx
 set laststatus=2
 set backspace=indent,eol,start
 set textwidth=0
+" Linux/macOS系统示例（Monospace字体，大小14）
+if has('gui_running') && (has('unix') || has('mac'))
+  set guifont=Monospace\ 8
+endif
 
 
 """ MAPPINGS --------------------------------------------------------------------

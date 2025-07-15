@@ -229,12 +229,14 @@ if {$debug} { puts "in 4: add Repeater" }
             if {$driveCellClass == "logic"} {
               if {$driveCapacity < 4} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 4 {1 12} $cellRegExp] 
+puts "$driveCelltype - $toChangeCelltype"
                 set cmd_DA_driveInst [print_ecoCommand -type change -inst $driveInstname -celltype $toChangeCelltype]; # pre fix: first, change driveInst DriveCapacity, second add repeater
                 lappend fixedList_1v1 [concat "DA_0.9" ${toChangeCelltype}_$toAddCelltype $allInfoList]
                 set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
                 set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-               
+                lappend fixedList_1v1 [concat "A_0.9" ${toChangeCelltype}_$toAddCelltype $allInfoList]
+                set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
               }
             } elseif {$driveCellClass == "buffer" || $driveCellClass == "inverter"} {
               lappend fixedList_1v1 [concat "A_0.5" $toAddCelltype $allInfoList]

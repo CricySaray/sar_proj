@@ -9,7 +9,7 @@
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-proc strategy_changeDriveCapacity {{celltype ""} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"}} {
+proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 4} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {

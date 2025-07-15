@@ -26,11 +26,29 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
       } else {
         set driveLevelNum [expr int($driveLevel)]
       }
+      set processType [whichProcess_fromStdCellPattern $celltype]
       set toDrive 0
+      if {$forceSpecifyDriveCapacibility } {
+        set toDrive $forceSpecifyDriveCapacibility
+        if {$processType == "TSMC"} {
+          regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
+          if {[dbget head.libCells.name $toCelltype -e] == ""} {
+            return "0x0:4:"; # forceSpecifyDriveCapacibility: have no this celltype 
+          } else {
+            return $toCelltype
+          }
+        } elseif {$processType == "HH"} {
+          regsub "X${driveLevel}" $celltype "X${toDrive}" toCelltype
+          if {[dbget head.libCells.name $toCelltype -e] == ""} {
+            return "0x0:4:"; # forceSpecifyDriveCapacibility: have no this celltype 
+          } else {
+            return $toCelltype
+          }
+        }
+      }
       set driveRangeRight [lsort -integer -increasing $driveRange]
       # simple version, provided fixed drive capacibility for 
       set toDrive_temp [expr int([expr $driveLevelNum * ($changeStairs * 2)])]
-      set processType [whichProcess_fromStdCellPattern $celltype]
       if {$processType == "TSMC"} {
         regsub D$driveLevel $celltype D* searchCelltypeExp
       } elseif {$processType == "HH"} {

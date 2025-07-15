@@ -247,6 +247,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
                 }
               }
             } elseif {$driveCellClass == "buffer" || $driveCellClass == "inverter"} {
+              set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
               if {$driveCapacity < 3} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 3 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -276,6 +277,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             set cmd1 "cantChange"
           } else {
             if {$driveCellClass == "logic"} {
+              set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
               if {$driveCapacity < 4} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 4 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -284,10 +286,18 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
                 set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
                 set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_1v1 [concat "A_0.9" $toAddCelltype $allInfoList]
-                set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+                if {$toChangeCelltype == $driveCelltype} {
+                  lappend fixedList_1v1 [concat "A_0.9" $toAddCelltype $allInfoList]
+                  set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+                } else {
+                  set cmd_TA_driveInst [print_ecoCommand -type change -inst $driveInstname -celltype $toChangeCelltype]
+                  lappend fixedList_1v1 [concat "TA_0.9" $toAddCelltype $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.9]
+                  set cmd1 [concat $cmd_TA_driveInst $cmd_TA_add]
+                }
               }
             } elseif {$driveCellClass == "buffer" || $driveCellClass == "inverter"} {
+              set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
               if {$driveCapacity < 3} {
                 set toChangeCelltype [strategy_changeDriveCapacity $driveCelltype 3 0 {1 12} $cellRegExp] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -296,8 +306,15 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
                 set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.5]
                 set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_1v1 [concat "A_0.5" $toAddCelltype $allInfoList]
-                set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.5]
+                if {$toChangeCelltype == $driveCelltype} {
+                  lappend fixedList_1v1 [concat "A_0.5" $toAddCelltype $allInfoList]
+                  set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.5]
+                } else {
+                  set cmd_TA_driveInst [print_ecoCommand -type change -inst $driveInstname -celltype $toChangeCelltype]
+                  lappend fixedList_1v1 [concat "TA_0.5" $toAddCelltype $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix $newInstNamePrefix -relativeDistToSink 0.5]
+                  set cmd1 [concat $cmd_TA_driveInst $cmd_TA_add]
+                }
               }
             }
           }

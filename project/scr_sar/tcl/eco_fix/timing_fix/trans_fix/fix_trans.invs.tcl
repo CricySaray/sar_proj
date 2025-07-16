@@ -189,6 +189,7 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
                               $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
                               $loadCellClass $loadCelltype [lindex $viol_driverPin_loadPin 2] ]
+      #set ifHaveFasterVT [expr {}]
       set cmd1 ""
       set toChangeCelltype ""
       set toAddCelltype ""

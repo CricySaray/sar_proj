@@ -27,9 +27,25 @@ augroup highlight_songnote
   autocmd!
   autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
   autocmd BufEnter * hi link SongNote Cursor
-  autocmd BufEnter * syn match tclpw "pw " containedin=.*
-  autocmd BufEnter * hi link tclpw Special
 augroup END
+" you can specify keyword to highlight
+let g:highlight_keywords = ['pw', 're', 'la', 'lo', 'al', 'ol'] " for tcl proc: logic operator
+let g:highlight_keywords += ['other_keyword']
+let g:highlight_group = 'Special'
+" 创建高亮组自动命令
+augroup highlight_keywords
+  autocmd!
+  autocmd BufEnter * call SetupKeywordHighlights()
+augroup END
+" 设置关键词高亮的函数
+function! SetupKeywordHighlights()
+  " 遍历关键词列表，为每个关键词设置语法匹配和高亮
+  for keyword in g:highlight_keywords
+    execute 'syn match HighlightKeyword /\V\<'. escape(keyword, '/\') .'\>/ containedin=.*'
+  endfor
+  " 统一设置所有关键词的高亮
+  execute 'hi def link HighlightKeyword' . ' ' . g:highlight_group
+endfunction
 
 """ ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World

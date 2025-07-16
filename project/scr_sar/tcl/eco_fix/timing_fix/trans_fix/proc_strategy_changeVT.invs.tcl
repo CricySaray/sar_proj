@@ -2,12 +2,13 @@
 # --------------------------
 # author    : sar song
 # date      : Wed Jul  2 20:38:55 CST 2025
-# update    : 2025/07/15 16:51:34 Tuesday
-#             1) add switch $ifForceValid: if you turn on it, it will change vt to one which weight is not 0. That is legalize VT
-#             2) if available vt list that is remove weight:0 vt is only now vt type, return now celltype
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
 # descrip   : strategy of fixing transition: change VT type of a cell. you can specify the weight of every VT type and speed index of VT. weight:0 will be forbidden to use
+# update    : 2025/07/15 16:51:34 Tuesday
+#             1) add switch $ifForceValid: if you turn on it, it will change vt to one which weight is not 0. That is legalize VT
+#             2) if available vt list that is remove weight:0 vt is only now vt type, return now celltype
+#             3) if have no faster VT, return original celltype
 # ref       : link url
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern

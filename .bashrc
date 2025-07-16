@@ -3,12 +3,12 @@
 alias cr='cd ~/project/backend/run'
 alias ct='cd ~/project/test_temp/'
 
+alias fd='fdfind'
 alias cs='tclsh cat_all.tcl'
 alias ts='tclsh'
 alias tk='touch .gitkeep'; # for updating empty dir to git
 alias his='history'
 alias bat='batcat'
-alias fd='find ./ -type f -name '
 alias vi='vim .gitignore'
 alias vm='vim Makefile'
 alias p='pwd'
@@ -45,34 +45,61 @@ alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
 # change newest dir
-# 进入最新修改的文件夹（支持层数参数）
+# 进入最新修改的文件夹（支持层数参数和忽略列表）
+alias cl='lc'
 lc() {
-  local depth="${1:-1}"  # 默认层数为1
+  local depth="${1:-1}"         # 默认层数为1
   local current_dir="$(pwd)"
   local target_dir=""
   local found=false
+  # 定义要忽略的文件夹列表（可自定义）
+  local ignore_list=("log" "test_temp" "backup")
   # 检查参数是否为正整数
   if ! [[ "$depth" =~ ^[0-9]+$ ]]; then
-    echo "songError: Please provide a positive integer!" >&2
+    echo "Error: Please provide a positive integer argument" >&2
     return 1
   fi
   # 执行指定层数的递归
   for ((i=1; i<=depth; i++)); do
-    # 查找当前目录下最新的子目录
-    target_dir=$(ls -dt */ 2>/dev/null | head -1)
+    # 查找当前目录下最新的子目录（排除忽略列表中的文件夹）
+    target_dir=$(ls -dt */ 2>/dev/null | grep -vE "^($(IFS="|"; echo "${ignore_list[*]}"))/" | head -1)
     if [[ -z "$target_dir" ]]; then
-      echo "Unable to continue: No deeper subdirectories"
+      echo "Cannot proceed: No deeper subdirectories found"
       break
     fi
     # 进入最新的子目录
     cd "$target_dir" || return 1
-    echo "[$i] Enter Directory: $(pwd)"
+    echo "[$i] Entered: $(pwd)"
     found=true
   done
   # 如果未找到任何子目录，输出提示
   if ! $found; then
-    echo "No directory was found" >&2
+    echo "No subdirectories found!" >&2
     cd "$current_dir" || return 1
+    return 1
+  fi
+}
+# vn：打开当前目录下最新的文件。
+# vn ~/projects：打开 ~/projects 目录下最新的文件。
+# vn . 3：递归查找当前目录下 3 层深度内的最新文件。
+vn() {
+  local dir="${1:-.}"           # 默认搜索当前目录，可指定路径
+  local max_depth="${2:-1}"     # 默认不递归，可指定递归深度
+  local ignore_dirs=("log" "temp")
+  local ignore_filter=""
+  # 构建忽略过滤器，只包含存在于搜索路径中的文件夹
+  for ignore_dir in "${ignore_dirs[@]}"; do
+    if [[ -d "$dir/$ignore_dir" ]]; then
+      ignore_filter+=" -not -path '*/$ignore_dir/*'"
+    fi
+  done
+  # 查找最新文件
+  local cmd="find '$dir' -maxdepth $max_depth -type f $ignore_filter -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-"
+  local newest_file=$(eval "$cmd")
+  if [[ -n "$newest_file" ]]; then
+    vim "$newest_file"
+  else
+    echo "No files found in $dir!" >&2
     return 1
   fi
 }

@@ -47,6 +47,7 @@
 #     buf/inv cell | drive net len
 # --------
 # 01 get info of viol cell: pin cellname celltype driveNum netlength
+source -v ../../../logic_or_and.common.tcl; # lo la
 source -v ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source -v ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
 source -v ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList] || get_driverPin - return drivePin

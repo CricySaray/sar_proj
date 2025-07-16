@@ -4,6 +4,7 @@
 !project/**
 !.vimrc
 !.bashrc
+!.cshrc
 !.tmux.conf
 !.gitignore
 !.invs_alias.tcl

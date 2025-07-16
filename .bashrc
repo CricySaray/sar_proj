@@ -44,6 +44,40 @@ alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
 alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
+# change newest dir
+# 进入最新修改的文件夹（支持层数参数）
+lc() {
+  local depth="${1:-1}"  # 默认层数为1
+  local current_dir="$(pwd)"
+  local target_dir=""
+  local found=false
+  # 检查参数是否为正整数
+  if ! [[ "$depth" =~ ^[0-9]+$ ]]; then
+    echo "songError: Please provide a positive integer!" >&2
+    return 1
+  fi
+  # 执行指定层数的递归
+  for ((i=1; i<=depth; i++)); do
+    # 查找当前目录下最新的子目录
+    target_dir=$(ls -dt */ 2>/dev/null | head -1)
+    if [[ -z "$target_dir" ]]; then
+      echo "Unable to continue: No deeper subdirectories"
+      break
+    fi
+    # 进入最新的子目录
+    cd "$target_dir" || return 1
+    echo "[$i] Enter Directory: $(pwd)"
+    found=true
+  done
+  # 如果未找到任何子目录，输出提示
+  if ! $found; then
+    echo "No directory was found" >&2
+    cd "$current_dir" || return 1
+    return 1
+  fi
+}
+
+#------------------------------------------------
 # GIT alias 
 alias vg='vim ~/.gitconfig'
 # 在.bashrc或.zshrc中添加
@@ -222,7 +256,7 @@ source "$HOME/.cargo/env"
 
 
 #-------------------------------------------------
-# prompt setting
+# command line status : prompt setting
 
 # Git 状态检查函数
 function parse_git_status() {

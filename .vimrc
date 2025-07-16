@@ -412,7 +412,6 @@ call jetpack#end()
 " setting for plugs 
 "" for jiangmiao/auto-pairs
 let g:AutoPairsFlyMode = 0
-let g:AutoPairs = {'<':'>', '(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
 let g:AutoPairsShortcutBackInsert = '<M-b>'
 
 "" for luochen1990/rainbow

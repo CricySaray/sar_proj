@@ -184,12 +184,17 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       set driveInstname_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $driveInstname $cellRegExp]
       set driveCelltype [lindex $driveInstname_celltype_driveLevel_VTtype 1]
       set driveCapacity [lindex $driveInstname_celltype_driveLevel_VTtype 2]
+      set sinkInstname [dbget [dbget top.insts.instTerms.name [lindex $viol_driverPin_loadPin 2] -p2].name]
+      set sinkInstname_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $sinkInstname $cellRegExp]
+      set sinkCelltype [lindex $sinkInstname_celltype_driveLevel_VTtype 1]
+      set sinkCapacity [lindex $sinkInstname_celltype_driveLevel_VTtype 2]
+
       set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
       set loadCapacity [get_driveCapacity_of_celltype $loadCelltype $cellRegExp]
       set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
                               $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
                               $loadCellClass $loadCelltype [lindex $viol_driverPin_loadPin 2] ]
-      #set ifHaveFasterVT [expr {}]
+      set ifHaveFasterVT [expr {}]
       set cmd1 ""
       set toChangeCelltype ""
       set toAddCelltype ""

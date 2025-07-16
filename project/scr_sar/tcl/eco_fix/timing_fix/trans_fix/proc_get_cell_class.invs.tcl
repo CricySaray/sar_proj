@@ -20,7 +20,9 @@ proc get_cell_class {{instOrPin ""}} {
   }
 }
 proc logic_of_mux {inst} {
-  if {[get_property [get_cells $inst] is_sequential]} {
+  if {[get_property [get_cells $inst] is_memory_cell]} {
+    return "mem"
+  } elseif {[get_property [get_cells $inst] is_sequential]} {
     return "sequential"
   } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
     return "CLKcell" 

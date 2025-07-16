@@ -3,6 +3,7 @@
 alias cr='cd ~/project/backend/run'
 alias ct='cd ~/project/test_temp/'
 
+alias cs='tclsh cat_all.tcl'
 alias ts='tclsh'
 alias tk='touch .gitkeep'; # for updating empty dir to git
 alias his='history'

@@ -140,6 +140,9 @@ cnoremap dd !date +"%Y/%m/%d %H:%M:%S %A"
 " .vimrc config
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
+"" Define the gd command as first executing the native gd and then returning to
+"" the original position
+nnoremap <silent> gd :normal! m'gd<C-O><CR>
 
 " editing config
 nnoremap <c-a> I

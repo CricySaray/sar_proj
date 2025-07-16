@@ -3,6 +3,7 @@
 # author : yzq
 # date   : 2025/01/07
 # descrip: unique, sort and take the big one of value
+#         format: name_needSort  violValue
 # ref		 : https://www.notion.so/sort_unique_big-pl-173a8d0ab3d88062929ef3c325cc96f3?source=copy_link
 ################
 use strict;

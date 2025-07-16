@@ -4,16 +4,6 @@
 # date      : 2025/07/11 19:14:40 Friday
 # label     : task_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
-#   -> dump_proc  : dump data with specific format from db(invs/pt/starrc/pv...)
-#   -> check_proc : only for checking for some stage(FP/place/cts/route/finish...)
-#   -> misc_proc  : some other uses of procs
 # descrip   : Execute in the worst hold session. In the first step of the entire hold-fixing process 
 #             (which consists of two steps), generate a file containing relevant paths with hold violations 
 #             and the violations themselves based on the file processed from the hold violation file (either 
@@ -21,8 +11,9 @@
 #             endpoints from PT). This prepares for the second step.
 # ref       : link url
 # --------------------------
-# songNOTE: run HOLD session
-proc gen_hold_path {{filepath ""} {{timestamp ""}}} {
+# FIRST STEP
+# songNOTE: run at HOLD session
+proc gen_hold_path {{filepath ""} {timestamp ""}} {
   if {![file exists $filepath/hold_endpt_$timestamp.list]} { puts "no hold endpt file."; return}
   set fi [open $filepath/hold_endpt_$timestamp.list r]
   set fo [open $filepath/hold_path_$timestamp.list w]
@@ -33,7 +24,7 @@ proc gen_hold_path {{filepath ""} {{timestamp ""}}} {
     set pathVio [get_attribute $pathObj slack]
     set pathPoints [list [lrange [lreverse [get_object_name [get_attribute [get_attribute $pathObj points] object]]] 0 end-1]]
     #puts $fo "$pathPoints $pathVio"
-    if {"" == $pathObj} {
+    if {$pathObj == ""} {
       puts $fo "$pin $vio" 
     } else {
       puts $fo "$pathPoints $vio" 
@@ -48,23 +39,14 @@ proc gen_hold_path {{filepath ""} {{timestamp ""}}} {
 # date      : 2025/07/11 19:03:58 Friday
 # label     : task_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> gui_proc   : for gui display, or effort can be viewed in invs GUI
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
-#   -> dump_proc  : dump data with specific format from db(invs/pt/starrc/pv...)
-#   -> check_proc : only for checking for some stage(FP/place/cts/route/finish...)
-#   -> misc_proc  : some other uses of procs
 # descrip   : In the second step of the entire hold-fixing process (which consists of two steps), 
 #             execute this proc in the worst setup session based on the path list file generated in the first step. 
 #             Then, fix the hold issues according to the setup margin. The fixing should be as conservative as possible, 
 #             without being too aggressive.
 # ref       : link url
 # --------------------------
-# songNOTE: run SETUP session
+# SECOND STEP
+# songNOTE: run at SETUP session
 proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
   catch {unset candidate} 
   if {![file exist $filepath/hold_path_$timestamp.list]} { puts "no hold path file."; return}
@@ -76,7 +58,7 @@ proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
   set fo4 [open $filepath/no_margin_$timestamp w]
   set fo5 [open $filepath/io_path_$timestamp w]
 
-  puts $fo2 "setEcoMode -reset""
+  puts $fo2 "setEcoMode -reset"
   puts $fo2 "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
   while {[gets $fi line] > -1} {
     set points [lindex $line 0]
@@ -87,8 +69,8 @@ proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
     set succeed 0
 
     # The number of items in the two variables `VIO_level` and `DEL_cells` must be consistent.
-    set VIO_level [-0.2 -0.11 -0.04 -0.02 -0.01]
-    set DEL_cells [DEL0N2X1AR9 DEL0N1X1AR9 DEL0N0X1AR9 BUFX1AR9 BUFX2AR9]
+    set VIO_level [list -0.2 -0.11 -0.04 -0.02 -0.01]
+    set DEL_cells [list DEL0N2X1AR9 DEL0N1X1AR9 DEL0N0X1AR9 BUFX1AR9 BUFX2AR9]
 
     foreach point $points {
       if {[regexp {ISO|LVL} [get_attribute [get_cells -of $point] ref_name]]} {
@@ -173,5 +155,5 @@ proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
   }
   
   puts $fo2 "setEcoMode -reset"
-  close $fi; close $fi1; close $fo2; close $fo3; close $fo4; close $fo5
+  close $fi; close $fo1; close $fo2; close $fo3; close $fo4; close $fo5
 }

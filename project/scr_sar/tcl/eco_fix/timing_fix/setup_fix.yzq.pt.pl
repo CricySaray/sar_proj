@@ -1,1 +1,1 @@
-../../perl/fix_setup.yzq.pt.pl
+../../../perl/fix_setup.yzq.pt.pl

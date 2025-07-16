@@ -15,6 +15,9 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
   } else {
     set cellName [dbget [dbget top.insts.name $inst -p].cell.name] 
     # NOTE: expression of get drive level need modify by different design and standard cell library.
+    set wholeName 0
+    set levelNum 0
+    set VTtype 0
     set runError [catch {regexp $regExp $cellName wholeName levelNum VTtype} errorInfo]
     if {$runError || $wholeName == ""} {
       # if error, check your regexp expression

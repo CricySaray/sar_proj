@@ -49,7 +49,26 @@
 # 01 get info of viol cell: pin cellname celltype driveNum netlength
 
 # The principle of minimum information
-proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeVT 1} {canChangeDriveCapacity 1} {canChangeVTandDriveCapacity 1} {canAddRepeater 1} {ecoName "test_econame"} {logicToBufferDistanceThreshold 10} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"} {newInstNamePrefix "sar_fix_trans_clk_070716"} {sumFile "sor_summary_of_result.list"} {cantExtractFile "sor_cantExtract.list"} {cmdFile "sor_commands_to_eco.tcl"} {debug 0}} {
+proc fix_trans {args} {
+  # default value for all var
+  set viol_pin_file                  ""
+  set violValue_pin_columnIndex      {4 1}
+  set canChangeVT                    1
+  set canChangeDriveCapacity         1
+  set canChangeVTandDriveCapacity    1
+  set canAddRepeater                 1
+  set logicToBufferDistanceThreshold 10
+  set cellRegExp                     "X(\\d+).*(A\[HRL\]\\d+)$"
+  set newInstNamePrefix              "sar_fix_trans_clk_071615"
+  set sumFile                        "sor_summary_of_result.tcl"
+  set cantExtractFile                "sor_cantExtract.tcl"
+  set cmdFile                        "sor_commands_to_eco.tcl"
+  set debug                          0
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
   # songNOTE: only deal with loadPin viol situation, ignore drivePin viol situation
   # $violValue_pin_columnIndex  : for example : {3 1}
   #   violPin   xxx   violValue   xxx   xxx
@@ -80,20 +99,21 @@ proc fix_trans {{viol_pin_file ""} {violValue_pin_columnIndex {4 1}} {canChangeV
         } elseif {[lindex $num_termName_D2List 0] > 1} { ; # load cell are several, need consider other method
           lappend violValue_driver_severalLoader_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
           lappend oneToMoreList [list $viol_value $drive_pin $load_pin]
+          # songNOTE: TODO show one drivePin , but all sink Pins
+          #           annotate a X flag in violated sink Pin
         }
       } else {
         lappend cantExtractList "(Line $j) drivePin - not extract! : $line"
       }
     }
     close $fi
-    # report some info of two D3 List
+    # -----------------------
+    # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing $violValue_driverPin_onylOneLoaderPin_D3List]
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]]
 if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
-    # -----------------------
-    # sort and check D3List correction : $violValue_driverPin_onylOneLoaderPin_D3List and $violValue_driver_severalLoader_D3List
     
     # ----------------------
     # info collections
@@ -109,6 +129,9 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "## N - toAddCelltype is not acceptable celltype from std cell library"
       "# special situation:(need fix by your hand)"
       "## S - violation value is very huge but net length is short"
+      "# special inst"
+      "## M_D - drive inst is mem"
+      "## M_S - sink inst is mem"
     }
     set cantChangeList_1v1 [list [list situ sym violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
     ## changed info
@@ -125,6 +148,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     }
     set fixedList_1v1 [list [list situ sym celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
     # ------
+    # init LIST
     set cmdList $fixedPrompts
     lappend cmdList "setEcoMode -reset"
     lappend cmdList "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
@@ -139,23 +163,29 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
 if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
       set driveCellClass [get_cell_class [lindex $viol_driverPin_loadPin 1]]
       set loadCellClass  [get_cell_class [lindex $viol_driverPin_loadPin 2]]
-      if {$driveCellClass != "" && $loadCellClass != ""} { ; # songNOTE: now dont split between different cell classes
-        set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
-        set netLength [get_net_length $netName] ; # net length: um
-        set driveInstname [dbget [dbget top.insts.instTerms.name [lindex $viol_driverPin_loadPin 1] -p2].name]
-        set driveInstname_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $driveInstname $cellRegExp]
-        set driveCelltype [lindex $driveInstname_celltype_driveLevel_VTtype 1]
-        set driveCapacity [lindex $driveInstname_celltype_driveLevel_VTtype 2]
-        set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
-        set loadCapacity [get_driveCapacity_of_celltype $loadCelltype $cellRegExp]
-        set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
-                                $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
-                                $loadCellClass $loadCelltype [lindex $viol_driverPin_loadPin 2] ]
+      set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
+      set netLength [get_net_length $netName] ; # net length: um
+      set driveInstname [dbget [dbget top.insts.instTerms.name [lindex $viol_driverPin_loadPin 1] -p2].name]
+      set driveInstname_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $driveInstname $cellRegExp]
+      set driveCelltype [lindex $driveInstname_celltype_driveLevel_VTtype 1]
+      set driveCapacity [lindex $driveInstname_celltype_driveLevel_VTtype 2]
+      set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
+      set loadCapacity [get_driveCapacity_of_celltype $loadCelltype $cellRegExp]
+      set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
+                              $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
+                              $loadCellClass $loadCelltype [lindex $viol_driverPin_loadPin 2] ]
+      set cmd1 ""
+      set toChangeCelltype ""
+      set toAddCelltype ""
+      if {$driveCellClass == "mem"} {
+        lappend cantChangeList_1v1 [concat "in_0" "M_D" $allInfoList]
+        set cmd1 "cantChange"
+      } elseif {$loadCellClass == "mem"} {
+        lappend cantChangeList_1v1 [concat "in_0" "M_S" $allInfoList]
+        set cmd1 "cantChange"
+      } elseif {$driveCellClass != "" && $loadCellClass != ""} { ; # songNOTE: now dont split between different cell classes
 if {$debug} { puts "$netLength $driveCelltype $loadCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         #### onlyChangeVT / changeVTandSizeupDriveCapacity / onlySizeupDriveCapacity
-        set cmd1 ""
-        set toChangeCelltype ""
-        set toAddCelltype ""
         if {[lindex $viol_driverPin_loadPin 0] < -0.07 && $netLength < 8 } { ; # songNOTE: special situation: big violValue , short net length
           lappend cantChangeList_1v1 [concat "in_1" "S" $allInfoList]
           set cmd1 "cantChange"
@@ -428,11 +458,31 @@ if {$debug} { puts "# -----------------" }
     ### primarily focus on driver capacity and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
   }
 }
+define_proc_arguments fix_trans \
+  -info "fix transition"\
+  -define_args {
+    {-viol_pin_file "specify violation filename" AString string required}
+    {-violValue_pin_columnIndex "specify the column of violValue and pinname" AList list optional}
+    {-canChangeVT "if it use strategy of changing VT" "" boolean optional}
+    {-canChangeDriveCapacity "if it use strategy of changing drive capacity" "" boolean optional}
+    {-canChangeVTandDriveCapacity "if it use strategy of changing VT and drive capacity" "" boolean optional}
+    {-canAddRepeater "if it use strategy of adding repeater" "" boolean optional}
+    {-logicToBufferDistanceThreshold "sepcify threshold of min net length" AFloat float optional}
+    {-cellRegExp "specify universal regExp for this process celltype"}
+    {-newInstNamePrefix "specify a new name for inst when adding new repeater"}
+    {-sumFile "specify summary filename" AString string optional}
+    {-cantExtractFile "specify cantExtract file name" AString string optional}
+    {-cmdFile "specify cmd file name" AString string optional}
+    {-debug "debug mode" "" boolean optional}
+  }
 
 proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget top.insts.cell.name $celltype -e ] == ""} {
     return "0x0:1"; # check your input 
   } else {
+    set wholename 0
+    set driveLevel 0
+    set VTtype 0
     regexp $regExp $celltype wholename driveLevel VTtype 
     if {$driveLevel == "05"} {set driveLevel 0.5}
     return $driveLevel
@@ -540,6 +590,9 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
   } else {
     set cellName [dbget [dbget top.insts.name $inst -p].cell.name] 
     # NOTE: expression of get drive level need modify by different design and standard cell library.
+    set wholeName 0
+    set levelNum 0
+    set VTtype 0
     set runError [catch {regexp $regExp $cellName wholeName levelNum VTtype} errorInfo]
     if {$runError || $wholeName == ""} {
       # if error, check your regexp expression
@@ -580,7 +633,9 @@ proc get_cell_class {{instOrPin ""}} {
   }
 }
 proc logic_of_mux {inst} {
-  if {[get_property [get_cells $inst] is_sequential]} {
+  if {[get_property [get_cells $inst] is_memory_cell]} {
+    return "mem"
+  } elseif {[get_property [get_cells $inst] is_sequential]} {
     return "sequential"
   } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
     return "CLKcell" 

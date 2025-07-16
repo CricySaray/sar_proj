@@ -148,7 +148,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "## M_D - drive inst is mem"
       "## M_S - sink inst is mem"
     }
-    set cantChangeList_1v1 [list [list situ sym violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
+    set cantChangeList_1v1 [list [list situ sym violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     ## changed info
     set fixedPrompts {
       "# symbols of methods for changed cell"
@@ -161,7 +161,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "## A_0.5 - in the middle of driver and sink - addedRepeaterCell, below is toAddCelltype"
       "## A_0.1 - near the sink   - addedRepeaterCell, below is toAddCelltype"
     }
-    set fixedList_1v1 [list [list situ sym celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass loadCelltype loadViolPin]]
+    set fixedList_1v1 [list [list situ sym celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     # ------
     # init LIST
     set cmdList $fixedPrompts
@@ -189,11 +189,11 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       set sinkCelltype [lindex $sinkInstname_celltype_driveLevel_VTtype 1]
       set sinkCapacity [lindex $sinkInstname_celltype_driveLevel_VTtype 2]
 
-      set loadCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
-      set loadCapacity [get_driveCapacity_of_celltype $loadCelltype $cellRegExp]
+      set sinkCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
+      set loadCapacity [get_driveCapacity_of_celltype $sinkCelltype $cellRegExp]
       set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
                               $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
-                              $loadCellClass $loadCelltype [lindex $viol_driverPin_loadPin 2] ]
+                              $loadCellClass $sinkCelltype [lindex $viol_driverPin_loadPin 2] ]
       set ifHaveFasterVT [expr {}]
       set cmd1 ""
       set toChangeCelltype ""
@@ -211,7 +211,7 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
       } elseif {$driveCellClass in {logic} && $loadCellClass in {logic}} { ; # songNOTE: now dont split between different cell classes
-if {$debug} { puts "$netLength $driveCelltype $loadCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
+if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         #### onlyChangeVT / changeVTandSizeupDriveCapacity / onlySizeupDriveCapacity
         if {[lindex $viol_driverPin_loadPin 0] < -0.2 && $netLength < 20} {
           lappend cantChangeList_1v1 [concat "in_1:1" "S" $allInfoList]
@@ -284,9 +284,9 @@ if {$debug} { puts "in 3: change VT and DriveCapacity" }
         } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.08  && [lindex $viol_driverPin_loadPin 0] >= -0.1 && $netLength < [expr $logicToBufferDistanceThreshold * 4] && $netLength > [expr $logicToBufferDistanceThreshold * 2]} { ; # songNOTE: situation 04 add Repeater near logic cell
 if {$debug} { puts "in 4: add Repeater" }
           if {$driveCellClass == "logic" && $loadCellClass == "logic"} {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 2 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           } else {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           }
 
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
@@ -347,9 +347,9 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           if {$driveCellClass == "logic"} {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 2 {2 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 {2 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           } else {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "refDriver" 0 {3 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "refDriver" 0 {3 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           }
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "in_8" "N" $allInfoList]
@@ -415,7 +415,7 @@ if {$debug} { puts "# -----------------" }
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
       } elseif {$driveCellClass in {buffer inverter} && $loadCellClass in {buffer inverter}} { ; # songNOTE: now dont split between different cell classes
-if {$debug} { puts "$netLength $driveCelltype $loadCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
+if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         #### onlyChangeVT / changeVTandSizeupDriveCapacity / onlySizeupDriveCapacity
         if {[lindex $viol_driverPin_loadPin 0] < -0.2 && $netLength < 20} {
           lappend cantChangeList_1v1 [concat "in_1:1" "S" $allInfoList]
@@ -488,9 +488,9 @@ if {$debug} { puts "in 3: change VT and DriveCapacity" }
         } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.08  && [lindex $viol_driverPin_loadPin 0] >= -0.1 && $netLength < [expr $logicToBufferDistanceThreshold * 4] && $netLength > [expr $logicToBufferDistanceThreshold * 2]} { ; # songNOTE: situation 04 add Repeater near logic cell
 if {$debug} { puts "in 4: add Repeater" }
           if {$driveCellClass == "logic" && $loadCellClass == "logic"} {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 2 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           } else {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 3 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 {} 0 "BUFX4AR9" $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           }
 
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
@@ -551,9 +551,9 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           if {$driveCellClass == "logic"} {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "" 2 {2 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 {2 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           } else {
-            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $loadCelltype "refDriver" 0 {3 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+            set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "refDriver" 0 {3 12} 1 "BUFX4AR9" $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           }
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "in_8" "N" $allInfoList]

@@ -2,12 +2,12 @@
 # --------------------------
 # author    : sar song
 # date      : Wed Jul  2 20:38:55 CST 2025
-# update    : 2025/07/15 09:15:53 Tuesday
-#             add switch var $preCheckPlace to checkPlace(will clear Markers), you can use it when eco flow or every stage of flow
 # label     : task_proc
 #   -> (atomic_proc|display_proc|task_proc)
 # descrip   : fix overlap insts with fixed pstatus: set placed -> refinePlace -> set fixed
 #             can exclude endcap/welltap and block cell
+# update    : 2025/07/15 09:15:53 Tuesday
+#             add switch var $preCheckPlace to checkPlace(will clear Markers), you can use it when eco flow or every stage of flow
 # ref       : link url
 # --------------------------
 proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefinePlace 1} {ifRunEcoRoute 1} {only_refinePlace_violInsts "false"} {overlap_marker_name {SPOverlapViolation SPFillerGapViolation}}} {
@@ -42,6 +42,11 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
     #puts "after: $insts"
     select_obj $insts
     set insts_ptr [dbget selected.]
+    set insts_num [llength $insts_ptr]
+    set insts_name [dbget $insts_ptr.name -e -u]
+    set formated_instsname [lmap instname $insts_name {set temp "\t$instname"}]
+    puts "$promptINFO fix_overlap: have $insts_num overlaped insts:"
+    puts [join $formated_instsname \n]
     # $testOrRun have low priority, $ifRunRefinePlace and $ifRunEcoRoute have higher priority!!
     if {$testOrRun == "run"} {
       if {$insts_ptr != ""} {

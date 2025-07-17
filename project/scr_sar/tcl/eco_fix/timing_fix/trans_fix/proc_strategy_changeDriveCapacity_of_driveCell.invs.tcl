@@ -5,11 +5,13 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|task_proc)
 # descrip   : strategy of fixing transition: change drive capacibility of cell. ONLY one celltype
+# update    : 2025/07/17 10:40:17 Thursday
+#             add $ifClamp: if changedDriveCapacity is out of $driveRange, it can clamp it and return it 
 # ref       : link url
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 4} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"}} {
+proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 4} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {ifClamp 1}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
@@ -21,7 +23,7 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
       return "0x0:2" 
     } else {
       #puts "driveLevel : $driveLevel"
-      if {$driveLevel == "05"} {
+      if {$driveLevel == "05"} { ; # M31 std cell library have X05(0.5) driveCapacity
         set driveLevelNum 0.5
       } else {
         set driveLevelNum [expr int($driveLevel)]
@@ -65,7 +67,14 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
       } else {
         set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 0]
       }
-      if {$toDrive > [lindex $driveRangeRight end] || $toDrive < [lindex $driveRangeRight 0] } {
+      # legealize edge of $driveRange
+      set maxAvailableDriveOnRange [find_nearestNum_atIntegerList $availableDriveCapacityList [lindex $driveRangeRight 1] 0 1]
+      set minAvailableDriveOnRnage [find_nearestNum_atIntegerList $availableDriveCapacityList [lindex $driveRangeRight 0] 1 1]
+      if {$ifClamp && $toDrive > $maxAvailableDriveOnRange} {
+        set toDrive $maxAvailableDriveOnRange
+      } elseif {$ifClamp && $toDrive < $minAvailableDriveOnRnage} {
+        set toDrive $minAvailableDriveOnRnage
+      } else {
         return "0x0:3"; # toDrive is out of acceptable driveCapacity list ($driveRange)
       }
       if {[regexp BWP $celltype]} { ; # TSMC standard cell keyword

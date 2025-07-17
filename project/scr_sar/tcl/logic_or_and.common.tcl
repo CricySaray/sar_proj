@@ -2,11 +2,14 @@
 # --------------------------
 # author    : sar song
 # date      : 2025/07/16 19:17:29 Wednesday
-# update    : 2025/07/16 23:18:45 Wednesday
-#             add ol/al proc: check empty string or zero value
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
 # descrip   : logic or(lo) / logic and(la) (string comparition): check if variable is equaled to string
+# update    : 2025/07/16 23:18:45 Wednesday
+#             add ol/al proc: check empty string or zero value
+# update    : 2025/07/17 10:11:36 Thursday
+#             add eo proc: judge if the first arg is empty string or number 0. advanced version of [expr $test ? trueValue : falseValue ]
+#             it(eo) can input string and the trueValue and falseValue can also be string
 # ref       : link url
 # --------------------------
 
@@ -112,7 +115,7 @@ proc re {args} {
 		return [expr {![_to_boolean [lindex $args 0]]}]
 	}
 }
-# TODO : 这里设置了option，但是假如没有写option，直接写了值或者字符串，该如何解析？
+# TODO(FIXED) : 这里设置了option，但是假如没有写option，直接写了值或者字符串，该如何解析？
 define_proc_arguments re \
   -info ":re ?-list|-dict? value(s) - Logical negation of values"\
   -define_args {
@@ -136,3 +139,32 @@ proc _to_boolean {value} {
 		}
 	}
 }
+
+# test if firstArg is empty string or number 0
+#     if it is, return secondArg(trueValue)
+#     if it is not , return thirdArg(falseValue)
+alias eo "ifEmptyZero"
+proc ifEmptyZero {value trueValue falseValue} {
+    # 错误检查：使用 [info level 0] 获取当前过程的参数数量
+    if {[llength [info level 0]] != 4} {
+        error "Usage: ifEmptyZero value trueValue falseValue"
+    }
+    # 处理空值或空白字符串
+    if {$value eq "" || [string trim $value] eq ""} {
+        return $falseValue
+    }
+    # 尝试将值转换为数字进行判断
+    set numericValue [string is double -strict $value]
+    if {$numericValue} {
+        # 数值为0时返回falseValue
+        if {[expr {$value == 0}]} {
+            return $falseValue
+        }
+    } elseif {$value eq "0"} {
+        # 字符串"0"返回falseValue
+        return $falseValue
+    }
+    # 其他情况返回trueValue
+    return $trueValue
+}
+

@@ -23,15 +23,13 @@ let mapleader = "\\"
 cabbrev co %!column -t -s '\|'
 
 """ KEYWORDS TO HIGHLIGHT -------------------------------------------------------
-augroup highlight_songnote
-  autocmd!
-  autocmd BufEnter * syn match SongNote "songNOTE" containedin=.*
-  autocmd BufEnter * hi link SongNote Cursor
-augroup END
-" you can specify keyword to highlight
-let g:highlight_keywords = ['pw', 're', 'la', 'lo', 'al', 'ol'] " for tcl proc: logic operator
-let g:highlight_keywords += ['other_keyword']
-let g:highlight_group = 'Special'
+
+" 定义一个三维列表，每个子列表包含一个高亮组和对应的关键词列表
+let g:highlight_groups = [
+      \ ['Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo']],
+      \ ['Cursor',  ['songNOTE']],
+      \ ['GruvboxFg0', ['TODO', 'FIXED']],
+      \ ]
 " 创建高亮组自动命令
 augroup highlight_keywords
   autocmd!
@@ -39,12 +37,17 @@ augroup highlight_keywords
 augroup END
 " 设置关键词高亮的函数
 function! SetupKeywordHighlights()
-  " 遍历关键词列表，为每个关键词设置语法匹配和高亮
-  for keyword in g:highlight_keywords
-    execute 'syn match HighlightKeyword /\V\<'. escape(keyword, '/\') .'\>/ containedin=.*'
+  " 遍历每个高亮组配置
+  for group in g:highlight_groups
+    let highlight_group = group[0]
+    let keywords = group[1]
+    " 遍历关键词列表，为每个关键词设置语法匹配
+    for keyword in keywords
+      execute 'syn match HighlightKeyword_' . highlight_group . ' /\V\<'. escape(keyword, '/\') .'\>/ containedin=.*'
+    endfor
+    " 设置当前高亮组的高亮样式
+    execute 'hi def link HighlightKeyword_' . highlight_group . ' ' . highlight_group
   endfor
-  " 统一设置所有关键词的高亮
-  execute 'hi def link HighlightKeyword' . ' ' . g:highlight_group
 endfunction
 
 """ ABBR CONFIG -----------------------------------------------------------------
@@ -86,6 +89,8 @@ command! Rt call InsertProcessHead()
 
 
 """ VIM VARIABLES SETTING -------------------------------------------------------
+set path+=**
+
 
 """ SETTING CONFIG --------------------------------------------------------------
 if has("syntax")

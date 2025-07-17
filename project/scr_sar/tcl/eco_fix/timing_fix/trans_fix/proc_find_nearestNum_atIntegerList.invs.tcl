@@ -5,6 +5,10 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc)
 # descrip   : find the nearest number from list, you can control which one of bigger or smaller
+#             if $returnBigOneFlag is 1, return big one near number
+#             if $returnBigOneFlag is 0, return small one near number
+#             if $ifClamp is 1 and $number is out of $realList, return the maxOne or small one of $realList
+#             if $ifClamp is 0 and $number is out of $realList, return "0x0:1"(error)
 # ref       : link url
 # --------------------------
 proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {

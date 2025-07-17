@@ -1482,14 +1482,14 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
         if {$processType == "TSMC"} {
           regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
           if {[dbget head.libCells.name $toCelltype -e] == ""} {
-            return "0x0:4:"; # forceSpecifyDriveCapacibility: have no this celltype 
+            return "0x0:4"; # forceSpecifyDriveCapacibility: have no this celltype 
           } else {
             return $toCelltype
           }
         } elseif {$processType == "HH"} {
-          regsub "X${driveLevel}" $celltype "X${toDrive}" toCelltype
+          regsub {(.*)X${driveLevel}} $celltype {\1X${toDrive}} toCelltype
           if {[dbget head.libCells.name $toCelltype -e] == ""} {
-            return "0x0:4:"; # forceSpecifyDriveCapacibility: have no this celltype 
+            return "0x0:4"; # forceSpecifyDriveCapacibility: have no this celltype 
           } else {
             return $toCelltype
           }

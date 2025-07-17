@@ -132,7 +132,7 @@ proc fix_trans {args} {
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]]
-if {1} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
+if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # 1 v more
     set oneToMoreList [lsort -index 0 -real -decreasing $oneToMoreList]
     set oneToMoreList [lsort -index 1 -increasing [lsort -unique -index 2 $oneToMoreList]]
@@ -204,11 +204,11 @@ if {1} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
-    set skippedList_1v1 [list [list situ method celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViol Pin]]
+    set skippedList_1v1 [list [list situ method celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     set notConsideredPrompt {
       "# NC - not considered situation"
     }
-    set notConsideredList_1v1 [list [list situ celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViol Pin]]
+    set notConsideredList_1v1 [list [list situ violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     # ------
     # init LIST
     set cmdList $fixedPrompts
@@ -762,6 +762,7 @@ if {$debug} { puts "# -----------------" }
     pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
     pw $sf "1 v more number: [llength $violValue_driver_severalLoader_D3List]"
     pw $sf ""
+    pw $sf "ONE to MORE SITUATIONS"
     pw $sf [print_formatedTable $oneToMoreList]
     pw $sf ""
     pw $sf "SKIPPED LIST"
@@ -770,6 +771,8 @@ if {$debug} { puts "# -----------------" }
     pw $sf [print_formatedTable $skippedList_1v1]
     pw $sf ""
     pw $sf "NOT CONSIDERED LIST"
+    pw $sf ""
+    pw $sf [join $notConsideredPrompt \n]
     pw $sf ""
     pw $sf [print_formatedTable $notConsideredList_1v1]
     close $sf

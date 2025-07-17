@@ -680,7 +680,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       if {$cmd1 != "cantChange"} { 
         lappend cmdList "# [lindex $fixedList_1v1 end]"; 
         if {[llength $cmd1] == 2} {
-          set cmdList [concat $cmdList $cmd1]
+          lappend cmdList $cmd1; #!!!
         } else {
           lappend cmdList $cmd1 
         }

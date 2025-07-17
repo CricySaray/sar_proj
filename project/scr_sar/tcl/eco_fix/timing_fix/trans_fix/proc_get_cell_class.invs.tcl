@@ -25,7 +25,15 @@ proc logic_of_mux {inst} {
   } elseif {[get_property [get_cells $inst] is_sequential]} {
     return "sequential"
   } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
-    return "CLKcell" 
+    if {[get_property [get_cells $inst] is_buffer]} {
+      return "CLKbuffer"
+    } elseif {[get_property [get_cells $inst] is_inverter]} {
+      return "CLKinverter"
+    } elseif {[get_property [get_cells $inst] is_combinational]} {
+      return "CLKlogic" 
+    } else {
+      return "CLKcell" 
+    }
   } elseif {[get_property [get_cells $inst] is_buffer]} {
     return "buffer" 
   } elseif {[get_property [get_cells $inst] is_inverter]} {

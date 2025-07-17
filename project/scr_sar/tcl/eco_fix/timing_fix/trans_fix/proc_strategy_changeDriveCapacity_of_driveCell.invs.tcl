@@ -11,7 +11,7 @@
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 4} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {ifClamp 1}} {
+proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacity 4} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {ifClamp 1}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
@@ -30,19 +30,20 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
       }
       set processType [whichProcess_fromStdCellPattern $celltype]
       set toDrive 0
-      if {$forceSpecifyDriveCapacibility } {
-        set toDrive $forceSpecifyDriveCapacibility
+      if {$forceSpecifyDriveCapacity } {
+        set toDrive $forceSpecifyDriveCapacity
         if {$processType == "TSMC"} {
           regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
           if {[dbget head.libCells.name $toCelltype -e] == ""} {
-            return "0x0:4"; # forceSpecifyDriveCapacibility: have no this celltype 
+            return "0x0:4"; # forceSpecifyDriveCapacity: have no this celltype 
           } else {
             return $toCelltype
           }
         } elseif {$processType == "HH"} {
-          regsub {(.*)X${driveLevel}} $celltype {\1X${toDrive}} toCelltype
+          regsub [subst {(.*)X${driveLevel}}] $celltype [subst {\\1X${toDrive}}] toCelltype
           if {[dbget head.libCells.name $toCelltype -e] == ""} {
-            return "0x0:4"; # forceSpecifyDriveCapacibility: have no this celltype 
+            return $celltype ; # songNOTE: temp!!!
+            return "0x0:4"; # forceSpecifyDriveCapacity: have no this celltype 
           } else {
             return $toCelltype
           }
@@ -52,9 +53,9 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
       # simple version, provided fixed drive capacibility for 
       set toDrive_temp [expr int([expr $driveLevelNum * ($changeStairs * 2)])]
       if {$processType == "TSMC"} {
-        regsub D$driveLevel $celltype D* searchCelltypeExp
+        regsub D${driveLevel}BWP $celltype D*BWP searchCelltypeExp
       } elseif {$processType == "HH"} {
-        regsub X$driveLevel $celltype X* searchCelltypeExp
+        regsub [subst {(.*)X$driveLevel}] $celltype [subst {\\1X*}] searchCelltypeExp
       }
       set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
       set availableDriveCapacityList [lmap celltype $availableCelltypeList {
@@ -81,7 +82,7 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacibility 
         regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
         return $toCelltype
       } elseif {[regexp {.*X\d+.*A[RHL]\d+} $celltype]} { ; # M31 standard cell keyword/ HH40
-        regsub "X${driveLevel}" $celltype "X${toDrive}" toCelltype
+        regsub [subst {(.*)X${driveLevel}}] $celltype [subst {\\1X${toDrive}}] toCelltype
         return $toCelltype
       }
     }

@@ -25,7 +25,7 @@ proc print_ecoCommand {args} {
   } else {
     if {$type == "change"} {
       if {$inst == "" || $celltype == "" || [dbget top.insts.name $inst -e] == "" || [dbget head.libCells.name $celltype -e] == ""} {
-        return "0x0:2"; # change: error instname or celltype 
+        return "pe:0x0:2"; # change: error instname or celltype 
       }
       return "ecoChangeCell -cell $celltype -inst $inst"
     } elseif {$type == "add"} {

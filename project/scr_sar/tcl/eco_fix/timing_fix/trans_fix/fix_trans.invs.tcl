@@ -382,6 +382,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
               lappend fixedList_1v1 [concat "ll:in_7:2" "DA_09" ${toChangeCelltype}_$toAddCelltype $allInfoList]
               set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
               set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
+              puts $cmd1
             } else {
               if {$ifHaveFasterVT} {
                 set cmd_TA_driveInst [print_ecoCommand -type change -inst $driveInstname -celltype $toChangeCelltype]
@@ -682,7 +683,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
         if {[llength $cmd1] == 2} {
           lappend cmdList $cmd1; #!!!
         } else {
-          lappend cmdList $cmd1 
+          set cmdList [concat $cmdList $cmd1]
         }
       }
 if {$debug} { puts "# -----------------" }

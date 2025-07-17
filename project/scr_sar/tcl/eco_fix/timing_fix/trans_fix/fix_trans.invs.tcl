@@ -176,8 +176,8 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
 
       "## lc - logic to clockcell"
       "## cl - clockcell to logic"
-      "## bc - buffer/inverter to clockcell"
-      "## cb - clockcell to buffer/inverter"
+      "## bc - buffer/inverter/clockcell to clockcell"
+      "## cb - clockcell to buffer/inverter/clockcell"
 
       "## lm - logic to mem"
       "## ml - mem to logic"
@@ -534,7 +534,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-      } elseif {$driveCellClass in {CLKcell buffer inverter} && $loadCellClass in {CLKcell}} { ; # songNOTE: now dont split between different cell classes
+      } elseif {$driveCellClass in {CLKcell buffer inverter} && $loadCellClass in {CLKcell} || $driveCellClass in {CLKcell} && $loadCellClass in {buffer inverter}} { ; # songNOTE: now dont split between different cell classes
 if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         if {!$ifHaveFasterVT && !$ifHaveLargerCapacity} {
           lappend skippedList_1v1 [concat "bb:in_1:1" "NFL" $allInfoList]

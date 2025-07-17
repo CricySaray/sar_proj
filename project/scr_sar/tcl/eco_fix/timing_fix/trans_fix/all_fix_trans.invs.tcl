@@ -84,7 +84,7 @@ proc fix_trans {args} {
     set fi [open $file_viol_pin r]
     set violValue_driverPin_onylOneLoaderPin_D3List [list ]; # one to one
     set violValue_driver_severalLoader_D3List [list ]; # one to more
-    set oneToMoreList [list [list violValue drivePin loadPin]]
+    set oneToMoreList [list ]
     # ------------------------------------
     # sort two class for all viol situations
     set j 0
@@ -123,7 +123,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # 1 v more
     set oneToMoreList [lsort -index 0 -real -decreasing $oneToMoreList]
     set oneToMoreList [lsort -index 0 -real -decreasing [lsort -unique -index 1 $oneToMoreList]]
-    
+    #set oneToMoreList [lreplace $oneToMoreList 0 0 [list violValue drivePin loadPin]]
     # ----------------------
     # info collections
     ## cant change info
@@ -797,7 +797,7 @@ proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d
 # ref       : link url
 # --------------------------
 alias ci "counter"
-unset counters
+catch {unset counters}
 proc counter {input {start 1}} {
     global counters
     if {![info exists counters($input)]} {

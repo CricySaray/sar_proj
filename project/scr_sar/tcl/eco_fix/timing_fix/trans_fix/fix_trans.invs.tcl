@@ -132,7 +132,7 @@ proc fix_trans {args} {
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing $violValue_driver_severalLoader_D3List]
     set violValue_driver_severalLoader_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driver_severalLoader_D3List]]
-if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
+if {1} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # 1 v more
     set oneToMoreList [lsort -index 0 -real -decreasing $oneToMoreList]
     set oneToMoreList [lsort -index 1 -increasing [lsort -unique -index 2 $oneToMoreList]]

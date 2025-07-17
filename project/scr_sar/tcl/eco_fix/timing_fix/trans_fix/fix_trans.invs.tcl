@@ -679,8 +679,8 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       ### loader is a buffer, and driver is a buffer too
       ### loader is a logic cell, and driver is a logic cell
       ### !!!CLK cell : need specific cell type buffer/inverter
-      if {$cmd1 != "cantChange"} { 
-        if {[al $cmd1]}lappend cmdList "# [lindex $fixedList_1v1 end]"; 
+      if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
+        lappend cmdList "# [lindex $fixedList_1v1 end]"; 
         if {[llength $cmd1] == 2} {
           set cmdList [concat $cmdList $cmd1]; #!!!
         } else {

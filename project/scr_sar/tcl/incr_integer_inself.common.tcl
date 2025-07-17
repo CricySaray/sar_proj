@@ -10,7 +10,7 @@
 # ref       : link url
 # --------------------------
 alias ci "counter"
-unset counters
+catch {unset counters}
 proc counter {input {start 1}} {
     global counters
     if {![info exists counters($input)]} {

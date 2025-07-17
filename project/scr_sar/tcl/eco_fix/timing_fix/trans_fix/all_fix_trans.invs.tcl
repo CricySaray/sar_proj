@@ -122,8 +122,8 @@ proc fix_trans {args} {
 if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # 1 v more
     set oneToMoreList [lsort -index 0 -real -decreasing $oneToMoreList]
-    set oneToMoreList [lsort -index 0 -real -decreasing [lsort -unique -index 1 $oneToMoreList]]
-    #set oneToMoreList [lreplace $oneToMoreList 0 0 [list violValue drivePin loadPin]]
+    set oneToMoreList [lsort -index 0 -real -decreasing [lsort -unique -index {1 2} $oneToMoreList]]
+    set oneToMoreList [linsert $oneToMoreList 0 [list violValue drivePin loadPin]]
     # ----------------------
     # info collections
     ## cant change info

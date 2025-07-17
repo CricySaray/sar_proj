@@ -44,6 +44,10 @@ alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
 alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
+# config for autojump (github : wting/autojump)
+[[ -s /home/cricy/.autojump/etc/profile.d/autojump.sh ]] && source /home/cricy/.autojump/etc/profile.d/autojump.sh
+
+#------------------------------------------------
 # change newest dir
 # 进入最新修改的文件夹（支持层数参数和忽略列表）
 alias cl='lc'
@@ -328,4 +332,4 @@ precmd() {
     PS1="${STATUS_COLOR}[\#]\u \[\e[1m\]\D{%Y/%m/%d} \A\[\e[0m\]$(parse_git_status) \[\e[34m\]\[\e[1m\]\w\[\e[0m\] \$ "
 }
 PROMPT_COMMAND=precmd
-
+export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND ;} history -a"

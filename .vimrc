@@ -26,7 +26,7 @@ cabbrev co %!column -t -s '\|'
 
 " 定义一个三维列表，每个子列表包含一个高亮组和对应的关键词列表
 let g:highlight_groups = [
-      \ ['Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo']],
+      \ ['Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
       \ ['Cursor',  ['songNOTE']],
       \ ['GruvboxFg0', ['TODO', 'FIXED']],
       \ ]
@@ -166,6 +166,7 @@ nnoremap <leader>sv :source $MYVIMRC<cr>
 nnoremap <silent> gd :normal! m'gd<C-O><CR>
 
 " editing config
+nnoremap <c-h> <c-e>
 nnoremap <c-a> I
 nnoremap <c-e> A
 inoremap <c-a> <esc>I

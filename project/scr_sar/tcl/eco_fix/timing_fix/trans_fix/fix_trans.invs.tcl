@@ -204,7 +204,11 @@ if {1} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
-    set skippedList_1v1 [list [list ]]
+    set skippedList_1v1 [list [list situ method celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViol Pin]]
+    set notConsideredPrompt {
+      "# NC - not considered situation"
+    }
+    set notConsideredList_1v1 [list [list situ celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViol Pin]]
     # ------
     # init LIST
     set cmdList $fixedPrompts
@@ -686,6 +690,8 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
         } else {
           lappend cmdList $cmd1
         }
+      } elseif {$cmd1 == ""} {
+        lappend notConsideredList_1v1 [list "NC" $allInfoList]
       }
 if {$debug} { puts "# -----------------" }
     }
@@ -757,6 +763,15 @@ if {$debug} { puts "# -----------------" }
     pw $sf "1 v more number: [llength $violValue_driver_severalLoader_D3List]"
     pw $sf ""
     pw $sf [print_formatedTable $oneToMoreList]
+    pw $sf ""
+    pw $sf "SKIPPED LIST"
+    pw $sf [join $skippedSituationsPrompt \n]
+    pw $sf ""
+    pw $sf [print_formatedTable $skippedList_1v1]
+    pw $sf ""
+    pw $sf "NOT CONSIDERED LIST"
+    pw $sf ""
+    pw $sf [print_formatedTable $notConsideredList_1v1]
     close $sf
 
 

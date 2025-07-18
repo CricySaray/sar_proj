@@ -299,7 +299,7 @@ if {$debug} { puts "ll:in_1:1 FS changeDrive : $toChangeCelltype" }
             lappend cantChangeList_1v1 [concat "ll:in_1:1" "S" $allInfoList]
             set cmd1 "cantChange"
           }
-        } elseif {$ifHaveFasterVT && $canChangeVT && [expr [lindex $viol_driverPin_loadPin 0] >= -0.015 || \
+        } elseif {$ifHaveFasterVT && $canChangeVT && [expr [lindex $viol_driverPin_loadPin 0] >= -0.006 || \
                    [lindex $viol_driverPin_loadPin 0] >= -0.01 && $netLength > [expr $logicToBufferDistanceThreshold  * 15 ] || \
                    [lindex $viol_driverPin_loadPin 0] >= -0.02 && $netLength > [expr $logicToBufferDistanceThreshold  * 30 ] \
                    ]} { ; # songNOTE: situation 01 only changeVT,

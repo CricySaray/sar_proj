@@ -5,6 +5,9 @@
 # label     : task_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
 # descrip   : fix trans
+# update    : 2025/07/18 19:51:29 Friday
+#           (U001) check if changed cell meet rule that is larger than specified drive capacity(such as X1) at end of fixing looping
+#                  if $largerThanDriveCapacityOfChangedCelltype is X1, so drive capacity of needing to ecoChangeCell must be larger than X1
 # ref       : link url
 # --------------------------
 # ------
@@ -49,34 +52,35 @@
 # The principle of minimum information
 proc fix_trans {args} {
   # default value for all var
-  set file_viol_pin                     ""
-  set violValue_pin_columnIndex         {4 1}
-  set canChangeVT                       1
-  set canChangeDriveCapacity            1
-  set canChangeVTandDriveCapacity       1
-  set canAddRepeater                    1
-  set logicToBufferDistanceThreshold    10
-  set refBufferCelltype                 "BUFX4AR9"
-  set refInverterCelltype               "INVX4AR9"
-  set refCLKBufferCelltype              "CLKBUFX4AL9"
-  set refCLKInverterCelltype            "CLKINVX4AL9"
-  set cellRegExp                        "X(\\d+).*(A\[HRL\]\\d+)$"
-  set rangeOfVtSpeed                    {AL9 AR9 AH9}
-  set clkNeedVtWeightList               {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
-  set normalNeedVtWeightList            {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
-  set rangeOfDriveCapacityForChange     {1 12}
-  set rangeOfDriveCapacityForAdd        {3 12}
-  set ecoNewInstNamePrefix              "sar_fix_trans_clk_071615"
-  set suffixFilename                    ""; # for example : eco4
-  set debug                             0
+  set file_viol_pin                            ""
+  set violValue_pin_columnIndex                {4 1}
+  set canChangeVT                              1
+  set canChangeDriveCapacity                   1
+  set canChangeVTandDriveCapacity              1
+  set canAddRepeater                           1
+  set logicToBufferDistanceThreshold           10
+  set refBufferCelltype                        "BUFX4AR9"
+  set refInverterCelltype                      "INVX4AR9"
+  set refCLKBufferCelltype                     "CLKBUFX4AL9"
+  set refCLKInverterCelltype                   "CLKINVX4AL9"
+  set cellRegExp                               "X(\\d+).*(A\[HRL\]\\d+)$"
+  set rangeOfVtSpeed                           {AL9 AR9 AH9}
+  set clkNeedVtWeightList                      {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
+  set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
+  set rangeOfDriveCapacityForChange            {1 12}
+  set rangeOfDriveCapacityForAdd               {3 12}
+  set largerThanDriveCapacityOfChangedCelltype 2
+  set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
+  set suffixFilename                           ""; # for example : eco4
+  set debug                                    0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set sumFile                           [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
-  set cantExtractFile                   [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]
-  set cmdFile                           [eo $suffixFilename "sor_ecocmds_$suffixFilename.tcl" "sor_ecocmds.tcl"]
+  set sumFile                                 [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
+  set cantExtractFile                         [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]
+  set cmdFile                                 [eo $suffixFilename "sor_ecocmds_$suffixFilename.tcl" "sor_ecocmds.tcl"]
   # songNOTE: only deal with loadPin viol situation, ignore drivePin viol situation
   # $violValue_pin_columnIndex  : for example : {3 1}
   #   violPin   xxx   violValue   xxx   xxx
@@ -215,7 +219,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # songNOTE: TODO: 
     # 1 check violated chain, or timing arc
     # 2 specially deal with specific situation, such as big violValue but short net length
-    set i 0
+##### BEGIN OF LOOP
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
       ### 1 loader is a buffer, but driver is a logic cell
 if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
@@ -286,7 +290,7 @@ if {$debug} { puts "ll:in_1:1 FS changeDrive : $toChangeCelltype" }
             lappend cantChangeList_1v1 [concat "ll:in_1:1" "S" $allInfoList]
             set cmd1 "cantChange"
           }
-        } elseif {$ifHaveFasterVT && $canChangeVT && [expr [lindex $viol_driverPin_loadPin 0] >= -0.015 || \
+        } elseif {$ifHaveFasterVT && $canChangeVT && [expr [lindex $viol_driverPin_loadPin 0] >= -0.006 || \
                    [lindex $viol_driverPin_loadPin 0] >= -0.01 && $netLength > [expr $logicToBufferDistanceThreshold  * 15 ] || \
                    [lindex $viol_driverPin_loadPin 0] >= -0.02 && $netLength > [expr $logicToBufferDistanceThreshold  * 30 ] \
                    ]} { ; # songNOTE: situation 01 only changeVT,
@@ -935,6 +939,20 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       ### loader is a logic cell, and driver is a logic cell
       ### !!!CLK cell : need specific cell type buffer/inverter
       
+
+      ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
+      # ONLY check $toChangeCelltype, NOT check $toAddCelltype
+      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] < $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
+        set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
+        set checkedCmd [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
+        if {[llength $cmd1] > 1 && [llength $cmd1] < 5} {
+          set indexChangeCmd [lsearch -regexp $cmd1 "^ecoChangeCell .*"]
+          set cmd1 [lreplace $cmd1 $indexChangeCmd $indexChangeCmd $checkedCmd]
+        } elseif {[llength $cmd1] >= 5} {
+          set cmd1 $checkedCmd
+        }
+      }
+      
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_1v1 end]"
         if {[llength $cmd1] < 5} { ; # because shortest eco cmd need 5 items at least (ecoChangeCell -inst instname -cell celltype)
@@ -947,6 +965,9 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       }
 if {$debug} { puts "# -----------------" }
     }
+##### END OF LOOP
+
+
     lappend cmdList " "
     lappend cmdList "setEcoMode -reset"
 
@@ -1028,6 +1049,7 @@ if {$debug} { puts "# -----------------" }
     pw $sf [join $notConsideredPrompt \n]
     pw $sf ""
     pw $sf [print_formatedTable $notConsideredList_1v1]
+    pw $sf "total non-considered [expr [llength $notConsideredList_1v1] - 1]"
     close $sf
 
 
@@ -1055,13 +1077,15 @@ define_proc_arguments fix_trans \
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
     {-rangeOfDriveCapacityForChange "specify range of drive capacity for ecoChangeCell" AList list optional}
     {-rangeOfDriveCapacityForAdd "specify range of drive capacity for ecoAddRepeater" AList list optional}
-    {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater"}
+    {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
+    {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list optional}
     {-suffixFilename "specify suffix of result filename" AString string optional}
-    {-sumFile "specify summary filename" AString string optional}
-    {-cantExtractFile "specify cantExtract file name" AString string optional}
-    {-cmdFile "specify cmd file name" AString string optional}
     {-debug "debug mode" "" boolean optional}
   }
+# needn't to set options as below:
+#    {-sumFile "specify summary filename" AString string optional}
+#    {-cantExtractFile "specify cantExtract file name" AString string optional}
+#    {-cmdFile "specify cmd file name" AString string optional}
 
 proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget top.insts.cell.name $celltype -e ] == ""} {

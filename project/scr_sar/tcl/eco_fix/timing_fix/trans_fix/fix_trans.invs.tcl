@@ -415,7 +415,7 @@ if {$debug} {puts "test : ll:in_7:2"}
               }
             }
           }
-        } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.04 && [lindex $viol_driverPin_loadPin 0] > -0.1 && $netLength < [expr $logicToBufferDistanceThreshold * 1]} {; # fix viol
+        } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.04 && [lindex $viol_driverPin_loadPin 0] > -0.1 && $netLength < [expr $logicToBufferDistanceThreshold * 1]} {; # fix viol big and short length
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
           set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {

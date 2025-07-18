@@ -35,7 +35,7 @@ proc logic_of_mux {inst} {
     } else {
       return "CLKcell" 
     }
-  } elseif {[regexp {DEL} $celltype] && [get_property [get_cells $inst] is_buffer]} {
+  } elseif {[regexp {^DEL} $celltype] && [get_property [get_cells $inst] is_buffer]} {
     return "delay"
   } elseif {[get_property [get_cells $inst] is_buffer]} {
     return "buffer" 

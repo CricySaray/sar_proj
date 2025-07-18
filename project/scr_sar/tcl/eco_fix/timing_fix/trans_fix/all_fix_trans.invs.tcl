@@ -67,7 +67,7 @@ proc fix_trans {args} {
   set rangeOfVtSpeed                           {AL9 AR9 AH9}
   set clkNeedVtWeightList                      {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
   set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
-  set specialNeedVtWeightList                  {{AL9 0} {AR9 3} {AH9 0}}; # for checking AH9(HVT), if violated drive inst is HVT, change it
+  set specialNeedVtWeightList                  {{AL9 0} {AR9 3} {AH9 0}}; # for checking AH9(HVT), if violated drive inst is HVT, change it. it oftenly is used to change to almost vt like RVT/SVT.
   set rangeOfDriveCapacityForChange            {1 12}
   set rangeOfDriveCapacityForAdd               {3 12}
   set largerThanDriveCapacityOfChangedCelltype 2
@@ -368,15 +368,8 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
               set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
               set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
             } else {
-              if {$ifHaveFasterVT} {
-                set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype -inst $toChangeCelltype]
-                lappend fixedList_1v1 [concat "ll:in_6:3" "TA_09" $toAddCelltype $allInfoList]
-                set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
-                set cmd1 [concat $cmd_TA_driveInst $cmd_TA_add]
-              } else {
-                lappend fixedList_1v1 [concat "ll:in_6:4" "A_09" $toAddCelltype $allInfoList]
-                set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
-              }
+              lappend fixedList_1v1 [concat "ll:in_6:4" "A_09" $toAddCelltype $allInfoList]
+              set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
             }
           }
         } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.12 && $netLength > [expr $logicToBufferDistanceThreshold * 9]} { ; # songNOTE: situation 05 not in above situation
@@ -407,6 +400,27 @@ if {$debug} {puts "test : ll:in_7:2"}
                 lappend fixedList_1v1 [concat "ll:in_7:4" "A_09" $toAddCelltype $allInfoList]
                 set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
               }
+            }
+          }
+        } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.04 && [lindex $viol_driverPin_loadPin 0] > -0.1 && $netLength < [expr $logicToBufferDistanceThreshold * 1]} {; # fix viol big and short length
+          set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+          if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
+            lappend cantChangeList_1v1 [concat "ll:in_6:1" "N_forceDrive" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+#puts  "in 4: $driveCelltype --  $toChangeCelltype song"
+            set toChangeCelltype [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
+            if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
+              set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
+if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
+              set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
+              lappend fixedList_1v1 [concat "ll:in_6:2" "DA_09" ${toChangeCelltype}_$toAddCelltype $allInfoList]
+              set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
+              set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
+            } else {
+              lappend fixedList_1v1 [concat "ll:in_6:4" "A_09" $toAddCelltype $allInfoList]
+              set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
             }
           }
         } else { ; # songNOTE: situation 05 not in above situation

@@ -228,6 +228,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # songNOTE: TODO: 
     # 1 check violated chain, or timing arc
     # 2 specially deal with specific situation, such as big violValue but short net length
+##### BEGIN OF LOOP
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
       ### 1 loader is a buffer, but driver is a logic cell
 if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
@@ -949,7 +950,10 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       
 
       ## songNOTE: check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
-      if {}
+      # ONLY check $toChangeCelltype, NOT check $toAddCelltype
+      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= 1} { ; # drive capacity of changed cell must be larger than X1
+       
+      }
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_1v1 end]"
@@ -963,6 +967,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       }
 if {$debug} { puts "# -----------------" }
     }
+##### END OF LOOP
 
 
     lappend cmdList " "

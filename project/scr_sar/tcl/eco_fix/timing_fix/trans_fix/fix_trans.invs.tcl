@@ -7,6 +7,7 @@
 # descrip   : fix trans
 # update    : 2025/07/18 19:51:29 Friday
 #           (U001) check if changed cell meet rule that is larger than specified drive capacity(such as X1) at end of fixing looping
+#                  if $largerThanDriveCapacityOfChangedCelltype is X1, so drive capacity of needing to ecoChangeCell must be larger than X1
 # ref       : link url
 # --------------------------
 # ------
@@ -64,26 +65,27 @@ source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced put
 # The principle of minimum information
 proc fix_trans {args} {
   # default value for all var
-  set file_viol_pin                     ""
-  set violValue_pin_columnIndex         {4 1}
-  set canChangeVT                       1
-  set canChangeDriveCapacity            1
-  set canChangeVTandDriveCapacity       1
-  set canAddRepeater                    1
-  set logicToBufferDistanceThreshold    10
-  set refBufferCelltype                 "BUFX4AR9"
-  set refInverterCelltype               "INVX4AR9"
-  set refCLKBufferCelltype              "CLKBUFX4AL9"
-  set refCLKInverterCelltype            "CLKINVX4AL9"
-  set cellRegExp                        "X(\\d+).*(A\[HRL\]\\d+)$"
-  set rangeOfVtSpeed                    {AL9 AR9 AH9}
-  set clkNeedVtWeightList               {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
-  set normalNeedVtWeightList            {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
-  set rangeOfDriveCapacityForChange     {1 12}
-  set rangeOfDriveCapacityForAdd        {3 12}
-  set ecoNewInstNamePrefix              "sar_fix_trans_clk_071615"
-  set suffixFilename                    ""; # for example : eco4
-  set debug                             0
+  set file_viol_pin                            ""
+  set violValue_pin_columnIndex                {4 1}
+  set canChangeVT                              1
+  set canChangeDriveCapacity                   1
+  set canChangeVTandDriveCapacity              1
+  set canAddRepeater                           1
+  set logicToBufferDistanceThreshold           10
+  set refBufferCelltype                        "BUFX4AR9"
+  set refInverterCelltype                      "INVX4AR9"
+  set refCLKBufferCelltype                     "CLKBUFX4AL9"
+  set refCLKInverterCelltype                   "CLKINVX4AL9"
+  set cellRegExp                               "X(\\d+).*(A\[HRL\]\\d+)$"
+  set rangeOfVtSpeed                           {AL9 AR9 AH9}
+  set clkNeedVtWeightList                      {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
+  set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
+  set rangeOfDriveCapacityForChange            {1 12}
+  set rangeOfDriveCapacityForAdd               {3 12}
+  set largerThanDriveCapacityOfChangedCelltype 1
+  set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
+  set suffixFilename                           ""; # for example : eco4
+  set debug                                    0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -953,7 +955,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 
       ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
-      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= 1} { ; # drive capacity of changed cell must be larger than X1
+      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
         set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
         set checkedCmd [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
         if {[llength $cmd1] > 1 && [llength $cmd1] < 5} {
@@ -1088,6 +1090,7 @@ define_proc_arguments fix_trans \
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
     {-rangeOfDriveCapacityForChange "specify range of drive capacity for ecoChangeCell" AList list optional}
     {-rangeOfDriveCapacityForAdd "specify range of drive capacity for ecoAddRepeater" AList list optional}
+    {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater"}
     {-suffixFilename "specify suffix of result filename" AString string optional}
     {-sumFile "specify summary filename" AString string optional}

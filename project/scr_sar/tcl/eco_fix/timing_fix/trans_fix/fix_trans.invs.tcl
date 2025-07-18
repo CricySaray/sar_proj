@@ -955,16 +955,19 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 
       ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
-      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] < $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
-        set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
+puts "TEST: $toChangeCelltype"
+      if {$cmd1 != "" && $cmd1 != "cantChange" && [get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] < $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
+        set checkedCmd ""
+        set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype $largerThanDriveCapacityOfChangedCelltype 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
         set checkedCmd [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
-        if {[llength $cmd1] > 1 && [llength $cmd1] < 5} {
+        if {[llength $cmd1] > 1 && [llength $cmd1] < 5 && ![regexp "0x0" $checkedCmd] && $checkedCmd != ""} {
           set indexChangeCmd [lsearch -regexp $cmd1 "^ecoChangeCell .*"]
           set cmd1 [lreplace $cmd1 $indexChangeCmd $indexChangeCmd $checkedCmd]
-        } elseif {[llength $cmd1] >= 5} {
+        } elseif {[llength $cmd1] >= 5 && [regexp "ecoChangeCell" $cmd1] && ![regexp "0x0" $checkedCmd] && $checkedCmd != ""} {
           set cmd1 $checkedCmd
         }
       }
+puts "TEST END: $cmd1\n   $checkedCmd"
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_1v1 end]"

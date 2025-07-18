@@ -224,6 +224,9 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
       ### 1 loader is a buffer, but driver is a logic cell
 if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
+      foreach var {driveCellClass loadCellClass netName netLength driveInstname driveInstname_celltype_driveLevel_VTtype driveCelltype driveCapacity sinkInstname sinkInstname_celltype_driveLevel_VTtype sinkCelltype sinkCapacity allInfoList} {
+        set $var "" 
+      }
       set driveCellClass [get_cell_class [lindex $viol_driverPin_loadPin 1]]
       set loadCellClass  [get_cell_class [lindex $viol_driverPin_loadPin 2]]
       set netName [get_object_name [get_nets -of_objects [lindex $viol_driverPin_loadPin 1]]]
@@ -236,9 +239,6 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       set sinkInstname_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $sinkInstname $cellRegExp]
       set sinkCelltype [lindex $sinkInstname_celltype_driveLevel_VTtype 1]
       set sinkCapacity [lindex $sinkInstname_celltype_driveLevel_VTtype 2]
-
-      set sinkCelltype [dbget [dbget top.insts.name [get_object_name [get_cells -quiet -of_objects  [lindex $viol_driverPin_loadPin 2]]] -p].cell.name]
-      set loadCapacity [get_driveCapacity_of_celltype $sinkCelltype $cellRegExp]
       set allInfoList [concat [lindex $viol_driverPin_loadPin 0] $netLength \
                               $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
                               $loadCellClass $sinkCelltype [lindex $viol_driverPin_loadPin 2] ]
@@ -279,7 +279,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
             [lindex $viol_driverPin_loadPin 0] < -0.07 && $netLength < 8 || \
             [lindex $viol_driverPin_loadPin 0] < -0.03 && $netLength < 4 \
               } { ; # songNOTE: special situation NOTICE: for fixing special situation(large violation but short net lenth)
-          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 4 || [expr $driveCapacity - $loadCapacity] < 0]} {
+          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 4 || [expr $driveCapacity - $sinkCapacity] < 0]} {
 if {$debug} { puts "------" }
             set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
 if {$debug} { puts "ll:in_1:1 FS changeVT : $toChangeCelltype" }
@@ -472,13 +472,14 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
             [lindex $viol_driverPin_loadPin 0] < -0.07 && $netLength < 8 || \
             [lindex $viol_driverPin_loadPin 0] < -0.03 && $netLength < 4 \
             } { ; # songNOTE: special situation NOTICE: for fixing special situation(large violation but short net lenth)
-          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 6 || [expr  $driveCapacity - $loadCapacity] < 2]} {
-            set leftStair [eo [expr $driveCapacity <= 1 && [expr $driveCapacity - $loadCapacity] <= -5] 4 3]
-            set rightStair [eo [expr $driveCapacity <= 1 && [expr $driveCapacity - $loadCapacity] <= -5] 3 2]
-            set leftStair [eo [expr $driveCapacity < 1 && [expr $driveCapacity - $loadCapacity] <= -10] 5 $leftStair]
-            set rightStair [eo [expr $driveCapacity < 1 && [expr $driveCapacity - $loadCapacity] <= -10] 4 $rightStair]
+          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 6 || [expr  $driveCapacity - $sinkCapacity] < 2]} {
+            set leftStair [eo [expr $driveCapacity <= 1 && [expr $driveCapacity - $sinkCapacity] <= -5] 4 3]
+            set rightStair [eo [expr $driveCapacity <= 1 && [expr $driveCapacity - $sinkCapacity] <= -5] 3 2]
+            set leftStair [eo [expr $driveCapacity < 1 && [expr $driveCapacity - $sinkCapacity] <= -10] 5 $leftStair]
+            set rightStair [eo [expr $driveCapacity < 1 && [expr $driveCapacity - $sinkCapacity] <= -10] 4 $rightStair]
+#### songNOTE: TODO: expanded to all case with above method
 puts "----------------"
-puts "driveCapacity: $driveCapacity  | loadCapacity: $loadCapacity"
+puts "driveCapacity: $driveCapacity  | sinkCapacity: $sinkCapacity"
 puts "left: $leftStair  right: $rightStair"
             set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 2] $leftStair $rightStair] $rangeOfDriveCapacityForChange $cellRegExp 1] $toChangeCelltype] 
@@ -642,7 +643,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
             [lindex $viol_driverPin_loadPin 0] < -0.07 && $netLength < 8 || \
             [lindex $viol_driverPin_loadPin 0] < -0.03 && $netLength < 4 \
             } { ; # songNOTE: special situation NOTICE: for fixing special situation(large violation but short net lenth)
-          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 4 || [expr  $driveCapacity - $loadCapacity] < 0]} {
+          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 4 || [expr  $driveCapacity - $sinkCapacity] < 0]} {
             set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 3] 2 1] $rangeOfDriveCapacityForChange $cellRegExp 1] $toChangeCelltype] 
             lappend fixedList_1v1 [concat "bl:in_1:1" "FS" $toChangeCelltype $allInfoList]
@@ -777,7 +778,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
             [lindex $viol_driverPin_loadPin 0] < -0.07 && $netLength < 8 || \
             [lindex $viol_driverPin_loadPin 0] < -0.03 && $netLength < 4 \
             } { ; # songNOTE: special situation
-          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity < 4 || [expr  $driveCapacity - $loadCapacity] < 0]} {
+          if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity < 4 || [expr  $driveCapacity - $sinkCapacity] < 0]} {
             set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 4] 2 1] $rangeOfDriveCapacityForChange $cellRegExp 1] $toChangeCelltype] 
             lappend fixedList_1v1 [concat "bb:in_1:1" "FS" $toChangeCelltype $allInfoList]
@@ -1427,7 +1428,7 @@ proc logic_of_mux {inst} {
     } else {
       return "CLKcell" 
     }
-  } elseif {[regexp {DEL} $celltype] && [get_property [get_cells $inst] is_buffer]} {
+  } elseif {[regexp {^DEL} $celltype] && [get_property [get_cells $inst] is_buffer]} {
     return "delay"
   } elseif {[get_property [get_cells $inst] is_buffer]} {
     return "buffer" 

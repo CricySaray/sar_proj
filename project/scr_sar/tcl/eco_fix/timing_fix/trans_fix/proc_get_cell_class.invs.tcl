@@ -19,6 +19,7 @@ proc get_cell_class {{instOrPin ""}} {
     }
   }
 }
+
 proc logic_of_mux {inst} {
   set celltype [dbget [dbget top.insts.name $inst -p].cell.name]
   if {[get_property [get_cells $inst] is_memory_cell]} {

@@ -1041,6 +1041,7 @@ if {$debug} { puts "# -----------------" }
     pw $sf [join $notConsideredPrompt \n]
     pw $sf ""
     pw $sf [print_formatedTable $notConsideredList_1v1]
+    pw $sf [expr [llength $notConsideredList_1v1] - 1]
     close $sf
 
 

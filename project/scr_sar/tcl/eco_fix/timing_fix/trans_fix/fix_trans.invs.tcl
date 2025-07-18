@@ -5,6 +5,8 @@
 # label     : task_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
 # descrip   : fix trans
+# update    : 2025/07/18 19:51:29 Friday
+#           (U001) check if changed cell meet rule that is larger than specified drive capacity(such as X1) at end of fixing looping
 # ref       : link url
 # --------------------------
 # ------
@@ -949,7 +951,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       ### !!!CLK cell : need specific cell type buffer/inverter
       
 
-      ## songNOTE:FIXED check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
+      ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
       if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= 1} { ; # drive capacity of changed cell must be larger than X1
         set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]

@@ -966,6 +966,7 @@ puts "TEST: $toChangeCelltype"
         } elseif {[llength $cmd1] >= 5 && [regexp "ecoChangeCell" $cmd1] && ![regexp "0x0" $checkedCmd] && $checkedCmd != ""} {
           set cmd1 $checkedCmd
         }
+        set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace $fixedList_1v1 1 1 [append [lindex $fixedList_1v1 1]]]]
       }
 puts "TEST END: $cmd1\n   $checkedCmd"
       

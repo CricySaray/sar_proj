@@ -949,12 +949,17 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       ### !!!CLK cell : need specific cell type buffer/inverter
       
 
-      ## songNOTE: check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
+      ## songNOTE:FIXED check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
       if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= 1} { ; # drive capacity of changed cell must be larger than X1
         set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
-        set indexChangeCmd [lsearch -regexp $cmd1 "^ecoChangeCell .*"]
-        set 
+        set checkedCmd [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
+        if {[llength $cmd1] > 1 && [llength $cmd1] < 5} {
+          set indexChangeCmd [lsearch -regexp $cmd1 "^ecoChangeCell .*"]
+          set cmd1 [lreplace $cmd1 $indexChangeCmd $indexChangeCmd $checkedCmd]
+        } else {[llength $cmd] >= 5} {
+          set cmd1 $checkedCmd
+        }
       }
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p

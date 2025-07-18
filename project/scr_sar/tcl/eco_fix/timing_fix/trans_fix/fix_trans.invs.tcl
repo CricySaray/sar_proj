@@ -391,7 +391,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 {2 12} 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "ll:in_7:1" "N" $allInfoList]
             set cmd1 "cantChange"
@@ -421,7 +421,7 @@ if {$debug} {puts "test : ll:in_7:2"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 {2 12} 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "ll:in_8:1" "N" $allInfoList]
             set cmd1 "cantChange"
@@ -610,7 +610,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 {2 12} 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "lb:in_8:1" "N" $allInfoList]
             set cmd1 "cantChange"
@@ -765,7 +765,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 {2 12} 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "bl:in_7:1" "N" $allInfoList]
             set cmd1 "cantChange"
@@ -884,7 +884,7 @@ if {$debug} { puts "in 3: change VT and DriveCapacity" }
         } elseif {$canAddRepeater && [lindex $viol_driverPin_loadPin 0] < -0.08  && [lindex $viol_driverPin_loadPin 0] >= -0.1 && $netLength < [expr $logicToBufferDistanceThreshold * 4] && $netLength > [expr $logicToBufferDistanceThreshold * 2]} { ; # songNOTE: situation 04 add Repeater near logic cell
 if {$debug} { puts "in 4: add Repeater" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 {} 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "bb:in_6:1" "N_forceDrive" $allInfoList]
             set cmd1 "cantChange"
@@ -914,7 +914,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
 if {$debug} { puts "Not in above situation, so NOTICE" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 {2 12} 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
             lappend cantChangeList_1v1 [concat "bb:in_7:1" "N" $allInfoList]
             set cmd1 "cantChange"
@@ -1066,7 +1066,8 @@ define_proc_arguments fix_trans \
     {-rangeOfVtSpeed "specify range of vt speed, it will be different from every process" AList list optional}
     {-clkNeedVtWeightList "specify vt weight list clock-needed" AList list optional}
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
-    {-rangeOfDriveCapacityForChange "specify range of drive capacity" AList list optional}
+    {-rangeOfDriveCapacityForChange "specify range of drive capacity for ecoChangeCell" AList list optional}
+    {-rangeOfDriveCapacityForAdd "specify range of drive capacity for ecoAddRepeater" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater"}
     {-suffixFilename "specify suffix of result filename" AString string optional}
     {-sumFile "specify summary filename" AString string optional}

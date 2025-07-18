@@ -28,7 +28,7 @@ cabbrev co %!column -t -s '\|'
 let g:highlight_groups = [
       \ ['Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
       \ ['Cursor',  ['songNOTE']],
-      \ ['GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'U001']],
+      \ ['GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE', 'U001']],
       \ ]
 " 创建高亮组自动命令
 augroup highlight_keywords

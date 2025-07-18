@@ -955,7 +955,8 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 
       ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
-puts "TEST: $toChangeCelltype"
+      #### ADVANCE TODO:U002 can specify logic rule and buffer/inverter rule, you can set it seperately
+if {$debug} { puts "TEST: $toChangeCelltype" }
       if {$cmd1 != "" && $cmd1 != "cantChange" && [get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] < $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
         set checkedSymbol "C"
         set checkedCmd ""
@@ -971,10 +972,10 @@ puts "TEST: $toChangeCelltype"
         set methodColumn [lindex [lindex $fixedList_1v1 end] 1]
         set celltypeToFix [lindex [lindex $fixedList_1v1 end] 2]
         set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace [lindex $fixedList_1v1 end] 1 2 [append methodColumn "_" $checkedSymbol ] [regsub $preToChangeCell $celltypeToFix $toChangeCelltype]]]
-puts "TEST FIXEDLIST large : [llength $fixedList_1v1]"
-puts [lindex $fixedList_1v1 end]
+if {$debug} { puts "TEST FIXEDLIST large : [llength $fixedList_1v1]" }
+if {$debug} { puts [lindex $fixedList_1v1 end] }
       }
-puts "TEST END: $cmd1\n   $checkedCmd"
+if {$debug} { puts "TEST END: $cmd1\n   $checkedCmd" }
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_1v1 end]"

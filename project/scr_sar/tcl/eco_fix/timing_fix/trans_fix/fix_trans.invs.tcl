@@ -228,7 +228,6 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
     # songNOTE: TODO: 
     # 1 check violated chain, or timing arc
     # 2 specially deal with specific situation, such as big violValue but short net length
-    set i 0
     foreach viol_driverPin_loadPin $violValue_driverPin_onylOneLoaderPin_D3List {; # violValue: ns
       ### 1 loader is a buffer, but driver is a logic cell
 if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] load: [get_cell_class [lindex $viol_driverPin_loadPin 2]]" }
@@ -948,6 +947,10 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       ### loader is a logic cell, and driver is a logic cell
       ### !!!CLK cell : need specific cell type buffer/inverter
       
+
+      ## songNOTE: check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
+      if {}
+      
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_1v1 end]"
         if {[llength $cmd1] < 5} { ; # because shortest eco cmd need 5 items at least (ecoChangeCell -inst instname -cell celltype)
@@ -960,6 +963,8 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       }
 if {$debug} { puts "# -----------------" }
     }
+
+
     lappend cmdList " "
     lappend cmdList "setEcoMode -reset"
 

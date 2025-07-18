@@ -58,7 +58,7 @@ endfunction
 let g:highlight_groups = [
       \ ['Special', 'exact', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
       \ ['Cursor',  'exact', ['songNOTE']],
-      \ ['GruvboxFg0', 'regex', ['U\d\d\d']],
+      \ ['GruvboxFg0', 'regex', ['U\\d\\d\\d']],
       \ ]
 
 " 创建高亮组自动命令
@@ -94,7 +94,8 @@ endfunction
 
 
 
-
+syn match songsong 'U\\d\\d\\d' containedin=.*
+hi def link songsong Special
 
 
 

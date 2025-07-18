@@ -957,7 +957,9 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
 puts "TEST: $toChangeCelltype"
       if {$cmd1 != "" && $cmd1 != "cantChange" && [get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] < $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
+        set checkedSymbol "C"
         set checkedCmd ""
+        set preToChangeCell $toChangeCelltype
         set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype $largerThanDriveCapacityOfChangedCelltype 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
         set checkedCmd [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
         if {[llength $cmd1] > 1 && [llength $cmd1] < 5 && ![regexp "0x0" $checkedCmd] && $checkedCmd != ""} {
@@ -966,7 +968,9 @@ puts "TEST: $toChangeCelltype"
         } elseif {[llength $cmd1] >= 5 && [regexp "ecoChangeCell" $cmd1] && ![regexp "0x0" $checkedCmd] && $checkedCmd != ""} {
           set cmd1 $checkedCmd
         }
-        set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace $fixedList_1v1 1 1 [append [lindex $fixedList_1v1 1]]]]
+        set methodColumn [lindex [lindex $fixedList_1v1 end] 1]
+        set celltypeToFix [lindex [lindex $fixedList_1v1 end] 2]
+        set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace $fixedList_1v1 1 2 [append methodColumn "_" $checkedSymbol ] [regsub $preToChangeCell $celltypeToFix $toChangeCelltype]]]
       }
 puts "TEST END: $cmd1\n   $checkedCmd"
       

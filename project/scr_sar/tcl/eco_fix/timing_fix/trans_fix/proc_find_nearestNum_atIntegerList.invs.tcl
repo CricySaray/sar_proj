@@ -9,18 +9,22 @@
 #             if $returnBigOneFlag is 0, return small one near number
 #             if $ifClamp is 1 and $number is out of $realList, return the maxOne or small one of $realList
 #             if $ifClamp is 0 and $number is out of $realList, return "0x0:1"(error)
+# update    : 2025/07/18 12:15:10 Friday
+#             adapt to list with only one item
 # ref       : link url
 # --------------------------
 proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {
   # $ifClamp: When out of range, take the boundary value.
   set s [lsort -unique -increasing -real $realList]
-  set idx [lsearch -exact $s $number]
+  set idx [lsearch -exact -real $s $number]
   if {$idx != -1} {
-    return $number ; # number is not equal every real digit of list
+    return [lsearch -inline -real -exact $s $number] ; # number is not equal every real digit of list
   }
-  if {$ifClamp && $number < [lindex $s 0]} {
+  if {[llength $realList] == 1 && $ifClamp} {
+    return [lindex $realList 0]
+  } elseif {$ifClamp && $number < [lindex $s 0]} {
     return [lindex $s 0] 
-  } elseif {$ifClamp && $number > [lindex $s 1]} {
+  } elseif {$ifClamp && $number > [lindex $s end]} { ; # adapt to list with only one item
     return [lindex $s 1] 
   } elseif {$number < [lindex $s 0] || $number > [lindex $s end]} {
     return "0x0:1"; # your number is not in the range of list

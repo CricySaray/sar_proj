@@ -20,11 +20,12 @@ proc get_cell_class {{instOrPin ""}} {
   }
 }
 proc logic_of_mux {inst} {
+  set celltype [dbget [dbget top.insts.name $inst -p].cell.name]
   if {[get_property [get_cells $inst] is_memory_cell]} {
     return "mem"
   } elseif {[get_property [get_cells $inst] is_sequential]} {
     return "sequential"
-  } elseif {[regexp {CLK} [dbget [dbget top.insts.name $inst -p].cell.name]]} {
+  } elseif {[regexp {CLK} $celltype]} {
     if {[get_property [get_cells $inst] is_buffer]} {
       return "CLKbuffer"
     } elseif {[get_property [get_cells $inst] is_inverter]} {
@@ -34,6 +35,8 @@ proc logic_of_mux {inst} {
     } else {
       return "CLKcell" 
     }
+  } elseif {[regexp {DEL} $celltype] && [get_property [get_cells $inst] is_buffer]} {
+    return "delay"
   } elseif {[get_property [get_cells $inst] is_buffer]} {
     return "buffer" 
   } elseif {[get_property [get_cells $inst] is_inverter]} {

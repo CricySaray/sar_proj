@@ -20,6 +20,9 @@ proc get_cell_class {{instOrPin ""}} {
   }
 }
 
+# songNOTE: NOTICE: if you open invs db without timing info, you will get incorrect judgement for cell class, you can only get logic and sequential!
+#           ADVANCE: it can test if you open noTiming invs db. if it is, it judge it by other rule
+# now : please open invs db with timing info
 proc logic_of_mux {inst} {
   set celltype [dbget [dbget top.insts.name $inst -p].cell.name]
   if {[get_property [get_cells $inst] is_memory_cell]} {

@@ -953,7 +953,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
       if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= 1} { ; # drive capacity of changed cell must be larger than X1
         set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
-        set 
+        set indexBeginSearch [lindex [lsearch -regexp -all $cmdList "^# .*"] end]
       }
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p

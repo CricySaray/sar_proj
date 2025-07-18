@@ -970,7 +970,7 @@ puts "TEST: $toChangeCelltype"
         }
         set methodColumn [lindex [lindex $fixedList_1v1 end] 1]
         set celltypeToFix [lindex [lindex $fixedList_1v1 end] 2]
-        set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace $fixedList_1v1 1 2 [append methodColumn "_" $checkedSymbol ] [regsub $preToChangeCell $celltypeToFix $toChangeCelltype]]]
+        set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace [lindex $fixedList_1v1 end] 1 2 [append methodColumn "_" $checkedSymbol ] [regsub $preToChangeCell $celltypeToFix $toChangeCelltype]]]
 puts "TEST FIXEDLIST large : [llength $fixedList_1v1]"
 puts [lindex $fixedList_1v1 end]
       }

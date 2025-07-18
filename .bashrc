@@ -47,6 +47,25 @@ alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 # config for autojump (github : wting/autojump)
 [[ -s /home/cricy/.autojump/etc/profile.d/autojump.sh ]] && source /home/cricy/.autojump/etc/profile.d/autojump.sh
 
+
+#------------------------------------------------
+# vim + fdfind
+# 使用fdfind搜索文件并通过vim打开
+function vf() {
+  if [[ $# -eq 0 ]]; then
+    local search_dir="."
+    local search_term=""
+  elif [[ $# -eq 1 ]]; then
+    local search_dir="$1"
+    local search_term=""
+  fi
+  local file=$(fdfind --type f ${search_term:+.} -H -E '.git' "$search_term" "$search_dir" 2>/dev/null | \
+               fzf --preview 'bat --style=numbers --color=always {} 2>/dev/null')
+  if [[ -n "$file" ]]; then
+    vim "$file"
+  fi
+}
+
 #------------------------------------------------
 # change newest dir
 # 进入最新修改的文件夹（支持层数参数和忽略列表）

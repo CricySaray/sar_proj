@@ -28,7 +28,7 @@ cabbrev co %!column -t -s '\|'
 let g:highlight_groups = [
       \ ['Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
       \ ['Cursor',  ['songNOTE']],
-      \ ['GruvboxFg0', ['TODO', 'FIXED', 'NOTICE']],
+      \ ['GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'U\\d\\d\\d']],
       \ ]
 " 创建高亮组自动命令
 augroup highlight_keywords
@@ -49,6 +49,60 @@ function! SetupKeywordHighlights()
     execute 'hi def link HighlightKeyword_' . highlight_group . ' ' . highlight_group
   endfor
 endfunction
+
+
+
+
+" 定义一个三维列表，每个子列表包含一个高亮组、匹配类型和对应的模式列表
+" 匹配类型: 'exact' 表示精确匹配, 'regex' 表示正则表达式匹配
+let g:highlight_groups = [
+      \ ['Special', 'exact', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
+      \ ['Cursor',  'exact', ['songNOTE']],
+      \ ['GruvboxFg0', 'regex', ['U\d\d\d']],
+      \ ]
+
+" 创建高亮组自动命令
+augroup highlight_keywords
+  autocmd!
+  autocmd BufEnter * call SetupKeywordHighlights()
+augroup END
+
+" 设置关键词高亮的函数
+function! SetupKeywordHighlights()
+  " 遍历每个高亮组配置
+  for group in g:highlight_groups
+    let highlight_group = group[0]
+    let match_type = group[1]
+    let patterns = group[2]
+    
+    " 遍历模式列表，为每个模式设置语法匹配
+    for pattern in patterns
+      if match_type ==# 'exact'
+        " 精确匹配模式
+        execute 'syn match HighlightKeyword_' . highlight_group . ' /\V\<'. escape(pattern, '/\') .'\>/ containedin=.*'
+      elseif match_type ==# 'regex'
+        " 正则表达式匹配模式
+        execute 'syn match HighlightKeyword_' . highlight_group . ' /\v\<'. escape(pattern, '/\') .'\>/ containedin=.*'
+      endif
+    endfor
+    
+    " 设置当前高亮组的高亮样式
+    execute 'hi def link HighlightKeyword_' . highlight_group . ' ' . highlight_group
+  endfor
+endfunction
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 """ ABBR CONFIG -----------------------------------------------------------------
 iabbrev hw Hello World

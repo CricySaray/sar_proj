@@ -82,7 +82,7 @@ proc fix_trans {args} {
   set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
   set rangeOfDriveCapacityForChange            {1 12}
   set rangeOfDriveCapacityForAdd               {3 12}
-  set largerThanDriveCapacityOfChangedCelltype 1
+  set largerThanDriveCapacityOfChangedCelltype 2
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
   set suffixFilename                           ""; # for example : eco4
   set debug                                    0
@@ -91,9 +91,9 @@ proc fix_trans {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set sumFile                           [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
-  set cantExtractFile                   [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]
-  set cmdFile                           [eo $suffixFilename "sor_ecocmds_$suffixFilename.tcl" "sor_ecocmds.tcl"]
+  set sumFile                                 [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
+  set cantExtractFile                         [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]
+  set cmdFile                                 [eo $suffixFilename "sor_ecocmds_$suffixFilename.tcl" "sor_ecocmds.tcl"]
   # songNOTE: only deal with loadPin viol situation, ignore drivePin viol situation
   # $violValue_pin_columnIndex  : for example : {3 1}
   #   violPin   xxx   violValue   xxx   xxx
@@ -955,7 +955,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
 
       ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
-      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
+      if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] < $largerThanDriveCapacityOfChangedCelltype} { ; # drive capacity of changed cell must be larger than X1
         set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
         set checkedCmd [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
         if {[llength $cmd1] > 1 && [llength $cmd1] < 5} {
@@ -1093,11 +1093,12 @@ define_proc_arguments fix_trans \
     {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater"}
     {-suffixFilename "specify suffix of result filename" AString string optional}
-    {-sumFile "specify summary filename" AString string optional}
-    {-cantExtractFile "specify cantExtract file name" AString string optional}
-    {-cmdFile "specify cmd file name" AString string optional}
     {-debug "debug mode" "" boolean optional}
   }
+# needn't to set options as below:
+#    {-sumFile "specify summary filename" AString string optional}
+#    {-cantExtractFile "specify cantExtract file name" AString string optional}
+#    {-cmdFile "specify cmd file name" AString string optional}
 
 proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget top.insts.cell.name $celltype -e ] == ""} {

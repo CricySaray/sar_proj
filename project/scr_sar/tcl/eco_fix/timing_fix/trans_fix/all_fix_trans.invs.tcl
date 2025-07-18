@@ -7,9 +7,6 @@
 # descrip   : fix trans
 # ref       : link url
 # --------------------------
-# API:
-#set fi [open "$1" "r"]
-
 # ------
 # need :
 #   viol driver pins (primary!) and viol value
@@ -194,7 +191,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
-    set skippedList_1v1 [list [list situation method celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set skippedList_1v1 [list [list situation method violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     set notConsideredPrompt {
       "# NC - not considered situation"
     }

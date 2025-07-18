@@ -11,6 +11,7 @@
 #             3) if have no faster VT, return original celltype
 # ref       : link url
 # --------------------------
+# TODO: consider mix fluence between speed and weight!!!
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {ifForceValid 1}} {
   # $weight:0 is stand for no using

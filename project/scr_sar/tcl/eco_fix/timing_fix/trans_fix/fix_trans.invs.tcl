@@ -7,9 +7,6 @@
 # descrip   : fix trans
 # ref       : link url
 # --------------------------
-# API:
-#set fi [open "$1" "r"]
-
 # ------
 # need :
 #   viol driver pins (primary!) and viol value
@@ -77,6 +74,9 @@ proc fix_trans {args} {
   set refCLKBufferCelltype              "CLKBUFX4AL9"
   set refCLKInverterCelltype            "CLKINVX4AL9"
   set cellRegExp                        "X(\\d+).*(A\[HRL\]\\d+)$"
+  set rangeOfVtSpeed                    {AL9 AR9 AH9}
+  set clkNeedVtWeightList               {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
+  set normalNeedVtWeightList            {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
   set ecoNewInstNamePrefix              "sar_fix_trans_clk_071615"
   set suffixFilename                    ""; # for example : eco4
   set debug                             0
@@ -207,7 +207,7 @@ if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
-    set skippedList_1v1 [list [list situation method celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set skippedList_1v1 [list [list situation method violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     set notConsideredPrompt {
       "# NC - not considered situation"
     }
@@ -265,8 +265,8 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       } elseif {$driveCellClass in {delay logic CLKlogic} && $loadCellClass in {delay logic CLKlogic}} { ; # songNOTE: now dont split between different cell classes
 if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         # some useful flag
-        set refVTweightList [eo [regexp CLK $driveCellClass] {{AR9 0} {AL9 3} {AH9 0}} {{AR9 3} {AL9 0} {AH9 0}}]
-        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]]
+        set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
+        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]]
   if {$debug} {puts "if have faster vt: $ifHaveFasterVT"}
         set ifHaveSlowerVT 0
         set ifHaveLargerCapacity [re [la [strategy_changeDriveCapacity $driveCelltype 0 2 {1 12} $cellRegExp 1] $driveCelltype]]
@@ -287,7 +287,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
               } { ; # songNOTE: special situation NOTICE: for fixing special situation(large violation but short net lenth)
           if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 4 || [expr $driveCapacity - $loadCapacity] < 0]} {
 if {$debug} { puts "------" }
-            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]
+            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
 if {$debug} { puts "ll:in_1:1 FS changeVT : $toChangeCelltype" }
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 2] 2 1] {1 12} $cellRegExp 1] $toChangeCelltype] 
 if {$debug} { puts "ll:in_1:1 FS changeDrive : $toChangeCelltype" }
@@ -303,7 +303,7 @@ if {$debug} { puts "ll:in_1:1 FS changeDrive : $toChangeCelltype" }
                    ]} { ; # songNOTE: situation 01 only changeVT,
           # TODO: this situation need judge if the celltype has been fastest VT. if it has, you need consider other methods
 if {$debug} { puts "in 1: only change VT" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "ll:in_2:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -316,7 +316,7 @@ if {$debug} { puts "in 1: only change VT" }
           }
         } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.04 && $netLength <= [expr $logicToBufferDistanceThreshold * 1.5]} { ; # songNOTE: situation 02 only changeDriveCapacity
 if {$debug} { puts "in 2: only change DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
 #puts "in 2: $driveCelltype $toChangeCelltype"
 if {$debug} { puts $toChangeCelltype }
           if {$driveCapacity == 0.5} {
@@ -335,7 +335,7 @@ if {$debug} { puts $toChangeCelltype }
           }
         } elseif {$ifHaveFasterVT && $ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.05 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.2]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "ll:in_5:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -365,7 +365,7 @@ if {$debug} { puts "in 4: add Repeater" }
             set cmd1 "cantChange"
           } else {
 #puts  "in 4: $driveCelltype --  $toChangeCelltype song"
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -394,7 +394,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             lappend cantChangeList_1v1 [concat "ll:in_7:1" "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 8 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -424,7 +424,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             lappend cantChangeList_1v1 [concat "ll:in_8:1" "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -452,7 +452,7 @@ if {$debug} {puts "test : ll:in_8:2"}
       } elseif {$driveCellClass in {delay logic CLKlogic} && $loadCellClass in {buffer inverter CLKbuffer CLKinverter}} { ; # songNOTE: now dont split between different cell classes
 if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         set refVTweightList [eo [regexp CLK $driveCellClass] {{AR9 0} {AL9 3} {AH9 0}} {{AR9 3} {AL9 0} {AH9 0}}]
-        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]]
+        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]]
   if {$debug} {puts "if have faster vt: $ifHaveFasterVT"}
         set ifHaveSlowerVT 0
         set ifHaveLargerCapacity [re [la [strategy_changeDriveCapacity $driveCelltype 0 2 {1 12} $cellRegExp 1] $driveCelltype]]
@@ -479,7 +479,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
 puts "----------------"
 puts "driveCapacity: $driveCapacity  | loadCapacity: $loadCapacity"
 puts "left: $leftStair  right: $rightStair"
-            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]
+            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 2] $leftStair $rightStair] {1 12} $cellRegExp 1] $toChangeCelltype] 
             lappend fixedList_1v1 [concat "lb:in_1:1" "FS" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
@@ -490,7 +490,7 @@ puts "left: $leftStair  right: $rightStair"
         } elseif {$ifHaveFasterVT && $canChangeVT && [lindex $viol_driverPin_loadPin 0] >= -0.005} { ; # songNOTE: situation 01 only changeVT
           # TODO: this situation need judge if the celltype has been fastest VT. if it has, you need consider other methods
 if {$debug} { puts "in 1: only change VT" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "lb:in_2:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -503,7 +503,7 @@ if {$debug} { puts "in 1: only change VT" }
           }
         } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.015 && $netLength <= [expr $logicToBufferDistanceThreshold * 1.1]} { ; # songNOTE: situation 02 only changeDriveCapacity
 if {$debug} { puts "in 2: only change DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
 #puts "in 2: $driveCelltype $toChangeCelltype"
 if {$debug} { puts $toChangeCelltype }
           if {$driveCapacity == 0.5} {
@@ -522,7 +522,7 @@ if {$debug} { puts $toChangeCelltype }
           }
         } elseif {$ifHaveFasterVT && $ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.04 && $netLength <= [expr $logicToBufferDistanceThreshold * 1.8]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "lb:in_5:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -552,7 +552,7 @@ if {$debug} { puts "in 4: add Repeater" }
             set cmd1 "cantChange"
           } else {
 #puts  "in 4: $driveCelltype --  $toChangeCelltype song"
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -580,7 +580,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
             set cmd1 "cantChange"
           } else {
 #puts  "in 4: $driveCelltype --  $toChangeCelltype song"
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -613,7 +613,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             lappend cantChangeList_1v1 [concat "lb:in_8:1" "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 8 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 6 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -645,7 +645,7 @@ if {$debug} {puts $cmd1}
       } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $loadCellClass in {delay logic CLKlogic}} { ; # songNOTE: now dont split between different cell classes
 if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         set refVTweightList [eo [regexp CLK $driveCellClass] {{AR9 0} {AL9 3} {AH9 0}} {{AR9 3} {AL9 0} {AH9 0}}]
-        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]]
+        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]]
   if {$debug} {puts "if have faster vt: $ifHaveFasterVT"}
         set ifHaveSlowerVT 0
         set ifHaveLargerCapacity [re [la [strategy_changeDriveCapacity $driveCelltype 0 2 {1 12} $cellRegExp 1] $driveCelltype]]
@@ -665,7 +665,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
             [lindex $viol_driverPin_loadPin 0] < -0.03 && $netLength < 4 \
             } { ; # songNOTE: special situation NOTICE: for fixing special situation(large violation but short net lenth)
           if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity <= 4 || [expr  $driveCapacity - $loadCapacity] < 0]} {
-            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]
+            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 3] 2 1] {1 12} $cellRegExp 1] $toChangeCelltype] 
             lappend fixedList_1v1 [concat "bl:in_1:1" "FS" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
@@ -679,7 +679,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
                    ]} { ; # songNOTE: situation 01 only changeVT,
           # TODO: this situation need judge if the celltype has been fastest VT. if it has, you need consider other methods
 if {$debug} { puts "in 1: only change VT" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "bl:in_2:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -692,7 +692,7 @@ if {$debug} { puts "in 1: only change VT" }
           }
         } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.04 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.1]} { ; # songNOTE: situation 02 only changeDriveCapacity
 if {$debug} { puts "in 2: only change DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
 #puts "in 2: $driveCelltype $toChangeCelltype"
 if {$debug} { puts $toChangeCelltype }
           if {$driveCapacity in {0.5 1 2}} { ; # buffer/inverter to logic, don't need change a lot
@@ -709,7 +709,7 @@ if {$debug} { puts $toChangeCelltype }
           }
         } elseif {$ifHaveFasterVT && $ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.06 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.5]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "bl:in_5:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -739,7 +739,7 @@ if {$debug} { puts "in 4: add Repeater" }
             set cmd1 "cantChange"
           } else {
 #puts  "in 4: $driveCelltype --  $toChangeCelltype song"
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -768,7 +768,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             lappend cantChangeList_1v1 [concat "bl:in_7:1" "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -794,7 +794,7 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       } elseif {$driveCellClass in {CLKbuffer CLKinverter buffer inverter} && $loadCellClass in {CLKbuffer CLKinverter buffer inverter}} { ; # songNOTE: now dont split between different cell classes
 if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driverPin_loadPin 1] [lindex $viol_driverPin_loadPin 2]" }
         set refVTweightList [eo [regexp CLK $driveCellClass] {{AR9 0} {AL9 3} {AH9 0}} {{AR9 3} {AL9 0} {AH9 0}}]
-        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]]
+        set ifHaveFasterVT [re [la [strategy_changeVT $driveCelltype $refVTweightList $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]]
   if {$debug} {puts "if have faster vt: $ifHaveFasterVT"}
         set ifHaveSlowerVT 0
         set ifHaveLargerCapacity [re [la [strategy_changeDriveCapacity $driveCelltype 0 2 {1 12} $cellRegExp 1] $driveCelltype]]
@@ -814,7 +814,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
             [lindex $viol_driverPin_loadPin 0] < -0.03 && $netLength < 4 \
             } { ; # songNOTE: special situation
           if {[expr $ifHaveFasterVT || $ifHaveLargerCapacity] && [expr $driveCapacity < 4 || [expr  $driveCapacity - $loadCapacity] < 0]} {
-            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1] $driveCelltype]
+            set toChangeCelltype [eo $ifHaveFasterVT [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1] $driveCelltype]
             set toChangeCelltype [eo $ifHaveLargerCapacity [strategy_changeDriveCapacity $toChangeCelltype 0 [eo [expr $driveCapacity <= 4] 2 1] {1 12} $cellRegExp 1] $toChangeCelltype] 
             lappend fixedList_1v1 [concat "bb:in_1:1" "FS" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -cell $toChangeCelltype -inst $driveInstname]
@@ -828,7 +828,7 @@ if {$debug} { puts "$netLength $driveCelltype $sinkCelltype [lindex $viol_driver
           ] } { ; # songNOTE: situation 01 only changeVT,
           # TODO: this situation need judge if the celltype has been fastest VT. if it has, you need consider other methods
 if {$debug} { puts "in 1: only change VT" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "bb:in_2:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -841,7 +841,7 @@ if {$debug} { puts "in 1: only change VT" }
           }
         } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.04 && $netLength <= [expr $logicToBufferDistanceThreshold * 1.5]} { ; # songNOTE: situation 02 only changeDriveCapacity
 if {$debug} { puts "in 2: only change DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
 #puts "in 2: $driveCelltype $toChangeCelltype"
 if {$debug} { puts $toChangeCelltype }
           if {$driveCapacity in {0.5 1 2}} {
@@ -858,7 +858,7 @@ if {$debug} { puts $toChangeCelltype }
           }
         } elseif {$ifHaveFasterVT && $ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.07 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.2]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
-          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+          set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 1} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
             lappend cantChangeList_1v1 [concat "bb:in_5:1" "V" $allInfoList]
             set cmd1 "cantChange"
@@ -888,7 +888,7 @@ if {$debug} { puts "in 4: add Repeater" }
             set cmd1 "cantChange"
           } else {
 #puts  "in 4: $driveCelltype --  $toChangeCelltype song"
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -917,7 +917,7 @@ if {$debug} { puts "Not in above situation, so NOTICE" }
             lappend cantChangeList_1v1 [concat "bb:in_7:1" "N" $allInfoList]
             set cmd1 "cantChange"
           } else {
-            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
+            set toChangeCelltype [strategy_changeVT $driveCelltype {{AR9 3} {AL9 0} {AH9 0}} $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
               set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 {1 12} $cellRegExp 1] 
 if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
@@ -1061,6 +1061,7 @@ define_proc_arguments fix_trans \
     {-refCLKBufferCelltype "specify ref clk buffer cell type name" AString string optional}
     {-refCLKInverterCelltype "specify ref clk inverter cell type name" AString string optional}
     {-cellRegExp "specify universal regExp for this process celltype, need pick out driveCapacity and VTtype" AString string optional}
+    {-rangeOfVtSpeed "specify range of vt speed, it will be different from every process"}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater"}
     {-suffixFilename "specify suffix of result filename" AString string optional}
     {-sumFile "specify summary filename" AString string optional}

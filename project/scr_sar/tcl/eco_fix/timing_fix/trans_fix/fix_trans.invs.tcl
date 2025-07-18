@@ -952,7 +952,8 @@ if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
       ## songNOTE: check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
       if {[get_driveCapacity_of_celltype $toChangeCelltype $cellRegExp] <= 1} { ; # drive capacity of changed cell must be larger than X1
-       
+        set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 2 0 $rangeOfDriveCapacityForChange $cellRegExp 1]
+        set 
       }
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p

@@ -1,7 +1,0 @@
-#@ # 
-#@ # Running lc_shell Version O-2018.06-SP1 for linux64 -- Jul 18, 2018
-#@ # Date:   Fri Feb 23 14:31:04 2024
-#@ # Run by: zhurourou@ICT-LSF50
-#@ 
-
-source -echo -verbose gen_db.tcl

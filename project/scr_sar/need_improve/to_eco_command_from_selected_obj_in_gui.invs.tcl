@@ -1,1 +1,0 @@
-../tcl/to_eco_command_from_selected_obj_in_gui.invs.tcl

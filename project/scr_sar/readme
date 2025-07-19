@@ -1,7 +1,0 @@
-This filelist in dir is my scripts from daily collections.
-Below are three type file adapted to all code languages:
- - *.common.* : not for specified software, you can source it in csh/bash
- - *.invs.*		: only for innovus shell
- - *.invsGUI.*: only for innovus GUI view, you can run it in invs shell, but effort can view in GUI
- - *.pt.*			: only for PrimeTime shell
-

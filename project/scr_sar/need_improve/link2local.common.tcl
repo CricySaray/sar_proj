@@ -1,1 +1,0 @@
-../tcl/link2local.common.tcl

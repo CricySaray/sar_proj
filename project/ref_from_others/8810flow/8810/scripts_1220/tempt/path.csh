@@ -1,0 +1,12 @@
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/gephy/FXEDP447EWHJ0P-0.2.0/FXEDP447EWHJ0P/2024Q2V0.2.0/BackEnd/gdsii.PHANTOM/FXEDP447EWHJ0P_METAL.8m11006.gds.gz \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/pcie/Full_gds_O12P5PHYU28HPCP_E1W1_V1_20240524/gds/O12P5PHYU28HPCP_E1W1.gds.gz \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/por/Full_gds_CPORU28HPCP_V1_20240724/gds/0.9/CPOR0P9U28HPCP.gds.gz \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/por/Full_gds_CPORU28HPCP_V1_20240724/gds/1.8/CPOR1P8U28HPCP.gds.gz \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/usb3/Full_gds_GSM3PHYU28CPL1_V1_20240724/gds/GSM3PHYU28CPL1.gds.gz \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/usb2/Full_gds_U2OPHYU28HPCP_V2P1_20240524/gds/U2OPHYU28HPCP.gds.gz \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/gephy/FXEDP447EWHJ0P-0.2.0/FXEDP447EWHJ0P/2024Q2V0.2.0/BackEnd/lvs.PHANTOM/FXEDP447EWHJ0P_blockbox.spi \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/pcie/Full_gds_O12P5PHYU28HPCP_E1W1_V1_20240524/lvs_netlist/O12P5PHYU28HPCP_E1W1.sp \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/por/Full_gds_CPORU28HPCP_V1_20240724/lvs_netlist/0.9/CPOR0P9U28HPCP.sp \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/por/Full_gds_CPORU28HPCP_V1_20240724/lvs_netlist/1.8/CPOR1P8U28HPCP.sp \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/usb3/Full_gds_GSM3PHYU28CPL1_V1_20240724/lvs_netlist/GSM3PHYU28CPL1.sp \
+ls /eda_files/proj/ict8810/swap/to_vct/third_files/usb2/Full_gds_U2OPHYU28HPCP_V2P1_20240524/lvs_netlist/U2OPHYU28HPCP.sp \

@@ -1,0 +1,27 @@
+[submodule "./.vim/pack/jetpack/opt/fzf"]
+	path = ./.vim/pack/jetpack/opt/fzf
+	url	 = https://github.com/junegunn/fzf.git
+[submodule "project/ref_from_others/autojump"]
+	path = project/ref_from_others/autojump
+	url = git@github.com:wting/autojump.git
+[submodule ".vim/pack/jetpack/opt/auto-pairs"]
+	path = .vim/pack/jetpack/opt/auto-pairs
+	url = https://github.com/jiangmiao/auto-pairs
+[submodule ".vim/pack/jetpack/opt/fzf.vim"]
+	path = .vim/pack/jetpack/opt/fzf.vim
+	url = https://github.com/junegunn/fzf.vim
+[submodule ".vim/pack/jetpack/opt/gruvbox"]
+	path = .vim/pack/jetpack/opt/gruvbox
+	url = https://github.com/morhetz/gruvbox
+[submodule ".vim/pack/jetpack/opt/rainbow"]
+	path = .vim/pack/jetpack/opt/rainbow
+	url = https://github.com/luochen1990/rainbow
+[submodule ".vim/pack/jetpack/opt/tabular"]
+	path = .vim/pack/jetpack/opt/tabular
+	url = https://github.com/godlygeek/tabular
+[submodule ".vim/pack/jetpack/opt/vim-matchup"]
+	path = .vim/pack/jetpack/opt/vim-matchup
+	url = https://github.com/andymass/vim-matchup
+[submodule ".vim/pack/jetpack/opt/vim-surround"]
+	path = .vim/pack/jetpack/opt/vim-surround
+	url = https://github.com/tpope/vim-surround

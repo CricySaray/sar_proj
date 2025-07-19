@@ -1,0 +1,221 @@
+###invs_setup file
+##
+set vars(date) [exec date "+%y%m%d"]
+exec mkdir -p ./tmp
+setenv TMPDIR ./tmp
+
+####lib_setup file
+
+source /home/proj/ict3300/archive/chip_top_idp/.lib_setup.tcl 
+set proj_dir "../../"
+set dsn_gate_dir "../../dsn/gate"
+set dsn_def_dir "../../dsn/def"
+set dsn_gds_dir "../../dsn/gds"
+set dsn_sdf_dir "../../dsn/sdf"
+set dsn_tdf_dir "../../dsn/tdf"
+set dsn_constr_dir "../../dsn/constr"
+set dsn_tech_dir "../../dsn/tech"
+set lib_tech_dir "../../lib/tech"
+set dsn_csf_dir "../../dsn/csf"
+set dsn_pwr_dir "../../dsn/pwr"
+set dsn_para_dir "../../dsn/para"
+set vars(script_root) "../scr"
+set vars(dbs_dir) "../db"
+set vars(rpt_dir) "../rpt"
+set opt_scr "default"
+set INVS_EXT "invs"
+set INVS_COND "BALANCE"
+
+## define some var
+
+set vars(design)                                      "lb_cpuss_ca53_top"
+set vars(top_or_block)                                block ;
+set vars(process)                                     40
+set vars(library)                                     SMIC40
+set vars(lp_mode)                                     false
+set vars(min_route_layer)                             1
+set vars(max_route_layer)                             7
+set vars(opt_max_length)                              250;# max length rule for optDesign
+set vars(viewName)                                    default
+set vars(max_shifter_depth)                           15
+set vars(cts_faout)                                   20 
+set vars(debug_mode)                                  false
+set vars(timing_cri_mode)                             true ;# if design is timing critical  turn on
+set vars(cong_cir_mode)                               true ;# if design is congestion critical  turn on
+set vars(scan_reoder_mode)                            true ;# whether to enalbe scan reoder
+set vars(cellPad_mode)                                true ;# add cell padding or not
+set vars(simplify_mode)                               false ;# simplity netlist or not
+set vars(userfulSkew_mode)                           true  ;# skewing only for macro cells
+set vars(cts_swap_ff_mode)                            false ;# control whether to swap ff during swapckTree
+set vars(ckeco_mode)                                  false ;# control whether to enable cts opt with ckeco
+set vars(leakage_opt_mode)                            true ;# control whether to enable leakage opt in postroute step
+set vars(cts_hold_fix_mode)                           false ;# control whether to enable hold fix in postcts step
+set vars(hold_fix_mode)                               true ;# control whether to enable hold fix in postroute step
+set vars(dfm_opt_mode)                                true ;# control whether to enable dfm opt in postroute step
+set vars(earlycts_mode)                               false ;# control whether to run cts during placement step
+set vars(vp_mode)                                     false ;# control whether to run via pillar flow
+set vars(merge_ffs)                                   false ;# control whether to run ffs merge flow in place step
+set vars(sbocv)                                       false ;
+set vars(pocv)                                        false ;
+
+
+
+
+set vars(powr_nets) "VDD"
+set vars(gnd_nets) "VSS"
+set vars(vp) false
+### define input data file
+
+set vars(netlist)              "/home/wangd/proj/chip_top_idp/sub_proj/lb_cpuss_ca53_top/dsn/gate/lb_cpuss_ca53_top.dft.default.vg.gz"
+set vars(fp_file)              " "
+set vars(cts_spec)              " "
+set vars(sdc_func)              "/home/wangd/proj/chip_top_idp/sub_proj/lb_cpuss_ca53_top/dsn/constrains/lb_cpuss_ca53_top.func.default.sdc"
+set vars(sdc_funcasyn)              " "
+set vars(sdc_scan)              "/home/wangd/proj/chip_top_idp/sub_proj/lb_cpuss_ca53_top/dsn/constrains/lb_cpuss_ca53_top.func.default.sdc"
+set vars(sdc_scanasyn)              " "
+set vars(sdc_mbist)              "/home/wangd/proj/chip_top_idp/sub_proj/lb_cpuss_ca53_top/dsn/constrains/lb_cpuss_ca53_top.func.default.sdc"
+set vars(func_dontch_list)              " "
+set vars(dft_dontch_list)              " "
+set vars(scan_def)              " "
+set vars(excNet_file)              " "
+set vars(cpf_file)              ""
+set vars(view_definition_file)              "/home/wangd/proj/chip_top_idp/sub_proj/lb_cpuss_ca53_top/pr_invs/scr/viewDefine.invs"
+set vars(gds_layer_map)              "$vars(TECH_MAP_EDI)"
+set vars(min_gap)              "[expr 2 * 0.19]"
+
+### define opt analysis view for each step
+
+set vars(place_analysis_view) "-setup {func_wcl_cworst scan_wcl_cworst mbist_wcl_cworst} -hold {func_ml_rcworst}"
+set vars(cts_analysis_view) "-setup {func_wcl_cworst scan_wcl_cworst mbist_wcl_cworst} -hold {func_ml_rcworst}"
+set vars(postcts_analysis_view) "-setup {func_wcl_cworst scan_wcl_cworst mbist_wcl_cworst} -hold {func_ml_rcworst}"
+set vars(route_analysis_view) "-setup {func_wcl_cworst scan_wcl_cworst mbist_wcl_cworst} -hold {func_ml_rcworst}"
+set vars(postroute_analysis_view) "-setup {func_wcl_cworst scan_wcl_cworst mbist_wcl_cworst} -hold {func_ml_rcworst}"
+
+
+### cell option
+set vars(ccopt_logic_cells)   "BUF_X6M_A9TL50"
+set vars(ccopt_icg_cells)     "PREICG_X9B_A9TL50 PREICG_X6B_A9TL50"
+set vars(cts_driver_cells)    "BUF_X6M_A9TL50"
+set vars(assign_buffer_cell)  "BUF_X6M_A9TL50"
+set vars(io_attach_cell)      "BUF_X6M_A9TL50"
+set vars(cts_driver_cell)     "BUF_X13B_A9TL50"
+set vars(cts_buf_cells)       "BUF_X9B_A9TL50 BUF_X13B_A9TL50 BUF_X11B_A9TL50 BUF_X7P5B_A9TL50 BUF_X6B_A9TL50 INV_X9B_A9TL50 INV_X13B_A9TL50 INV_X11B_A9TL50 INV_X7P5B_A9TL50 INV_X6B_A9TL50"
+set vars(ccopt_buf_cells)       "BUF_X9B_A9TL50 BUF_X13B_A9TL50 BUF_X11B_A9TL50 BUF_X7P5B_A9TL50 BUF_X6B_A9TL50"
+set vars(ccopt_inv_cells)       "INV_X9B_A9TL50 INV_X13B_A9TL50 INV_X11B_A9TL50 INV_X7P5B_A9TL50 INV_X6B_A9TL50"
+set vars(cts_icg_cells)       "PREICG_X9B_A9TL50 PREICG_X6B_A9TL50"
+set vars(welltap_cell)       "FILLTIE3_A9TR50"
+set vars(decap_cell)       "FILLSGCAP64_A9TR50 FILLSGCAP32_A9TR50 FILLSGCAP16_A9TR50 FILLSGCAP8_A9TR50 FILLSGCAP4_A9TR50"
+set vars(precap_cell)       "FILL4_A9TR50"
+set vars(endcap_cell)       "FILL4_A9TR50"
+set vars(postcap_cell)       "FILL4_A9TR40"
+set vars(tie_cells)       "TIEHI_X1M_A9TR50 TIELO_X1M_A9TR50"
+set vars(filler_cells)       "FILLSGCAP64_A9TR50 FILLSGCAP32_A9TR50 FILLSGCAP16_A9TR50 FILLSGCAP8_A9TR50 FILLECO6_A9TR40 FILLECO3_A9TR40 FILL2_A9TR40"
+set vars(spare_cells)       "FILLECOCAP48_A9TR40 2  FILLECOCAP24_A9TR40 4   FILLECOCAP12_A9TR40 8"
+set vars(dont_use_cells)       "*_X0P* BUFZ* BUF_X*B* BUF_X1M_* BUFH_X1M_* INV_X*B_* INV_X1M_* DLY* MX2_* MXGL2* RF* GPGBUF* GPGINV* *_A9TR40 ANTE*"
+set vars(cts_cells)       "BUF_*B_A9TL50 INV_X*B_A9TL50"
+set vars(cts_dont_use_cells)       "BUF_X0P*B_A9TL50 BUF_X1P*B_A9TL50 BUF_X2P*B_A9TL50 BUF_X3P*B_A9TL50 BUF_4P*B_A9TL50 BUF_X16B_A9TL50"
+set vars(delay_cells)       "DLY2_X1M_A9TL50 DLY2_X2M_A9TL50 DLY2_X4M_A9TL50 DLY4_X1M_A9TL50 DLY4_X2M_A9TL50 DLY4_X4M_A9TL50"
+set vars(retention_cells)       ""
+set vars(aonbuffer_cells)       ""
+set vars(l2hshifter_cells)       ""
+set vars(pso_cell)       ""
+set vars(padding_cells)       "XOR3* 2 AOI22* 2"
+set vars(exclude_cells)       "PAD* logo"
+set vars(cts_vtclass)       "A9T"
+set vars(rpt_inst_vtclass)       "A9TR40 A9TL40 A9TH40 A9TR50 A9TL50 A9TH50"
+set vars(timing_cir_mode)  "true"
+set vars(early_cts_mode)  "true"
+set vars(cong_cri_mode) "true"
+set vars(scan_reorder_mode) "true"
+set vars(exlude_pg_list) ""
+set vars(pg_physical_cells) ""
+
+
+#cts setting
+set vars(top_pref_layer) 7
+set vars(btm_pref_layer) 2
+set vars(leaf_top_pref_layer) 5
+set vars(leaf_btm_pref_layer) 1
+set vars(cts_fanout) 32 
+set vars(cts_length) 250
+set vars(cts_skew) 0.1
+set vars(cts_tran) 0.14
+set vars(cts_ndr) NDR_2W2S
+set vars(via_weight) 0.5
+
+#pare cell
+set vars(insert_spare_cell) true
+set vars(insert_spare_step) place
+
+
+#ocv seting
+set vars(max_corner) "delay_func_wcl_cworst delay_mbist_wcl_cworst"
+set vars(max_cell_early_clock) 0.925
+set vars(max_cell_late_clock) 1.075
+set vars(max_cell_early_data) 1
+set vars(max_cell_late_data) 1
+set vars(max_net_early_clock) 0.925
+set vars(max_net_late_clock) 1.075
+set vars(max_net_early_data) 1
+set vars(max_net_late_data) 1
+set vars(min_corner) "delay_func_ml_rcworst delay_mbist_ml_rcworst"
+set vars(min_cell_early_clock) 0.88
+set vars(min_cell_late_clock) 1
+set vars(min_cell_early_data) 1
+set vars(min_cell_late_data) 1
+set vars(min_net_early_clock) 0.88
+set vars(min_net_late_clock) 1
+set vars(min_net_early_data) 1
+set vars(min_net_late_data) 1
+
+#dbViaWeight setting
+set vars(via_weight) ""
+#set vars(via_weight_dfm) "*_DFM_P1_VIA* 11, *_DFM_P2_VIA* 10 *_DFM_P3_VIA* 9 *_DFM_P4_VIA* 8 *_DFM_P5_VIA* 7 *_DFM_P6_VIA* 6 *_DFM_P7_VIA* 5 *_DFM_P8_VIA* 4 *_DFM_P9_VIA* 3 *_DFM_P10_VIA* 2 *_DFM_P11_VIA* 1"
+#set vars(via_weight) "*FBD* -1, *FBS* -1, *PBD* -1, *PBS* -1, *VIAGEN* -1"
+#set vars(via_weight_dfm) "*FBD* -1, *FBS* -1, *PBD* -1, *PBS* -1, *VIAGEN* -1"
+
+#define clock gating margin
+set vars(clock_gating_margin) -0.3
+
+#earch of the above variable can be applied per power domain
+#set vars(<domain>,welltaps)  <welltap cells>
+#set vars(<domain>,welltaps,checkerboard)  <true or false>
+#set vars(<domain>,welltaps,max_gap)  <max gap>
+#set vars(<domain>,welltaps,cell_interval)  <cell interval>
+#set vars(<domain>.percap_cell)  <per endcap cell>
+#set vars(<domain>.postcap_cell)  <post endcap cell>
+#
+#secondary pg route setting,used in prects
+set vars(route_secondary_pg)                 false
+set vars(route_secondary_pg_nets)                "VDD_CORE" 
+set vars(route_secondary_pg_pattern)                "trunk" 
+set vars(route_secondary_pg_maxFanout)               2 
+set vars(route_secondary_pg_ndr)              NDR_2W2S 
+set vars(route_secondary_topLayer)             6
+set vars(route_secondary_bottomLayer)            3 
+set vars(route_secondary_PGPin)            "PT*HD*:TVDD DEL*35HVT_AON:TVDD"
+
+###signal intergrity options
+set vars(coupling_c_thresh) 1e-15
+set vars(delta_delay_threshold) -1
+set vars(relative_c_thresh) 0.02
+set vars(total_c_thresh) 0
+
+###optional define the folowing when application
+set vars(pwer_nets) "VDD"
+set vars(gnd_nets) "VSS"
+
+#rc factor
+#setLimitedAccessFeature flow_effort_extrem 0
+
+if {$vars(process) == 80 || $vars(process) == 55 } {
+	puts "set half node process $vars(process) shrink factor to 0.9"
+	setShrinkFactor 0.9
+}
+
+##set defOutLefNDR 1
+set defOutLefVia 1
+setMultiCpuUsage -localCpu 8 -keepLicense true -threadinfo 2
+
+#source ../scr/util/a
+

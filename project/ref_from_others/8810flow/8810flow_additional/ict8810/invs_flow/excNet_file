@@ -1,0 +1,8 @@
+dft_edt_clk
+dft_test_clk
+ijtag_tck
+lb_cpuss_ca53_1x4_m0_aclk
+lb_cpuss_ca53_1x4_m1_aclk
+lb_cpuss_ca53_apb2apb_as1_pclks
+lb_cpuss_ca53_jtagtck_i
+lb_cpuss_ca53_main_clk_i

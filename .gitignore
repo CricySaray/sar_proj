@@ -8,6 +8,7 @@
 !.tmux.conf
 !.gitignore
 !.gitattributes
+!.gitmodules
 !.invs_alias.tcl
 !.gitconfig
 !.teamshare/

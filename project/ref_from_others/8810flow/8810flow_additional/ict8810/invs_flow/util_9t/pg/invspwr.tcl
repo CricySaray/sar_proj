@@ -1,0 +1,261 @@
+##used for pgr of multi-domain or single domain
+##begin time
+set t1 [exec date]
+#
+#################################
+###proc
+#################################
+source ../scr_org/pg/invsAddM1.tcl
+source ../scr_org/pg/invsAddM5.tcl
+#source ../scr_org/pg/invsFixDrc.tcl
+source ../scr_org/pg/invsAddM6.tcl
+source ../scr_org/pg/invsAddM7.tcl
+source ../scr_org/pg/invsAddM8.tcl
+source ../scr_org/pg/invsAddRG.tcl
+source ../scr_org/pg/invsAddEnd.tcl
+#source ../scr_org/pg/invsAddWell.tcl
+source ../scr_org/pg/invsAddMemM5.tcl
+source ../scr_org/pg/invsAddMemM6.tcl
+source ../scr_org/pg/invsAddCorePSWM5.tcl
+source ../scr_org/pg/invsAddPowerSwitch.tcl
+source ../scr_org/pg/invsAddChannelM5.tcl
+source ../scr_org/uti/userCreateM1FollowPin.tcl
+source ../scr_org/uti/proc
+#
+#################################
+###vars
+#################################
+##core/die info
+set core_area [dbGet top.fplan.coreBox]
+set die_area [dbGet Top.fplan.box]
+set vars(core_x1) [lindex [lindex $core_area 0] 0]
+set vars(core_y1) [lindex [lindex $core_area 0] 1]
+set vars(core_x2) [lindex [lindex $core_area 0] 2]
+set vars(core_y2) [lindex [lindex $core_area 0] 3]
+set vars(die_x1) [lindex [lindex $die_area 0] 0]
+set vars(die_y1) [lindex [lindex $die_area 0] 1]
+set vars(die_x2) [lindex [lindex $die_area 0] 2]
+set vars(die_y2) [lindex [lindex $die_area 0] 3]
+#
+####direction
+set vars(m5_direction) Vertical
+set vars(m6_direction) Horizontal
+set vars(m7_direction) Vertical
+set vars(m8_direction) Horizontal
+#
+#### Power pattern info
+set vars(m5_width) 0.42
+set vars(m5_pitch) 10
+set vars(m5_step) 20
+set vars(addm5_width) 0.5
+set vars(addm5_pitch) 2.5
+set vars(addm5_step) 5
+set vars(m6_width) 0.6
+set vars(m6_pitch) 7.56
+set vars(m6_step) 15.12
+set vars(addm6_width) 0.6
+set vars(addm6_pitch) 7.56 
+set vars(addm6_step) 7.56
+#set vars(m7_width) 6
+#set vars(m7_pitch) 8
+#set vars(m7_step) 16
+set vars(m7_width) 0.5
+set vars(m7_pitch) 10
+set vars(m7_step) 20
+set vars(addm7_width) 0.5
+set vars(addm7_pitch) 3.3 
+set vars(addm7_step) 10
+set vars(m8_width) 10
+set vars(m8_pitch) 12.5
+set vars(m8_step) 25
+set vars(m5psw_width) 1.3
+set vars(m5psw_pitch) 1.6
+set vars(m5psw_step) 58
+set vars(m7psw_width) 1
+set vars(m7psw_pitch) 1.3
+#
+####offset setting
+set vars(m5_offset) 0
+set vars(m6_offset) 4.11
+set vars(m7_offset) 0
+set vars(m8_offset) 0
+set vars(m6mem_offset) [expr $vars(m6_offset) + $vars(addm6_step) / 3]
+set vars(m7mem_offset) [expr $vars(m7_offset) + $vars(addm7_step) / 3.0]
+set vars(m5mem_offset) $vars(m5_offset)
+set vars(m5psw_offset) $vars(m5_offset)
+#set vars(m5channel_offset) [expr 2.98 - 0.13 - 0.5/2]
+set vars(m5channel_offset) 0.95
+#
+####start/stop points setting
+set vars(m5_start) [expr $vars(core_y1)  + $vars(m5_offset)]
+set vars(m5_stop) $vars(core_y2)
+set vars(m6mem_start) [expr $vars(core_y1)  + $vars(m6mem_offset)]
+set vars(m6mem_stop) $vars(core_y2)
+set vars(m7mem_start) [expr $vars(core_y1)  + $vars(m7mem_offset)]
+set vars(m7mem_stop) $vars(core_y2)
+set vars(m6_start) [expr $vars(core_y1)  + $vars(m6_offset)]
+set vars(m6_stop) $vars(core_y2)
+set vars(m7_start) [expr $vars(core_x1)  + $vars(m7_offset)]
+set vars(m7_stop) $vars(core_x2)
+set vars(m8_start) [expr $vars(core_y1)  + $vars(m8_offset)]
+set vars(m8_stop) $vars(core_y2)
+set vars(sw_offset) 20
+set vars(halo) 2.8
+#
+#### psw setting
+set pgvars(domain) pd_aa
+set pgvars(pso_cell) HEADBUFTIE32_X2M_A9TR50
+set pgvars(channel_pso_cell) HEADBUFTIE32_X2M_A9TR50
+#the vars below is related with power switch type
+set pgvars(channel_placementAdjustX) -1.28
+set pgvars(leftOffset) [expr $vars(m5psw_offset) + [dbGet top.fplan.coreBox_llx] +$vars(sw_offset) -$vars(m5psw_step) ]
+set pgvars(horizontalPitch) $vars(m5psw_step)
+set pgvars(skipRows) 1
+set pgvars(enablePortIn) [list  PD_AA_IN] ;
+set pgvars(enablePortOut) [list  PD_AA_OUT] ;
+set pgvars(channel_skipRows) 1
+set pgvars(AON_POWER) VDD ;
+set pgvars(AON_POWER_layer) M7 ;
+set pgvars(add_pwrsh_option) "-checkerBoard -honorNonRegularPitchStripe -ignoreSoftBlockage -noFixedStdCellOverlap"
+set pgvars(channel_add_pwrsh_option) "-honorNonRegularPitchStripe -ignoreSoftBlockage -noFixedStdCellOverlap"
+#
+###power domain info
+set vars(power_domains) [userGetPowerDomains]
+#
+###addstripeMode setting
+setAddStripeMode -stripe_min_length 0
+setAddStripeMode -ignore_nondefault_domains 1
+setAddStripeMode -use_exact_spacing true
+setAddStripeMode -use_point2point_router false
+#
+#################################
+###endcap
+#################################
+invsAddEnd
+verifyEndCap -report $vars(rpt_dir)/${vars(step)}_[dbgDesignName].endCap.rpt
+###
+#################################
+###add channel psw m5 stripe
+#################################
+# add m5 on channel ,including channel boundary cells
+invsAddChannelM5
+###
+#################################
+###add m1 stripe, 1min
+#################################
+invsAddM1
+##
+#################################
+###route clamp cells
+#################################
+##add M6
+##
+#################################
+invsAddChannelRG -layer {5} -sizey 0 -name ChannelRG
+invsAddChannelRG -layer {7} -sizey 0 -name ChannelRG
+invsAddMemRG -layer {5} -name MemRG
+invsAddMemRG -layer {7} -name MemRG
+invsAddCorePSWM5
+deleteRouteBlk -name ChannelRG
+deleteRouteBlk -name MemRG
+#### edit power via from channel m5 to m1
+editPowerVia -skip_via_on_pin Standardcell -bottom_layer M2 -add_vias 1 -top_layer M5 -via_scale_width 70
+editPowerVia -skip_via_on_pin Standardcell -bottom_layer M2 -add_vias 1 -top_layer M7 -via_scale_width 70
+##
+##
+#################################
+###add global m5 stripe
+#################################
+##add rg on channel
+invsAddChannelRG -layer {5} -sizey 0 -name ChannelRG
+invsAddChannelRG -layer {7} -sizey 0 -name ChannelRG
+invsAddRG -layer {7}  -name M7RG
+invsAddRG -layer {5}  -name M5RG
+invsAddM5
+deleteRouteBlk -name ChannelRG
+deleteRouteBlk -name M7RG
+deleteRouteBlk -name M5RG
+##
+#################################
+###add psw on core/channel and connect enable signal
+#################################
+##delete all power switch
+my.pg.delete_all_pwrsh
+foreach pds [dbGet [dbGet top.pds.isAlwaysOn 0 -e -p].name] {
+	my.pg.add_power_switch $pds
+}
+###edit power via for power switch
+globalNetConnect VDD -pin VDDG
+setViaGenMode -allow_via_expansion false
+editPowerVia -skip_via_on_pin {Pad Block Cover} -skip_via_on_wire_shape { Followpin Corewire Blockwire Iowire Fillwire Noshape } \
+	-bottom_layer M1 -same_sized_stack_vias 1 -via_using_exact_crossover_size 0 -add_vias 1 -top_layer M7 -uda PowerSwitchVia
+##
+#################################
+###add global m6 stripe
+#################################
+invsAddM6
+##
+#################################
+###add global psw m5 stripe
+#################################
+###welltap
+#################################
+invsAddWell
+verifyWellTap  -rule 30 -cell "$vars(welltap_cell)" -report $vars(rpt_dir)/${vars(step)}_[dbgDesignName].welltap.rpt
+##
+#################################
+###add mem additional m5 stripe
+#################################
+## mem power density,single power net 20%
+setAddStripeMode -remove_floating_stripe_over_block false
+invsAddExMemRG -layer {5} -name MemExRG
+invsAddMemM5
+deleteRouteBlk -name MemExRG
+##
+###add power via from m5 to m4
+editPowerVia -skip_via_on_pin Standardcell -bottom_layer M4 -add_vias 1 -top_layer M5 -uda MemVia45
+##
+#################################
+###mem additional m6 stripe
+#################################
+##only add one post switch vdd
+invsAddExMemRG -layer {6} -name MemExRG
+invsAddMemM6
+deleteRouteBlk -name MemExRG
+#################################
+###add global m7 stripe
+#################################
+setAddStripeMode -remove_floating_stripe_over_block false
+invsAddExMemRG -layer {7} -name MemExRG
+invsAddMemM7
+#################################
+###add global m8 stripe
+#################################
+invsAddM8
+##
+##
+userCreateM1FollowPin 0.09 0.09
+##
+setAddStripeMode -remove_floating_stripe_over_block true
+##
+###end time
+set t2 [exec date]
+##
+puts "power plan time from $t1 to $t2"
+return
+###
+##
+#################################
+###verify
+#################################
+verifyConnectivity -noAntenna -type signal -noUnrouteNet -report $vars(rpt_dir)/${vars(step)}_[dbgDesignName].power_verifyconnect.rpt
+if {[regexp {^14} [getVersion]]} {
+	verify_drc -limit 10000 -report $vars(rpt_dir)/${vars(step)}_[dbgDesignName].power_verifydrc.rpt
+	} else {
+		verifyGeometry -error 10000 -warning 500 -report $vars(rpt_dir)/${vars(step)}_[dbgDesignName].power_verifygeometry.rpt
+	}
+################################
+##drc fix
+################################
+#invsFixDrc
+#	#

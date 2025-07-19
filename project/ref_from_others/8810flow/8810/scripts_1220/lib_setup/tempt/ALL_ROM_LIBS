@@ -1,0 +1,226 @@
+set vars(LEF_ROM_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8.lef \
+"
+
+set vars(GDS_ROM_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8.gds2 \
+"
+
+set vars(CDL_ROM_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8.cdl \
+"
+
+set vars(MDT_ROM_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8.mdt \
+"
+
+set vars(MBIST_ROM_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8.memlib \
+"
+
+set vars(VLG_ROM_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8.v \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_WCL_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_WCL_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_m40c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_WCL_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_m40c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_WCL_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_m40c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_WCL_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_m40c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_WCL_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_m40c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_WC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_125c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_WC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_125c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_WC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_125c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_WC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_125c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_WC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_125c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_WC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_125c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_WCZ_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_0c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_WCZ_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_0c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_WCZ_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_0c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_WCZ_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_0c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_WCZ_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p81v_0p81v_0c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_WCZ_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ssg_cworstt_0p90v_0p90v_0c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_ML_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_125c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_ML_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_125c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_ML_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_125c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_ML_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_125c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_ML_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_125c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_ML_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_125c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_LT_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_m40c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_LT_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_m40c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_LT_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_m40c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_LT_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_m40c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_LT_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_m40c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_LT_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_m40c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_BC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_0c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_BC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_0c.lib_ccs_tn_sh5p1cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_BC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_0c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_BC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_0c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_BC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_0p99v_0p99v_0c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_BC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_ffg_cbestt_1p05v_1p05v_0c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_TC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_25c.lib_ccs_tn_sh0cm \
+"
+set vars(LIB_ROM_0P9VP_0P9VC_TC125_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_125c.lib_ccs_tn_sh0cm \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_TC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_1p00v_1p00v_25c.lib_ccs_tn_sh0cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_TC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_25c.aocv3 \
+"
+set vars(AOCV_ROM_0P9VP_0P9VC_TC125_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_125c.aocv3 \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_TC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_1p00v_1p00v_25c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_TC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_25c.db \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_TC125_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_125c.db \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_TC_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_1p00v_1p00v_25c.db \
+"
+
+set vars(LIB_ROM_0P9VP_0P9VC_TC85_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_85c.lib_ccs_tn_sh0cm \
+"
+
+set vars(AOCV_ROM_0P9VP_0P9VC_TC85_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_85c.aocv3 \
+"
+
+set vars(DB_ROM_0P9VP_0P9VC_TC85_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_0p90v_0p90v_85c.db \
+"
+
+set vars(LIB_ROM_1P0VP_1P0VC_TC85_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_1p00v_1p00v_85c.lib_ccs_tn_sh0cm \
+"
+
+set vars(AOCV_ROM_1P0VP_1P0VC_TC85_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_1p00v_1p00v_85c.aocv3 \
+"
+
+set vars(DB_ROM_1P0VP_1P0VC_TC85_LIBS) " \
+/eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/archive_fullmask/chip_top_idp/lib/mem/AU28HPCPROMSPHDLL2560X64CM8/AU28HPCPROMSPHDLL2560X64CM8_tt_ctypical_1p00v_1p00v_85c.db \
+"
+

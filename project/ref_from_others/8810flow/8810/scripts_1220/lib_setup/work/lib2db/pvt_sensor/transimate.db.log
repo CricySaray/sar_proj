@@ -1,0 +1,139 @@
+Job <962653> is submitted to queue <I2100_PR>.
+<<Waiting for dispatch ...>>
+<<Starting on ICT-LSF49>>
+
+                             Library Compiler (TM)
+
+             Version O-2018.06-SP1 for linux64 - Jul 18, 2018 -SLE
+
+                    Copyright (c) 1988 - 2018 Synopsys, Inc.
+   This software and the associated documentation are proprietary to Synopsys,
+ Inc. This software may only be used in accordance with the terms and conditions
+ of a written license agreement with Synopsys, Inc. All other use, reproduction,
+            or distribution of this software is strictly prohibited.
+
+Initializing...
+#hah foreach lib $all_libs  {read_lib $lib}
+#hah foreach lib [get_object_name  [get_lib *]]  {write_lib -format db -output $lib.db   $lib}
+set all_libs  [glob /eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/{capacitor_instance,UMC028_PVT_01_SU09,UMC028_PVT_01_SU18,UMC028_PVT_01_SU33,UMC028_PVT_01_SU_VBAT}*lib]
+/eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/capacitor_instance.lib /eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU09.lib /eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU18.lib /eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU33.lib /eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU_VBAT.lib
+foreach lib $all_libs {
+	read_lib $lib
+	set ip_name [get_object_name  [get_lib *]]
+#	regexp ".*LIB/${ip_name}.lib" $lib a corner
+	write_lib -format db -output ${ip_name}.db $ip_name 
+	remove_lib -all
+}
+Reading '/eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/capacitor_instance.lib' ...
+Warning: Line 12, The 'default_output_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_rise' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_output_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_rise' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_fall' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_fall' attribute is not specified. Using 1.00. (LBDB-172)
+Technology library 'capacitor_instance' read successfully
+Wrote the 'capacitor_instance' library to '/eda_files/proj/ict8810/backend/zhurourou/work/lib2db/pvt_sensor/capacitor_instance.db' successfully
+Removing library 'capacitor_instance'
+Reading '/eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU09.lib' ...
+Warning: Line 12, The 'default_output_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_rise' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_output_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_rise' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_fall' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_fall' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, Overwrite 'nom_voltage' by default 'voltage' value 1.800000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 12, Overwrite 'nom_temperature' by default 'temperature' value 27.000000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 55, Cell 'UMC028_PVT_01_SU09', The 'UMC028_PVT_01_SU09' cell's leakage_power groups for related_pg_pin 'VDD18' 
+	do not cover all the states represented by the 'when' string, and the default 
+	leakage_power group is not defined for related_pg_pin 'VDD18', thus 0 will be used as 
+	the leakage_power value for the missing states of related_pg_pin 'VDD18'. (LIBG-248)
+Warning: Line 91, Cell 'UMC028_PVT_01_SU09', pin 'CP', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 97, Cell 'UMC028_PVT_01_SU09', pin 'SS', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 100, Cell 'UMC028_PVT_01_SU09', pin 'EN', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Technology library 'UMC028_PVT_01_SU09' read successfully
+Wrote the 'UMC028_PVT_01_SU09' library to '/eda_files/proj/ict8810/backend/zhurourou/work/lib2db/pvt_sensor/UMC028_PVT_01_SU09.db' successfully
+Removing library 'UMC028_PVT_01_SU09'
+Reading '/eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU18.lib' ...
+Warning: Line 12, The 'default_output_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_rise' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_output_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_rise' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_fall' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_fall' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, Overwrite 'nom_voltage' by default 'voltage' value 1.800000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 12, Overwrite 'nom_temperature' by default 'temperature' value 27.000000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 55, Cell 'UMC028_PVT_01_SU18', The 'UMC028_PVT_01_SU18' cell's leakage_power groups for related_pg_pin 'VDD18' 
+	do not cover all the states represented by the 'when' string, and the default 
+	leakage_power group is not defined for related_pg_pin 'VDD18', thus 0 will be used as 
+	the leakage_power value for the missing states of related_pg_pin 'VDD18'. (LIBG-248)
+Warning: Line 91, Cell 'UMC028_PVT_01_SU18', pin 'CP', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 97, Cell 'UMC028_PVT_01_SU18', pin 'SS', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 100, Cell 'UMC028_PVT_01_SU18', pin 'EN', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Technology library 'UMC028_PVT_01_SU18' read successfully
+Wrote the 'UMC028_PVT_01_SU18' library to '/eda_files/proj/ict8810/backend/zhurourou/work/lib2db/pvt_sensor/UMC028_PVT_01_SU18.db' successfully
+Removing library 'UMC028_PVT_01_SU18'
+Reading '/eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU33.lib' ...
+Warning: Line 12, The 'default_output_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_rise' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_output_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_rise' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_fall' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_fall' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, Overwrite 'nom_voltage' by default 'voltage' value 1.800000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 12, Overwrite 'nom_temperature' by default 'temperature' value 27.000000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 55, Cell 'UMC028_PVT_01_SU33', The 'UMC028_PVT_01_SU33' cell's leakage_power groups for related_pg_pin 'VDD18' 
+	do not cover all the states represented by the 'when' string, and the default 
+	leakage_power group is not defined for related_pg_pin 'VDD18', thus 0 will be used as 
+	the leakage_power value for the missing states of related_pg_pin 'VDD18'. (LIBG-248)
+Warning: Line 91, Cell 'UMC028_PVT_01_SU33', pin 'CP', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 97, Cell 'UMC028_PVT_01_SU33', pin 'SS', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 100, Cell 'UMC028_PVT_01_SU33', pin 'EN', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Technology library 'UMC028_PVT_01_SU33' read successfully
+Wrote the 'UMC028_PVT_01_SU33' library to '/eda_files/proj/ict8810/backend/zhurourou/work/lib2db/pvt_sensor/UMC028_PVT_01_SU33.db' successfully
+Removing library 'UMC028_PVT_01_SU33'
+Reading '/eda_files/proj/ict8810/archive/11-ip/pvt_sensor/20240528_028UMC_PVT_01_database_release_v1.0/Abstracts/LIB/UMC028_PVT_01_SU_VBAT.lib' ...
+Warning: Line 12, The 'default_output_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_inout_pin_rise_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_rise' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_output_pin_fall_res' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_rise' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, The 'default_slope_fall' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 12, The 'default_intrinsic_fall' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 12, Overwrite 'nom_voltage' by default 'voltage' value 1.800000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 12, Overwrite 'nom_temperature' by default 'temperature' value 27.000000 defined
+	in 'operating_conditions'.  (LBDB-750)
+Warning: Line 55, Cell 'UMC028_PVT_01_SU_VBAT', The 'UMC028_PVT_01_SU_VBAT' cell's leakage_power groups for related_pg_pin 'VDD18' 
+	do not cover all the states represented by the 'when' string, and the default 
+	leakage_power group is not defined for related_pg_pin 'VDD18', thus 0 will be used as 
+	the leakage_power value for the missing states of related_pg_pin 'VDD18'. (LIBG-248)
+Warning: Line 91, Cell 'UMC028_PVT_01_SU_VBAT', pin 'CP', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 97, Cell 'UMC028_PVT_01_SU_VBAT', pin 'SS', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Warning: Line 100, Cell 'UMC028_PVT_01_SU_VBAT', pin 'EN', The 'capacitance' attribute is not specified. Using 0.01. (LBDB-172)
+Technology library 'UMC028_PVT_01_SU_VBAT' read successfully
+Wrote the 'UMC028_PVT_01_SU_VBAT' library to '/eda_files/proj/ict8810/backend/zhurourou/work/lib2db/pvt_sensor/UMC028_PVT_01_SU_VBAT.db' successfully
+Removing library 'UMC028_PVT_01_SU_VBAT'
+exit
+Maximum memory usage for this session: 65.69 MB
+CPU usage for this session:      1 seconds (  0.00 hours)
+Elapsed time for this session:      4 seconds (  0.00 hours)
+Thank you for using Library Compiler.
+Memory usage for this session 65 Mbytes.
+CPU usage for this session 1 seconds ( 0.00 hours ).
+
+Thank you...

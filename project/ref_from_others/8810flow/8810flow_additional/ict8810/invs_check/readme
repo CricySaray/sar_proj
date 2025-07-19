@@ -1,0 +1,9 @@
+# /eda_tools/cadence/INNOVUS_1917/tools.lnx86/fish/bin/fishenc user.tcl
+# design_invs.tcl
+    1. design::reportUtilization        (2024/12/2)
+    2. design::report_vt_usage          (2024/12/2)
+    3. design::insert_macro_iso_buffer  (2024/12/3)
+    4. design::insert_iso_buffer        (2024/12/5)
+
+# gen timing summary
+# python3 /eda_files/proj/ict8810/swap/to_vct/eda_files/proj/ict8810/backend/be8801/david/script/invs_parse_timing_rpt/cmd_parse_timingRpt.py -save_rptPath $path -timing_rptFile timing.rpt

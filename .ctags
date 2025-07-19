@@ -1,0 +1,4 @@
+--langdef=all
+--langmap=all+*
+--langmap=all+:.
+--regex-all=/^\s*set\s+((vars|FP)\([a-zA-Z1-9_,]+\))?\s+/\1/v,vars,variables/

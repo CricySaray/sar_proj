@@ -1,0 +1,17 @@
+*
+*/
+.*
+!.gitignore
+!scr_sar/
+!scr_sar/**
+!backend/
+!backend/**
+!ref_from_others/
+!ref_from_others/**
+*.swp
+*.swo
+*.swn
+.*.swp
+.*.swo
+.*.swn
+*~

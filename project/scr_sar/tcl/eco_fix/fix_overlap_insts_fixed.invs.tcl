@@ -8,6 +8,9 @@
 #             can exclude endcap/welltap and block cell
 # update    : 2025/07/15 09:15:53 Tuesday
 #             add switch var $preCheckPlace to checkPlace(will clear Markers), you can use it when eco flow or every stage of flow
+# update    : 2025/07/19 23:32:30 Saturday
+#             (U001)refinePlace -wire_length_reclaim true: exist on version 23.10 or above version
+#             setPlaceMode -place_detail_remove_affected_routing true
 # ref       : link url
 # --------------------------
 proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefinePlace 1} {ifRunEcoRoute 1} {only_refinePlace_violInsts "false"} {overlap_marker_name {SPOverlapViolation SPFillerGapViolation}}} {
@@ -21,6 +24,7 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
   set violobjs [list ]
   if {$preCheckPlace} { 
     setPlaceMode -place_detail_legalization_inst_gap 1
+    setPlaceMode -place_detail_remove_affected_routing true; # U001
     set cmd_precheck "checkPlace -ignoreOutOfCore"
     puts "$promptINFO $cmd_precheck"
     eval $cmd_precheck
@@ -55,8 +59,19 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
         setPlaceMode -place_detail_eco_max_distance 10
         if {$ifRunRefinePlace} {
           puts "$promptINFO begin refinePlace for overlap insts..."
-          if {$only_refinePlace_violInsts == "true"} {refinePlace -inst [dbget $insts_ptr.name]
-          } else { refinePlace -eco true }
+          if {$only_refinePlace_violInsts == "true"} {
+            if { [string compare -length 5 [getVersion] "23.10"] > -1} { ; # U001
+              refinePlace -inst [dbget $insts_ptr.name] -wire_length_reclaim true
+            } else {
+              refinePlace -inst [dbget $insts_ptr.name]
+            }
+          } else { 
+            if { [string compare -length 5 [getVersion] "23.10"] > -1} {
+              refinePlace -eco true -wire_length_reclaim true
+            } else {
+              refinePlace -eco true 
+            }
+          }
         }
         if {$ifRunEcoRoute} {
           puts "$promptINFO begin ecoRoute for overlap insts..."

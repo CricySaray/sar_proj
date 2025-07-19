@@ -21,14 +21,16 @@ let mapleader = "\\"
 """ INCREAMENTAL SETTINGS -------------------------------------------------------
 "" you can write some misc config when you are in client env such as VDI/Xclient
 cabbrev co %!column -t -s '\|'
-
 """ KEYWORDS TO HIGHLIGHT -------------------------------------------------------
 
-" 定义一个三维列表，每个子列表包含一个高亮组和对应的关键词列表
+" 定义一个三维列表，支持两种匹配模式:
+" - 直接匹配: ['Exact', 高亮组, [关键词1, 关键词2, ...]]
+" - 正则匹配: ['Regex', 高亮组, [正则表达式1, 正则表达式2, ...]]
 let g:highlight_groups = [
-      \ ['Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
-      \ ['Cursor',  ['songNOTE']],
-      \ ['GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE', 'U001']],
+      \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
+      \ ['Exact', 'Cursor',  ['songNOTE']],
+      \ ['Exact', 'GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE']],
+      \ ['Regex', 'GruvboxFg0', ['U\d\{3}', 'ID\d\{4,}']],
       \ ]
 " 创建高亮组自动命令
 augroup highlight_keywords
@@ -39,11 +41,18 @@ augroup END
 function! SetupKeywordHighlights()
   " 遍历每个高亮组配置
   for group in g:highlight_groups
-    let highlight_group = group[0]
-    let keywords = group[1]
-    " 遍历关键词列表，为每个关键词设置语法匹配
-    for keyword in keywords
-      execute 'syn match HighlightKeyword_' . highlight_group . ' /\V\<'. escape(keyword, '/\') .'\>/ containedin=.*'
+    let match_type = group[0]
+    let highlight_group = group[1]
+    let patterns = group[2]
+    " 遍历模式列表，为每个模式设置语法匹配
+    for pattern in patterns
+      if match_type ==# 'Exact'
+        " 直接匹配模式 (整词匹配)
+        execute 'syn match HighlightKeyword_' . highlight_group . ' /\V\<'. escape(pattern, '/\') .'\>/ containedin=.*'
+      elseif match_type ==# 'Regex'
+        " 正则表达式匹配模式
+        execute 'syn match HighlightKeyword_' . highlight_group . ' /\<'. pattern .'\>/ containedin=.*'
+      endif
     endfor
     " 设置当前高亮组的高亮样式
     execute 'hi def link HighlightKeyword_' . highlight_group . ' ' . highlight_group
@@ -471,3 +480,100 @@ let g:rainbow_conf = {
 " 这些颜色在深灰色背景上会更加突出，同时保持了莫兰迪色系的柔和特性，减轻长时间编程的视觉疲劳。
 " 括号匹配与行号高亮配置
 " ~/.vimrc 配置
+"" ---------------------------------------------------------
+" fzf.vim config
+" 初始化 fzf.vim 配置字典
+let g:fzf_vim = {}
+" 配置选项
+" [Buffers] 若可能，跳转到现有的窗口
+let g:fzf_vim.buffers_jump = 1
+" [Ag|Rg|RG] 在窄屏幕上，将路径显示在单独的一行
+let g:fzf_vim.grep_multi_line = 1
+" [[B]Commits] 自定义 'git log' 使用的选项
+let g:fzf_vim.commits_log_options = '--graph --color=always --format="%C(auto)%h%d %s %C(black)%C(bold)%cr"'
+" [Tags] 生成标签文件的命令
+let g:fzf_vim.tags_command = 'ctags -R'
+" [Commands] --expect 表达式，用于直接执行命令
+let g:fzf_vim.commands_expect = 'alt-enter,ctrl-x'
+" 命令级别的 fzf 选项
+" 配置 Buffers 命令的外观
+let g:fzf_vim.buffers_options = ['--style', 'full', '--border-label', ' Open Buffers ']
+" 预览窗口配置
+" 预览窗口在右侧，占50%宽度，使用 ctrl-/ 切换显示/隐藏
+let g:fzf_vim.preview_window = ['right,50%', 'ctrl-/']
+" 列表类型处理多选配置
+" 默认使用快速修复列表
+let g:fzf_vim.listproc = { list -> fzf#vim#listproc#quickfix(list) }
+" 为 Ag 命令使用快速修复列表
+let g:fzf_vim.listproc_ag = { list -> fzf#vim#listproc#quickfix(list) }
+" 为 Rg 命令使用位置列表
+let g:fzf_vim.listproc_rg = { list -> fzf#vim#listproc#location(list) }
+" 快捷键设置 - 基础操作
+" 搜索文件 (使用 $FZF_DEFAULT_COMMAND)
+nnoremap <leader>ff <cmd>Files<CR>
+" 搜索缓冲区
+nnoremap <leader>fb <cmd>Buffers<CR>
+" 搜索文件历史
+nnoremap <leader>fh <cmd>History<CR>
+" 搜索标签
+nnoremap <leader>ft <cmd>Tags<CR>
+" 搜索标记
+nnoremap <leader>fm <cmd>Marks<CR>
+" 搜索颜色方案
+nnoremap <leader>fc <cmd>Colors<CR>
+" 搜索窗口
+nnoremap <leader>fw <cmd>Windows<CR>
+" 快捷键设置 - Git 集成
+" 搜索 Git 文件 (git ls-files)
+nnoremap <leader>gf <cmd>GFiles<CR>
+" 搜索 Git 状态文件
+nnoremap <leader>gs <cmd>GFiles?<CR>
+" 搜索 Git 提交
+nnoremap <leader>gc <cmd>Commits<CR>
+" 搜索当前文件的 Git 提交
+nnoremap <leader>gb <cmd>BCommits<CR>
+" 使用 git grep 搜索
+nnoremap <leader>gg <cmd>GGrep<CR>
+" 快捷键设置 - 文本搜索
+" 使用 ripgrep 搜索
+nnoremap <leader>rg <cmd>Rg<CR>
+" 搜索所有缓冲区中的行
+nnoremap <leader>lg <cmd>Lines<CR>
+" 搜索当前缓冲区中的行
+nnoremap <leader>bl <cmd>BLines<CR>
+" 快捷键设置 - 命令与帮助
+" 搜索命令
+nnoremap <leader>cm <cmd>Commands<CR>
+" 搜索帮助标签
+nnoremap <leader>hm <cmd>Helptags<CR>
+" 搜索映射
+nnoremap <leader>mf <cmd>Maps<CR>
+" 映射选择映射
+nmap <leader><tab> <plug>(fzf-maps-n)
+xmap <leader><tab> <plug>(fzf-maps-x)
+omap <leader><tab> <plug>(fzf-maps-o)
+" 插入模式补全
+" 使用 fzf 进行单词补全
+imap <c-x><c-k> <plug>(fzf-complete-word)
+" 使用 fzf 进行路径补全
+imap <c-x><c-f> <plug>(fzf-complete-path)
+" 使用 fzf 进行行补全
+imap <c-x><c-l> <plug>(fzf-complete-line)
+" 自定义命令示例：ProjectFiles 只搜索 ~/projects 目录
+command! -bang ProjectFiles call fzf#vim#files('~/projects', <bang>0)
+" 搜索项目文件
+nnoremap <leader>fp <cmd>ProjectFiles<CR>
+" 自定义 Git grep 命令
+command! -bang -nargs=* GGrep
+  \ call fzf#vim#grep(
+  \   'git grep --line-number -- '.fzf#shellescape(<q-args>),
+  \   fzf#vim#with_preview({'dir': systemlist('git rev-parse --show-toplevel')[0]}), <bang>0)
+" 自定义状态栏
+function! s:fzf_statusline()
+  " 自定义状态栏样式
+  highlight fzf1 ctermfg=161 ctermbg=251
+  highlight fzf2 ctermfg=23 ctermbg=251
+  highlight fzf3 ctermfg=237 ctermbg=251
+  setlocal statusline=%#fzf1#\ >\ %#fzf2#fz%#fzf3#f
+endfunction
+autocmd! User FzfStatusLine call <SID>fzf_statusline()

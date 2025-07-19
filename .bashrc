@@ -201,7 +201,7 @@ alias unproxy='unset all_proxy'
 
 #------------------------------------------------
 # export vars
-export DISPLAY=172.23.112.1:0
+export DISPLAY=255.255.255.252
 
 #------------------------------------------------
 # - fzf command config:

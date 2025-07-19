@@ -34,7 +34,6 @@ alias t='lt -lthr'
 alias ll='ls -alF'
 alias la='ls -alhr'
 alias l='ls -CF'
-alias c='cd'
 alias .='cd ..'
 alias ..='cd ../../'
 alias ...='cd ../../../'
@@ -53,7 +52,7 @@ alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 # 使用fdfind搜索文件并通过vim打开
 function vf() {
   if [[ $# -eq 0 ]]; then
-    local search_dir="."
+    local search_dir="/home/cricy/"
     local search_term=""
   elif [[ $# -eq 1 ]]; then
     local search_dir="$1"
@@ -65,6 +64,62 @@ function vf() {
     vim "$file"
   fi
 }
+
+#------------------------------------------------
+# cd + fdfind
+# 使用fdfind搜索目录并直接cd跳转
+alias r='cdf'
+alias cc='cdf'
+function cdf() {
+# 使用fdfind搜索文件并通过vim打开
+  if [[ $# -eq 0 ]]; then
+    local search_dir="$HOME"
+    local search_term=""
+  else
+    local search_dir="$1"
+    local search_term="$2"
+  fi
+  local selected_dir=$(fdfind --type d ${search_term:+~} -H -E '.git' "$search_term" "$search_dir" 2>/dev/null | \
+                      fzf --preview 'tree -L 2 {} 2>/dev/null' --height=35%)
+  if [[ -n "$selected_dir" ]]; then
+    cd "$selected_dir" || return
+    pwd  # 可选：显示当前目录
+  fi
+  # 检查 autojump 是否可用
+  if ! command -v autojump &> /dev/null; then
+    echo "autojump not found. Directory not recorded." >&2
+    return 1
+  fi
+  # 记录当前目录到 autojump 数据库
+  if ! autojump -a "$PWD"; then
+    echo "Failed to add directory to autojump database." >&2
+    return 1
+  fi
+  autojump --purge &> /dev/null
+  return 0
+}
+
+#------------------------------------------------
+# cd + fdfind
+# 在 ~/.bashrc 文件中添加或修改以下内容
+function c() {
+  # 使用内置的 cd 命令
+  builtin cd "$@" || return 1
+  # 检查 autojump 是否可用
+  if ! command -v autojump &> /dev/null; then
+    echo "autojump not found. Directory not recorded." >&2
+    return 1
+  fi
+  # 记录当前目录到 autojump 数据库
+  if ! autojump -a "$PWD"; then
+    echo "Failed to add directory to autojump database." >&2
+    return 1
+  fi
+  autojump --purge &> /dev/null
+  return 0
+}
+alias c='c'
+
 
 #------------------------------------------------
 # change newest dir

@@ -83,7 +83,7 @@ proc fix_trans {args} {
   set specialNeedVtWeightList                  {{AL9 0} {AR9 3} {AH9 0}}; # for checking AH9(HVT), if violated drive inst is HVT, change it. it oftenly is used to change to almost vt like RVT/SVT.
   set rangeOfDriveCapacityForChange            {1 12}
   set rangeOfDriveCapacityForAdd               {3 12}
-  set largerThanDriveCapacityOfChangedCelltype 2
+  set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
   set suffixFilename                           ""; # for example : eco4
   set debug                                    0

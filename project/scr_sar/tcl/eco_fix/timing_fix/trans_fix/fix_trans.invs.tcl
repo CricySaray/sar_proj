@@ -632,6 +632,47 @@ if {$debug} {puts $cmd1}
               set cmd1 [concat $cmd_AA_add1 $cmd_AA_add2]
             }
           }
+        } elseif {$canAddRepeater && [expr [lindex $viol_driverPin_loadPin 0] > -0.2 && $netLength < [expr $logicToBufferDistanceThreshold * 4] || \
+                                    [lindex $viol_driverPin_loadPin 0] > -0.4 && $netLength < [expr $logicToBufferDistanceThreshold * 6]]} {
+          set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+          if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
+            lappend cantChangeList_1v1 [concat "lb:in_9:1" "N_forceDrive" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            set toChangeCelltype [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
+            if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
+              set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
+if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
+              set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
+              lappend fixedList_1v1 [concat "lb:in_9:2" "DA_09" ${toChangeCelltype}_$toAddCelltype $allInfoList]
+              set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
+              set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
+            } else {
+              lappend fixedList_1v1 [concat "lb:in_9:4" "A_09" $toAddCelltype $allInfoList]
+              set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
+            }
+          }
+        } else {
+          set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
+          if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {
+            lappend cantChangeList_1v1 [concat "lb:in_0:1" "N_forceDrive" $allInfoList]
+            set cmd1 "cantChange"
+          } else {
+            set toChangeCelltype [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
+            if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
+              set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
+if {$debug} {puts "$driveCelltype - $toChangeCelltype"}
+              set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
+              lappend fixedList_1v1 [concat "lb:in_0:2" "DA_09" ${toChangeCelltype}_$toAddCelltype $allInfoList]
+              set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
+              set cmd1 [list $cmd_DA_driveInst $cmd_DA_add]
+            } else {
+              lappend fixedList_1v1 [concat "lb:in_0:4" "A_09" $toAddCelltype $allInfoList]
+              set cmd1 [print_ecoCommand -type add -celltype $toAddCelltype -terms [lindex $viol_driverPin_loadPin 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_[ci add] -relativeDistToSink 0.9]
+            }
+          }
         }
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 4: buffer/inverter to logic

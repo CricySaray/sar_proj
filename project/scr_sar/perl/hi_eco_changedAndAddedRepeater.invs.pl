@@ -65,14 +65,16 @@ while (my $line = <$in_fh>) {
         next if $pin eq '';
         print $out_fh "selectPin $pin\n";
         print $out_fh "highlight -index 6 $pin\n";
-        print $out_fh "selectInst [regsub \{/[^/]+\$\} $pin \"\" ]\n";
-        print $out_fh "highlight -index $addedInstOfTermColor [regsub \{/[^/]+\$\} $pin \"\" ]\n";
+        my $instOfPin = substr($pin, 0, rindex($pin, '/')) if $pin =~ m!/!;
+        print $out_fh "selectInst $instOfPin\n";
+        print $out_fh "highlight -index $addedInstOfTermColor $instOfPin\n";
       }
     } else {
       print $out_fh "selectPin $pins\n";
       print $out_fh "highlight -index 6 $pins\n";
-      print $out_fh "selectInst [regsub \{/[^/]+\$\} $pins \"\" ]\n";
-      print $out_fh "highlight -index $addedInstOfTermColor [regsub \{/[^/]+\$\} $pins \"\" ]\n";
+      my $instOfPin = substr($pins, 0, rindex($pins, '/')) if $pins =~ m!/!;
+      print $out_fh "selectInst $instOfPin\n";
+      print $out_fh "highlight -index $addedInstOfTermColor $instOfPin\n";
     }
   }
 }

@@ -259,7 +259,7 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       set cmd1 ""
       set toChangeCelltype ""
       set toAddCelltype ""
-puts "$driveCellClass : $loadCellClass"
+#puts "$driveCellClass : $loadCellClass"
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 1: mem
       if {$driveCellClass == "mem"} {
@@ -341,7 +341,7 @@ if {$debug} { puts $toChangeCelltype }
             lappend fixedList_1v1 [concat "ll:in_4:2" "D" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -celltype $toChangeCelltype -inst $driveInstname]
           }
-        } elseif {$ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.05 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.2]} { ; # songNOTE: situation 03 change VT and DriveCapacity
+        } elseif {$ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [expr  [lindex $viol_driverPin_loadPin 0] >= -0.05 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.2] ||  [lindex $viol_driverPin_loadPin 0] >= -0.11 && $netLength <= [expr $logicToBufferDistanceThreshold * 1.4]]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
           set toChangeCelltype [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {

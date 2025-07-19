@@ -70,7 +70,7 @@ proc fix_trans {args} {
   set specialNeedVtWeightList                  {{AL9 0} {AR9 3} {AH9 0}}; # for checking AH9(HVT), if violated drive inst is HVT, change it. it oftenly is used to change to almost vt like RVT/SVT.
   set rangeOfDriveCapacityForChange            {1 12}
   set rangeOfDriveCapacityForAdd               {3 12}
-  set largerThanDriveCapacityOfChangedCelltype 2
+  set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
   set suffixFilename                           ""; # for example : eco4
   set debug                                    0
@@ -246,6 +246,7 @@ if {$debug} { puts "drive: [get_cell_class [lindex $viol_driverPin_loadPin 1]] l
       set cmd1 ""
       set toChangeCelltype ""
       set toAddCelltype ""
+#puts "$driveCellClass : $loadCellClass"
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 1: mem
       if {$driveCellClass == "mem"} {
@@ -327,7 +328,7 @@ if {$debug} { puts $toChangeCelltype }
             lappend fixedList_1v1 [concat "ll:in_4:2" "D" $toChangeCelltype $allInfoList]
             set cmd1 [print_ecoCommand -type change -celltype $toChangeCelltype -inst $driveInstname]
           }
-        } elseif {$ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [lindex $viol_driverPin_loadPin 0] >= -0.05 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.2]} { ; # songNOTE: situation 03 change VT and DriveCapacity
+        } elseif {$ifHaveLargerCapacity && $canChangeVTandDriveCapacity && [expr  [lindex $viol_driverPin_loadPin 0] >= -0.05 && $netLength <= [expr $logicToBufferDistanceThreshold * 2.2] ||  [lindex $viol_driverPin_loadPin 0] >= -0.11 && $netLength <= [expr $logicToBufferDistanceThreshold * 1.4]]} { ; # songNOTE: situation 03 change VT and DriveCapacity
 if {$debug} { puts "in 3: change VT and DriveCapacity" }
           set toChangeCelltype [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
           if {[regexp -- {0x0:3} $toChangeCelltype]} {
@@ -1412,6 +1413,10 @@ proc get_cell_class {{instOrPin ""}} {
     }
   }
 }
+
+# songNOTE: NOTICE: if you open invs db without timing info, you will get incorrect judgement for cell class, you can only get logic and sequential!
+#           ADVANCE: it can test if you open noTiming invs db. if it is, it judge it by other rule
+# now : please open invs db with timing info
 proc logic_of_mux {inst} {
   set celltype [dbget [dbget top.insts.name $inst -p].cell.name]
   if {[get_property [get_cells $inst] is_memory_cell]} {

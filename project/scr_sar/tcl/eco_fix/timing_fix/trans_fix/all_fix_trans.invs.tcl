@@ -2657,7 +2657,7 @@ if {$debug} { puts "# -----------------" }
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
                   lappend fixedList_one2more [concat "mbl:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
                   set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
-                  set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
+                  set cmd2 [list $cmd_TA_driveInst $cmd_TA_add]
                 } else {
                   lappend fixedList_one2more [concat "mbl:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
                   set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
@@ -3654,7 +3654,12 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
       pw $sf "FIXED CELL LIST: ONE 2 MORE"
       pw $sf [join $fixedPrompts_one2more \n]
       pw $sf ""
-      pw $sf [print_formatedTable [reverseListRange $fixedList_one2more 1 end 0] ]
+      if {[llength $fixedList_one2more] >= 2} {
+        set reversedFixedList_one2more [reverseListRange $fixedList_one2more 1 end 0]
+      } else {
+        set reversedFixedList_one2more $fixedList_one2more
+      }
+      pw $sf [print_formatedTable $reversedFixedList_one2more]
       pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
       pw $sf ""
       pw $sf "CANT CHANGE LIST: ONE 2 MORE"

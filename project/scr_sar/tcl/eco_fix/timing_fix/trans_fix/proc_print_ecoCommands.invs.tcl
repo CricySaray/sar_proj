@@ -12,7 +12,7 @@ proc print_ecoCommand {args} {
   set inst                ""
   set terms               ""
   set celltype            ""
-  set newInstNamePrefix   "sar_fix_tran_070521"
+  set newInstNamePrefix   ""
   set loc                 {}
   set relativeDistToSink  ""
   parse_proc_arguments -args $args opt
@@ -35,11 +35,11 @@ proc print_ecoCommand {args} {
       if {$newInstNamePrefix != ""} {
         if {[llength $loc] && [ifInBoxes $loc]} {
           if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
           } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
             return "0x0:5"; # check $relativeDistToSink 
           } else {
-            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\}" 
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\}" 
           }
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:4"; # check your loc value, it is out of fplan boxes

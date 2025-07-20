@@ -75,6 +75,9 @@ source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced put
 source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints - input pointsList, return center pt
 source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint - return relative point
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance - return value of distance
+source ./proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement - return string
+source ./proc_reverseListRange.invs.tcl; # reverseListRange - return reversed list
+source ./proc_formatDecimal.invs.tcl; # formatDecimal/fm - return string converted from number
 
 
 
@@ -101,7 +104,7 @@ proc fix_trans {args} {
   set rangeOfDriveCapacityForAdd               {3 12}
   set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
-  set suffixFilename                           ""; # for example : eco4
+  set suffixFilename                           "" ; # for example : eco4
   set debug                                    0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
@@ -1762,10 +1765,10 @@ if {$debug} { puts "TEST: $toChangeCelltype" }
         set methodColumn [lindex [lindex $fixedList_1v1 end] 1]
         set celltypeToFix [lindex [lindex $fixedList_1v1 end] 2]
         set fixedList_1v1 [lreplace $fixedList_1v1 end end [lreplace [lindex $fixedList_1v1 end] 1 2 [append methodColumn "_" $checkedSymbol ] [regsub $preToChangeCell $celltypeToFix $toChangeCelltype]]]
-if {$debug} { puts "TEST FIXEDLIST large : [llength $fixedList_1v1]" }
-if {$debug} { puts [lindex $fixedList_1v1 end] }
+        if {$debug} { puts "TEST FIXEDLIST large : [llength $fixedList_1v1]" }
+        if {$debug} { puts [lindex $fixedList_1v1 end] }
       }
-if {$debug} { puts "TEST END: $cmd1\n   $checkedCmd" }
+      if {$debug} { puts "TEST END: $cmd1\n   $checkedCmd" }
       
       if {$cmd1 != "cantChange" && $cmd1 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_1v1 end]"
@@ -1864,17 +1867,13 @@ if {$debug} { puts "# -----------------" }
     }
     set notConsideredList_one2more [list [list situation violValue distance2centerOfSinks driveCellClass driveCelltype driveViolPin numSinks loadCellClass sinkCelltype loadViolPin]]
     set one2moreList_diffTypesOfSinks [list [list situation types violValue distance2centerOfSinks driveCellClass driveCelltype driveViolPin numSinks loadCellClass sinkCelltype loadViolPin]]
+    set one2moreDetailList_withAllViolSinkPinsInfo [list [list violValue distance2centerOfSinks distanceToSink driveCellClass driveCelltype driveViolPin numSinks loadCellClass sinkCelltype loadViolPin]]
 
     # ---------------------------------------------------
-    ## 1 v more , you need consider num of sinks when addrepeater!!!
-    set oneToMoreAllList [list ]
+    ## one 2 more , you need consider num of sinks when addrepeater!!!
 
     foreach violValue_drivePin_loadPin_numSinks_sinks $violValue_drivePin_loadPin_numSinks_sinks_D5List {
       if {$debug} { puts "drive: [get_cell_class [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]] load: [get_cell_class [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]]" }
-      if {[lsearch -exact -index 7 $fixedList_one2more [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]] > -1 || \
-          [lsearch -exact -index 6 $cantChangeList_one2more [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]] > -1 || \
-          [lsearch -exact -index 5 $notConsideredList_one2more [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]] > -1 \
-         } {continue} ; # if this drive pin has been deal with, next loop
 
       foreach var {violnum driveCellClass loadCellClass netName netLength driveInstname driveInstname_celltype_driveLevel_VTtype driveCelltype driveCapacity sinkInstname sinkInstname_celltype_driveLevel_VTtype sinkCelltype sinkCapacity allInfoList numSinks sinksList sinksType sinksPt centerPtOfSinks drivePt distanceOfdrive2CenterPtOfSinks allInfoList} {
         set $var "" 
@@ -1894,31 +1893,57 @@ if {$debug} { puts "# -----------------" }
       set sinkCapacity [lindex $sinkInstname_celltype_driveLevel_VTtype 2]
       set numSinks [lindex $violValue_drivePin_loadPin_numSinks_sinks 3]
       set sinksList [lindex $violValue_drivePin_loadPin_numSinks_sinks 4]
-      set sinksType [lsort -unique [lmap sink $sinksList { set sinkType [get_cell_class $sink] }]]
+      set rawSinksType [lmap sink $sinksList { set sinkType [get_cell_class $sink] }]
+      set sinksType [lsort -unique $rawSinksType]
       set sinksPt [lmap sink $sinksList {set pt [gpt $sink]}]
       set centerPtOfSinks [calculateResistantCenter_fromPoints  $sinksPt]
 #puts "drivePin : [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]"
       set drivePt [gpt [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]]
 #puts "centerPtOfSinks: $centerPtOfSinks, drivePt: $drivePt"
       set distanceOfdrive2CenterPtOfSinks [format "%.3f" [calculateDistance $centerPtOfSinks $drivePt]]
+      set sinkPt [gpt [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]]
+      set distanceToSink [format "%.3f" [calculateDistance $sinkPt $drivePt]]
 
 #puts "driveInstname : $driveInstname , pt of drive: $drivePt, pt of center of sinks: $centerPtOfSinks,  distance to center of sinks: $distanceOfdrive2CenterPtOfSinks"
 
       set allInfoList [concat $violnum $distanceOfdrive2CenterPtOfSinks \
                               $driveCellClass $driveCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] "-$numSinks-" \
                               $loadCellClass $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 2] ]
-      lappend oneToMoreAllList $allInfoList
+
+      if {[lsearch -exact -index 5 $one2moreDetailList_withAllViolSinkPinsInfo [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]] > -1 } {
+        lappend one2moreDetailList_withAllViolSinkPinsInfo [concat $violnum $distanceOfdrive2CenterPtOfSinks $distanceToSink "/" "/" "/" "/" $loadCellClass $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]]
+        continue
+      } ; # if this drive pin has been deal with, next loop
+      lappend one2moreDetailList_withAllViolSinkPinsInfo [concat $violnum $distanceOfdrive2CenterPtOfSinks $distanceToSink $driveCellClass $driveCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] $numSinks $loadCellClass $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]]
 
       # initialize some iterative vars
       set cmd2 ""
       set toChangeCelltype2 ""
       set toAddCelltype2 ""
+
+      # Merge similar cell class
+      set rawMergeSinksType [lmap sinkType $rawSinksType {
+        if {$sinkType in {logic delay CLKlogic}} { 
+          set t "logic" 
+        } elseif {$sinkType in {buffer inverter CLKbuffer CLKinverter}} {
+          set t "buffer"
+        } elseif {$sinkType in {sequential}} {
+          set t "sequential"
+        }
+        set t
+      }]
+      set mergedSinksType [findMostFrequentElement $rawMergeSinksType 50 1]
+#puts "origin: $rawSinksType"
+#puts "rawMerge: $rawMergeSinksType"
+#puts "merged: $mergedSinksType"
       
 ## sinks all are only one type of cellclass
-      if {[llength $sinksType] == 1} { ; # if type of sinks is only one class
+      if {[llength $mergedSinksType] == 1} { ; # if type of sinks is only one class
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 1: (one2more) logic to logic
-        if {$driveCellClass in {delay logic CLKlogic} && $loadCellClass in {delay logic CLKlogic}} {
+        if {$driveCellClass in {delay logic CLKlogic} && $mergedSinksType in {delay logic CLKlogic}} {
+          set locOffSink 0.8 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -2016,7 +2041,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 4] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 5 || \
                                                                    $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 2] && $numSinks > 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mll:in_6:1" "N_forceDrive" $allInfoList]
@@ -2028,18 +2053,18 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mll:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mll:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mll:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mll:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.12 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.5]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mll:in_7:1" "N" $allInfoList]
@@ -2050,24 +2075,24 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mll:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mll:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mll:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "mll:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                  lappend fixedList_one2more [concat "mll:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "mll:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                  lappend fixedList_one2more [concat "mll:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mll:in_6:1" "N_forceDrive" $allInfoList]
@@ -2079,18 +2104,18 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mll:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mll:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mll:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mll:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mll:in_8:1" "N" $allInfoList]
@@ -2101,19 +2126,21 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mll:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mll:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mll:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mll:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mll:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 2: (one2more) buffer to buffer
-        } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $loadCellClass in {buffer inverter CLKbuffer CLKinverter}} {
+        } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $mergedSinksType in {buffer inverter CLKbuffer CLKinverter}} {
+          set locOffSink 0.6 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -2168,7 +2195,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.03 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.2]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -2211,30 +2238,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 4] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 5 || \
                                                                    $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 2] && $numSinks > 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbb:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbb:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                lappend fixedList_one2more [concat "mbb:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbb:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                lappend fixedList_one2more [concat "mbb:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.12 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.5]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbb:in_7:1" "N" $allInfoList]
@@ -2245,47 +2272,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbb:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mbb:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mbb:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "mbb:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                  lappend fixedList_one2more [concat "mbb:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "mbb:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                  lappend fixedList_one2more [concat "mbb:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
-          } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+          } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * $off]} {; # fix viol big and short length
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbb:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbb:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                lappend fixedList_one2more [concat "mbb:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbb:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                lappend fixedList_one2more [concat "mbb:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbb:in_8:1" "N" $allInfoList]
@@ -2296,20 +2323,22 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbb:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mbb:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mbb:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbb:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.6]]
+                lappend fixedList_one2more [concat "mbb:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
           
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 3: (one2more) logic to buffer
-        } elseif {$driveCellClass in {delay logic CLKlogic} && $loadCellClass in {buffer inverter CLKbuffer CLKinverter}} {
+        } elseif {$driveCellClass in {delay logic CLKlogic} && $mergedSinksType in {buffer inverter CLKbuffer CLKinverter}} {
+          set locOffSink 0.9 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -2364,7 +2393,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.03 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.2]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -2407,30 +2436,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 4] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 5 || \
                                                                    $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 2] && $numSinks > 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mlb:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mlb:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mlb:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mlb:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mlb:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.12 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.5]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mlb:in_7:1" "N" $allInfoList]
@@ -2441,47 +2470,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mlb:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mlb:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mlb:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "mlb:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "mlb:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "mlb:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "mlb:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mlb:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mlb:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mlb:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mlb:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mlb:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mlb:in_8:1" "N" $allInfoList]
@@ -2492,20 +2521,22 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mlb:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mlb:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mlb:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mlb:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mlb:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
           
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 4: (one2more) buffer to logic
-        } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $loadCellClass in {delay logic CLKlogic}} {
+        } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $mergedSinksType in {delay logic CLKlogic}} {
+          set locOffSink 0.6 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -2560,7 +2591,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.05 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.7]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -2603,30 +2634,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.14 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 6] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 7 || \
                                                                    $violnum >= -0.14 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 3.5] && $numSinks > 7]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbl:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbl:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbl:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbl:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbl:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.17 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.1]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbl:in_7:1" "N" $allInfoList]
@@ -2637,47 +2668,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbl:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mbl:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mbl:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "mbl:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "mbl:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "mbl:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "mbl:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
-          } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.16 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+          } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.16 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * $off]} {; # fix viol big and short length
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbl:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbl:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbl:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbl:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbl:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbl:in_8:1" "N" $allInfoList]
@@ -2688,20 +2719,22 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbl:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mbl:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mbl:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbl:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbl:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
           
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 5: (one2more) buffer to sequential
-        } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $loadCellClass in {sequential}} {
+        } elseif {$driveCellClass in {buffer inverter CLKbuffer CLKinverter} && $mergedSinksType in {sequential}} {
+          set locOffSink 0.6 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -2756,7 +2789,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.05 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.7]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -2799,30 +2832,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.14 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 6] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 7 || \
                                                                    $violnum >= -0.14 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 3.5] && $numSinks > 7]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbs:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbs:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbs:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbs:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbs:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.17 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.1]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbs:in_7:1" "N" $allInfoList]
@@ -2833,47 +2866,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbs:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mbs:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mbs:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "mbs:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "mbs:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "mbs:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "mbs:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
-          } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.16 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+          } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.16 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * $off]} {; # fix viol big and short length
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbs:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbs:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbs:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbs:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbs:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mbs:in_8:1" "N" $allInfoList]
@@ -2884,20 +2917,22 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mbs:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mbs:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mbs:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mbs:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "mbs:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 6: (one2more) sequential to buffer
-        } elseif {$driveCellClass in {sequential} && $loadCellClass in {buffer inverter CLKbuffer CLKinverter}} {
+        } elseif {$driveCellClass in {sequential} && $mergedSinksType in {buffer inverter CLKbuffer CLKinverter}} {
+          set locOffSink 0.9 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -2952,7 +2987,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.03 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.2]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -2995,30 +3030,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 4] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 5 || \
                                                                    $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 2] && $numSinks > 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msb:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msb:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "msb:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "msb:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "msb:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.12 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.5]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msb:in_7:1" "N" $allInfoList]
@@ -3029,47 +3064,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msb:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "msb:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : msb:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "msb:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "msb:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "msb:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                  lappend fixedList_one2more [concat "msb:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msb:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msb:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "msb:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "msb:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "msb:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msb:in_8:1" "N" $allInfoList]
@@ -3080,20 +3115,22 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msb:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "msb:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : msb:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "msb:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.9]]
+                lappend fixedList_one2more [concat "msb:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 7: (one2more) logic to sequential
-        } elseif {$driveCellClass in {delay logic CLKlogic} && $loadCellClass in {sequential}} {
+        } elseif {$driveCellClass in {delay logic CLKlogic} && $mergedSinksType in {sequential}} {
+          set locOffSink 0.8 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -3148,7 +3185,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.03 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.2]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -3191,30 +3228,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 4] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 5 || \
                                                                    $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 2] && $numSinks > 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mls:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mls:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mls:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mls:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mls:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.12 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.5]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mls:in_7:1" "N" $allInfoList]
@@ -3225,47 +3262,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mls:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mls:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mls:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "mls:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                  lappend fixedList_one2more [concat "mls:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "mls:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                  lappend fixedList_one2more [concat "mls:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mls:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mls:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mls:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mls:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mls:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "mls:in_8:1" "N" $allInfoList]
@@ -3276,20 +3313,22 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "mls:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "mls:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : mls:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "mls:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "mls:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SITUATION 8: (one2more) sequential to logic
-        } elseif {$driveCellClass in {sequential} && $loadCellClass in {delay logic CLKlogic}} {
+        } elseif {$driveCellClass in {sequential} && $mergedSinksType in {delay logic CLKlogic}} {
+          set locOffSink 0.8 ; # off relatived to center pt of sinks
+          set off $locOffSink
           if {$debug} { puts "$distanceOfdrive2CenterPtOfSinks $driveCelltype $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]" }
           # some useful flag
           set refVTweightList [eo [regexp CLK $driveCellClass] $clkNeedVtWeightList $normalNeedVtWeightList]
@@ -3344,7 +3383,7 @@ if {$debug} { puts "# -----------------" }
           } elseif {$ifHaveLargerCapacity && $canChangeDriveCapacity && $violnum >= -0.03 && $distanceOfdrive2CenterPtOfSinks <= [expr $unitOfNetLength * 1.2]} { ; # songNOTE: situation 02 only changeDriveCapacity
             if {$debug} { puts "in 2: only change DriveCapacity" }
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
-  #puts "in 2: $driveCelltype $toChangeCelltype2"
+            #puts "in 2: $driveCelltype $toChangeCelltype2"
             if {$debug} { puts $toChangeCelltype2 }
             if {$driveCapacity == 0.5} {
               set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 0 3 $rangeOfDriveCapacityForChange $cellRegExp 1]
@@ -3387,30 +3426,30 @@ if {$debug} { puts "# -----------------" }
           } elseif {$canAddRepeater && $violnum < -0.08  && [expr  $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 4] && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 0.3] && $numSinks <= 5 || \
                                                                    $violnum >= -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 2] && $numSinks > 5]} { ; # songNOTE: situation 04 add Repeater near logic cell
             if {$debug} { puts "in 4: add Repeater" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msl:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msl:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "msl:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "msl:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "msl:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.12 && $distanceOfdrive2CenterPtOfSinks > [expr $unitOfNetLength * 2.5]} { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 4 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msl:in_7:1" "N" $allInfoList]
@@ -3421,47 +3460,47 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msl:in_7:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "msl:in_7:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : msl:in_7:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
                 if {$ifHaveFasterVT} {
                   set cmd_TA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]
-                  lappend fixedList_one2more [concat "msl:in_7:3" "TA_09" $toAddCelltype2 $allInfoList]
-                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                  lappend fixedList_one2more [concat "msl:in_7:3" "TA_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd_TA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                   set cmd2 [concat $cmd_TA_driveInst $cmd_TA_add]
                 } else {
-                  lappend fixedList_one2more [concat "msl:in_7:4" "A_09" $toAddCelltype2 $allInfoList]
-                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                  lappend fixedList_one2more [concat "msl:in_7:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                  set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 }
               }
             }
           } elseif {$canAddRepeater && $violnum < -0.04 && $violnum > -0.1 && $distanceOfdrive2CenterPtOfSinks < [expr $unitOfNetLength * 0.6]} {; # fix viol big and short length
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msl:in_6:1" "N_forceDrive" $allInfoList]
               set cmd2 "cantChange"
             } else {
-  #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
+              #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
               set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
               if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 8 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msl:in_6:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "msl:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "msl:in_6:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "msl:in_6:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           } else { ; # songNOTE: situation 05 not in above situation
             if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
             if {$debug} { puts "Not in above situation, so NOTICE" }
-            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
+            set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $mergedSinksType]] $refCLKBufferCelltype $refBufferCelltype]
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype2]} {
               lappend cantChangeList_one2more [concat "msl:in_8:1" "N" $allInfoList]
@@ -3472,19 +3511,19 @@ if {$debug} { puts "# -----------------" }
                 set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
                 if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
                 set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
-                lappend fixedList_one2more [concat "msl:in_8:2" "DA_09" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
+                lappend fixedList_one2more [concat "msl:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
                 if {$debug} {puts "test : msl:in_8:2"}
-                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                set cmd_DA_add [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
                 set cmd2 [list $cmd_DA_driveInst $cmd_DA_add]
               } else {
-                lappend fixedList_one2more [concat "msl:in_8:4" "A_09" $toAddCelltype2 $allInfoList]
-                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt 0.8]]
+                lappend fixedList_one2more [concat "msl:in_8:4" "A_[fm $off]" $toAddCelltype2 $allInfoList]
+                set cmd2 [print_ecoCommand -type add -celltype $toAddCelltype2 -terms [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] -newInstNamePrefix ${ecoNewInstNamePrefix}_one2more_[ci add] -loc [calculateRelativePoint $centerPtOfSinks $drivePt $off]]
               }
             }
           }
 
         }
-      } elseif {[llength $sinksType] > 1} {; # if type of sinks is different cell class
+      } elseif {[llength $mergedSinksType] > 1} {; # if type of sinks is different cell class
         # class : buffer inverter logic CLKbuffer CLKinverter CLKlogic delay seqential
         set sinksType [lmap type $sinksType {
           switch $type {
@@ -3500,7 +3539,9 @@ if {$debug} { puts "# -----------------" }
           }
           set t
         }]
+
         lappend one2moreList_diffTypesOfSinks [concat "MT" [join $sinksType "/"] $allInfoList ]
+        
       }
 
       ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
@@ -3527,6 +3568,12 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
       }
       if {$debug} { puts "TEST END: $cmd2\n   $checkedCmd" }
       
+      # label case with 'm' for merged sinks cell class to one cell class
+      if {[llength $sinksType] > 1} {
+        set situMerged [lindex [lindex $fixedList_one2more end] 0]
+        set fixedList_one2more [lreplace $fixedList_one2more end end [lreplace [lindex $fixedList_one2more end] 0 0 [string cat "m" $situMerged]]]
+      }
+      # dump to cmdList in format of comment
       if {$cmd2 != "cantChange" && $cmd2 != ""} { ; # consider not-checked situation; like ip to ip, mem to mem, r2p
         lappend cmdList "# [lindex $fixedList_one2more end]"
         if {[llength $cmd2] < 5} { ; # because shortest eco cmd need 5 items at least (ecoChangeCell -inst instname -cell celltype)
@@ -3534,7 +3581,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
         } else {
           lappend cmdList $cmd2
         }
-      } elseif {$cmd2 == ""} {
+      } elseif {$cmd2 == "" && [llength $mergedSinksType] == 1} { ; # only view one2more(only one type of sinks)
         lappend notConsideredList_one2more [concat "NC" $allInfoList]
       }
       if {$debug} { puts "# -----------------" }
@@ -3546,7 +3593,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
     lappend cmdList "setEcoMode -reset"
 
     # --------------------
-    # summary of result
+    # summary of result: TODO: need make similar part for one2more situations
     set fixedSituationSortNumber [lmap item $fixedList_1v1 {
       set symbol [lindex $item 0]
     }]
@@ -3581,9 +3628,9 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
     if {1} {
       ## 1 v 1
       ### can't extract
-      pw $ce "CANT EXTRACT:"
-      pw $ce ""
-      if {[info exists cantExtractList]} { pw $ce [join $cantExtractList \n] }
+      puts $ce "CANT EXTRACT:"
+      puts $ce ""
+      if {[info exists cantExtractList]} { puts $ce [join $cantExtractList \n] }
       ### file of cmds 
       pw $co [join $cmdList \n]
 
@@ -3623,20 +3670,12 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
 
       ## one 2 more
       ### primarily focus on driver capacity and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
-      pw $sf "ONE TO MORE ALL VIEW:"
-      pw $sf ""
-      pw $sf [print_formatedTable $oneToMoreAllList]
-      pw $sf [llength $oneToMoreAllList]
       pw $sf ""
       pw $sf "FIXED CELL LIST: ONE 2 MORE"
       pw $sf [join $fixedPrompts_one2more \n]
       pw $sf ""
-      pw $sf [print_formatedTable $fixedList_one2more]
+      pw $sf [print_formatedTable [reverseListRange $fixedList_one2more 1 end 0] ]
       pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
-      pw $sf ""
-      pw $sf "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
-      pw $sf ""
-      pw $sf [print_formatedTable $oneToMoreList_diffSinksCellclass]
       pw $sf ""
       pw $sf "CANT CHANGE LIST: ONE 2 MORE"
       pw $sf [join $cantChangePrompts_one2more \n]
@@ -3658,14 +3697,23 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
       pw $sf "DIFF TYPES OF SINKS: ONE 2 MORE"
       pw $sf ""
       pw $sf [print_formatedTable $one2moreList_diffTypesOfSinks]
-      pw $sf "total diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
+      pw $sf "total viol drivePin (sorted) with diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
       
+      puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
+      puts $di ""
+      puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
+      puts $di "total of all viol sinks : [llength $one2moreDetailList_withAllViolSinkPinsInfo]"
+      puts $di "total of all viol drivePin (sorted) : [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]]"
+      puts $di ""
+
       # summary of two situations
       pw $sf ""
       pw $sf "TWO SITUATIONS OF ALL VIOLATIONS:"
       pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
       pw $sf "1 v more number: [llength [lsort -unique -index 1 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]"
       pw $sf ""
+
+
     }
     close $ce
     close $co

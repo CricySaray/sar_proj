@@ -38,5 +38,7 @@ proc calculateRelativePoint {startPoint endPoint {relativeValue 0.5} {clampValue
     set x $endX
     set y $endY
   }
+  set x [format "%.3f" $x]
+  set y [format "%.3f" $y]
   return [list $x $y]
 }

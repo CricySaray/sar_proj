@@ -142,7 +142,7 @@ set smartindent " 开启新行时使用智能自动缩进
 set backspace=indent,eol,start " 不设定在插入状态无法用退格键和 Delete 键删除回车符
 set cmdheight=1 " 设定命令行的行数为 1
 set nofoldenable " 开始折叠
-set foldmethod=indent 
+set foldmethod=syntax
 set foldcolumn=0 " 设置折叠区域的宽度
 set foldlevel=1 " 设置折叠层数为 1
  au FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
@@ -192,6 +192,9 @@ nnoremap <s-f> j
 " buffers config
 nnoremap <c-n> :bn <CR>
 nnoremap <c-p> :bp <CR>
+" searching in vim
+vnoremap <silent> <leader>y :<C-U>let @/=escape(@@, '/\')<CR>
+
 
 " jump out of parenthesis, bracket, brace, quotes etc
 inoremap <C-l> <C-\><C-n>:call search('[>)\]}"'']', 'W')<CR>a
@@ -248,17 +251,22 @@ nnoremap <leader>p :call TogglePaste()<CR>
 inoremap <leader>p <C-o>:call TogglePaste()<CR>
 
 " ---------------------------
-" replace all same name to new name, It can automatically identify the boundaries of variables
+" replace all same name to new name, It can automatically identify the boundaries of variables. case-sensitive
 function! s:SmartReplace()
   let old_name = expand("<cword>")
-  let new_name = input("replace to: ", old_name)
-  if new_name != '' && new_name != old_name
+  let new_name = input("replace to (case-sensitive): ", old_name)
+  
+  " 显式使用大小写敏感的字符串比较
+  if new_name !=# '' && new_name !=# old_name
+    " Case-sensitive replacement with proper variable boundary checks
+    "
     " To avoid accidentally replacing keywords that appear in attributes (where they shouldn't be modified), 
 		" you can restrict matches to instances where the keyword is preceded by a space or the `$` symbol. 
     " This ensures that only variables in valid contexts (like code, not attribute names) are replaced.
     " songNOTE: I have only tested it with languages like TCL and Perl so far. There might be other 
 		" 			variable prefixes in other languages, but it won't be too late to add support for them when we encounter such cases.
     execute '%s/\(^\|[ $@%&\]})[{(]\)\zs\<'. old_name .'\>/' . new_name . '/g'
+    echohl WarningMsg | echo "Replaced all instances of '" . old_name . "' with '" . new_name . "' (case-sensitive)" | echohl None
   endif
 endfunction
 nnoremap <leader>r :call <SID>SmartReplace()<CR>

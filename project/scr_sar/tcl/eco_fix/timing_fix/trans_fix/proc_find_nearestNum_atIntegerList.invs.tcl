@@ -27,7 +27,7 @@ proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {i
   } elseif {$ifClamp && $number > [lindex $s end]} { ; # adapt to list with only one item
     return [lindex $s 1] 
   } elseif {$number < [lindex $s 0] || $number > [lindex $s end]} {
-    return "0x0:1"; # your number is not in the range of list
+    error "proc find_nearestNum_atIntegerList: your number is not in the range of list (without turning on switch \$ifClamp)"; # your number is not in the range of list
   }
   foreach i $s {
     set next_i [lindex $s [expr [lsearch $s $i] + 1]]

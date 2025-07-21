@@ -15,12 +15,12 @@ proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacity 4} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
-    return "0x0:1" 
+    error "proc strategy_changeDriveCapacity: check your input!!!" 
   } else {
     #get now Drive Capacibility
     set runError [catch {regexp $regExp $celltype wholename driveLevel VTtype} errorInfo]
     if {$runError || $wholename == ""} {
-      return "0x0:2" 
+      error "proc strategy_changeDriveCapacity: can't regexp!!!" 
     } else {
       #puts "driveLevel : $driveLevel"
       if {$driveLevel == "05"} { ; # M31 std cell library have X05(0.5) driveCapacity

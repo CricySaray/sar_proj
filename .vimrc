@@ -182,7 +182,6 @@ nnoremap <c-e> A
 inoremap <c-a> <esc>I
 inoremap <c-e> <esc>A
 noremap - dd
-nnoremap <F2> :g/^\s*$/d<CR>
 nnoremap <F3> :tabnew .<CR>
 nnoremap <F4> a<c-r>=strftime('%Y/%m/%d %H:%M:%S %A')<CR><Esc>
 nnoremap <c-a> ggVG:ya
@@ -442,6 +441,8 @@ Jetpack 'morhetz/gruvbox'
 Jetpack 'luochen1990/rainbow'
 Jetpack 'andymass/vim-matchup'
 Jetpack 'jiangmiao/auto-pairs'
+Jetpack 'preservim/nerdtree'
+Jetpack 'ryanoasis/vim-devicons'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
@@ -585,3 +586,73 @@ function! s:fzf_statusline()
   setlocal statusline=%#fzf1#\ >\ %#fzf2#fz%#fzf3#f
 endfunction
 autocmd! User FzfStatusLine call <SID>fzf_statusline()
+
+"" ---------------------------------------------------------
+" NerdTree config
+
+" 使用 F2 键快速切换 NERDTree
+map <F2> :NERDTreeToggle<CR>
+" 打开 Vim 时自动打开 NERDTree（无文件参数时）
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
+" 关闭最后一个 buffer 时自动退出 Vim
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+" 设置 NERDTree 窗口宽度
+let NERDTreeWinSize = 50
+" 显示行号
+let NERDTreeShowLineNumbers = 1
+" 隐藏 .git 目录
+let NERDTreeIgnore = ['\.git', '\.hg', '\.svn']
+" 显示文件图标（需要安装字体支持）
+let g:NERDTreeDirArrowExpandable = '▸'
+let g:NERDTreeDirArrowCollapsible = '▾'
+" ----------------------------
+" NERDTree 高级设置
+" 启用语法高亮
+let NERDTreeHighlightCursorline = 1
+" 显示隐藏文件（默认不显示）
+let NERDTreeShowHidden = 1
+" 自动切换到当前文件所在目录
+let NERDTreeAutoCenter = 1
+" 显示文件大小
+let NERDTreeShowFileInfo = 1
+" 启用书签功能
+let NERDTreeShowBookmarks = 1
+" 自定义文件图标（需要安装 Powerline 字体）
+let g:NERDTreeDirArrowExpandable = ''
+let g:NERDTreeDirArrowCollapsible = ''
+" 自定义快捷键
+" 使用 <leader>n 切换 NERDTree
+map <leader>n :NERDTreeToggle<CR>
+" 使用 <leader>f 定位当前文件
+map <leader>f :NERDTreeFind<CR>
+" 关闭 NERDTree 时自动关闭对应标签页
+function! CloseBufAndNerdTree()
+  if bufname('%') =~ 'NERD_tree'
+    wincmd p
+    bd#
+  else
+    bd
+  endif
+endfunction
+nnoremap <leader>q :call CloseBufAndNerdTree()<CR>
+let g:NERDTreeShowIcons = 1
+let g:NERDTreeGitStatusUseNerdFonts = 1
+" 在 .vimrc 中添加
+let g:NERDTreeGitStatus = 1
+
+" 自定义 Git 状态符号
+let g:NERDTreeGitStatusIndicators = {
+    \ 'Modified'  : '✹',
+    \ 'Staged'    : '✚',
+    \ 'Untracked' : '✭',
+    \ 'Renamed'   : '➜',
+    \ 'Unmerged'  : '═',
+    \ 'Deleted'   : '✖',
+    \ 'Ignored'   : '☒'
+    \ }
+" 在 .vimrc 中添加
+highlight NERDTreeDir guifg=#61afef ctermfg=blue
+highlight NERDTreeExecFile guifg=#98c379 ctermfg=green
+highlight NERDTreeSpecialFile guifg=#c678dd ctermfg=magenta
+highlight NERDTreeLink guifg=#56b6c2 ctermfg=cyan

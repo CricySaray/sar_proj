@@ -163,7 +163,7 @@ proc fix_trans {args} {
       "## M_D - drive inst is mem"
       "## M_S - sink inst is mem"
     }
-    set cantChangeList_1v1 [list [list situation method violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set cantChangeList_1v1 [list [list situation method violVal netLen distance ifLoop driveClass driveCelltype driveViolPin loadClass sinkCelltype loadViolPin]]
     ## changed info
     set fixedPrompts {
       "# symbols of normal methods : all of symbols can combine with each other, which is mix of a lot methods."
@@ -186,18 +186,18 @@ proc fix_trans {args} {
       "## 't' - dt - dont touch cell class: dontouch"
       "## 'u' - du - dont use cell class: dontuse"
     }
-    set fixedList_1v1 [list [list situation method celltypeToFix violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set fixedList_1v1 [list [list situation method celltypeToFix violVal netLen distance ifLoop driveClass driveCelltype driveViolPin loadClass sinkCelltype loadViolPin]]
     # skipped situation info
     set skippedSituationsPrompt {
       "# NF - have no faster vt" 
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
-    set skippedList_1v1 [list [list situation method violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set skippedList_1v1 [list [list situation method violVal netLen distance ifLoop driveClass driveCelltype driveViolPin loadClass sinkCelltype loadViolPin]]
     set notConsideredPrompt {
       "# NC - not considered situation"
     }
-    set notConsideredList_1v1 [list [list situation violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set notConsideredList_1v1 [list [list situation violVal netLen distance ifLoop driveClass driveCelltype driveViolPin loadClass sinkCelltype loadViolPin]]
     # ------
     # init LIST
     set cmdList $fixedPrompts
@@ -231,7 +231,7 @@ proc fix_trans {args} {
       set sinkCapacity [lindex $sinkInstname_celltype_driveLevel_VTtype 2]
       set drivePt [gpt [lindex $viol_driverPin_loadPin 1]]
       set sinkPt [gpt [lindex $viol_driverPin_loadPin 2]]
-      set distanceToSink [calculateDistance $drivePt $sinkPt]
+      set distanceToSink [format "%.3f" [calculateDistance $drivePt $sinkPt]]
       set resultOfCheckRoutingLoop [checkRoutingLoop $distanceToSink $netLength "normal"]
       set ifLoop [switch $resultOfCheckRoutingLoop {
         0 {set result "noLoop"}

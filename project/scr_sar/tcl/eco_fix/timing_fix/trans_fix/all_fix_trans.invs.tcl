@@ -163,62 +163,41 @@ proc fix_trans {args} {
       "## M_D - drive inst is mem"
       "## M_S - sink inst is mem"
     }
-    set cantChangeList_1v1 [list [list situation method violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set cantChangeList_1v1 [list [list situation method violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     ## changed info
     set fixedPrompts {
-      "# symbols of methods for changed cell"
-      "# changeVT:"
+      "# symbols of normal methods : all of symbols can combine with each other, which is mix of a lot methods."
       "## T - changedVT, below is toChangeCelltype"
-      "# changeDriveCapacity"
       "## D - changedDriveCapacity, below is toChangeCelltype"
-      "# addRepeaterCell"
       "## A_09 A_0.9 - near the driver - addedRepeaterCell, below is toAddCelltype"
       "## A_05 A_0.5 - in the middle of driver and sink - addedRepeaterCell, below is toAddCelltype"
       "## A_01 A_0.1 - near the sink   - addedRepeaterCell, below is toAddCelltype"
       "# special fixed"
       "## FS - fix special situation: change driveCelltype (changeVT and changeDriveCapacity)"
+      "## _C - checked driveCapacity of celltype at every end of fixing loop "
       ""
-      "# symbol of situations:"
-      "## ll - logic/CLKlogic to logic/CLKlogic"
-      "## bb/vv - buffer/inverter to buffer/inverter"
-      "## lb - logic to buffer/inverter"
-      "## bl - buffer to logic"
-
-      "## lc - logic to clockcell"
-      "## cl - clockcell to logic"
-      "## bc - buffer/inverter/clockcell to clockcell"
-      "## cb - clockcell to buffer/inverter/clockcell"
-
-      "## lm - logic to mem"
-      "## ml - mem to logic"
-      "## bm - buffer/inverter to mem"
-      "## mb - mem to buffer/inverter"
-
-      "## li - logic to ip (maybe never)"
-      "## il - ip to logic (maybe never)"
-      "## bi - buffer/inverter to ip"
-      "## ib - ip to buffer/inverter"
-
-      "## lp - logic to IOpad"
-      "## pl - IOpad to logic"
-      "## bp - buffer/inverter to IOpad"
-      "## pb - IOpad to buffer/inverter"
-
-      "## dt - dont touch cell"
-      "## du - dont use cell"
+      "# symbol of cell class:"
+      "## 'l' - logic class: logic/CLKlogic/delay"
+      "## 'b' - buffer class: buffer/inverter/CLKbuffer/CLKinverter"
+      "## 's' - sequential class: sequential"
+      "## 'e' - mem class: mem"
+      "## 'i' - IP class: IP, an ip buffer will be middle between IP and logic at normal situation"
+      "## 'p' - IOpad class: IOpad"
+      "## 't' - dt - dont touch cell class: dontouch"
+      "## 'u' - du - dont use cell class: dontuse"
     }
-    set fixedList_1v1 [list [list situation method celltypeToFix violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set fixedList_1v1 [list [list situation method celltypeToFix violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     # skipped situation info
     set skippedSituationsPrompt {
       "# NF - have no faster vt" 
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
-    set skippedList_1v1 [list [list situation method violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set skippedList_1v1 [list [list situation method violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     set notConsideredPrompt {
       "# NC - not considered situation"
     }
-    set notConsideredList_1v1 [list [list situation violValue netLength driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
+    set notConsideredList_1v1 [list [list situation violValue netLength distanceToSink ifLoop driveCellClass driveCelltype driveViolPin loadCellClass sinkCelltype loadViolPin]]
     # ------
     # init LIST
     set cmdList $fixedPrompts
@@ -250,7 +229,17 @@ proc fix_trans {args} {
       set sinkInstname_celltype_driveLevel_VTtype [get_cellDriveLevel_and_VTtype_of_inst $sinkInstname $cellRegExp]
       set sinkCelltype [lindex $sinkInstname_celltype_driveLevel_VTtype 1]
       set sinkCapacity [lindex $sinkInstname_celltype_driveLevel_VTtype 2]
-      set allInfoList [concat $violnum $netLength \
+      set drivePt [gpt [lindex $viol_driverPin_loadPin 1]]
+      set sinkPt [gpt [lindex $viol_driverPin_loadPin 2]]
+      set distanceToSink [calculateDistance $drivePt $sinkPt]
+      set resultOfCheckRoutingLoop [checkRoutingLoop $distanceToSink $netLength "normal"]
+      set ifLoop [switch $resultOfCheckRoutingLoop {
+        0 {set result "noLoop"}
+        1 {set result "mildLoop"} 
+        2 {set result "moderateLoop"} 
+        3 {set result "severeLoop"} 
+      }]
+      set allInfoList [concat $violnum $netLength $distanceToSink $ifLoop \
                               $driveCellClass $driveCelltype [lindex $viol_driverPin_loadPin 1] \
                               $loadCellClass $sinkCelltype [lindex $viol_driverPin_loadPin 2] ]
       # initialize some iterative vars
@@ -1719,13 +1708,6 @@ proc fix_trans {args} {
         
       }
 
-
-      ### loader is a logic cell, driver is a buffer(simple, upsize drive capacity, but consider previous cell drive range)
-      ### loader is a buffer, and driver is a buffer too
-      ### loader is a logic cell, and driver is a logic cell
-      ### !!!CLK cell : need specific cell type buffer/inverter
-      
-
       ## songNOTE:FIXED:U001 check all fixed celltype(changed). if it is smaller than X1 (such as X05), it must change to X1 or larger
       # ONLY check $toChangeCelltype, NOT check $toAddCelltype
       #### ADVANCE TODO:U002 can specify logic rule and buffer/inverter rule, you can set it seperately
@@ -1770,8 +1752,6 @@ if {$debug} { puts "# -----------------" }
     lappend cmdList " "
 
     #
-    #
-    #
     # ----------------------
     # info collections
     ## cant change info
@@ -1793,46 +1773,26 @@ if {$debug} { puts "# -----------------" }
     set cantChangeList_one2more [list [list situation sym violValue distance2centerOfSinks driveCellClass driveCelltype driveViolPin numSinks loadCellClass sinkCelltype loadViolPin]]
     ## changed info
     set fixedPrompts_one2more {
-      "# symbols of methods for changed cell"
-      "# changeVT:"
+      "# symbols of normal methods : all of symbols can combine with each other, which is mix of a lot methods."
       "## T - changedVT, below is toChangeCelltype"
-      "# changeDriveCapacity"
       "## D - changedDriveCapacity, below is toChangeCelltype"
-      "# addRepeaterCell"
       "## A_09 A_0.9 - near the driver - addedRepeaterCell, below is toAddCelltype"
       "## A_05 A_0.5 - in the middle of driver and sink - addedRepeaterCell, below is toAddCelltype"
       "## A_01 A_0.1 - near the sink   - addedRepeaterCell, below is toAddCelltype"
       "# special fixed"
       "## FS - fix special situation: change driveCelltype (changeVT and changeDriveCapacity)"
+      "## _C - checked driveCapacity of celltype at every end of fixing loop "
       ""
-      "# symbol of situations:"
-      "## ll - logic/CLKlogic to logic/CLKlogic"
-      "## bb/vv - buffer/inverter to buffer/inverter"
-      "## lb - logic to buffer/inverter"
-      "## bl - buffer to logic"
-
-      "## lc - logic to clockcell"
-      "## cl - clockcell to logic"
-      "## bc - buffer/inverter/clockcell to clockcell"
-      "## cb - clockcell to buffer/inverter/clockcell"
-
-      "## lm - logic to mem"
-      "## ml - mem to logic"
-      "## bm - buffer/inverter to mem"
-      "## mb - mem to buffer/inverter"
-
-      "## li - logic to ip (maybe never)"
-      "## il - ip to logic (maybe never)"
-      "## bi - buffer/inverter to ip"
-      "## ib - ip to buffer/inverter"
-
-      "## lp - logic to IOpad"
-      "## pl - IOpad to logic"
-      "## bp - buffer/inverter to IOpad"
-      "## pb - IOpad to buffer/inverter"
-
-      "## dt - dont touch cell"
-      "## du - dont use cell"
+      "# symbol of cell class:"
+      "## 'l' - logic class: logic/CLKlogic/delay"
+      "## 'b' - buffer class: buffer/inverter/CLKbuffer/CLKinverter"
+      "## 's' - sequential class: sequential"
+      "## 'e' - mem class: mem"
+      "## 'i' - IP class: IP, an ip buffer will be middle between IP and logic at normal situation"
+      "## 'p' - IOpad class: IOpad"
+      "## 't' - dt - dont touch cell class: dontouch"
+      "## 'u' - du - dont use cell class: dontuse"
+      "## 'm' - one 2 more situations, if there are two adjacent m flags at the very beginning, it indicates that in the one-to-many situation, the types of sinks cells have multiple types"
     }
     set fixedList_one2more [list [list situation method celltypeToFix violValue distance2centerOfSinks driveCellClass driveCelltype driveViolPin numSinks loadCellClass sinkCelltype loadViolPin]]
     # skipped situation info
@@ -1892,7 +1852,7 @@ if {$debug} { puts "# -----------------" }
 
       if {[lsearch -exact -index 5 $one2moreDetailList_withAllViolSinkPinsInfo [lindex $violValue_drivePin_loadPin_numSinks_sinks 1]] > -1 } {
         lappend one2moreDetailList_withAllViolSinkPinsInfo [concat $violnum $distanceOfdrive2CenterPtOfSinks $distanceToSink "/" "/" "/" "/" $loadCellClass $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]]
-        continue
+        continue; # AT001
       } ; # if this drive pin has been deal with, next loop
       lappend one2moreDetailList_withAllViolSinkPinsInfo [concat $violnum $distanceOfdrive2CenterPtOfSinks $distanceToSink $driveCellClass $driveCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 1] $numSinks $loadCellClass $sinkCelltype [lindex $violValue_drivePin_loadPin_numSinks_sinks 2]]
 
@@ -3519,7 +3479,7 @@ if {$debug} { puts "# -----------------" }
           }
           set t
         }]
-
+        # this will only show the worst situation that sink viol value is biggest, cuz other situ which of similiar drivePin is been continue at AT001.
         lappend one2moreList_diffTypesOfSinks [concat "MT" [join $sinksType "/"] $allInfoList ]
         
       }
@@ -3567,8 +3527,6 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
       if {$debug} { puts "# -----------------" }
       
     }
-
-
     lappend cmdList " "
     lappend cmdList "setEcoMode -reset"
 
@@ -3687,8 +3645,8 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
       puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
       puts $di ""
       puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
-      puts $di "total of all viol sinks : [llength $one2moreDetailList_withAllViolSinkPinsInfo]"
-      puts $di "total of all viol drivePin (sorted) : [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]]"
+      puts $di "total of all viol sinks : [expr [llength $one2moreDetailList_withAllViolSinkPinsInfo] - 1]"
+      puts $di "total of all viol drivePin (sorted) : [expr [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]] - 1]"
       puts $di ""
 
       # summary of two situations
@@ -5241,6 +5199,102 @@ proc formatDecimal {value {fixedLength 2} {strictRange 1} {padZero 1}} {
 	} else {
 		# 不限制长度时，直接添加前缀0
 		return "0$strValue"
+	}
+}
+
+# source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop - return number
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/07/21 12:16:50 Monday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)
+# descrip   : check routing loop in invs
+# ref       : link url
+# --------------------------
+# 判断布线绕圈情况并分级的过程
+# 参数:
+#   - 直线距离: 两点间的最短距离(um)
+#   - 实际线长: 网络的实际走线长度(um)
+#   - 严重级别: 可选参数，用于调整各级别的阈值
+# 返回值:
+#   0: 无绕圈
+#   1: 轻微绕圈
+#   2: 中度绕圈
+#   3: 严重绕圈
+#   -1: 输入错误
+proc checkRoutingLoop {straightDistance netLength {severityLevel "normal"}} {
+	# 错误防御: 检查输入是否为有效数值
+	if {![string is double -strict $straightDistance] || $straightDistance <= 0} {
+		error "PROC checkRoutingLoop: Invalid parameter 'straightDistance' - must be a positive number ($straightDistance)"
+	}
+	if {![string is double -strict $netLength] || $netLength <= 0} {
+		error "PROC checkRoutingLoop: Invalid parameter 'netLength' - must be a positive number ($netLength)"
+	}
+	# 将输入参数转换为double类型，确保除法运算精度
+	set straightDistance [expr {double($straightDistance)}]
+	set netLength [expr {double($netLength)}]
+	# 根据严重级别设置阈值
+	set thresholds [dict create \
+		normal  {1.5 2.0 3.0} \
+		relaxed {1.8 2.5 3.5} \
+		strict  {1.2 1.8 2.5}
+	]
+	if {![dict exists $thresholds $severityLevel]} {
+		puts "WARNING: Unknown severity level '$severityLevel', using default 'normal'"
+		set severityLevel "normal"
+	}
+	lassign [dict get $thresholds $severityLevel] mildThreshold moderateThreshold severeThreshold
+	# 计算线长比
+	set lengthRatio [expr {$netLength / $straightDistance}]
+	# 判断绕圈等级
+	if {$lengthRatio <= $mildThreshold} {
+		return 0 ;# No loop
+	} elseif {$lengthRatio <= $moderateThreshold} {
+		return 1 ;# Mild loop
+	} elseif {$lengthRatio <= $severeThreshold} {
+		return 2 ;# Moderate loop
+	} else {
+		return 3 ;# Severe loop
+	}
+}
+
+# 辅助过程: 获取绕圈等级的文本描述
+proc getLoopDescription {loopLevel} {
+	switch -- $loopLevel {
+		0 { return "No Loop" }
+		1 { return "Mild Loop" }
+		2 { return "Moderate Loop" }
+		3 { return "Severe Loop" }
+		default { return "Unknown Level" }
+	}
+}
+
+# 示例用法
+if {0} {
+	# 测试案例
+	puts "Testing checkRoutingLoop procedure:"
+	puts "Straight Distance\tNet Length\tSeverity Level\tLoop Level\tDescription"
+	puts "------------------------------------------------------------"
+
+	foreach {dist length level} {
+		10.0   12.0   normal
+		10.0   18.0   normal
+		10.0   22.0   normal
+		10.0   35.0   normal
+		10.0   12.0   strict
+		10.0   12.0   relaxed
+		10.0   -5.0   normal
+		abc    20.0   normal
+	} {
+		puts -nonewline "$dist\t\t$length\t\t$level\t\t"
+		# 使用错误捕获机制，避免测试时因错误中断
+		if {[catch {set result [checkRoutingLoop $dist $length $level]} errMsg]} {
+			puts "ERROR: $errMsg"
+		} else {
+			set desc [getLoopDescription $result]
+			puts "$result\t\t$desc"
+		}
 	}
 }
 

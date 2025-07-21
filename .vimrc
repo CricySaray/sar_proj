@@ -30,7 +30,7 @@ let g:highlight_groups = [
       \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'ci']],
       \ ['Exact', 'Cursor',  ['songNOTE']],
       \ ['Exact', 'GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE']],
-      \ ['Regex', 'GruvboxFg0', ['U\d\{3}', 'ID\d\{4,}']],
+      \ ['Regex', 'GruvboxFg0', ['U\d\{3}', 'ID\d\{4,}', 'AT\d\{3}']],
       \ ]
 " 创建高亮组自动命令
 augroup highlight_keywords

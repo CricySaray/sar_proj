@@ -1,4 +1,6 @@
+# ----------------------
 
+# ----------------------
 source ~/project/scr_sar/tcl/to_eco_command_from_selected_obj_in_gui.invs.tcl
 alias te "to_eco_command_from_selected_obj_in_gui"
 alias li "dbget head.libCells.name"
@@ -88,6 +90,26 @@ set sar "/backend/project/p100/pd/PNR/100P/d2d_ss/sar"
 # --------------------------
 # some proc using invs shell or for GUI
 # --------------------------
+alias sip "selectInstOfSelectedPin_invsGUI"
+# This proc has a defect
+proc selectInstOfSelectedPin_invsGUI {{removeInst ""}} {
+  set selpins_ptr [dbget selected.objType instTerm -p -e]
+  if {$selpins == ""} {
+    error "proc selectInstOfSelectedPin_invsGUI: no selected pins in GUI!!!" 
+  } else {
+    set selpinsname [dbget $selpins_ptr.name]
+    set allRelatedPins [list]
+    foreach pin $selpinsname {
+      set relatedPins [get_object_name [get_pins -of [get_nets -of $pin]]]
+      set allRelatedPins [concat $allRelatedPins $relatedPins]
+    }
+    set allRelatedInsts [lmap related_pin $allRelatedPins {
+      set inst [get_object_name [get_cells -of $related_pin] ]
+    }]
+    select_obj [lsort -unique $allRelatedPins]
+    select_obj [lsort -unique $allRelatedInsts]
+  }
+}
 
 proc autosoft {} {
 	setFinishFPlanMode -activeObj {core macro fence hardBlkg softBlkg partialBlkg routingBlkg} -drcRegionObj {macro macroHalo hardBlkg minGap coreSpacing} -direction xy -override false

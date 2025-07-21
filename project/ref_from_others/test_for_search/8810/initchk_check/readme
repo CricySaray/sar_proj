@@ -1,3 +1,0 @@
-# 1. link initchk_pt.tcl to /sta_pt/scr
-# 2. cp run_initchk.csh to sta_pt/work
-# 3. source run_initchk.csh at work 

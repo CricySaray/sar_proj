@@ -1,8 +1,0 @@
-usb_block  chip_core_inst/usb_block_inst
-lb_eth_ge  chip_core_inst/np_top_inst/lb_eth_ge
-lb_cpu_top  chip_core_inst/lb_cpu_top_inst
-pp_top  chip_core_inst/np_top_inst/pp_top_u0
-lb_dp_ocb_top  chip_core_inst/np_top_inst/lb_dp_ocb_top_u0
-lb_ddr4_top  chip_core_inst/lb_ddr4_top_inst
-lb_se_tm_top  chip_core_inst/np_top_inst/lb_se_tm_top_u0
-lb_mge_pon_top  chip_core_inst/np_top_inst/lb_mge_pon_top_u0

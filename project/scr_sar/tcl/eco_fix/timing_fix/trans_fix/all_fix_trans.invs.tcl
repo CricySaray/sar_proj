@@ -1,3 +1,8 @@
+
+#
+# START OF FILE: fix_trans.invs.tcl (depth 0)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/fix_trans.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -3731,7 +3736,14 @@ proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d
     return $driveLevel
   }
 }
-# source ../../../incr_integer_inself.common.tcl; # ci(proc counter), don't use array: counters
+
+# SOURCE COMMAND: source ../../../incr_integer_inself.common.tcl; # ci(proc counter), don't use array: counters
+# Resolving: ../../../incr_integer_inself.common.tcl (from current working directory)
+
+#
+# START OF FILE: ../../../incr_integer_inself.common.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/incr_integer_inself.common.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -3758,37 +3770,17 @@ proc counter {input {holdon 0} {start 1}} {
     return "$counters($input)"
 }
 
-# source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : 2025/07/20 15:47:17 Sunday
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)
-# descrip   : get pt(location) of object(pin/inst/...)
-# ref       : link url
-# --------------------------
-alias gpt "getPt_ofObj"
-proc getPt_ofObj {{obj ""}} {
-  if {$obj == ""} { 
-    set obj [dbget selected.name -e] ; # now support case that is only one obj
-  }
-  if {$obj == "" || [dbget top.insts.name $obj -e] == "" && [dbget top.insts.instTerms.name $obj -e] == ""} {
-    return "0x0:1"; # check your input 
-  } else {
-    set inst_ptr [dbget top.insts.name $obj -e -p]
-    set pin_ptr  [dbget top.insts.instTerms.name $obj -e -p]
-    if {$inst_ptr != ""} {
-      set inst_pt [lindex [dbget $inst_ptr.pt] 0]
-      return $inst_pt
-    } elseif {$pin_ptr != ""} {
-      set pin_pt [lindex [dbget $pin_ptr.pt] 0]
-      return $pin_pt
-    }
-  }
-}
+#
+# END OF FILE: ../../../incr_integer_inself.common.tcl (depth 1)
+#
 
-# source ../../../logic_or_and.common.tcl; # operators: lo la ol al re eo - return 0|1
+# SOURCE COMMAND: source ../../../logic_or_and.common.tcl; # operators: lo la ol al re eo - return 0|1
+# Resolving: ../../../logic_or_and.common.tcl (from current working directory)
+
+#
+# START OF FILE: ../../../logic_or_and.common.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/logic_or_and.common.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -3960,7 +3952,57 @@ proc ifEmptyZero {value trueValue falseValue} {
 }
 
 
-# source ./proc_get_net_lenth.invs.tcl; # get_net_length - num
+#
+# END OF FILE: ../../../logic_or_and.common.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
+# Resolving: ./proc_getPt_ofObj.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_getPt_ofObj.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_getPt_ofObj.invs.tcl
+#
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/07/20 15:47:17 Sunday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)
+# descrip   : get pt(location) of object(pin/inst/...)
+# ref       : link url
+# --------------------------
+alias gpt "getPt_ofObj"
+proc getPt_ofObj {{obj ""}} {
+  if {$obj == ""} { 
+    set obj [dbget selected.name -e] ; # now support case that is only one obj
+  }
+  if {$obj == "" || [dbget top.insts.name $obj -e] == "" && [dbget top.insts.instTerms.name $obj -e] == ""} {
+    return "0x0:1"; # check your input 
+  } else {
+    set inst_ptr [dbget top.insts.name $obj -e -p]
+    set pin_ptr  [dbget top.insts.instTerms.name $obj -e -p]
+    if {$inst_ptr != ""} {
+      set inst_pt [lindex [dbget $inst_ptr.pt] 0]
+      return $inst_pt
+    } elseif {$pin_ptr != ""} {
+      set pin_pt [lindex [dbget $pin_ptr.pt] 0]
+      return $pin_pt
+    }
+  }
+}
+
+#
+# END OF FILE: ./proc_getPt_ofObj.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_get_net_lenth.invs.tcl; # get_net_length - num
+# Resolving: ./proc_get_net_lenth.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_get_net_lenth.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -3984,7 +4026,17 @@ proc get_net_length {{net ""}} {
 }
 alias gl "get_net_length"
 
-# source ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
+#
+# END OF FILE: ./proc_get_net_lenth.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
+# Resolving: ./proc_if_driver_or_load.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_if_driver_or_load.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_if_driver_or_load.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4006,7 +4058,17 @@ proc if_driver_or_load {{pin ""}} {
   }
 }
 
-# source ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList] || get_driverPin - return drivePin
+#
+# END OF FILE: ./proc_if_driver_or_load.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList] || get_driverPin - return drivePin
+# Resolving: ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4044,7 +4106,17 @@ proc get_driverPin {{pin ""}} {
   }
 }
 
-# source ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instname cellName driveLevel VTtype]
+#
+# END OF FILE: ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instname cellName driveLevel VTtype]
+# Resolving: ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4082,7 +4154,17 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
   }
 }
 
-# source ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|sequential|gating|other
+#
+# END OF FILE: ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|sequential|gating|other
+# Resolving: ./proc_get_cell_class.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_get_cell_class.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_cell_class.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4139,7 +4221,17 @@ proc logic_of_mux {inst} {
   }
 }
 
-# source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
+#
+# END OF FILE: ./proc_get_cell_class.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
+# Resolving: ./proc_strategy_changeVT.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_strategy_changeVT.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_changeVT.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4249,7 +4341,14 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
     }
   }
 }
-# source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+
+# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_whichProcess_fromStdCellPattern.invs.tcl (depth 2)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_whichProcess_fromStdCellPattern.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4274,8 +4373,21 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
   }
 }
 
+#
+# END OF FILE: ./proc_whichProcess_fromStdCellPattern.invs.tcl (depth 2)
+#
 
-# source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
+#
+# END OF FILE: ./proc_strategy_changeVT.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
+# Resolving: ./proc_strategy_addRepeaterCelltype.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_strategy_addRepeaterCelltype.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_addRepeaterCelltype.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4359,32 +4471,18 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
     }
   }
 }
-# source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # proc: whichProcess_fromStdCellPattern
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:22:06 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-# descrip   : judge which process specified celltype is 
-# ref       : link url
-# --------------------------
-proc whichProcess_fromStdCellPattern {{celltype ""}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
-    return "0x0:1"; # can't find celltype in this design and library 
-  } else {
-    if {[regexp BWP $celltype]} {
-      set processType "TSMC" 
-    } elseif {[regexp {A[HRL]\d+$} $celltype]} {
-      set processType "HH" 
-    } else {
-      return "0x0:1"; # can't indentify where the celltype is come from
-    }
-    return $processType
-  }
-}
 
-# source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList list num big?
+# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # proc: whichProcess_fromStdCellPattern
+# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
+
+# SOURCE COMMAND: source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList list num big?
+# Resolving: ./proc_find_nearestNum_atIntegerList.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_find_nearestNum_atIntegerList.invs.tcl (depth 2)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_find_nearestNum_atIntegerList.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4427,7 +4525,17 @@ proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {i
   return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
 }
 
-# source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
+#
+# END OF FILE: ./proc_find_nearestNum_atIntegerList.invs.tcl (depth 2)
+#
+
+# SOURCE COMMAND: source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
+# Resolving: ./proc_changeDriveCapacity_of_celltype.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_changeDriveCapacity_of_celltype.invs.tcl (depth 2)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_changeDriveCapacity_of_celltype.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4437,7 +4545,6 @@ proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {i
 # descrip   : change cell drive capacity of cell type according to different std process
 # ref       : link url
 # --------------------------
-source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDriveCapacibility 0} {toDriverCapacibility 0}} {
   set processType [whichProcess_fromStdCellPattern $refType]
   if {$processType == "TSMC"} { ; # TSMC
@@ -4452,8 +4559,25 @@ proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDr
   }
 }
 
+# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
 
-# source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
+#
+# END OF FILE: ./proc_changeDriveCapacity_of_celltype.invs.tcl (depth 2)
+#
+
+#
+# END OF FILE: ./proc_strategy_addRepeaterCelltype.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
+# Resolving: ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4556,76 +4680,26 @@ if {$debug} { puts "- > $minAvailableDriveOnRnage $maxAvailableDriveOnRange" }
     }
   }
 }
-# source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:22:06 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-# descrip   : judge which process specified celltype is 
-# ref       : link url
-# --------------------------
-proc whichProcess_fromStdCellPattern {{celltype ""}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
-    return "0x0:1"; # can't find celltype in this design and library 
-  } else {
-    if {[regexp BWP $celltype]} {
-      set processType "TSMC" 
-    } elseif {[regexp {A[HRL]\d+$} $celltype]} {
-      set processType "HH" 
-    } else {
-      return "0x0:1"; # can't indentify where the celltype is come from
-    }
-    return $processType
-  }
-}
 
-# source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:05:01 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-# descrip   : find the nearest number from list, you can control which one of bigger or smaller
-#             if $returnBigOneFlag is 1, return big one near number
-#             if $returnBigOneFlag is 0, return small one near number
-#             if $ifClamp is 1 and $number is out of $realList, return the maxOne or small one of $realList
-#             if $ifClamp is 0 and $number is out of $realList, return "0x0:1"(error)
-# update    : 2025/07/18 12:15:10 Friday
-#             adapt to list with only one item
-# ref       : link url
-# --------------------------
-proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {
-  # $ifClamp: When out of range, take the boundary value.
-  set s [lsort -unique -increasing -real $realList]
-  set idx [lsearch -exact -real $s $number]
-  if {$idx != -1} {
-    return [lsearch -inline -real -exact $s $number] ; # number is not equal every real digit of list
-  }
-  if {[llength $realList] == 1 && $ifClamp} {
-    return [lindex $realList 0]
-  } elseif {$ifClamp && $number < [lindex $s 0]} {
-    return [lindex $s 0] 
-  } elseif {$ifClamp && $number > [lindex $s end]} { ; # adapt to list with only one item
-    return [lindex $s 1] 
-  } elseif {$number < [lindex $s 0] || $number > [lindex $s end]} {
-    error "proc find_nearestNum_atIntegerList: your number is not in the range of list (without turning on switch \$ifClamp)"; # your number is not in the range of list
-  }
-  foreach i $s {
-    set next_i [lindex $s [expr [lsearch $s $i] + 1]]
-    if {$i < $number && $number < $next_i} {
-      set lowerIdx [lsearch $s $i]
-      break
-    } 
-  }
-  set upperIdx [expr {$lowerIdx + 1}]
-  return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
-}
+# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
 
+# SOURCE COMMAND: source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
+# Resolving: ./proc_find_nearestNum_atIntegerList.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_find_nearestNum_atIntegerList.invs.tcl
 
-# source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
+#
+# END OF FILE: ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
+# Resolving: ./proc_print_ecoCommands.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_print_ecoCommands.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_print_ecoCommands.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4739,7 +4813,17 @@ proc ifInBox {{loc {0 0}} {box {0 0 10 10}}} {
   }
 }
 
-# source ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
+#
+# END OF FILE: ./proc_print_ecoCommands.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
+# Resolving: ./proc_print_formatedTable.common.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_print_formatedTable.common.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_print_formatedTable.common.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4767,7 +4851,17 @@ proc print_formatedTable {{dataList {}}} {
   return [join $formattedLines \n]
 }
 
-# source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
+#
+# END OF FILE: ./proc_print_formatedTable.common.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
+# Resolving: ./proc_pw_puts_message_to_file_and_window.common.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_pw_puts_message_to_file_and_window.common.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_pw_puts_message_to_file_and_window.common.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4782,7 +4876,17 @@ proc pw {{fileId ""} {message ""}} {
   puts $fileId $message
 }
 
-# source ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl; # strategy_clampDriveCapacity_BetweenDriverSink - return celltype
+#
+# END OF FILE: ./proc_pw_puts_message_to_file_and_window.common.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl; # strategy_clampDriveCapacity_BetweenDriverSink - return celltype
+# Resolving: ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -4792,7 +4896,7 @@ proc pw {{fileId ""} {message ""}} {
 # descrip   : 
 # ref       : link url
 # --------------------------
-proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCelltype ""} {toCheckCelltype} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {refDriverOrSink "refSink"} {maxExcessRatio 0.5}} {
+proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCelltype ""} {toCheckCelltype ""} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {refDriverOrSink "refSink"} {maxExcessRatio 0.5}} {
   if {$driverCelltype == "" || [dbget head.libCells.name $driverCelltype -e] == "" || $sinkCelltype == "" || [dbget head.libCells.name $sinkCelltype -e] == "" || $toCheckCelltype == "" || [dbget head.libCells.name $toCheckCelltype -e] == ""} {
     error "proc strategy_clampDriveCapacity_BetweenDriverSink: check your input!!!"
   } else {
@@ -4834,102 +4938,32 @@ proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCel
       set resultDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $rawResultDrive 0 1] ; # always get min value(valid)
       return [changeDriveCapacity_of_celltype $toCheckCelltype $driveLevel3 $resultDrive]
     }
-}
-# source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:22:06 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-# descrip   : judge which process specified celltype is 
-# ref       : link url
-# --------------------------
-proc whichProcess_fromStdCellPattern {{celltype ""}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
-    return "0x0:1"; # can't find celltype in this design and library 
-  } else {
-    if {[regexp BWP $celltype]} {
-      set processType "TSMC" 
-    } elseif {[regexp {A[HRL]\d+$} $celltype]} {
-      set processType "HH" 
-    } else {
-      return "0x0:1"; # can't indentify where the celltype is come from
-    }
-    return $processType
   }
 }
 
-# source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : Tue Jul  8 11:05:01 CST 2025
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc)
-# descrip   : find the nearest number from list, you can control which one of bigger or smaller
-#             if $returnBigOneFlag is 1, return big one near number
-#             if $returnBigOneFlag is 0, return small one near number
-#             if $ifClamp is 1 and $number is out of $realList, return the maxOne or small one of $realList
-#             if $ifClamp is 0 and $number is out of $realList, return "0x0:1"(error)
-# update    : 2025/07/18 12:15:10 Friday
-#             adapt to list with only one item
-# ref       : link url
-# --------------------------
-proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {
-  # $ifClamp: When out of range, take the boundary value.
-  set s [lsort -unique -increasing -real $realList]
-  set idx [lsearch -exact -real $s $number]
-  if {$idx != -1} {
-    return [lsearch -inline -real -exact $s $number] ; # number is not equal every real digit of list
-  }
-  if {[llength $realList] == 1 && $ifClamp} {
-    return [lindex $realList 0]
-  } elseif {$ifClamp && $number < [lindex $s 0]} {
-    return [lindex $s 0] 
-  } elseif {$ifClamp && $number > [lindex $s end]} { ; # adapt to list with only one item
-    return [lindex $s 1] 
-  } elseif {$number < [lindex $s 0] || $number > [lindex $s end]} {
-    error "proc find_nearestNum_atIntegerList: your number is not in the range of list (without turning on switch \$ifClamp)"; # your number is not in the range of list
-  }
-  foreach i $s {
-    set next_i [lindex $s [expr [lsearch $s $i] + 1]]
-    if {$i < $number && $number < $next_i} {
-      set lowerIdx [lsearch $s $i]
-      break
-    } 
-  }
-  set upperIdx [expr {$lowerIdx + 1}]
-  return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
-}
+# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
 
-# source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : 2025/07/21 23:24:37 Monday
-# label     : atomic_proc
-#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)
-# descrip   : change cell drive capacity of cell type according to different std process
-# ref       : link url
-# --------------------------
-source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDriveCapacibility 0} {toDriverCapacibility 0}} {
-  set processType [whichProcess_fromStdCellPattern $refType]
-  if {$processType == "TSMC"} { ; # TSMC
-    regsub "D${originalDriveCapacibility}BWP" $refType "D${toDriverCapacibility}BWP" toCelltype
-    return $toCelltype
-  } elseif {$processType == "HH"} { ; # HH40 huahonghongli
-    if {$toDriverCapacibility == 0.5} {set toDriverCapacibility "05"}
-    regsub [subst {(.*)X${originalDriveCapacibility}}] $refType [subst {\\1X${toDriverCapacibility}}] toCelltype
-    return $toCelltype
-  } else {
-    error "proc changeDriveCapacity_of_celltype: process of std cell is not belong to TSMC or HH!!!"
-  }
-}
+# SOURCE COMMAND: source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
+# Resolving: ./proc_find_nearestNum_atIntegerList.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_find_nearestNum_atIntegerList.invs.tcl
 
+# SOURCE COMMAND: source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
+# Resolving: ./proc_changeDriveCapacity_of_celltype.invs.tcl (from current working directory)
+# Skipping already processed file: ./proc_changeDriveCapacity_of_celltype.invs.tcl
 
-# source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints - input pointsList, return center pt
+#
+# END OF FILE: ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints - input pointsList, return center pt
+# Resolving: ./proc_calculateResistantCenter_advanced.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_calculateResistantCenter_advanced.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter_advanced.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5114,7 +5148,17 @@ proc min {a b} {
   expr {$a < $b ? $a : $b}
 }
 
-# source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint - return relative point
+#
+# END OF FILE: ./proc_calculateResistantCenter_advanced.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint - return relative point
+# Resolving: ./proc_calculateRelativePoint.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_calculateRelativePoint.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_calculateRelativePoint.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5160,7 +5204,17 @@ proc calculateRelativePoint {startPoint endPoint {relativeValue 0.5} {clampValue
   return [list $x $y]
 }
 
-# source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance - return value of distance
+#
+# END OF FILE: ./proc_calculateRelativePoint.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance - return value of distance
+# Resolving: ./proc_calculateDistance_betweenTwoPoint.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_calculateDistance_betweenTwoPoint.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_calculateDistance_betweenTwoPoint.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5205,7 +5259,17 @@ proc calculateDistance {point1 point2 {epsilon 1e-10} {maxValue 1.0e+100}} {
   return [expr {sqrt($sumSq)}]
 }
 
-# source ./proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement - return string
+#
+# END OF FILE: ./proc_calculateDistance_betweenTwoPoint.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement - return string
+# Resolving: ./proc_findMostFrequentElementOfList.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_findMostFrequentElementOfList.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5254,7 +5318,17 @@ proc findMostFrequentElement {inputList {minPercentage 50.0} {returnUnique 1}} {
 	return [lindex $mostFrequentElements 0]
 }
 
-# source ./proc_reverseListRange.invs.tcl; # reverseListRange - return reversed list
+#
+# END OF FILE: ./proc_findMostFrequentElementOfList.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_reverseListRange.invs.tcl; # reverseListRange - return reversed list
+# Resolving: ./proc_reverseListRange.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_reverseListRange.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_reverseListRange.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5324,7 +5398,17 @@ proc reverseListRange {listVar {startIdx ""} {endIdx ""} {deep 0}} {
 	return [lreplace $result $startIdx $endIdx {*}$reversedRange]
 }
 
-# source ./proc_formatDecimal.invs.tcl; # formatDecimal/fm - return string converted from number
+#
+# END OF FILE: ./proc_reverseListRange.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_formatDecimal.invs.tcl; # formatDecimal/fm - return string converted from number
+# Resolving: ./proc_formatDecimal.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_formatDecimal.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_formatDecimal.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5378,7 +5462,17 @@ proc formatDecimal {value {fixedLength 2} {strictRange 1} {padZero 1}} {
 	}
 }
 
-# source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop - return number
+#
+# END OF FILE: ./proc_formatDecimal.invs.tcl (depth 1)
+#
+
+# SOURCE COMMAND: source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop - return number
+# Resolving: ./proc_checkRoutingLoop.invs.tcl (from current working directory)
+
+#
+# START OF FILE: ./proc_checkRoutingLoop.invs.tcl (depth 1)
+# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_checkRoutingLoop.invs.tcl
+#
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
@@ -5474,3 +5568,10 @@ if {0} {
 	}
 }
 
+#
+# END OF FILE: ./proc_checkRoutingLoop.invs.tcl (depth 1)
+#
+
+#
+# END OF FILE: fix_trans.invs.tcl (depth 0)
+#

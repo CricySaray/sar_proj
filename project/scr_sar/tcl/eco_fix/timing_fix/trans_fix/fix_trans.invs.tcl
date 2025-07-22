@@ -60,8 +60,8 @@
 # --------
 # 01 get info of viol cell: pin cellname celltype driveNum netlength
 source ../../../incr_integer_inself.common.tcl; # ci(proc counter), don't use array: counters
-source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
 source ../../../logic_or_and.common.tcl; # operators: lo la ol al re eo - return 0|1
+source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
 source ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
 source ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList] || get_driverPin - return drivePin

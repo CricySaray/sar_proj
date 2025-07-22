@@ -136,7 +136,7 @@ proc fix_trans {args} {
       set viol_value [lindex $line [expr [lindex $violValue_pin_columnIndex 0] - 1]]
       set viol_pin   [lindex $line [expr [lindex $violValue_pin_columnIndex 1] - 1]]
       if {![string is double $viol_value] || [dbget top.insts.instTerms.name $viol_pin -e] == ""} {
-        error "column([lindex $violValue_pin_columnIndex 0]) is not number"; # column([lindex $violValue_pin_columnIndex 0]) is not number
+        error "column([lindex $violValue_pin_columnIndex 0]) is not number, or violPin($viol_pin) can't find"; # column([lindex $violValue_pin_columnIndex 0]) is not number
       }
       if {![if_driver_or_load $viol_pin]} { ; # only extract viol loadPin
         set load_pin $viol_pin 
@@ -1620,7 +1620,8 @@ if {$debug} { puts "# -----------------" }
     # BEGIN OF ONE 2 MORE SITUATIONS
     if {[llength $violValue_drivePin_loadPin_numSinks_sinks_D5List]} {
       lappend cmdList " "
-      lappend cmdList "# BEGIN OF ONE 2 MORE SITUATIONS:"
+      set beginOfOne2MoreCmds "# BEGIN OF ONE 2 MORE SITUATIONS:"
+      lappend cmdList $beginOfOne2MoreCmds
       lappend cmdList " "
     }
 
@@ -3308,6 +3309,9 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
       puts $ce ""
       if {[info exists cantExtractList]} { puts $ce [join $cantExtractList \n] }
       ### file of cmds 
+      set beginIndexOfOne2MoreCmds [expr [lsearch -exact $cmdList $beginOfOne2MoreCmds] + 2]
+      set endIndexOfOne2MoreCmds [expr [lindex [lsearch -exact -all $cmdList "setEcoMode -reset"] end] - 2]
+      set reverseOne2MoreCmdFromCmdList [reverseListRange $cmdList $beginIndexOfOne2MoreCmds $endIndexOfOne2MoreCmds 0 0 1 "#"]
       pw $co [join $cmdList \n]
 
       ### file of summary

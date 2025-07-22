@@ -609,8 +609,8 @@ proc fix_trans {args} {
               set cmd1 [concat $cmd_AA_add1 $cmd_AA_add2]
             }
           }
-        } elseif {$canAddRepeater && [expr $violnum > -0.2 && $netLength < [expr $unitOfNetLength * 4] || \
-                                    $violnum > -0.4 && $netLength < [expr $unitOfNetLength * 6]]} {
+        } elseif {$canAddRepeater && [expr $violnum > -0.2 && $netLength < [expr $unitOfNetLength * 4] && $netLength > [expr $unitOfNetLength * 1.5] || \
+                                    $violnum > -0.4 && $netLength < [expr $unitOfNetLength * 6] && $netLength > [expr $unitOfNetLength * 2]]} {
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
           set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 0 $refCelltype $cellRegExp] ; # strategy addRepeater Celltype to select buffer/inverter celltype(driveCapacity and VTtype)
           if {[regexp -- {0x0:6|0x0:7|0x0:8} $toAddCelltype]} {

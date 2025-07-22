@@ -45,8 +45,8 @@ proc cat_all {args} {
 		puts "Merged file created: $output_file"
 	}
 }
-define_proc_arguments print_ecoCommand \
-  -info "print eco command"\
+define_proc_arguments cat_all \
+  -info "cat all sourced file to one file" \
   -define_args {
     {inputfilename "specify input filename" AString string required}
     {-output "output file name (default: all_<input>)" AString string optional}

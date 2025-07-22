@@ -10,7 +10,7 @@
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
 source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
-proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCelltype ""} {toCheckCelltype} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {refDriverOrSink "refSink"} {maxExcessRatio 0.5}} {
+proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCelltype ""} {toCheckCelltype ""} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {refDriverOrSink "refSink"} {maxExcessRatio 0.5}} {
   if {$driverCelltype == "" || [dbget head.libCells.name $driverCelltype -e] == "" || $sinkCelltype == "" || [dbget head.libCells.name $sinkCelltype -e] == "" || $toCheckCelltype == "" || [dbget head.libCells.name $toCheckCelltype -e] == ""} {
     error "proc strategy_clampDriveCapacity_BetweenDriverSink: check your input!!!"
   } else {
@@ -52,4 +52,5 @@ proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCel
       set resultDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $rawResultDrive 0 1] ; # always get min value(valid)
       return [changeDriveCapacity_of_celltype $toCheckCelltype $driveLevel3 $resultDrive]
     }
+  }
 }

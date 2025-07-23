@@ -86,7 +86,7 @@ pw $fo "# cant find - list"
 pw $fo [join [lmap cf $cantFindList {set result "# $cf"}] \n]
 pw $fo "##############################"
 pw $fo "# not only one inst - list"
-pw $fo [join $notOnlyOneList \n]
+pw $fo [join [lmap no $notOnlyOneList {set result "# $no"}] \n]
 close $fo
 
 TCL_CODE

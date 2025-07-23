@@ -3434,7 +3434,7 @@ define_proc_arguments fix_trans \
     {-rangeOfDriveCapacityForChange "specify range of drive capacity for ecoChangeCell" AList list optional}
     {-rangeOfDriveCapacityForAdd "specify range of drive capacity for ecoAddRepeater" AList list optional}
     {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
-    {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list optional}
+    {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list required}
     {-suffixFilename "specify suffix of result filename" AString string optional}
     {-debug "debug mode" "" boolean optional}
   }

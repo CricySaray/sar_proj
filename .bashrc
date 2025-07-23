@@ -44,6 +44,11 @@ alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
 alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
 
 #------------------------------------------------
+# config for attr (manage filesystem, add attribute info for files)
+alias sf='setfattr'
+alias gf='getfattr'
+
+#------------------------------------------------
 # config for autojump (github : wting/autojump)
 [[ -s /home/cricy/.autojump/etc/profile.d/autojump.sh ]] && source /home/cricy/.autojump/etc/profile.d/autojump.sh
 

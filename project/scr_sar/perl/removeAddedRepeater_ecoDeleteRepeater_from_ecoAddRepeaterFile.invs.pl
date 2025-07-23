@@ -56,6 +56,7 @@ while (my $line = <$in_fh>) {
 # Output the end of the TCL variable definition and processing logic
 print $out_fh "}\n";
 print $out_fh <<'TCL_CODE';
+
 set testOrRun "test"
 foreach name $insts_name {
   set instGets [dbget top.insts.name *${name} -e]

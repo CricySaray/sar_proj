@@ -62,6 +62,7 @@ proc pw {{fileId ""} {message ""}} {
   puts $fileId $message
 }
 
+set fo [open "removeRepeaterFromAddRepeaterFile.tcl" w]
 set testOrRun "test"
 foreach name $insts_name {
   set instGets [dbget top.insts.name *${name} -e]
@@ -71,7 +72,7 @@ foreach name $insts_name {
       lappend notOnlyOneList "*$name"
     } elseif {[llength $instGets] == 1} {
       set cmd "ecoDeleteRepeater -inst $instGets"
-      pw $cmd
+      pw $fo $cmd
       if {$testOrRun == "run"} {
         eval $cmd
       }
@@ -80,12 +81,13 @@ foreach name $insts_name {
     lappend cantFindList "*$name"
   }
 }
-pw "##############################"
-pw "# cant find - list"
-pw [join $cantFindList \n]
-pw "##############################"
-pw "# not only one inst - list"
-pw [join $notOnlyOneList \n]
+pw $fo "##############################"
+pw $fo "# cant find - list"
+pw $fo [join [lmap cf $cantFindList {set result "# $cf"}] \n]
+pw $fo "##############################"
+pw $fo "# not only one inst - list"
+pw $fo [join $notOnlyOneList \n]
+close $fo
 
 TCL_CODE
 

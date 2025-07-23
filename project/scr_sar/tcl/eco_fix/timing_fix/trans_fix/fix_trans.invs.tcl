@@ -433,7 +433,7 @@ proc fix_trans {args} {
           if {$debug} { puts "in 5: add Repeater refDriver, uncertainly, conservative" }
           if {$debug} { puts "Not in above situation, so NOTICE" }
           set refCelltype [eo [expr [regexp CLK $driveCellClass] || [regexp CLK $loadCellClass]] $refCLKBufferCelltype $refBufferCelltype]
-          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
+          set toAddCelltype [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 2 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
           set toChangeCelltype [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
           if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
             set toChangeCelltype [strategy_changeDriveCapacity $toChangeCelltype 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
@@ -2452,7 +2452,7 @@ if {$debug} { puts "# -----------------" }
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
-              set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
+              set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
               if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
               set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
               lappend fixedList_one2more [concat "mbl:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
@@ -2613,7 +2613,7 @@ if {$debug} { puts "# -----------------" }
             #puts  "in 4: $driveCelltype --  $toChangeCelltype2 song"
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $normalNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
-              set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
+              set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] ; # specify 8 drive capacity is special set for this case viol > 100ps and net length < 10um
               if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
               set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
               lappend fixedList_one2more [concat "mbs:in_6:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]
@@ -2630,7 +2630,7 @@ if {$debug} { puts "# -----------------" }
             set toAddCelltype2 [strategy_addRepeaterCelltype $driveCelltype $sinkCelltype "" 3 $rangeOfDriveCapacityForAdd 1 $refCelltype $cellRegExp ]; # have a lot of situation, logic/buffer/inverter
             set toChangeCelltype2 [strategy_changeVT $driveCelltype $specialNeedVtWeightList $rangeOfVtSpeed $cellRegExp 1]
             if {$driveCapacity < 4 && $ifHaveLargerCapacity} {
-              set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 6 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
+              set toChangeCelltype2 [strategy_changeDriveCapacity $toChangeCelltype2 4 0 $rangeOfDriveCapacityForChange $cellRegExp 1] 
               if {$debug} {puts "$driveCelltype - $toChangeCelltype2"}
               set cmd_DA_driveInst [print_ecoCommand -type change -celltype $toChangeCelltype2 -inst $driveInstname]; # pre fix: first, change driveInst DriveCapacity, second add repeater
               lappend fixedList_one2more [concat "mbs:in_8:2" "DA_[fm $off]" ${toChangeCelltype2}_$toAddCelltype2 $allInfoList]

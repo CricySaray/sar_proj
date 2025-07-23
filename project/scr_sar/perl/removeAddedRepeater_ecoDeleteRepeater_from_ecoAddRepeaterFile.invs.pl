@@ -57,6 +57,11 @@ while (my $line = <$in_fh>) {
 print $out_fh "}\n";
 print $out_fh <<'TCL_CODE';
 
+proc pw {{fileId ""} {message ""}} {
+  puts $message
+  puts $fileId $message
+}
+
 set testOrRun "test"
 foreach name $insts_name {
   set instGets [dbget top.insts.name *${name} -e]
@@ -66,7 +71,7 @@ foreach name $insts_name {
       lappend notOnlyOneList "*$name"
     } elseif {[llength $instGets] == 1} {
       set cmd "ecoDeleteRepeater -inst $instGets"
-      puts $cmd
+      pw $cmd
       if {$testOrRun == "run"} {
         eval $cmd
       }
@@ -75,12 +80,12 @@ foreach name $insts_name {
     lappend cantFindList "*$name"
   }
 }
-puts "##############################"
-puts "# cant find - list"
-puts [join $cantFindList \n]
-puts "##############################"
-puts "# not only one inst - list"
-puts [join $notOnlyOneList \n]
+pw "##############################"
+pw "# cant find - list"
+pw [join $cantFindList \n]
+pw "##############################"
+pw "# not only one inst - list"
+pw [join $notOnlyOneList \n]
 
 TCL_CODE
 

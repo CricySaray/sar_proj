@@ -28,9 +28,17 @@ proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {
 }
 proc get_driverPin {{pin ""}} {
   if {$pin == "" || [dbget top.insts.instTerms.name $pin -e] == ""} {
-    return "0x0:1"; # no pin
+    error "proc get_driverPin: pin ($pin) can't find in invs db!!!"; # no pin
   } else {
     set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isOutput 1 -p].name ] 0]
     return $driver
+  }
+}
+# TODO
+proc get_loadPins {{pin ""}} {
+  if {$pin == "" || [dbget top.insts.instTerms.name $pin -e] == ""} {
+    error "proc get_loadPins: pin ($pin) can't find in invs db!!!" 
+  } else {
+     
   }
 }

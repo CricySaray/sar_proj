@@ -20,6 +20,7 @@
 #       to fix IMPOPT-616
 #       1) get powerdomains name, 2) get powerdomain area, 3) get powerdomain which the inst is belong to, 4) get location of inst, 5) calculate the loc of toAddRepeater
 # TODO: 1 v more: calculate lenth between every sinks of driveCell, and classify them to one or more group in order to fix fanout or set ecoAddRepeater -term {... ...}
+# TODO: songNOTE: judge mem and ip celltype!!! if driver is mem/ip, it can't fix. if sink is mem/ip, it can fix driver
 # --------------------------
 # ------
 # need :
@@ -151,6 +152,19 @@ proc fix_trans {args} {
           #           annotate a X flag in violated sink Pin
         }
       } else {
+
+        set drive_pin $viol_pin 
+        set num_termName_D2List [get_fanoutNum_and_inputTermsName_of_pin $drive_pin]
+        if {[lindex $num_termName_D2List 0] == 1} { ; # load cell is only one. you can use option: -relativeDistToSink to ecoAddRepeater
+          lappend violValue_driverPin_onylOneLoaderPin_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
+        } elseif {[lindex $num_termName_D2List 0] > 1} { ; # load cell are several, need consider other method
+          set load_pin [lindex [lindex $num_termName_D2List 1] 0]
+          lappend violValue_drivePin_loadPin_numSinks_sinks_D5List [list $viol_value $drive_pin $load_pin [lindex $num_termName_D2List 0] [lindex $num_termName_D2List 1]]
+          lappend oneToMoreList_diffSinksCellclass [list $viol_value $drive_pin $load_pin]
+          # songNOTE: TODO show one drivePin , but all sink Pins
+          #           annotate a X flag in violated sink Pin
+        }
+
         lappend cantExtractList "(Line $j) drivePin - not extract! : $line"
       }
     }

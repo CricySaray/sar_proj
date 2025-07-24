@@ -3310,9 +3310,9 @@ proc ifEmptyZero {value trueValue falseValue} {
 #
 alias gpt "getPt_ofObj"
 proc getPt_ofObj {{obj ""}} {
-if {[lindex $obj 0] == [lindex [lindex $obj 0 ] 0]} {
-  set obj [lindex $obj 0]
-}
+  if {[lindex $obj 0] == [lindex [lindex $obj 0 ] 0]} {
+    set obj [lindex $obj 0]
+  }
   if {$obj == ""} {
     set obj [dbget selected.name -e] ;
   }

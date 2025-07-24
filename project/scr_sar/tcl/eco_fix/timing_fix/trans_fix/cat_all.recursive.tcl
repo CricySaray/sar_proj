@@ -300,7 +300,7 @@ if {$argc > 0} {
 	set filename [lindex $argv 0]
 	set options [lrange $argv 1 end]
 	# 解析选项参数
-	set output ""; set verbose 0; set max_depth 10; set exclude ""; set include_comments 1; set preserve_order 1; set strip_comments 0
+	set output ""; set verbose 0; set max_depth 10; set exclude ""; set include_comments 1; set preserve_order 1; set strip_comments 3
 	for {set i 0} {$i < [llength $options]} {incr i} {
 		set opt [lindex $options $i]
 		switch -- $opt {

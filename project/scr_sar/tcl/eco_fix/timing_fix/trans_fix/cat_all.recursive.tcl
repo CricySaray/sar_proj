@@ -3,327 +3,401 @@
 # author    : sar song
 # date      : 2025/07/24
 # label     : misc_proc
-# descrip   : Merge sourced files with improved source line parsing and comment stripping
-# update    : 2025/07/23 11:02:14 Wednesday
-#             Adjusted for source line parsing with comments
+# descrip   : Merge sourced files with improved comment stripping (fixed inline comments)
+# update    : 2025/07/25 修复行内注释去除逻辑，处理括号内注释和分号后空白
 # --------------------------
 namespace eval CatAll {
-	variable state
-	array set state {
-		processed_files {}  ;# 记录已处理的文件
-		recursion_depth {}  ;# 记录递归深度
-		original_dir ""     ;# 原始工作目录
-		target_dir ""       ;# 目标文件所在目录
-	}
-	# 初始化状态（保存原始目录和目标目录）
-	proc init_state {original working} {
-		variable state
-		array unset state
-		set state(processed_files) [dict create]
-		set state(recursion_depth) [dict create]
-		set state(original_dir) $original  ;# 保存原始工作目录
-		set state(target_dir) $working     ;# 保存目标文件所在目录
-	}
-	# 检查文件是否已处理
-	proc is_file_processed {file} {
-		variable state
-		return [dict exists $state(processed_files) $file]
-	}
-	# 标记文件为已处理
-	proc mark_file_processed {file} {
-		variable state
-		dict set state(processed_files) $file 1
-	}
-	# 管理递归深度
-	proc set_recursion_depth {file depth} {
-		variable state
-		dict set state(recursion_depth) $file $depth
-	}
-	proc get_recursion_depth {file} {
-		variable state
-		return [dict get $state(recursion_depth) $file 0]
-	}
-	# 获取目标工作目录
-	proc get_target_dir {} {
-		variable state
-		return $state(target_dir)
-	}
-	# 恢复原始工作目录
-	proc restore_original_dir {} {
-		variable state
-		catch {cd $state(original_dir)}
-	}
+  variable state
+  array set state {
+    processed_files {}  ;# 记录已处理的文件
+    recursion_depth {}  ;# 记录递归深度
+    original_dir ""     ;# 原始工作目录
+    target_dir ""       ;# 目标文件所在目录
+  }
+
+  proc init_state {original working} {
+    variable state
+    array unset state
+    set state(processed_files) [dict create]
+    set state(recursion_depth) [dict create]
+    set state(original_dir) $original
+    set state(target_dir) $working
+  }
+
+  proc is_file_processed {file} {variable state; return [dict exists $state(processed_files) $file]}
+  proc mark_file_processed {file} {variable state; dict set state(processed_files) $file 1}
+  proc set_recursion_depth {file depth} {variable state; dict set state(recursion_depth) $file $depth}
+  proc get_recursion_depth {file} {variable state; return [dict get $state(recursion_depth) $file 0]}
+  proc get_target_dir {} {variable state; return $state(target_dir)}
+  proc restore_original_dir {} {variable state; catch {cd $state(original_dir)}}
+
+  proc process_file {filename fo depth opts} {
+    set max_depth [dict get $opts -max_depth]
+    if {$depth > $max_depth} {
+      set msg "Maximum recursion depth ($max_depth) reached for $filename"
+      puts $fo "# WARNING: $msg"
+      if {[dict get $opts -verbose]} {puts "Warning: $msg"}
+      return
+    }
+
+    set current_dir [pwd]
+    set abs_path [file normalize [file join $current_dir $filename]]
+    if {[is_file_processed $abs_path]} {
+      set msg "Skipping already processed file: $filename"
+      puts $fo "# $msg"
+      if {[dict get $opts -verbose]} {puts $msg}
+      return
+    }
+
+    mark_file_processed $abs_path
+    set_recursion_depth $abs_path $depth
+
+    set exclude [dict get $opts -exclude]
+    if {$exclude ne "" && [string match $exclude $abs_path]} {
+      set msg "Excluded by pattern: $filename"
+      puts $fo "# $msg"
+      if {[dict get $opts -verbose]} {puts $msg}
+      return
+    }
+
+    if {![file exists $filename]} {
+      set msg "File not found: $filename (resolved to $abs_path)"
+      puts $fo "# ERROR: $msg"
+      if {[dict get $opts -verbose]} {puts "Error: $msg"}
+      return
+    }
+
+    if {[catch {set fi [open $filename r]} err]} {
+      set msg "Failed to open file $filename: $err"
+      puts $fo "# ERROR: $msg"
+      if {[dict get $opts -verbose]} {puts "Error: $msg"}
+      return
+    }
+    fconfigure $fi -encoding utf-8
+
+    set lang [dict get $opts -lang]
+    set strip_mode [dict get $opts -strip_comments]
+    set comment_state [CommentState new $lang]
+
+    if {[dict get $opts -include_comments]} {
+      puts $fo "\n#"
+      puts $fo "# START OF FILE: $filename (depth $depth)"
+      puts $fo "# Resolved path: $abs_path"
+      puts $fo "#"
+    }
+
+    set source_lines [list]
+    set regular_lines [list]
+    while {[gets $fi line] >= 0} {
+      if {[regexp {^\s*source\s+(\S+)(.*)$} $line -> filename_part remainder]} {
+        if {[string index $filename_part 0] eq "\""} {
+          if {[regexp {^"([^"]*)"(.*)$} $filename_part -> clean_file rest]} {
+            lappend source_lines [list $clean_file $line]
+            continue
+          }
+        } elseif {[string index $filename_part 0] eq "'"} {
+          if {[regexp {^'([^']*)'(.*)$} $filename_part -> clean_file rest]} {
+            lappend source_lines [list $clean_file $line]
+            continue
+          }
+        }
+        set clean_file [string map {";" ""} $filename_part]
+        set clean_file [string trimright $clean_file " \t;"]
+        if {[string first "#" $clean_file] >= 0} {
+        set clean_file [string range $clean_file 0 [expr {[string first "#" $clean_file] - 1}]]
+        set clean_file [string trimright $clean_file " \t"]
+      }
+      lappend source_lines [list $clean_file $line]
+    } else {
+      lappend regular_lines $line
+    }
+  }
+  close $fi
+
+  foreach line $regular_lines {
+    set processed_line [process_comments $line $comment_state $strip_mode]
+    if {$processed_line ne ""} {
+      puts $fo $processed_line
+    }
+  }
+
+  if {[dict get $opts -preserve_order]} {
+    foreach item $source_lines {
+      lassign $item src_file orig_line
+      process_source_line $src_file $orig_line $fo [expr {$depth + 1}] $opts
+    }
+  } else {
+    foreach item [lsort -index 0 $source_lines] {
+      lassign $item src_file orig_line
+      process_source_line $src_file $orig_line $fo [expr {$depth + 1}] $opts
+    }
+  }
+
+  if {[dict get $opts -include_comments]} {
+    puts $fo "\n#"
+    puts $fo "# END OF FILE: $filename (depth $depth)"
+    puts $fo "#"
+  }
+
+  $comment_state destroy
 }
-# 改进的注释处理函数，正确处理引号和分号
-proc strip_line_comments {line mode} {
-	if {$mode == 0} {
-		return $line
-	}
-	
-	# 处理整行注释 (模式1或3)
-	set trimmed [string trimleft $line]
-	if {($mode & 1) && [string index $trimmed 0] eq "#"} {
-		return ""
-	}
-	
-	# 处理行内注释 (模式2或3)
-	if {($mode & 2)} {
-		set len [string length $line]
-		set in_quote 0
-		set quote_char ""
-		set last_semicolon -1
-		
-		for {set i 0} {$i < $len} {incr i} {
-			set char [string index $line $i]
-			
-			# 检查引号状态
-			if {!$in_quote && ($char eq "\"" || $char eq "'")} {
-				set in_quote 1
-				set quote_char $char
-			} elseif {$in_quote && $char eq $quote_char} {
-				# 检查是否为转义引号
-				set escaped 0
-				for {set j $i-1} {$j >= 0 && [string index $line $j] eq "\\"} {incr j -1} {
-					incr escaped
-				}
-				
-				if {($escaped % 2) == 0} {  ;# 偶数个反斜杠表示未转义
-					set in_quote 0
-				}
-			}
-			
-			# 记录最后一个不在引号内的分号
-			if {!$in_quote && $char eq ";"} {
-				set last_semicolon $i
-			}
-		}
-		
-		# 如果找到分号，移除分号及后面的所有内容
-		if {$last_semicolon >= 0} {
-			return [string trimright [string range $line 0 [expr {$last_semicolon - 1}]]]
-		}
-	}
-	
-	return $line
+
+proc process_source_line {src_file orig_line fo depth opts} {
+  if {[dict get $opts -include_comments]} {
+    puts $fo "\n# SOURCE COMMAND: $orig_line"
+    puts $fo "# Resolving: $src_file (from current working directory)"
+  }
+  process_file $src_file $fo $depth $opts
 }
-# 主处理过程
-proc cat_all {filename {output ""} {verbose 0} {max_depth 10} {exclude ""} {include_comments 1} {preserve_order 1} {strip_comments 3}} {
-	# 记录原始工作目录
-	set original_dir [file normalize [pwd]]
-	# 解析目标文件绝对路径
-	set target_file_abs [file normalize $filename]
-	if {![file exists $target_file_abs]} {
-		puts "Error: Target file not found - $filename"
-		return 1
-	}
-	# 确定目标文件所在目录
-	set target_dir [file dirname $target_file_abs]
-	set target_file [file tail $target_file_abs]
-	# 初始化状态
-	CatAll::init_state $original_dir $target_dir
-	# 切换到目标文件所在目录进行所有操作
-	if {[catch {cd $target_dir} err]} {
-		puts "Error: Failed to change to target directory ($target_dir): $err"
-		return 1
-	}
-	# 处理输出文件路径（基于原始目录或指定路径）
-	if {$output eq ""} {
-		set output "all_$target_file"
-		# 输出文件默认放在原始工作目录
-		set output_path [file join $original_dir $output]
-	} else {
-		# 如果输出路径是相对路径，基于原始目录解析
-		if {[file pathtype $output] eq "relative"} {
-			set output_path [file join $original_dir $output]
-		} else {
-			set output_path $output
-		}
-	}
-	# 初始化状态
-	CatAll::init_state $original_dir $target_dir
-	# 处理选项参数
-	set opts [dict create \
-		-verbose $verbose \
-		-max_depth $max_depth \
-		-exclude [list $exclude] \
-		-include_comments $include_comments \
-		-preserve_order $preserve_order \
-		-output $output_path \
-		-strip_comments $strip_comments]  ;# 新增注释处理选项
-	# 打开输出文件
-	if {[catch {set fo [open $output_path w]} err]} {
-		puts "Error: Failed to open output file ($output_path): $err"
-		CatAll::restore_original_dir
-		return 1
-	}
-	fconfigure $fo -encoding utf-8
-	# 开始递归处理（此时已在目标目录，使用相对路径）
-	if {[catch {
-		CatAll::process_file $target_file $fo 0 $opts
-	} err]} {
-		puts "Error during processing: $err"
-	}
-	# 清理操作
-	close $fo
-	CatAll::restore_original_dir  ;# 确保切回原始目录
-	if {[dict get $opts -verbose]} {
-		puts "Merged file created: $output_path"
-	}
-	return 0
 }
-namespace eval CatAll {
-	proc process_file {filename fo depth opts} {
-		# 检查递归深度
-		set max_depth [dict get $opts -max_depth]
-		if {$depth > $max_depth} {
-			set msg "Maximum recursion depth ($max_depth) reached for $filename"
-			puts $fo "# WARNING: $msg"
-			if {[dict get $opts -verbose]} {puts "Warning: $msg"}
-			return
-		}
-		# 获取当前工作目录（已切换到目标目录）
-		set current_dir [pwd]
-		set abs_path [file normalize [file join $current_dir $filename]]
-		# 检查是否已处理
-		if {[is_file_processed $abs_path]} {
-			set msg "Skipping already processed file: $filename"
-			puts $fo "# $msg"
-			if {[dict get $opts -verbose]} {puts $msg}
-			return
-		}
-		# 标记为已处理
-		mark_file_processed $abs_path
-		set_recursion_depth $abs_path $depth
-		# 检查排除模式
-		set exclude [dict get $opts -exclude]
-		if {$exclude ne "" && [string match $exclude $abs_path]} {
-			set msg "Excluded by pattern: $filename"
-			puts $fo "# $msg"
-			if {[dict get $opts -verbose]} {puts $msg}
-			return
-		}
-		# 检查文件是否存在
-		if {![file exists $filename]} {  ;# 基于当前工作目录（目标目录）检查
-			set msg "File not found: $filename (resolved to $abs_path)"
-			puts $fo "# ERROR: $msg"
-			if {[dict get $opts -verbose]} {puts "Error: $msg"}
-			return
-		}
-		# 打开并读取文件
-		if {[catch {set fi [open $filename r]} err]} {  ;# 基于当前工作目录打开
-			set msg "Failed to open file $filename: $err"
-			puts $fo "# ERROR: $msg"
-			if {[dict get $opts -verbose]} {puts "Error: $msg"}
-			return
-		}
-		fconfigure $fi -encoding utf-8
-		# 写入文件开始标记
-		if {[dict get $opts -include_comments]} {
-			puts $fo "\n#"
-			puts $fo "# START OF FILE: $filename (depth $depth)"
-			puts $fo "# Resolved path: $abs_path"
-			puts $fo "#"
-		}
-		# 分离source行和普通行
-		set source_lines [list]
-		set regular_lines [list]
-		while {[gets $fi line] >= 0} {
-			# 改进的source命令解析，处理注释和分号
-			if {[regexp {^\s*source\s+(\S+)(.*)$} $line -> filename_part remainder]} {
-				# 处理带引号的文件名
-				if {[string index $filename_part 0] eq "\""} {
-					# 双引号文件名
-					if {[regexp {^"([^"]*)"(.*)$} $filename_part -> clean_file rest]} {
-						lappend source_lines [list $clean_file $line]
-						continue
-					}
-				} elseif {[string index $filename_part 0] eq "'"} {
-					# 单引号文件名
-					if {[regexp {^'([^']*)'(.*)$} $filename_part -> clean_file rest]} {
-						lappend source_lines [list $clean_file $line]
-						continue
-					}
-				}
-				# 处理不带引号的文件名（移除分号和注释）
-				set clean_file [string map {";" ""} $filename_part]
-				set clean_file [string trimright $clean_file " \t;"]
-				# 检查是否有注释
-				if {[string first "#" $clean_file] >= 0} {
-					set clean_file [string range $clean_file 0 [expr {[string first "#" $clean_file] - 1}]]
-					set clean_file [string trimright $clean_file " \t"]
-				}
-				lappend source_lines [list $clean_file $line]
-			} else {
-				lappend regular_lines $line
-			}
-		}
-		close $fi
-		# 写入普通行（处理注释）
-		set strip_mode [dict get $opts -strip_comments]
-		foreach line $regular_lines {
-			set processed_line [strip_line_comments $line $strip_mode]
-			if {$processed_line ne ""} {  ;# 跳过空行（原整行注释）
-				puts $fo $processed_line
-			}
-		}
-		# 处理source行（已在目标目录，直接使用相对路径）
-		if {[dict get $opts -preserve_order]} {
-			foreach item $source_lines {
-				lassign $item src_file orig_line
-				process_source_line $src_file $orig_line $fo [expr {$depth + 1}] $opts
-			}
-		} else {
-			foreach item [lsort -index 0 $source_lines] {
-				lassign $item src_file orig_line
-				process_source_line $src_file $orig_line $fo [expr {$depth + 1}] $opts
-			}
-		}
-		# 写入文件结束标记
-		if {[dict get $opts -include_comments]} {
-			puts $fo "\n#"
-			puts $fo "# END OF FILE: $filename (depth $depth)"
-			puts $fo "#"
-		}
-	}
-	proc process_source_line {src_file orig_line fo depth opts} {
-		# 写入source命令标记
-		if {[dict get $opts -include_comments]} {
-			puts $fo "\n# SOURCE COMMAND: $orig_line"
-			puts $fo "# Resolving: $src_file (from current working directory)"
-		}
-		# 递归处理（此时已在目标目录，直接使用相对路径）
-		process_file $src_file $fo $depth $opts
-	}
+
+oo::class create CommentState {
+  variable lang       ;# 语言类型(tcl/perl)
+  variable brace_depth ;# 括号嵌套深度
+  variable in_quote   ;# 引号状态(0:无, "':双引号, ':单引号)
+  variable in_comment ;# 是否在注释中(perl多行注释用)
+
+  constructor {language} {
+    set lang $language
+    set brace_depth 0
+    set in_quote 0
+    set in_comment 0
+  }
+
+  method cget {-lang} {return $lang}
+
+  method update_brace {char} {
+    if {$in_quote == 0 && $in_comment == 0} {
+      switch $char {
+        "{" { incr brace_depth }
+        "}" { if {$brace_depth > 0} { incr brace_depth -1 } }
+      }
+    }
+    return $brace_depth
+  }
+
+  method update_quote {char prev_char} {
+    if {$in_comment == 0} {
+      if {$in_quote == 0} {
+        if {$char in {"\"" "'"}} {
+          set in_quote $char
+        }
+      } else {
+        if {$char eq $in_quote} {
+          set escape_count 0
+          set p $prev_char
+          while {$p eq "\\"} {
+            incr escape_count
+            set p [string index [my get_prev_prev] end]
+          }
+          if {$escape_count % 2 == 0} {
+            set in_quote 0
+          }
+        }
+      }
+    }
+    return $in_quote
+  }
+
+  method get_prev_prev {} {return ""}
+  method set_in_comment {val} {set in_comment $val}
+  method get_state {} {return [list $brace_depth $in_quote $in_comment]}
+  method set_state {state} {
+    lassign $state brace_depth in_quote in_comment
+    set brace_depth $brace_depth
+    set in_quote $in_quote
+    set in_comment $in_comment
+  }
 }
-# 命令行处理
+
+# 修复行内注释处理逻辑
+proc process_comments {line state_obj strip_mode} {
+  set lang [$state_obj cget -lang]
+  set current_state [$state_obj get_state]
+  $state_obj set_state $current_state
+
+  set result ""
+  set len [string length $line]
+  set prev_char ""
+  set i 0
+
+  while {$i < $len} {
+    set char [string index $line $i]
+
+    $state_obj update_brace $char
+    $state_obj update_quote $char $prev_char
+    lassign [$state_obj get_state] brace_depth in_quote in_comment
+
+    if {$in_comment} {
+      if {$lang eq "perl" && $char eq "/" && $prev_char eq "*"} {
+        $state_obj set_in_comment 0
+        incr i
+        set prev_char ""
+        continue
+      }
+      if {![expr {$strip_mode & 1}]} {
+        append result $char
+      }
+      set prev_char $char
+      incr i
+      continue
+    }
+
+    # Tcl行内注释处理（核心修复）
+    if {$lang eq "tcl" && ($strip_mode & 2) && $char eq ";" && $in_quote == 0} {
+      # 保留分号本身
+      append result $char
+      set prev_char $char
+      incr i
+
+      # 跳过分号后的所有空白字符，寻找#
+      set found_comment 0
+      while {$i < $len} {
+        set c [string index $line $i]
+        if {[string trim $c] eq ""} {
+          # 保留空白字符直到#出现
+          append result $c
+          set prev_char $c
+          incr i
+        } elseif {$c eq "#"} {
+          # 找到行内注释起始点，截断后续内容
+          set found_comment 1
+          break
+        } else {
+          # 分号后不是注释，正常追加字符
+          append result $c
+          set prev_char $c
+          incr i
+        }
+      }
+      if {$found_comment} {
+        # 注释部分已找到，跳出循环
+        break
+      }
+      continue
+    }
+
+    # Tcl整行注释处理
+    if {$lang eq "tcl" && ($strip_mode & 1) && $char eq "#" && $in_quote == 0} {
+      set prefix [string range $line 0 [expr {$i-1}]]
+      if {[string trim $prefix] eq ""} {
+        break
+      }
+    }
+
+    # Perl行内注释处理
+    if {$lang eq "perl" && ($strip_mode & 2) && $char eq "#" && $in_quote == 0 && $brace_depth == 0} {
+      break
+    }
+
+    # Perl多行注释起始
+    if {$lang eq "perl" && ($strip_mode & 2) && $char eq "*" && $prev_char eq "/" && $in_quote == 0 && $brace_depth == 0} {
+      $state_obj set_in_comment 1
+      set result [string range $result 0 end-1]
+      set prev_char $char
+      incr i
+      continue
+    }
+
+    append result $char
+    set prev_char $char
+    incr i
+  }
+
+  $state_obj set_state [$state_obj get_state]
+  return [string trimright $result]
+}
+
+proc cat_all {filename {output ""} {verbose 0} {max_depth 10} {exclude ""} {include_comments 1} {preserve_order 1} {strip_comments 0} {lang "tcl"}} {
+  set original_dir [file normalize [pwd]]
+  set target_file_abs [file normalize $filename]
+  if {![file exists $target_file_abs]} {
+    puts "Error: Target file not found - $filename"
+    return 1
+  }
+
+  set target_dir [file dirname $target_file_abs]
+  set target_file [file tail $target_file_abs]
+  CatAll::init_state $original_dir $target_dir
+
+  if {[catch {cd $target_dir} err]} {
+    puts "Error: Failed to change to target directory ($target_dir): $err"
+    return 1
+  }
+
+  if {$output eq ""} {
+    set output "all_$target_file"
+    set output_path [file join $original_dir $output]
+  } else {
+    set output_path [file normalize [file join $original_dir $output]]
+  }
+
+  set opts [dict create \
+    -verbose $verbose \
+    -max_depth $max_depth \
+    -exclude $exclude \
+    -include_comments $include_comments \
+    -preserve_order $preserve_order \
+    -output $output_path \
+    -strip_comments $strip_comments \
+    -lang $lang]
+
+  if {[catch {set fo [open $output_path w]} err]} {
+    puts "Error: Failed to open output file ($output_path): $err"
+    CatAll::restore_original_dir
+    return 1
+  }
+  fconfigure $fo -encoding utf-8
+
+  if {[catch {
+    CatAll::process_file $target_file $fo 0 $opts
+  } err]} {
+    puts "Error during processing: $err"
+  }
+
+  close $fo
+  CatAll::restore_original_dir
+  if {[dict get $opts -verbose]} {
+    puts "Merged file created: $output_path"
+  }
+  return 0
+}
+
 if {$argc > 0} {
-	set filename [lindex $argv 0]
-	set options [lrange $argv 1 end]
-	# 解析选项参数
-	set output ""; set verbose 0; set max_depth 10; set exclude ""; set include_comments 1; set preserve_order 1; set strip_comments 3
-	for {set i 0} {$i < [llength $options]} {incr i} {
-		set opt [lindex $options $i]
-		switch -- $opt {
-			"-output" {incr i; set output [lindex $options $i]}
-			"-verbose" {incr i; set verbose [lindex $options $i]}
-			"-max_depth" {incr i; set max_depth [lindex $options $i]}
-			"-exclude" {incr i; set exclude [lindex $options $i]}
-			"-include_comments" {incr i; set include_comments [lindex $options $i]}
-			"-preserve_order" {incr i; set preserve_order [lindex $options $i]}
-			"-strip_comments" {incr i; set strip_comments [lindex $options $i]}  ;# 新增选项
-			default {
-				puts "Unknown option: $opt"
-				exit 1
-			}
-		}
-	}
-	# 调用主过程
-	cat_all $filename $output $verbose $max_depth $exclude $include_comments $preserve_order $strip_comments
+  set filename [lindex $argv 0]
+  set options [lrange $argv 1 end]
+
+  set output ""; set verbose 0; set max_depth 10; set exclude ""
+  set include_comments 1; set preserve_order 1; set strip_comments 3; set lang "tcl"
+
+  for {set i 0} {$i < [llength $options]} {incr i} {
+    set opt [lindex $options $i]
+    switch -- $opt {
+      "-output" {incr i; set output [lindex $options $i]}
+      "-verbose" {incr i; set verbose [lindex $options $i]}
+      "-max_depth" {incr i; set max_depth [lindex $options $i]}
+      "-exclude" {incr i; set exclude [lindex $options $i]}
+      "-include_comments" {incr i; set include_comments [lindex $options $i]}
+      "-preserve_order" {incr i; set preserve_order [lindex $options $i]}
+      "-strip_comments" {incr i; set strip_comments [lindex $options $i]}
+      "-lang" {incr i; set lang [lindex $options $i]}
+      default {
+        puts "Unknown option: $opt"
+        exit 1
+      }
+    }
+  }
+
+  cat_all $filename $output $verbose $max_depth $exclude $include_comments $preserve_order $strip_comments $lang
 } else {
-	puts "Usage: $argv0 filename ?-output outfile? ?-verbose 0|1? ?-max_depth n? ?-exclude pattern? ?-include_comments 0|1? ?-preserve_order 0|1? ?-strip_comments mode?"
-	puts "  -strip_comments modes:"
-	puts "    0 - 不去除任何注释"
-	puts "    1 - 只去除整行注释（以#开头的行）"
-	puts "    2 - 只去除行内注释（代码后的#注释）"
-	puts "    3 - 去除所有注释（整行和行内注释，默认）"
+  puts "Usage: $argv0 filename ?options?"
+  puts "Options:"
+  puts "  -output outfile      输出文件路径"
+  puts "  -verbose 0|1         显示详细信息"
+  puts "  -max_depth n         最大递归深度"
+  puts "  -exclude pattern     排除文件模式"
+  puts "  -include_comments 0|1 保留合并标记"
+  puts "  -preserve_order 0|1  保留原顺序"
+  puts "  -strip_comments mode 注释处理模式(0-3)"
+  puts "  -lang tcl|perl       语言类型"
 }

@@ -28,9 +28,12 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
   set convertedSegments [convertBranchSegments $branchSegments]
   set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
                 $options(-connectionTolerance) $options(-nodeTolerance) $options(-mainBranchThreshold)]
+  set pointMap [dict get $treeData pointMap]  ;# Get point mapping for later use
   set clusters [clusterLeaves $leafPoints $options(-clusterThreshold) $options(-minClusterSize)]
+  # Convert cluster points to mapped points in tree structure
+  set mappedClusters [mapClustersToTreePoints $clusters $pointMap]
   set totalLoadCount [llength $leafPoints]
-  set processedClusters [processClusters $clusters $totalLoadCount $options(-maxClusterRatio) $treeData]
+  set processedClusters [processClusters $mappedClusters $totalLoadCount $options(-maxClusterRatio) $treeData $pointMap]
 
   set distances [calculateDistances $treeData $rootPoint]
   set powerPlan [dict create]
@@ -39,12 +42,12 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
   dict set powerPlan directLoads [list]  ;# Loads directly driven by generator
 
   # Prioritize clusters by average distance (farther first)
-  set sortedClusters [lsort -command [list sortClustersByDistance $distances] $processedClusters]
+  set sortedClusters [lsort -command [list sortClustersByDistance $distances $pointMap] $processedClusters]
 
   foreach cluster $sortedClusters {
     set clusterSize [llength $cluster]
     set clusterCenter [calculateCenter $cluster]
-    set avgDistance [calculateClusterAvgDistance $cluster $distances]
+    set avgDistance [calculateClusterAvgDistance $cluster $distances $pointMap]
 
     # Determine if cluster should be handled by repeater or generator
     if {shouldUseRepeater $avgDistance $clusterSize $totalLoadCount} {
@@ -71,19 +74,39 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
   return $powerPlan
 }
 
+# Convert cluster points to their mapped counterparts in the tree structure
+proc mapClustersToTreePoints {clusters pointMap} {
+  set mappedClusters {}
+  foreach cluster $clusters {
+    set mappedCluster {}
+    foreach point $cluster {
+      # Get mapped point (ensure it exists in pointMap)
+      set mappedPoint [dict get $pointMap $point]
+      lappend mappedCluster $mappedPoint
+    }
+    lappend mappedClusters $mappedCluster
+  }
+  return $mappedClusters
+}
+
 # Calculate distances from root to each node using tree traversal
 proc calculateDistances {treeData rootPoint} {
   set adjacencyList [dict get $treeData adjacencyList]
   set pointMap [dict get $treeData pointMap]
   set distances [dict create]
   set visited [list]
-  set queue [list [list $rootPoint 0.0]]
+  # Use mapped root point for traversal
+  set mappedRoot [dict get $pointMap $rootPoint]
+  set queue [list [list $mappedRoot 0.0]]
+
   while {[llength $queue] > 0} {
     lassign [lindex $queue 0] currentNode currentDist
     set queue [lrange $queue 1 end]
+
     if {[lsearch -exact $visited $currentNode] != -1} {continue}
     lappend visited $currentNode
     dict set distances $currentNode $currentDist
+
     if {[dict exists $adjacencyList $currentNode]} {
       foreach neighbor [dict get $adjacencyList $currentNode] {
         if {[lsearch -exact $visited $neighbor] == -1} {
@@ -93,6 +116,17 @@ proc calculateDistances {treeData rootPoint} {
       }
     }
   }
+
+  # Ensure all leaf nodes are in distances (add fallback if missing)
+  foreach leaf [dict get $treeData leaves] {
+    set mappedLeaf [dict get $pointMap $leaf]
+    if {![dict exists $distances $mappedLeaf]} {
+      # Calculate direct distance as fallback if not reachable via tree
+      set dist [distance $mappedRoot $mappedLeaf]
+      dict set distances $mappedLeaf $dist
+    }
+  }
+
   return $distances
 }
 
@@ -258,10 +292,12 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
   dict set treeData branches $branchSegments
 
   set pointMap [dict create]
-  set uniquePoints [list $rootPoint]
+  set uniquePoints [list]
+  # Add root point to map first
   dict set pointMap $rootPoint $rootPoint
+  lappend uniquePoints $rootPoint
 
-  # Map all branch points with tolerance
+  # Map all branch points with connection tolerance
   foreach segment $branchSegments {
     lassign $segment x1 y1 x2 y2
     set p1 [list $x1 $y1]
@@ -284,7 +320,7 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
     }
   }
 
-  # Map leaf points with tolerance
+  # Map leaf points with node tolerance
   foreach leaf $leafPoints {
     if {![dict exists $pointMap $leaf]} {
       set found 0
@@ -302,7 +338,7 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
     }
   }
 
-  # Build adjacency list
+  # Build adjacency list using mapped points
   set adjacencyList [dict create]
   foreach segment $branchSegments {
     lassign $segment x1 y1 x2 y2
@@ -313,7 +349,7 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
   }
 
   # Identify main branches (critical paths with most leaves)
-  set mainBranches [identifyMainBranches $adjacencyList $rootPoint $leafPoints $mainBranchThreshold]
+  set mainBranches [identifyMainBranches $adjacencyList $rootPoint $leafPoints $mainBranchThreshold $pointMap]
 
   dict set treeData adjacencyList $adjacencyList
   dict set treeData pointMap $pointMap
@@ -322,36 +358,41 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
 }
 
 # Identify main branches (carry most load, critical paths)
-proc identifyMainBranches {adjacencyList rootPoint leaves threshold} {
+proc identifyMainBranches {adjacencyList rootPoint leaves threshold pointMap} {
   set leafCount [llength $leaves]
   set branchWeights [dict create]
+  # Use mapped root point for analysis
+  set mappedRoot [dict get $pointMap $rootPoint]
 
   # Calculate weight of each branch (number of leaves in its subtree)
-  # Use upvar with different alias to avoid variable name conflict
-  proc calculateBranchWeights {node parent adjacencyList leaves} {
-    upvar branchWeightsAlias bw  ;# Alias for parent's branchWeights
+  proc calculateBranchWeights {node parent adjacencyList leaves pointMap} {
+    upvar branchWeightsAlias bw
+    # Convert node to mapped point
+    set mappedNode [dict get $pointMap $node]
+    # Check if current node is a leaf
     set count [expr {[lsearch -exact $leaves $node] != -1 ? 1 : 0}]
-    foreach neighbor [dict get $adjacencyList $node] {
-      if {$neighbor eq $parent} {continue}
-      incr count [calculateBranchWeights $neighbor $node $adjacencyList $leaves]
+    foreach neighbor [dict get $adjacencyList $mappedNode] {
+      if {$neighbor eq [dict get $pointMap $parent]} {continue}
+      incr count [calculateBranchWeights $neighbor $node $adjacencyList $leaves $pointMap]
     }
-    # Only set entries if parent is not empty to avoid invalid keys
+    # Only set weights if parent is valid
     if {$parent ne ""} {
-      dict set bw [list $parent $node] $count
-      dict set bw [list $node $parent] $count
+      set mappedParent [dict get $pointMap $parent]
+      dict set bw [list $mappedParent $mappedNode] $count
+      dict set bw [list $mappedNode $mappedParent] $count
     }
     return $count
   }
 
   # Link branchWeights to alias for inner proc access
   upvar branchWeights branchWeightsAlias
-  calculateBranchWeights $rootPoint "" $adjacencyList $leaves
+  calculateBranchWeights $rootPoint "" $adjacencyList $leaves $pointMap
 
   # Determine main branches (above threshold proportion of total leaves)
   set mainBranches [list]
   foreach branch [dict keys $branchWeights] {
     set weight [dict get $branchWeights $branch]
-    if {[expr {double($weight) / $leafCount}] >= $threshold} {
+    if {$leafCount > 0 && [expr {double($weight) / $leafCount}] >= $threshold} {
       lappend mainBranches [lindex $branch 1]  ;# Add the child node of the branch
     }
   }
@@ -390,18 +431,18 @@ proc clusterLeaves {leafPoints threshold minSize} {
 }
 
 # Process clusters: split oversize clusters and handle singletons
-proc processClusters {clusters totalLoadCount maxRatio treeData} {
+proc processClusters {clusters totalLoadCount maxRatio treeData pointMap} {
   set processed [list]
   set maxSize [expr {int(floor($totalLoadCount * $maxRatio))}]
+  set distances [calculateDistances $treeData [dict get $treeData root]]
 
   foreach cluster $clusters {
     set clusterSize [llength $cluster]
     if {$clusterSize <= $maxSize} {
       lappend processed $cluster
     } else {
-      # Split large cluster into two based on distance from root
-      set distances [calculateDistances $treeData [dict get $treeData root]]
-      set sorted [lsort -command [list sortByDistance $distances] $cluster]
+      # Split large cluster into two based on distance from root (using mapped points)
+      set sorted [lsort -command [list sortByDistance $distances $pointMap] $cluster]
       set mid [expr {int(floor($clusterSize / 2))}]
       lappend processed [lrange $sorted 0 [expr {$mid - 1}]]
       lappend processed [lrange $sorted $mid end]
@@ -410,10 +451,13 @@ proc processClusters {clusters totalLoadCount maxRatio treeData} {
 
   # Handle unclustered points (isolated loads)
   set allClustered [lsort -unique [concat {*}$processed]]
-  set allLeaves [lsort -unique [dict get $treeData leaves]]
-  foreach leaf $allLeaves {
-    if {[lsearch -exact $allClustered $leaf] == -1} {
-      lappend processed [list $leaf]
+  set allLeavesMapped [list]
+  foreach leaf [dict get $treeData leaves] {
+    lappend allLeavesMapped [dict get $pointMap $leaf]
+  }
+  foreach leafMapped $allLeavesMapped {
+    if {[lsearch -exact $allClustered $leafMapped] == -1} {
+      lappend processed [list $leafMapped]
     }
   }
 
@@ -421,26 +465,33 @@ proc processClusters {clusters totalLoadCount maxRatio treeData} {
 }
 
 # Helper to sort clusters by average distance (farther first)
-proc sortClustersByDistance {distances a b} {
-  set avgA [calculateClusterAvgDistance $a $distances]
-  set avgB [calculateClusterAvgDistance $b $distances]
+proc sortClustersByDistance {distances pointMap a b} {
+  set avgA [calculateClusterAvgDistance $a $distances $pointMap]
+  set avgB [calculateClusterAvgDistance $b $distances $pointMap]
   return [expr {$avgB - $avgA}]  ;# Descending order
 }
 
-# Helper to sort points by distance from root
-proc sortByDistance {distances a b} {
-  set dA [dict get $distances $a]
-  set dB [dict get $distances $b]
+# Helper to sort points by distance from root (using mapped points)
+proc sortByDistance {distances pointMap a b} {
+  # Get mapped points to ensure they exist in distances
+  set mappedA $a  ;# Already mapped in processClusters
+  set mappedB $b  ;# Already mapped in processClusters
+
+  # Fallback: if distance not found, use direct distance from root
+  set dA [expr {[dict exists $distances $mappedA] ? [dict get $distances $mappedA] : 0.0}]
+  set dB [expr {[dict exists $distances $mappedB] ? [dict get $distances $mappedB] : 0.0}]
+  
   return [expr {$dA - $dB}]  ;# Ascending order
 }
 
-# Calculate average distance of cluster from root
-proc calculateClusterAvgDistance {cluster distances} {
+# Calculate average distance of cluster from root (using mapped points)
+proc calculateClusterAvgDistance {cluster distances pointMap} {
   set sum 0.0
   set count 0
   foreach point $cluster {
-    if {[dict exists $distances $point]} {
-      set sum [expr {$sum + [dict get $distances $point]}]
+    set mappedPoint $point  ;# Already mapped in mapClustersToTreePoints
+    if {[dict exists $distances $mappedPoint]} {
+      set sum [expr {$sum + [dict get $distances $mappedPoint]}]
       incr count
     }
   }

@@ -77,6 +77,8 @@ setLayerPreference node_layer -isVisible 0
 setLayerPreference M0 -isVisible 0
 setLayerPreference VIA0 -isVisible 0
 
+setDbGetMode -displayFormat table
+
 # --------------------------
 # internal variables of invs  
 # --------------------------

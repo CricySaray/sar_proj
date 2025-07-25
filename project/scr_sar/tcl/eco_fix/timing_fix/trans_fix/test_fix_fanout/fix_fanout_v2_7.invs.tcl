@@ -315,6 +315,14 @@ proc optimizeSingleRepeaterPlan {treeData clusters distances generatorCapacity l
             set current [lindex $queue 0]
             set queue [lrange $queue 1 end]
             
+            # Check if current node exists in adjacency list
+            if {![dict exists $adjacencyList $current]} {
+                if {$debug} {
+                    puts "Warning: Node $current not found in adjacency list, skipping..."
+                }
+                continue
+            }
+            
             foreach neighbor [dict get $adjacencyList $current] {
                 if {![dict exists $visited $neighbor] && $neighbor ne $rootPoint} {
                     dict set visited $neighbor 1
@@ -406,6 +414,14 @@ proc optimizeSingleRepeaterPlan {treeData clusters distances generatorCapacity l
                     set current [lindex $queue 0]
                     set queue [lrange $queue 1 end]
                     
+                    # Check if current node exists in adjacency list
+                    if {![dict exists $adjacencyList $current]} {
+                        if {$debug} {
+                            puts "Warning: Node $current not found in adjacency list, skipping connection check..."
+                        }
+                        continue
+                    }
+                    
                     if {$current eq $bestLocation} {
                         set canConnect 1
                         break
@@ -455,7 +471,7 @@ proc optimizeSingleRepeaterPlan {treeData clusters distances generatorCapacity l
     
     if {$debug} {
         puts "Single repeater optimization results:"
-        puts "  Best location: [format "%.2f %.2f" {*}$bestLocation], level: [dict exists $branchLevels $bestLocation] ? [dict get $branchLevels $bestLocation] : "unknown""
+        puts "  Best location: [format "%.2f %.2f" {*}$bestLocation], level: [dict exists $branchLevels $bestLocation] ? [dict get $branchLevels $bestLocation] : unknown"
         puts "  Repeater loads: [llength $bestRepeaterLoads], Direct loads: [llength $bestDirectLoads]"
         puts "  Target load balance: $targetLoadCount, Actual diff: [expr {abs([llength $bestRepeaterLoads] - [llength $bestDirectLoads])}]"
     }
@@ -480,6 +496,14 @@ proc calculateBranchLevels {treeData} {
         set queue [lrange $queue 1 end]
         set currentLevel [dict get $branchLevels $current]
         
+        # Check if current node exists in adjacency list
+        if {![dict exists $adjacencyList $current]} {
+            if {[info exists debug] && $debug} {
+                puts "Warning: Node $current not found in adjacency list during level calculation, skipping..."
+            }
+            continue
+        }
+        
         foreach neighbor [dict get $adjacencyList $current] {
             if {![dict exists $branchLevels $neighbor]} {
                 dict set branchLevels $neighbor [expr {$currentLevel + 1}]
@@ -491,6 +515,7 @@ proc calculateBranchLevels {treeData} {
     dict set treeData branchLevels $branchLevels
     return $treeData
 }
+
 
 # 其余代码保持不变...
 

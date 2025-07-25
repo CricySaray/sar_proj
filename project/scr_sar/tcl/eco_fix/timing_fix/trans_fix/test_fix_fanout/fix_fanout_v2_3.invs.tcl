@@ -371,11 +371,21 @@ proc identifyMainBranches {adjacencyList rootPoint leaves threshold pointMap} {
     set mappedNode [dict get $pointMap $node]
     # Check if current node is a leaf
     set count [expr {[lsearch -exact $leaves $node] != -1 ? 1 : 0}]
+    
+    # Process neighbors (skip parent node if parent exists)
     foreach neighbor [dict get $adjacencyList $mappedNode] {
-      if {$neighbor eq [dict get $pointMap $parent]} {continue}
+      # Only check parent mapping if parent is not empty
+      if {$parent ne ""} {
+        set mappedParent [dict get $pointMap $parent]
+        if {$neighbor eq $mappedParent} {
+          continue  ;# Skip parent node to avoid backtracking
+        }
+      }
+      # Recursively process child nodes
       incr count [calculateBranchWeights $neighbor $node $adjacencyList $leaves $pointMap]
     }
-    # Only set weights if parent is valid
+    
+    # Only set weights if parent is valid (non-empty)
     if {$parent ne ""} {
       set mappedParent [dict get $pointMap $parent]
       dict set bw [list $mappedParent $mappedNode] $count
@@ -386,6 +396,7 @@ proc identifyMainBranches {adjacencyList rootPoint leaves threshold pointMap} {
 
   # Link branchWeights to alias for inner proc access
   upvar branchWeights branchWeightsAlias
+  # Initial call with empty parent (root has no parent)
   calculateBranchWeights $rootPoint "" $adjacencyList $leaves $pointMap
 
   # Determine main branches (above threshold proportion of total leaves)

@@ -50,7 +50,7 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     set avgDistance [calculateClusterAvgDistance $cluster $distances $pointMap]
 
     # Determine if cluster should be handled by repeater or generator
-    if {shouldUseRepeater $avgDistance $clusterSize $totalLoadCount} {
+    if {[shouldUseRepeater $avgDistance $clusterSize $totalLoadCount]} {
       set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
                                   $generatorCapacity $options(-loadCapacity) \
                                   $clusterSize $avgDistance $options(-repeaterCapacities)]
@@ -479,20 +479,34 @@ proc processClusters {clusters totalLoadCount maxRatio treeData pointMap} {
 proc sortClustersByDistance {distances pointMap a b} {
   set avgA [calculateClusterAvgDistance $a $distances $pointMap]
   set avgB [calculateClusterAvgDistance $b $distances $pointMap]
-  return [expr {$avgB - $avgA}]  ;# Descending order
+  # Return integer comparison result (-1, 0, 1)
+  if {$avgA < $avgB} {
+    return 1
+  } elseif {$avgA > $avgB} {
+    return -1
+  } else {
+    return 0
+  }
 }
 
 # Helper to sort points by distance from root (using mapped points)
 proc sortByDistance {distances pointMap a b} {
-  # Get mapped points to ensure they exist in distances
-  set mappedA $a  ;# Already mapped in processClusters
-  set mappedB $b  ;# Already mapped in processClusters
+  # Get mapped points (already converted to tree points)
+  set mappedA $a
+  set mappedB $b
 
-  # Fallback: if distance not found, use direct distance from root
+  # Get distances with fallback to 0.0
   set dA [expr {[dict exists $distances $mappedA] ? [dict get $distances $mappedA] : 0.0}]
   set dB [expr {[dict exists $distances $mappedB] ? [dict get $distances $mappedB] : 0.0}]
   
-  return [expr {$dA - $dB}]  ;# Ascending order
+  # Return integer comparison result (-1, 0, 1) required by lsort
+  if {$dA < $dB} {
+    return -1  ;# a comes before b
+  } elseif {$dA > $dB} {
+    return 1   ;# b comes before a
+  } else {
+    return 0   ;# equal order
+  }
 }
 
 # Calculate average distance of cluster from root (using mapped points)

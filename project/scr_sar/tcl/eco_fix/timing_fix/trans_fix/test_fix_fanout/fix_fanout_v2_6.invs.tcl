@@ -22,6 +22,7 @@ createEnum RepeaterStrategy {
 
 # Analyze power distribution
 proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapacity {optionsDict {}}} {
+  # Initialize default options with enum values
   array set options {
     -clusterThreshold 20.0
     -minClusterSize 3
@@ -33,12 +34,13 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     -repeaterCapacities {4 6 8 12 16}
     -mainBranchThreshold 0.7
     -maxRepeaters 1
-    -repeaterStrategy $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)
+    -repeaterStrategy 0 ;# Default to STRATEGY_MINIMIZE_REPEATERS
   }
-  
-  upvar 1 RepeaterStrategy RepeaterStrategy
+
+  # Override default options with user-provided values
   array set options $optionsDict
 
+  # Validate input
   if {[catch {validateInput $rootPoint $leafPoints $branchSegments} errMsg]} {
     return -code error $errMsg
   }
@@ -49,24 +51,36 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     return -code error "Maximum repeaters must be non-negative"
   }
 
+  # Convert branch segments to standard format
   set convertedSegments [convertBranchSegments $branchSegments]
+
+  # Build tree structure
   set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
-                $options(-connectionTolerance) $options(-nodeTolerance) $options(-mainBranchThreshold)]
+    $options(-connectionTolerance) $options(-nodeTolerance) $options(-mainBranchThreshold)]
+
+  # Cluster leaves
   set pointMap [dict get $treeData pointMap]
   set clusters [clusterLeavesOptimized $leafPoints $options(-clusterThreshold) $options(-minClusterSize)]
   set mappedClusters [mapClustersToTreePoints $clusters $pointMap]
+
+  # Process clusters
   set totalLoadCount [llength $leafPoints]
   set processedClusters [processClusters $mappedClusters $totalLoadCount $options(-maxClusterRatio) $treeData $pointMap]
 
+  # Calculate distances from root
   set distances [calculateDistances $treeData $rootPoint]
+
+  # Initialize power plan
   set powerPlan [dict create]
   dict set powerPlan generator [list $rootPoint $generatorCapacity]
   dict set powerPlan repeaters [list]
   dict set powerPlan directLoads [list]
   dict set powerPlan repeaterDrivenLoads [dict create]
 
+  # Sort clusters by distance
   set sortedClusters [lsort -command [list sortClustersByDistance $distances $pointMap] $processedClusters]
 
+  # Track used repeaters
   set usedRepeaters 0
   set hasRepeaterLoads 0
 
@@ -76,24 +90,33 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     set clusterCenter [calculateCenter $cluster]
     set avgDistance [calculateClusterAvgDistance $cluster $distances $pointMap]
 
+    # Decide whether to use a repeater
     set useRepeater 0
-    if {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MAXIMIZE_REPEATERS)} {
-      if {$usedRepeaters < $options(-maxRepeaters)} {
-        set useRepeater 1
+    switch -- $options(-repeaterStrategy) {
+      0 { ;# STRATEGY_MINIMIZE_REPEATERS
+        if {[shouldUseRepeater $avgDistance $clusterSize $totalLoadCount] && $usedRepeaters < $options(-maxRepeaters)} {
+          set useRepeater 1
+        }
       }
-    } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)} {
-      if {[shouldUseRepeater $avgDistance $clusterSize $totalLoadCount] && $usedRepeaters < $options(-maxRepeaters)} {
-        set useRepeater 1
+      1 { ;# STRATEGY_MAXIMIZE_REPEATERS
+        if {$usedRepeaters < $options(-maxRepeaters)} {
+          set useRepeater 1
+        }
       }
-    } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_AUTOMATIC)} {
-      set useRepeater [decideAutomaticRepeaterUsage $avgDistance $clusterSize $totalLoadCount \
-                      $generatorCapacity $options(-loadCapacity) $usedRepeaters $options(-maxRepeaters)]
+      2 { ;# STRATEGY_AUTOMATIC
+        set useRepeater [decideAutomaticRepeaterUsage $avgDistance $clusterSize $totalLoadCount \
+          $generatorCapacity $options(-loadCapacity) $usedRepeaters $options(-maxRepeaters)]
+      }
+      default {
+        error "Invalid repeater strategy: $options(-repeaterStrategy)"
+      }
     }
 
+    # Process cluster based on repeater decision
     if {$useRepeater} {
       set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
-                                  $generatorCapacity $options(-loadCapacity) \
-                                  $clusterSize $avgDistance $options(-repeaterCapacities)]
+        $generatorCapacity $options(-loadCapacity) \
+        $clusterSize $avgDistance $options(-repeaterCapacities)]
       set breakpoint [findBestMainBranchBreakpoint $treeData $cluster $options(-debug)]
       dict lappend powerPlan repeaters [list $breakpoint $optimalRepeaterCapacity $cluster]
       dict set powerPlan repeaterDrivenLoads $breakpoint $cluster
@@ -106,20 +129,20 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     }
   }
 
-  # Phase 2: Ensure at least one repeater is used
+  # Phase 2: Ensure at least one repeater if required
   if {$usedRepeaters == 0 && $options(-maxRepeaters) >= 1 && $totalLoadCount > 0} {
     if {[llength $sortedClusters] > 0} {
       set cluster [lindex $sortedClusters 0]
       set clusterSize [llength $cluster]
       set clusterCenter [calculateCenter $cluster]
       set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
-                                  $generatorCapacity $options(-loadCapacity) \
-                                  $clusterSize [calculateClusterAvgDistance $cluster $distances $pointMap] \
-                                  $options(-repeaterCapacities)]
+        $generatorCapacity $options(-loadCapacity) \
+        $clusterSize [calculateClusterAvgDistance $cluster $distances $pointMap] \
+        $options(-repeaterCapacities)]
       set breakpoint [findBestMainBranchBreakpoint $treeData $cluster $options(-debug)]
       dict lappend powerPlan repeaters [list $breakpoint $optimalRepeaterCapacity $cluster]
       dict set powerPlan repeaterDrivenLoads $breakpoint $cluster
-      
+
       # Remove this cluster from direct loads
       set newDirectLoads [list]
       foreach load [dict get $powerPlan directLoads] {
@@ -143,16 +166,16 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     set powerPlan [adjustPowerPlan $powerPlan $options(-loadCapacity) $options(-repeaterCapacities)]
   }
 
-  # Ensure at least one repeater drives loads
+  # Ensure at least one repeater drives loads if repeaters are used
   if {$hasRepeaterLoads == 0 && $usedRepeaters > 0} {
     if {[llength [dict get $powerPlan directLoads]] > 0} {
       set firstRepeater [lindex [dict get $powerPlan repeaters] 0]
       lassign $firstRepeater repPoint repCapacity repLoads
-      
+
       set firstDirectLoad [lindex [dict get $powerPlan directLoads] 0]
       lassign $firstDirectLoad loadPoint loadCapacity
-      
-      # Add to repeater loads
+
+      # Move first direct load to repeater
       lappend repLoads $loadPoint
       set newRepeaters [list]
       foreach r [dict get $powerPlan repeaters] {
@@ -164,11 +187,11 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
       }
       dict set powerPlan repeaters $newRepeaters
       dict set powerPlan repeaterDrivenLoads $repPoint $repLoads
-      
+
       # Remove from direct loads
       set newDirectLoads [lrange [dict get $powerPlan directLoads] 1 end]
       dict set powerPlan directLoads $newDirectLoads
-      
+
       set hasRepeaterLoads 1
     }
   }
@@ -176,6 +199,7 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
   return $powerPlan
 }
 
+# 其余代码保持不变...
 # Build tree structure
 proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance nodeTolerance mainBranchThreshold} {
   set treeData [dict create]
@@ -775,33 +799,36 @@ proc decideAutomaticRepeaterUsage {avgDistance clusterSize totalLoads generatorC
   }
 }
 
-# Main program entry
+
+# Main program entry (for testing)
 if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info script]]]} {
-  set rootPoint {0 0}
-  set leafPoints {{30.1 20.2} {35.3 25.1} {40.2 20.3} {45.1 25.2} {20.3 40.1} {25.2 45.3} {30.1 40.2} {35.3 45.1} {60.2 40.1} {65.1 45.3} {70.3 40.2} {75.2 45.1}}
-  set branchSegments {{{0 0} {10.1 0.2}} {{9.9 0.1} {20.2 0.1}} {{19.8 0.3} {30.2 10.1}} {{30.1 9.9} {40.3 20.2}} {{19.9 0.2} {20.1 20.3}} {{20.2 19.8} {20.3 30.1}} {{20.1 30.2} {30.3 40.1}} {{20.3 0.1} {50.2 0.3}} {{49.8 0.2} {60.1 10.3}} {{60.2 9.9} {70.1 20.3}} {{70.3 20.1} {80.2 30.3}} {{80.1 29.9} {70.2 40.1}}}
-  
-  puts "Running power distribution analysis..."
-  set powerPlan [analyzePowerDistribution $rootPoint $leafPoints $branchSegments 30 \
-                {-connectionTolerance 0.3 -nodeTolerance 1.0 -debug 1 -maxClusterRatio 0.4 -maxRepeaters 2 -repeaterStrategy $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)}]
-  
-  puts "\nPower Distribution Plan:"
-  lassign [dict get $powerPlan generator] genPoint genCapacity
-  puts "Generator: [format "%.2f %.2f" {*}$genPoint] (Capacity: $genCapacity)"
-  
-  puts "\nRepeaters:"
-  foreach repeater [dict get $powerPlan repeaters] {
-    lassign $repeater repPoint repCapacity repLoads
-    puts "  Repeater: [format "%.2f %.2f" {*}$repPoint] (Capacity: $repCapacity, Loads: [llength $repLoads])"
-    puts "    Driven Loads:"
-    foreach load $repLoads {
-      puts "      - [format "%.2f %.2f" {*}$load]"
+    # Test case with sample data
+    set rootPoint {0 0}
+    set leafPoints {{30.1 20.2} {35.3 25.1} {40.2 20.3} {45.1 25.2} {20.3 40.1} {25.2 45.3} {30.1 40.2} {35.3 45.1} {60.2 40.1} {65.1 45.3} {70.3 40.2} {75.2 45.1}}
+    set branchSegments {{{0 0} {10.1 0.2}} {{9.9 0.1} {20.2 0.1}} {{19.8 0.3} {30.2 10.1}} {{30.1 9.9} {40.3 20.2}} {{19.9 0.2} {20.1 20.3}} {{20.2 19.8} {20.3 30.1}} {{20.1 30.2} {30.3 40.1}} {{20.3 0.1} {50.2 0.3}} {{49.8 0.2} {60.1 10.3}} {{60.2 9.9} {70.1 20.3}} {{70.3 20.1} {80.2 30.3}} {{80.1 29.9} {70.2 40.1}}}
+    
+    puts "Running power distribution analysis..."
+    set powerPlan [analyzePowerDistribution $rootPoint $leafPoints $branchSegments 30 \
+                  {-connectionTolerance 0.3 -nodeTolerance 1.0 -debug 1 -maxClusterRatio 0.4 -maxRepeaters 2 -repeaterStrategy 0}]
+    
+    # Output results
+    puts "\nPower Distribution Plan:"
+    lassign [dict get $powerPlan generator] genPoint genCapacity
+    puts "Generator: [format "%.2f %.2f" {*}$genPoint] (Capacity: $genCapacity)"
+    
+    puts "\nRepeaters:"
+    foreach repeater [dict get $powerPlan repeaters] {
+        lassign $repeater repPoint repCapacity repLoads
+        puts "  Repeater: [format "%.2f %.2f" {*}$repPoint] (Capacity: $repCapacity, Loads: [llength $repLoads])"
+        puts "    Driven Loads:"
+        foreach load $repLoads {
+            puts "      - [format "%.2f %.2f" {*}$load]"
+        }
     }
-  }
-  
-  puts "\nDirect Loads (generator-driven): [llength [dict get $powerPlan directLoads]]"
-  foreach load [dict get $powerPlan directLoads] {
-    lassign $load point capacity
-    puts "  - [format "%.2f %.2f" {*}$point] (Capacity: $capacity)"
-  }
+    
+    puts "\nDirect Loads (generator-driven): [llength [dict get $powerPlan directLoads]]"
+    foreach load [dict get $powerPlan directLoads] {
+        lassign $load point capacity
+        puts "  - [format "%.2f %.2f" {*}$point] (Capacity: $capacity)"
+    }
 }

@@ -71,9 +71,12 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     # Convert branch segments to standard format
     set convertedSegments [convertBranchSegments $branchSegments]
     
-    # Build tree structure
+    # Build tree structure and validate
     set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
                   $options(-connectionTolerance) $options(-nodeTolerance) $options(-mainBranchThreshold)]
+    
+    # Ensure all leaf points are in the tree
+    set treeData [ensureAllPointsInTree $treeData $leafPoints $options(-debug)]
     
     # Calculate branch levels and node weights
     set treeData [calculateBranchLevels $treeData]
@@ -278,6 +281,9 @@ proc optimizeSingleRepeaterPlan {treeData clusters distances generatorCapacity l
             set level [dict get $branchLevels $node]
             dict set branchWeights $node [expr {1.0 / (1.0 + $level)}]
         } else {
+            if {$debug} {
+                puts "Warning: Node $node not found in branchLevels, assigning default weight"
+            }
             dict set branchWeights $node 0.5  ;# Default weight for nodes not in branchLevels
         }
     }
@@ -471,9 +477,17 @@ proc optimizeSingleRepeaterPlan {treeData clusters distances generatorCapacity l
     
     if {$debug} {
         puts "Single repeater optimization results:"
-        puts "  Best location: [format "%.2f %.2f" {*}$bestLocation], level: [dict exists $branchLevels $bestLocation] ? [dict get $branchLevels $bestLocation] : unknown"
+        puts "  Best location: [format "%.2f %.2f" {*}$bestLocation], level: [dict exists $branchLevels $bestLocation] ? [dict get $branchLevels $bestLocation] : "unknown""
         puts "  Repeater loads: [llength $bestRepeaterLoads], Direct loads: [llength $bestDirectLoads]"
         puts "  Target load balance: $targetLoadCount, Actual diff: [expr {abs([llength $bestRepeaterLoads] - [llength $bestDirectLoads])}]"
+    }
+    
+    # Ensure bestLocation exists in branchLevels
+    if {![dict exists $branchLevels $bestLocation]} {
+        if {$debug} {
+            puts "Warning: Best location $bestLocation not found in branchLevels, assigning default level"
+        }
+        dict set branchLevels $bestLocation 0  ;# Assign default level 0 if not found
     }
     
     return [list $bestLocation $finalCapacity $bestRepeaterLoads $bestDirectLoads]
@@ -516,6 +530,61 @@ proc calculateBranchLevels {treeData} {
     return $treeData
 }
 
+# Ensure all points are in the tree structure
+proc ensureAllPointsInTree {treeData points debug} {
+    set adjacencyList [dict get $treeData adjacencyList]
+    set pointMap [dict get $treeData pointMap]
+    set rootPoint [dict get $treeData root]
+    
+    # Collect all nodes in the current tree
+    set treeNodes [dict keys $adjacencyList]
+    
+    # Check each point
+    foreach point $points {
+        if {[lsearch -exact $treeNodes $point] == -1} {
+            if {$debug} {
+                puts "Warning: Point $point not found in tree structure, adding..."
+            }
+            
+            # Find the nearest node in the tree
+            set nearestNode ""
+            set minDistance inf
+            
+            foreach node $treeNodes {
+                set dist [distance $point $node]
+                if {$dist < $minDistance} {
+                    set minDistance $dist
+                    set nearestNode $node
+                }
+            }
+            
+            # Add the point to the tree
+            if {$nearestNode ne ""} {
+                # Update adjacency list
+                lappend adjacencyList($nearestNode) $point
+                dict set adjacencyList $point [list $nearestNode]
+                
+                # Update point map if it exists
+                if {[dict exists $pointMap $nearestNode]} {
+                    dict set pointMap $point [dict get $pointMap $nearestNode]
+                }
+            }
+        }
+    }
+    
+    # Update treeData
+    dict set treeData adjacencyList $adjacencyList
+    dict set treeData pointMap $pointMap
+    
+    return $treeData
+}
+
+# Calculate distance between two points
+proc distance {p1 p2} {
+    lassign $p1 x1 y1
+    lassign $p2 x2 y2
+    return [expr {sqrt(pow(($x2 - $x1), 2) + pow(($y2 - $y1), 2))}]
+}
 
 # 其余代码保持不变...
 

@@ -325,21 +325,27 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
 proc identifyMainBranches {adjacencyList rootPoint leaves threshold} {
   set leafCount [llength $leaves]
   set branchWeights [dict create]
-  set visited [list]
 
   # Calculate weight of each branch (number of leaves in its subtree)
-  proc calculateBranchWeights {node parent adjacencyList leaves weights} {
+  # Use upvar to modify the branchWeights dictionary in parent scope
+  proc calculateBranchWeights {node parent adjacencyList leaves} {
+    upvar branchWeights branchWeights
     set count [expr {[lsearch -exact $leaves $node] != -1 ? 1 : 0}]
     foreach neighbor [dict get $adjacencyList $node] {
       if {$neighbor eq $parent} {continue}
-      incr count [calculateBranchWeights $neighbor $node $adjacencyList $leaves $weights]
+      incr count [calculateBranchWeights $neighbor $node $adjacencyList $leaves]
     }
-    dict set weights [list $parent $node] $count
-    dict set weights [list $node $parent] $count
+    # Only set entries if parent is not empty to avoid invalid keys
+    if {$parent ne ""} {
+      dict set branchWeights [list $parent $node] $count
+      dict set branchWeights [list $node $parent] $count
+    }
     return $count
   }
 
-  calculateBranchWeights $rootPoint "" $adjacencyList $leaves branchWeights
+  # Initialize branchWeights in current scope and pass to helper
+  upvar branchWeights branchWeights
+  calculateBranchWeights $rootPoint "" $adjacencyList $leaves
 
   # Determine main branches (above threshold proportion of total leaves)
   set mainBranches [list]

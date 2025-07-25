@@ -475,6 +475,30 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
     dict lappend adjacencyList $p2 $p1
   }
 
+  # Ensure root point is in adjacency list (add connection to closest node if necessary)
+  set mappedRoot [dict get $pointMap $rootPoint]
+  if {![dict exists $adjacencyList $mappedRoot]} {
+    dict set adjacencyList $mappedRoot [list]
+    
+    # Find closest node to root
+    set minDist inf
+    set closestNode ""
+    foreach node [dict keys $adjacencyList] {
+      if {$node eq $mappedRoot} {continue}
+      set dist [distance $mappedRoot $node]
+      if {$dist < $minDist} {
+        set minDist $dist
+        set closestNode $node
+      }
+    }
+    
+    # Add bidirectional connection
+    if {$closestNode ne ""} {
+      dict lappend adjacencyList $mappedRoot $closestNode
+      dict lappend adjacencyList $closestNode $mappedRoot
+    }
+  }
+
   # Identify main branches (critical paths with most leaves)
   set mainBranches [identifyMainBranches $adjacencyList $rootPoint $leafPoints $mainBranchThreshold $pointMap]
 
@@ -740,7 +764,7 @@ proc calculateCenter {points} {
 
 # Example usage with detailed output
 if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info script]]]} {
-  set rootPoint {0 0}
+  set rootPoint {1.2 3.1}
   set leafPoints {
     {30.1 20.2} {35.3 25.1} {40.2 20.3} {45.1 25.2}
     {20.3 40.1} {25.2 45.3} {30.1 40.2} {35.3 45.1}

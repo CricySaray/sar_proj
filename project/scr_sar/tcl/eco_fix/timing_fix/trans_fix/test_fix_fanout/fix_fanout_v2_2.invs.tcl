@@ -88,7 +88,7 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     set avgDistance 0.0
     foreach point $cluster {
       if {[dict exists $distances $point]} {
-        incr avgDistance [dict get $distances $point]
+        set avgDistance [expr $avgDistance + [dict get $distances $point]]
       }
     }
     if {$clusterSize > 0} {

@@ -327,9 +327,9 @@ proc identifyMainBranches {adjacencyList rootPoint leaves threshold} {
   set branchWeights [dict create]
 
   # Calculate weight of each branch (number of leaves in its subtree)
-  # Use upvar to modify the branchWeights dictionary in parent scope
+  # Use upvar with different alias to avoid variable name conflict
   proc calculateBranchWeights {node parent adjacencyList leaves} {
-    upvar branchWeights branchWeights
+    upvar branchWeightsAlias bw  ;# Alias for parent's branchWeights
     set count [expr {[lsearch -exact $leaves $node] != -1 ? 1 : 0}]
     foreach neighbor [dict get $adjacencyList $node] {
       if {$neighbor eq $parent} {continue}
@@ -337,14 +337,14 @@ proc identifyMainBranches {adjacencyList rootPoint leaves threshold} {
     }
     # Only set entries if parent is not empty to avoid invalid keys
     if {$parent ne ""} {
-      dict set branchWeights [list $parent $node] $count
-      dict set branchWeights [list $node $parent] $count
+      dict set bw [list $parent $node] $count
+      dict set bw [list $node $parent] $count
     }
     return $count
   }
 
-  # Initialize branchWeights in current scope and pass to helper
-  upvar branchWeights branchWeights
+  # Link branchWeights to alias for inner proc access
+  upvar branchWeights branchWeightsAlias
   calculateBranchWeights $rootPoint "" $adjacencyList $leaves
 
   # Determine main branches (above threshold proportion of total leaves)

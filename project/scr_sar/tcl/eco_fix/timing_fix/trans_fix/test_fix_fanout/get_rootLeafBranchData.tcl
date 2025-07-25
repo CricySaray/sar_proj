@@ -16,6 +16,25 @@ proc get_rootLeafBranchData {{pinName ""}} {
     set wiresLines [dbget $driverPin_ptr.net.wires.pts]
 
     set result [analyzePowerDistribution $driverPin_loc $sinksPins_loc $wiresLines 8]
+    puts "\nPower Distribution Plan:"
+    lassign [dict get $result generator] genPoint genCapacity
+    puts "Generator: [format "%.2f %.2f" {*}$genPoint] (Capacity: $genCapacity)"
+    
+    puts "\nRepeaters:"
+    foreach repeater [dict get $result repeaters] {
+      lassign $repeater repPoint repCapacity repLoads
+      puts "  Repeater: [format "%.2f %.2f" {*}$repPoint] (Capacity: $repCapacity, Loads: [llength $repLoads])"
+      puts "    Driven Loads:"
+      foreach load $repLoads {
+        puts "      - [format "%.2f %.2f" {*}$load]"
+      }
+    }
+    
+    puts "\nDirect Loads (generator-driven): [llength [dict get $result directLoads]]"
+    foreach load [dict get $result directLoads] {
+      lassign $load point capacity
+      puts "  - [format "%.2f %.2f" {*}$point] (Capacity: $capacity)"
+    }
 
   }
 }

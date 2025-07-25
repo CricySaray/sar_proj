@@ -494,40 +494,6 @@ proc calculateBranchLevels {treeData} {
 
 # 其余代码保持不变...
 
-# Main program entry (for testing)
-if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info script]]]} {
-    # Test case with sample data
-    set rootPoint {0 0}
-    set leafPoints {{30.1 20.2} {35.3 25.1} {40.2 20.3} {45.1 25.2} {20.3 40.1} {25.2 45.3} {30.1 40.2} {35.3 45.1} {60.2 40.1} {65.1 45.3} {70.3 40.2} {75.2 45.1}}
-    set branchSegments {{{0 0} {10.1 0.2}} {{9.9 0.1} {20.2 0.1}} {{19.8 0.3} {30.2 10.1}} {{30.1 9.9} {40.3 20.2}} {{19.9 0.2} {20.1 20.3}} {{20.2 19.8} {20.3 30.1}} {{20.1 30.2} {30.3 40.1}} {{20.3 0.1} {50.2 0.3}} {{49.8 0.2} {60.1 10.3}} {{60.2 9.9} {70.1 20.3}} {{70.3 20.1} {80.2 30.3}} {{80.1 29.9} {70.2 40.1}}}
-    
-    puts "Running power distribution analysis..."
-    set powerPlan [analyzePowerDistribution $rootPoint $leafPoints $branchSegments 30 \
-                  {-connectionTolerance 0.3 -nodeTolerance 1.0 -debug 1 -maxRepeaters 1 -repeaterStrategy 0}]
-    
-    # Output results
-    puts "\nPower Distribution Plan:"
-    lassign [dict get $powerPlan generator] genPoint genCapacity
-    puts "Generator: [format "%.2f %.2f" {*}$genPoint] (Capacity: $genCapacity)"
-    
-    puts "\nRepeaters:"
-    foreach repeater [dict get $powerPlan repeaters] {
-        lassign $repeater repPoint repCapacity repLoads
-        puts "  Repeater: [format "%.2f %.2f" {*}$repPoint] (Capacity: $repCapacity, Loads: [llength $repLoads])"
-        puts "    Driven Loads:"
-        foreach load $repLoads {
-            puts "      - [format "%.2f %.2f" {*}$load]"
-        }
-    }
-    
-    puts "\nDirect Loads (generator-driven): [llength [dict get $powerPlan directLoads]]"
-    foreach load [dict get $powerPlan directLoads] {
-        lassign $load point capacity
-        puts "  - [format "%.2f %.2f" {*}$point] (Capacity: $capacity)"
-    }
-}
-# 其余代码保持不变...
-
 # Build tree structure
 proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance nodeTolerance mainBranchThreshold} {
   set treeData [dict create]

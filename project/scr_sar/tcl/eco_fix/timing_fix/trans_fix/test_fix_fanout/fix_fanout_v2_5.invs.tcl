@@ -5,121 +5,184 @@ package require math::statistics
 
 # 创建枚举模拟
 proc createEnum {name values} {
-  upvar 1 $name enumDict
-  array set enumDict {}
-  set index 0
-  foreach value $values {
-    set enumDict($value) $index
-    incr index
-  }
+    upvar 1 $name enumDict
+    array set enumDict {}
+    set index 0
+    foreach value $values {
+        set enumDict($value) $index
+        incr index
+    }
 }
 
 # 创建中继器使用策略枚举
 createEnum RepeaterStrategy {
-  STRATEGY_MINIMIZE_REPEATERS
-  STRATEGY_MAXIMIZE_REPEATERS
-  STRATEGY_AUTOMATIC
+    STRATEGY_MINIMIZE_REPEATERS
+    STRATEGY_MAXIMIZE_REPEATERS
+    STRATEGY_AUTOMATIC
 }
 
 # Analyze power distribution with generator, repeaters and loads
 proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapacity {optionsDict {}}} {
-  # 定义选项默认值
-  array set options {
-    -clusterThreshold 20.0
-    -minClusterSize 3
-    -maxClusterRatio 0.6
-    -connectionTolerance 0.2
-    -nodeTolerance 1.0
-    -debug 0
-    -loadCapacity 4
-    -repeaterCapacities {4 6 8 12 16}
-    -mainBranchThreshold 0.7
-    -maxRepeaters 1
-    -repeaterStrategy $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)
-  }
+    # 定义选项默认值
+    array set options {
+        -clusterThreshold 20.0
+        -minClusterSize 3
+        -maxClusterRatio 0.6
+        -connectionTolerance 0.2
+        -nodeTolerance 1.0
+        -debug 0
+        -loadCapacity 4
+        -repeaterCapacities {4 6 8 12 16}
+        -mainBranchThreshold 0.7
+        -maxRepeaters 1
+        -repeaterStrategy $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)
+    }
+    
+    # 从全局作用域获取枚举变量
+    upvar 1 RepeaterStrategy RepeaterStrategy
+    
+    array set options $optionsDict
 
-  # 将注释移到array定义外部
-  # Max ratio of total load allowed in one cluster before splitting
-  # Ratio to identify main branches (longer, more critical paths)
-  # Default to minimize repeaters
-
-  array set options $optionsDict
-
-  if {[catch {validateInput $rootPoint $leafPoints $branchSegments} errMsg]} {
-    return -code error $errMsg
-  }
-  if {$generatorCapacity <= 0} {
-    return -code error "Generator capacity must be positive"
-  }
-  if {$options(-maxRepeaters) < 0} {
-    return -code error "Maximum repeaters must be non-negative"
-  }
-
-  # 从全局作用域获取枚举变量
-  upvar 1 RepeaterStrategy RepeaterStrategy
-
-  set convertedSegments [convertBranchSegments $branchSegments]
-  set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
-    $options(-connectionTolerance) $options(-nodeTolerance) $options(-mainBranchThreshold)]
-  set pointMap [dict get $treeData pointMap]
-  set clusters [clusterLeaves $leafPoints $options(-clusterThreshold) $options(-minClusterSize)]
-  set mappedClusters [mapClustersToTreePoints $clusters $pointMap]
-  set totalLoadCount [llength $leafPoints]
-  set processedClusters [processClusters $mappedClusters $totalLoadCount $options(-maxClusterRatio) $treeData $pointMap]
-
-  set distances [calculateDistances $treeData $rootPoint]
-  set powerPlan [dict create]
-  dict set powerPlan generator [list $rootPoint $generatorCapacity]
-  dict set powerPlan repeaters [list]
-  dict set powerPlan directLoads [list]
-  dict set powerPlan repeaterDrivenLoads [dict create]
-
-  set sortedClusters [lsort -command [list sortClustersByDistance $distances $pointMap] $processedClusters]
-
-  set usedRepeaters 0
-  foreach cluster $sortedClusters {
-    set clusterSize [llength $cluster]
-    set clusterCenter [calculateCenter $cluster]
-    set avgDistance [calculateClusterAvgDistance $cluster $distances $pointMap]
-
-    # Determine if cluster should be handled by repeater based on strategy
-    set useRepeater 0
-    if {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MAXIMIZE_REPEATERS)} {
-      if {$usedRepeaters < $options(-maxRepeaters)} {
-        set useRepeater 1
-      }
-    } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)} {
-      if {[shouldUseRepeater $avgDistance $clusterSize $totalLoadCount] && $usedRepeaters < $options(-maxRepeaters)} {
-        set useRepeater 1
-      }
-    } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_AUTOMATIC)} {
-      set useRepeater [decideAutomaticRepeaterUsage $avgDistance $clusterSize $totalLoadCount \
-        $generatorCapacity $options(-loadCapacity) $usedRepeaters $options(-maxRepeaters)]
+    if {[catch {validateInput $rootPoint $leafPoints $branchSegments} errMsg]} {
+        return -code error $errMsg
+    }
+    if {$generatorCapacity <= 0} {
+        return -code error "Generator capacity must be positive"
+    }
+    if {$options(-maxRepeaters) < 0} {
+        return -code error "Maximum repeaters must be non-negative"
     }
 
-    if {$useRepeater} {
-      set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
-        $generatorCapacity $options(-loadCapacity) \
-        $clusterSize $avgDistance $options(-repeaterCapacities)]
-      set breakpoint [findBestMainBranchBreakpoint $treeData $cluster $options(-debug)]
-      dict lappend powerPlan repeaters [list $breakpoint $optimalRepeaterCapacity $cluster]
-      dict set powerPlan repeaterDrivenLoads $breakpoint $cluster
-      incr usedRepeaters
-    } else {
-      foreach point $cluster {
-        dict lappend powerPlan directLoads [list $point $options(-loadCapacity)]
-      }
-    }
-  }
+    set convertedSegments [convertBranchSegments $branchSegments]
+    set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
+                  $options(-connectionTolerance) $options(-nodeTolerance) $options(-mainBranchThreshold)]
+    set pointMap [dict get $treeData pointMap]
+    set clusters [clusterLeaves $leafPoints $options(-clusterThreshold) $options(-minClusterSize)]
+    set mappedClusters [mapClustersToTreePoints $clusters $pointMap]
+    set totalLoadCount [llength $leafPoints]
+    set processedClusters [processClusters $mappedClusters $totalLoadCount $options(-maxClusterRatio) $treeData $pointMap]
 
-  if {[catch {validatePowerPlan $powerPlan $options(-loadCapacity)} errMsg]} {
-    if {$options(-debug)} {
-      puts "Warning: Power plan validation failed: $errMsg"
-      puts "Attempting to adjust capacities..."
+    set distances [calculateDistances $treeData $rootPoint]
+    set powerPlan [dict create]
+    dict set powerPlan generator [list $rootPoint $generatorCapacity]
+    dict set powerPlan repeaters [list]
+    dict set powerPlan directLoads [list]
+    dict set powerPlan repeaterDrivenLoads [dict create]
+
+    # 按距离降序排列集群（最远的优先）
+    set sortedClusters [lsort -command [list sortClustersByDistance $distances $pointMap] $processedClusters]
+
+    set usedRepeaters 0
+    set hasRepeaterLoads 0
+    
+    # 第一阶段：根据策略正常分配
+    foreach cluster $sortedClusters {
+        set clusterSize [llength $cluster]
+        set clusterCenter [calculateCenter $cluster]
+        set avgDistance [calculateClusterAvgDistance $cluster $distances $pointMap]
+
+        set useRepeater 0
+        if {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MAXIMIZE_REPEATERS)} {
+            if {$usedRepeaters < $options(-maxRepeaters)} {
+                set useRepeater 1
+            }
+        } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)} {
+            if {[shouldUseRepeater $avgDistance $clusterSize $totalLoadCount] && $usedRepeaters < $options(-maxRepeaters)} {
+                set useRepeater 1
+            }
+        } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_AUTOMATIC)} {
+            set useRepeater [decideAutomaticRepeaterUsage $avgDistance $clusterSize $totalLoadCount \
+                            $generatorCapacity $options(-loadCapacity) $usedRepeaters $options(-maxRepeaters)]
+        }
+
+        if {$useRepeater} {
+            set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
+                                        $generatorCapacity $options(-loadCapacity) \
+                                        $clusterSize $avgDistance $options(-repeaterCapacities)]
+            set breakpoint [findBestMainBranchBreakpoint $treeData $cluster $options(-debug)]
+            dict lappend powerPlan repeaters [list $breakpoint $optimalRepeaterCapacity $cluster]
+            dict set powerPlan repeaterDrivenLoads $breakpoint $cluster
+            incr usedRepeaters
+            set hasRepeaterLoads 1
+        } else {
+            foreach point $cluster {
+                dict lappend powerPlan directLoads [list $point $options(-loadCapacity)]
+            }
+        }
     }
-    set powerPlan [adjustPowerPlan $powerPlan $options(-loadCapacity) $options(-repeaterCapacities)]
-  }
-  return $powerPlan
+
+    # 第二阶段：如果没有中继器驱动任何负载，强制选择一个集群使用中继器
+    if {$usedRepeaters == 0 && $options(-maxRepeaters) >= 1 && $totalLoadCount > 0} {
+        # 选择距离最远的集群
+        if {[llength $sortedClusters] > 0} {
+            set cluster [lindex $sortedClusters 0]
+            set clusterSize [llength $cluster]
+            set clusterCenter [calculateCenter $cluster]
+            
+            set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
+                                        $generatorCapacity $options(-loadCapacity) \
+                                        $clusterSize [calculateClusterAvgDistance $cluster $distances $pointMap] \
+                                        $options(-repeaterCapacities)]
+            
+            set breakpoint [findBestMainBranchBreakpoint $treeData $cluster $options(-debug)]
+            dict lappend powerPlan repeaters [list $breakpoint $optimalRepeaterCapacity $cluster]
+            dict set powerPlan repeaterDrivenLoads $breakpoint $cluster
+            
+            # 从直接负载中移除这个集群
+            set newDirectLoads [list]
+            foreach load [dict get $powerPlan directLoads] {
+                lassign $load point capacity
+                if {[lsearch -exact $cluster $point] == -1} {
+                    lappend newDirectLoads $load
+                }
+            }
+            dict set powerPlan directLoads $newDirectLoads
+            
+            incr usedRepeaters
+            set hasRepeaterLoads 1
+        }
+    }
+
+    if {[catch {validatePowerPlan $powerPlan $options(-loadCapacity)} errMsg]} {
+        if {$options(-debug)} {
+            puts "Warning: Power plan validation failed: $errMsg"
+            puts "Attempting to adjust capacities..."
+        }
+        set powerPlan [adjustPowerPlan $powerPlan $options(-loadCapacity) $options(-repeaterCapacities)]
+    }
+    
+    # 确保至少有一个中继器且驱动负载
+    if {$hasRepeaterLoads == 0 && $usedRepeaters > 0} {
+        if {[llength [dict get $powerPlan directLoads]] > 0} {
+            # 从直接负载中移一个负载到第一个中继器
+            set firstRepeater [lindex [dict get $powerPlan repeaters] 0]
+            lassign $firstRepeater repPoint repCapacity repLoads
+            
+            set firstDirectLoad [lindex [dict get $powerPlan directLoads] 0]
+            lassign $firstDirectLoad loadPoint loadCapacity
+            
+            # 添加到中继器负载
+            lappend repLoads $loadPoint
+            set newRepeaters [list]
+            foreach r [dict get $powerPlan repeaters] {
+                if {$r eq $firstRepeater} {
+                    lappend newRepeaters [list $repPoint $repCapacity $repLoads]
+                } else {
+                    lappend newRepeaters $r
+                }
+            }
+            dict set powerPlan repeaters $newRepeaters
+            dict set powerPlan repeaterDrivenLoads $repPoint $repLoads
+            
+            # 从直接负载中移除
+            set newDirectLoads [lrange [dict get $powerPlan directLoads] 1 end]
+            dict set powerPlan directLoads $newDirectLoads
+            
+            set hasRepeaterLoads 1
+        }
+    }
+    
+    return $powerPlan
 }
 
 # Decide repeater usage based on automatic strategy

@@ -5,7 +5,6 @@ package require Tcl 8.5
 package require math::statistics
 # Main processing procedure
 proc analyzeTreeBreakpoint {rootPoint leafPoints branchSegments {optionsDict {}}} {
-  # Set default options
   array set options {
     -clusterThreshold 20.0
     -minClusterSize 3
@@ -13,18 +12,13 @@ proc analyzeTreeBreakpoint {rootPoint leafPoints branchSegments {optionsDict {}}
     -nodeTolerance 1.0
     -debug 0
   }
-  # Apply user-specified options
   array set options $optionsDict
-  # Validate input data
   if {[catch {validateInput $rootPoint $leafPoints $branchSegments} errMsg]} {
     return -code error $errMsg
   }
-  # Convert branch segment format
   set convertedSegments [convertBranchSegments $branchSegments]
-  # Build tree structure considering various tolerances
   set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
                 $options(-connectionTolerance) $options(-nodeTolerance)]
-  # Perform clustering analysis
   set clusters [clusterLeaves $leafPoints $options(-clusterThreshold) $options(-minClusterSize)]
   if {$options(-debug)} {
     puts "Clustering results: [llength $clusters] clusters"
@@ -32,7 +26,6 @@ proc analyzeTreeBreakpoint {rootPoint leafPoints branchSegments {optionsDict {}}
       puts "  Cluster $i: [llength [lindex $clusters $i]] leaves"
     }
   }
-  # Find best breakpoint for each cluster
   set breakpoints {}
   foreach cluster $clusters {
     lappend breakpoints [findBestBreakpoint $treeData $cluster $options(-debug)]
@@ -41,7 +34,6 @@ proc analyzeTreeBreakpoint {rootPoint leafPoints branchSegments {optionsDict {}}
 }
 # Analyze power distribution with generator, repeaters and loads
 proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapacity {optionsDict {}}} {
-  # Set default options
   array set options {
     -clusterThreshold 20.0
     -minClusterSize 3
@@ -51,24 +43,17 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     -loadCapacity 4
     -repeaterCapacities {4 6 8 12 16}
   }
-  # Apply user-specified options
   array set options $optionsDict
-  # Validate input data
   if {[catch {validateInput $rootPoint $leafPoints $branchSegments} errMsg]} {
     return -code error $errMsg
   }
-  # Validate generator capacity
   if {$generatorCapacity <= 0} {
     return -code error "Generator capacity must be positive"
   }
-  # Convert branch segment format
   set convertedSegments [convertBranchSegments $branchSegments]
-  # Build tree structure considering various tolerances
   set treeData [buildTreeStructure $rootPoint $leafPoints $convertedSegments \
                 $options(-connectionTolerance) $options(-nodeTolerance)]
-  # Perform clustering analysis
   set clusters [clusterLeaves $leafPoints $options(-clusterThreshold) $options(-minClusterSize)]
-  # Identify isolated points (not part of any cluster)
   set allLeafPoints $leafPoints
   set clusteredPoints {}
   foreach cluster $clusters {
@@ -76,22 +61,12 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
       lappend clusteredPoints $point
     }
   }
-   # 识别孤立点（不属于任何聚类的点）
-  set allLeafPoints $leafPoints
-  set clusteredPoints {}
-  foreach cluster $clusters {
-    foreach point $cluster {
-      lappend clusteredPoints $point
-    }
-  }
-  # 使用纯 Tcl 实现列表差集功能
   set isolatedPoints {}
   foreach point $allLeafPoints {
     if {[lsearch -exact $clusteredPoints $point] == -1} {
       lappend isolatedPoints $point
     }
-  } 
-#  set isolatedPoints [struct::list difference $allLeafPoints $clusteredPoints]
+  }
   if {$options(-debug)} {
     puts "Clustering results: [llength $clusters] clusters"
     for {set i 0} {$i < [llength $clusters]} {incr i} {
@@ -99,23 +74,17 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     }
     puts "Isolated points: [llength $isolatedPoints]"
   }
-  # Calculate distances from root to each leaf
   set distances [calculateDistances $treeData $rootPoint]
-  # Determine optimal repeater positions and capacities
   set powerPlan [dict create]
   dict set powerPlan generator [list $rootPoint $generatorCapacity]
-  dict set powerPlan repeaters {}
-  dict set powerPlan isolatedLoads [list ]
-  # Process isolated points first
+  dict set powerPlan repeaters [list]
+  dict set powerPlan isolatedLoads [list]
   foreach point $isolatedPoints {
-    puts "point 1"
     dict lappend powerPlan isolatedLoads [list $point $options(-loadCapacity)]
   }
-  # Process each cluster
   foreach cluster $clusters {
     set clusterSize [llength $cluster]
     set clusterCenter [calculateCenter $cluster]
-    # Calculate average distance from root to cluster
     set avgDistance 0.0
     foreach point $cluster {
       if {[dict exists $distances $point]} {
@@ -125,27 +94,27 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
     if {$clusterSize > 0} {
       set avgDistance [expr {$avgDistance / $clusterSize}]
     }
-    # Select optimal repeater capacity based on distance and cluster size
     set optimalRepeaterCapacity [selectOptimalRepeaterCapacity \
                                   $generatorCapacity $options(-loadCapacity) \
                                   $clusterSize $avgDistance $options(-repeaterCapacities)]
-    # Find best breakpoint for this cluster
     set breakpoint [findBestBreakpoint $treeData $cluster $options(-debug)]
-    # Add to power plan
-    puts "point 2"
-    puts "$breakpoint $optimalRepeaterCapacity $cluster"
-    #lappend [dict get powerPlan repeaters] [list $breakpoint $optimalRepeaterCapacity $cluster]
     dict lappend powerPlan repeaters [list $breakpoint $optimalRepeaterCapacity $cluster]
-  puts "dict get :"
-    puts [dict get powerPlan repeaters]
   }
-  # Validate the power plan
+  # 确保 powerPlan 结构完整
+  if {![dict exists $powerPlan generator]} {
+    dict set powerPlan generator [list $rootPoint $generatorCapacity]
+  }
+  if {![dict exists $powerPlan repeaters]} {
+    dict set powerPlan repeaters [list]
+  }
+  if {![dict exists $powerPlan isolatedLoads]} {
+    dict set powerPlan isolatedLoads [list]
+  }
   if {[catch {validatePowerPlan $powerPlan $options(-loadCapacity)} errMsg]} {
     if {$options(-debug)} {
       puts "Warning: Power plan validation failed: $errMsg"
       puts "Attempting to adjust capacities..."
     }
-    # Try to adjust capacities to meet requirements
     set powerPlan [adjustPowerPlan $powerPlan $options(-loadCapacity) $options(-repeaterCapacities)]
   }
   return $powerPlan
@@ -156,7 +125,6 @@ proc calculateDistances {treeData rootPoint} {
   set pointMap [dict get $treeData pointMap]
   set distances [dict create]
   set visited [list]
-  # Initialize queue with root node
   set queue [list [list $rootPoint 0.0]]
   while {[llength $queue] > 0} {
     lassign [lindex $queue 0] currentNode currentDist
@@ -166,7 +134,6 @@ proc calculateDistances {treeData rootPoint} {
     }
     lappend visited $currentNode
     dict set distances $currentNode $currentDist
-    # Process all neighbors
     if {[dict exists $adjacencyList $currentNode]} {
       foreach neighbor [dict get $adjacencyList $currentNode] {
         if {[lsearch -exact $visited $neighbor] == -1} {
@@ -180,32 +147,35 @@ proc calculateDistances {treeData rootPoint} {
 }
 # Select optimal repeater capacity based on distance and load
 proc selectOptimalRepeaterCapacity {generatorCapacity loadCapacity loadCount distance capacities} {
-  # Sort capacities in ascending order
   set sortedCapacities [lsort -integer $capacities]
-  # Calculate base load without considering distance
   set baseLoad [expr {$loadCount * $loadCapacity}]
-  # Calculate distance factor (voltage loss is proportional to distance squared)
   set distanceFactor [expr {1.0 / (1.0 + 0.1 * pow($distance, 2))}]
-  # Adjust required capacity based on distance
   set adjustedLoad [expr {$baseLoad / $distanceFactor}]
-  # Find the smallest capacity that can handle the adjusted load
   foreach capacity $sortedCapacities {
     if {$capacity >= $adjustedLoad} {
       return $capacity
     }
   }
-  # If none found, return the largest capacity
   return [lindex $sortedCapacities end]
 }
 # Validate the power plan
 proc validatePowerPlan {powerPlan loadCapacity} {
-  set generator [dict get powerPlan generator]
+  # 确保 powerPlan 包含所有必要的键
+  if {![dict exists $powerPlan generator]} {
+    return -code error "Power plan is missing 'generator' key"
+  }
+  if {![dict exists $powerPlan repeaters]} {
+    return -code error "Power plan is missing 'repeaters' key"
+  }
+  if {![dict exists $powerPlan isolatedLoads]} {
+    return -code error "Power plan is missing 'isolatedLoads' key"
+  }
+  
+  set generator [dict get $powerPlan generator]
   lassign $generator genPoint genCapacity
-  set repeaters [dict get powerPlan repeaters]
-  set isolatedLoads [dict get powerPlan isolatedLoads]
-  # Calculate total load from isolated points
+  set repeaters [dict get $powerPlan repeaters]
+  set isolatedLoads [dict get $powerPlan isolatedLoads]
   set isolatedLoadTotal [expr {[llength $isolatedLoads] * $loadCapacity}]
-  # Calculate total load from repeaters
   set repeaterLoadTotal 0
   foreach repeater $repeaters {
     lassign $repeater repPoint repCapacity repLoads
@@ -216,7 +186,6 @@ proc validatePowerPlan {powerPlan loadCapacity} {
     }
     incr repeaterLoadTotal $repLoad
   }
-  # Calculate total generator load
   set totalGenLoad [expr {$isolatedLoadTotal + $repeaterLoadTotal}]
   if {$genCapacity < $totalGenLoad} {
     return -code error "Generator capacity ($genCapacity) insufficient for total load ($totalGenLoad)"
@@ -225,22 +194,30 @@ proc validatePowerPlan {powerPlan loadCapacity} {
 }
 # Adjust power plan to meet capacity requirements
 proc adjustPowerPlan {powerPlan loadCapacity availableCapacities} {
-  set generator [dict get powerPlan generator]
+  # 确保 powerPlan 包含所有必要的键
+  if {![dict exists $powerPlan generator]} {
+    return -code error "Power plan is missing 'generator' key"
+  }
+  if {![dict exists $powerPlan repeaters]} {
+    dict set powerPlan repeaters [list]
+    return $powerPlan  ;# 如果没有中继器，直接返回
+  }
+  if {![dict exists $powerPlan isolatedLoads]} {
+    dict set powerPlan isolatedLoads [list]
+  }
+  
+  set generator [dict get $powerPlan generator]
   lassign $generator genPoint genCapacity
-  set repeaters [dict get powerPlan repeaters]
-  set isolatedLoads [dict get powerPlan isolatedLoads]
-  # Sort available capacities in descending order
+  set repeaters [dict get $powerPlan repeaters]
+  set isolatedLoads [dict get $powerPlan isolatedLoads]
   set sortedCapacities [lsort -decreasing -integer $availableCapacities]
-  # Calculate total load from isolated points
   set isolatedLoadTotal [expr {[llength $isolatedLoads] * $loadCapacity}]
-  # Try to adjust each repeater's capacity
   set newRepeaters {}
   set totalRepeaterLoad 0
   foreach repeater $repeaters {
     lassign $repeater repPoint oldCapacity repLoads
     set repLoadCount [llength $repLoads]
     set repLoad [expr {$repLoadCount * $loadCapacity}]
-    # Find the smallest capacity that can handle this load
     set newCapacity $oldCapacity
     foreach capacity $sortedCapacities {
       if {$capacity >= $repLoad} {
@@ -251,17 +228,14 @@ proc adjustPowerPlan {powerPlan loadCapacity availableCapacities} {
     lappend newRepeaters [list $repPoint $newCapacity $repLoads]
     incr totalRepeaterLoad $repLoad
   }
-  # Update the power plan
   dict set powerPlan repeaters $newRepeaters
   return $powerPlan
 }
 # Validate input data
 proc validateInput {rootPoint leafPoints branchSegments} {
-  # Validate root point
   if {[catch {validatePoint $rootPoint} errMsg]} {
     return -code error "Root point validation failed: $errMsg"
   }
-  # Validate leaf points
   if {[llength $leafPoints] < 1} {
     return -code error "At least one leaf point is required"
   }
@@ -270,7 +244,6 @@ proc validateInput {rootPoint leafPoints branchSegments} {
       return -code error "Leaf point validation failed: $errMsg"
     }
   }
-  # Validate branch segments
   if {[llength $branchSegments] < 1} {
     return -code error "At least one branch segment is required"
   }
@@ -295,11 +268,9 @@ proc validatePoint {point} {
 }
 # Validate segment format
 proc validateSegment {segment} {
-  # Check if it's the old format {{x1 y1 x2 y2}}
   if {[llength $segment] == 4 && [string is double -strict [lindex $segment 0]]} {
     return 1
   }
-  # Check if it's the new format {{x1 y1} {x2 y2}}
   if {[llength $segment] == 2} {
     foreach point $segment {
       if {[catch {validatePoint $point} errMsg]} {
@@ -314,14 +285,12 @@ proc validateSegment {segment} {
 proc convertBranchSegments {segments} {
   set converted {}
   foreach segment $segments {
-    # Check if it's the new format {{x1 y1} {x2 y2}}
     if {[llength $segment] == 2 && [llength [lindex $segment 0]] == 2} {
       lassign $segment p1 p2
       lassign $p1 x1 y1
       lassign $p2 x2 y2
       lappend converted [list $x1 $y1 $x2 $y2]
     } else {
-      # Keep old format {x1 y1 x2 y2} unchanged
       lappend converted $segment
     }
   }
@@ -329,22 +298,17 @@ proc convertBranchSegments {segments} {
 }
 # Build tree structure considering various tolerances
 proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance nodeTolerance} {
-  # Initialize tree data structure
   set treeData [dict create]
   dict set treeData root $rootPoint
   dict set treeData leaves $leafPoints
   dict set treeData branches $branchSegments
-  # Create a point map to treat points within tolerance as the same point
   set pointMap [dict create]
   set uniquePoints [list $rootPoint]
-  # Add root point to the map
   dict set pointMap $rootPoint $rootPoint
-  # Process endpoints of branch segments
   foreach segment $branchSegments {
     lassign $segment x1 y1 x2 y2
     set p1 [list $x1 $y1]
     set p2 [list $x2 $y2]
-    # Check if the point exists in the map (considering connection tolerance)
     foreach point [list $p1 $p2] {
       if {![dict exists $pointMap $point]} {
         set found 0
@@ -362,7 +326,6 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
       }
     }
   }
-  # Process leaf points (using larger node tolerance)
   foreach leaf $leafPoints {
     if {![dict exists $pointMap $leaf]} {
       set found 0
@@ -379,7 +342,6 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
       }
     }
   }
-  # Process root point connection to branches (using node tolerance)
   set rootMapped 0
   foreach existingPoint $uniquePoints {
     if {[distance $rootPoint $existingPoint] <= $nodeTolerance} {
@@ -388,19 +350,15 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
       break
     }
   }
-  # If root point is not mapped to any existing point, add it as a new point
   if {!$rootMapped} {
     lappend uniquePoints $rootPoint
     dict set pointMap $rootPoint $rootPoint
   }
-  # Build adjacency list representation of the graph structure using mapped points
   set adjacencyList [dict create]
-  # Add branch segment connections
   foreach segment $branchSegments {
     lassign $segment x1 y1 x2 y2
     set p1 [dict get $pointMap [list $x1 $y1]]
     set p2 [dict get $pointMap [list $x2 $y2]]
-    # Update adjacency list
     if {![dict exists $adjacencyList $p1]} {
       dict set adjacencyList $p1 [list]
     }
@@ -417,7 +375,6 @@ proc buildTreeStructure {rootPoint leafPoints branchSegments connectionTolerance
 # Cluster leaf nodes
 proc clusterLeaves {leafPoints threshold minSize} {
   set clusters {}
-  # Use a simple distance-based clustering algorithm (simplified DBSCAN)
   set visitedPoints {}
   foreach point $leafPoints {
     if {[lsearch -exact $visitedPoints $point] != -1} {
@@ -427,7 +384,6 @@ proc clusterLeaves {leafPoints threshold minSize} {
     set currentCluster [list $point]
     set neighbors [getNeighbors $point $leafPoints $threshold]
     set i 0
-    # Use floating-point safe loop
     while {$i < [llength $neighbors]} {
       set neighbor [lindex $neighbors $i]
       if {[lsearch -exact $visitedPoints $neighbor] == -1} {
@@ -440,10 +396,8 @@ proc clusterLeaves {leafPoints threshold minSize} {
           }
         }
       }
-      # Use floating-point addition and then convert to integer index
       set i [expr {int(floor($i + 1))}]
     }
-    # Keep only clusters that are large enough
     if {[llength $currentCluster] >= $minSize} {
       lappend clusters $currentCluster
     }
@@ -475,20 +429,16 @@ proc findBestBreakpoint {treeData cluster {debug 0}} {
   set branches [dict get $treeData branches]
   set adjacencyList [dict get $treeData adjacencyList]
   set pointMap [dict get $treeData pointMap]
-  # Calculate the center point of the cluster
   set center [calculateCenter $cluster]
   if {$debug} {
     puts "Cluster center: [format "%.2f %.2f" {*}$center]"
   }
-  # Find the endpoint on a branch segment closest to the center point
   set minDist inf
   set bestPoint {}
-  # Use mapped points to find the closest point
   foreach segment $branches {
     lassign $segment x1 y1 x2 y2
     set p1 [dict get $pointMap [list $x1 $y1]]
     set p2 [dict get $pointMap [list $x2 $y2]]
-    # Check both endpoints of the segment
     foreach endpoint [list $p1 $p2] {
       set dist [distance $center $endpoint]
       if {$dist < $minDist} {
@@ -497,7 +447,6 @@ proc findBestBreakpoint {treeData cluster {debug 0}} {
       }
     }
   }
-  # If no suitable endpoint is found, return the center point (theoretically this should not happen)
   if {$bestPoint eq ""} {
     set bestPoint $center
   }
@@ -513,10 +462,8 @@ proc calculateCenter {points} {
   set count 0
   foreach point $points {
     lassign $point x y
-    # Use expr to ensure floating-point addition
     set sumX [expr {$sumX + $x}]
     set sumY [expr {$sumY + $y}]
-    # Ensure count is an integer
     set count [expr {int(floor($count + 1))}]
   }
   if {$count > 0} {
@@ -527,7 +474,6 @@ proc calculateCenter {points} {
 }
 # Example usage
 if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info script]]]} {
-  # Example data - including connection point errors, using new segment format
   set rootPoint {0 0}
   set leafPoints {
     {30.1 20.2} {35.3 25.1} {40.2 20.3} {45.1 25.2}
@@ -548,7 +494,6 @@ if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info scr
     {{70.3 20.1} {80.2 30.3}}
     {{80.1 29.9} {70.2 40.1}}
   }
-  # Analyze and get breakpoints
   puts "Running tree breakpoint analysis..."
   set breakpoints [analyzeTreeBreakpoint $rootPoint $leafPoints $branchSegments \
                   {-connectionTolerance 0.3 -nodeTolerance 1.0 -debug 1}]
@@ -556,11 +501,9 @@ if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info scr
   foreach bp $breakpoints {
     puts "  [format "%.2f %.2f" {*}$bp]"
   }
-  # Analyze power distribution
   puts "\nRunning power distribution analysis..."
   set powerPlan [analyzePowerDistribution $rootPoint $leafPoints $branchSegments 8 \
                 {-connectionTolerance 0.3 -nodeTolerance 1.0 -debug 1}]
-  # Print power plan
   puts "\nPower Distribution Plan:"
   lassign [dict get $powerPlan generator] genPoint genCapacity
   puts "Generator: [format "%.2f %.2f" {*}$genPoint] (Capacity: $genCapacity)"
@@ -570,4 +513,4 @@ if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info scr
     puts "  Repeater: [format "%.2f %.2f" {*}$repPoint] (Capacity: $repCapacity, Loads: [llength $repLoads])"
   }
   puts "Isolated Loads: [llength [dict get $powerPlan isolatedLoads]]"
-}    
+}

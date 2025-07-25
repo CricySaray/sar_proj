@@ -3,23 +3,38 @@
 package require Tcl 8.5
 package require math::statistics
 
-# Repeater usage strategies
-enum {STRATEGY_MINIMIZE_REPEATERS STRATEGY_MAXIMIZE_REPEATERS STRATEGY_AUTOMATIC}
+# 创建枚举模拟
+proc createEnum {name values} {
+    upvar 1 $name enumDict
+    array set enumDict {}
+    set index 0
+    foreach value $values {
+        set enumDict($value) $index
+        incr index
+    }
+}
+
+# 创建中继器使用策略枚举
+createEnum RepeaterStrategy {
+    STRATEGY_MINIMIZE_REPEATERS
+    STRATEGY_MAXIMIZE_REPEATERS
+    STRATEGY_AUTOMATIC
+}
 
 # Analyze power distribution with generator, repeaters and loads
 proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapacity {optionsDict {}}} {
   array set options {
     -clusterThreshold 20.0
     -minClusterSize 3
-    -maxClusterRatio 0.6  ;# Max ratio of total load allowed in one cluster before splitting
+    -maxClusterRatio 0.6
     -connectionTolerance 0.2
     -nodeTolerance 1.0
     -debug 0
     -loadCapacity 4
     -repeaterCapacities {4 6 8 12 16}
-    -mainBranchThreshold 0.7  ;# Ratio to identify main branches (longer, more critical paths)
-    -maxRepeaters 1         ;# Maximum number of repeaters allowed
-    -repeaterStrategy $STRATEGY_MINIMIZE_REPEATERS  ;# Default to minimize repeaters
+    -mainBranchThreshold 0.7 
+    -maxRepeaters 1
+    -repeaterStrategy $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)
   }
   array set options $optionsDict
 
@@ -61,17 +76,17 @@ proc analyzePowerDistribution {rootPoint leafPoints branchSegments generatorCapa
 
     # Determine if cluster should be handled by repeater based on strategy
     set useRepeater 0
-    if {$options(-repeaterStrategy) == $STRATEGY_MAXIMIZE_REPEATERS} {
+    if {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MAXIMIZE_REPEATERS)} {
       # Maximize repeaters: use unless max is reached
       if {$usedRepeaters < $options(-maxRepeaters)} {
         set useRepeater 1
       }
-    } elseif {$options(-repeaterStrategy) == $STRATEGY_MINIMIZE_REPEATERS} {
+    } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)} {
       # Minimize repeaters: only use if absolutely necessary
       if {[shouldUseRepeater $avgDistance $clusterSize $totalLoadCount] && $usedRepeaters < $options(-maxRepeaters)} {
         set useRepeater 1
       }
-    } elseif {$options(-repeaterStrategy) == $STRATEGY_AUTOMATIC} {
+    } elseif {$options(-repeaterStrategy) == $RepeaterStrategy(STRATEGY_AUTOMATIC)} {
       # Automatic strategy: use heuristic to decide
       set useRepeater [decideAutomaticRepeaterUsage $avgDistance $clusterSize $totalLoadCount \
                       $generatorCapacity $options(-loadCapacity) $usedRepeaters $options(-maxRepeaters)]
@@ -674,7 +689,7 @@ if {[info exists argv0] && [string equal [file tail $argv0] [file tail [info scr
   puts "Running power distribution analysis..."
   set powerPlan [analyzePowerDistribution $rootPoint $leafPoints $branchSegments 30 \
                 {-connectionTolerance 0.3 -nodeTolerance 1.0 -debug 1 -maxClusterRatio 0.4 \
-                -maxRepeaters 2 -repeaterStrategy $STRATEGY_MINIMIZE_REPEATERS}]
+                -maxRepeaters 2 -repeaterStrategy $RepeaterStrategy(STRATEGY_MINIMIZE_REPEATERS)}]
 
   puts "\nPower Distribution Plan:"
   lassign [dict get $powerPlan generator] genPoint genCapacity

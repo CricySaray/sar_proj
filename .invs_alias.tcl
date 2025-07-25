@@ -92,6 +92,8 @@ set sar "/backend/project/p100/pd/PNR/100P/d2d_ss/sar"
 # --------------------------
 # some proc using invs shell or for GUI
 # --------------------------
+# 
+
 alias sip "selectInstOfSelectedPin_invsGUI"
 # This proc has a defect
 proc selectInstOfSelectedPin_invsGUI {{removeInst ""}} {

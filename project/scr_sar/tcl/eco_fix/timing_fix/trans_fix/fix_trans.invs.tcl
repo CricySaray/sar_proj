@@ -72,6 +72,7 @@ source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-change
 source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
 source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
+source ./proc_ifInBoxes.invs.tcl; # ifInBoxes - return 0|1
 source ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
 source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
 source ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl; # strategy_clampDriveCapacity_BetweenDriverSink - return celltype
@@ -3458,15 +3459,3 @@ define_proc_arguments fix_trans \
 #    {-cmdFile "specify cmd file name" AString string optional}
 #    {-one2moreDetailViolInfo "specify one2more detailed viol info, there are all violated sinks pin and other info" AString string optional}
 
-proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} { ; # FIXED: U003: before: dbget top.insts.cell.name $celltype -e
-    return "0x0:1"; # check your input 
-  } else {
-    set wholename 0
-    set driveLevel 0
-    set VTtype 0
-    regexp $regExp $celltype wholename driveLevel VTtype 
-    if {$driveLevel == "05"} {set driveLevel 0.5}
-    return $driveLevel
-  }
-}

@@ -5,9 +5,14 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
 # descrip   : get net length. ONLY one net!!!
+# update    : 2025/07/27 22:32:07 Sunday
+#             fix bug: for net: {{xxx/xxx/xxx[12]}}, it can be converted to {xxx/xxx/xxx[12]}
 # ref       : link url
 # --------------------------
 proc get_net_length {{net ""}} {
+  if {[lindex $net 0] == [lindex $net 0 0]} {
+    set net [lindex $net 0]
+  }
 	if {$net == "0x0" || [dbget top.nets.name $net -e] == ""} { 
 		return "0x0:1"
 	} else {

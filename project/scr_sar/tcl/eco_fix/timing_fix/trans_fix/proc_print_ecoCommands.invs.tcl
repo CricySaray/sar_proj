@@ -5,8 +5,11 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc)
 # descrip   : print eco command refering to args, you can specify instname/celltype/terms/newInstNamePrefix/loc/relativeDistToSink to control one to print
+# update    : 2025/07/27 22:23:08 Sunday
+#             add new option: $radius, and fix some logical error
 # ref       : link url
 # --------------------------
+source ./proc_ifInBoxes.invs.tcl; # ifInBoxes
 proc print_ecoCommand {args} {
   set type                "change"; # change|add|delete
   set inst                ""
@@ -15,6 +18,7 @@ proc print_ecoCommand {args} {
   set newInstNamePrefix   ""
   set loc                 {}
   set relativeDistToSink  ""
+  set radius              ""
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -34,33 +38,37 @@ proc print_ecoCommand {args} {
       }
       if {$newInstNamePrefix != ""} {
         if {[llength $loc] && [ifInBoxes $loc]} {
-          if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
-          } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
-            return "0x0:5"; # check $relativeDistToSink 
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\} -radius $radius" 
           } else {
             return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\}" 
           }
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:4"; # check your loc value, it is out of fplan boxes
         } elseif {![llength $loc] && $relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-          return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink -radius $radius" 
+          } else {
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
+          }
         } else {
           return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\}"
         }
       } else {
         if {[llength $loc] && [ifInBoxes $loc]} {
-          if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink" 
-          } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
-            return "0x0:5"; # check $relativeDistToSink 
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -radius $radius" 
           } else {
             return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\}" 
           }
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:6"; # check your loc value, it is out of fplan boxes
         } elseif {![llength $loc] && $relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-          return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink -radius $radius" 
+          } else {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink" 
+          }
         } elseif {$relativeDistToSink != "" && $relativeDistToSink <= 0 || $relativeDistToSink >= 1} {
           return "0x0:7"; # $relativeDistToSink range error
         } else {
@@ -87,26 +95,5 @@ define_proc_arguments print_ecoCommand \
     {-newInstNamePrefix "specify new inst name prefix when type is add" AString string optional}
     {-loc "specify location of new inst when type is add" AString string optional}
     {-relativeDistToSink "specify relative value when type is add.(use it when loader is only one)" AFloat float optional}
+    {-radius "specify radius searching location" AFloat float optional}
   }
-proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
-  if {![llength [lindex $boxes 0]]} {
-    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
-  }
-  foreach box $fplanBoxes {
-    if {[ifInBox $loc $box]} {
-      return 1 
-    }
-  }
-  return 0
-}
-proc ifInBox {{loc {0 0}} {box {0 0 10 10}}} {
-  set xRange [list [lindex $box 0] [lindex $box 2]]
-  set yRange [list [lindex $box 1] [lindex $box 3]]
-  set x [lindex $loc 0]
-  set y [lindex $loc 1]
-  if {[lindex $xRange 0] < $x && $x < [lindex $xRange 1] && [lindex $yRange 0] < $y && $y < [lindex $yRange 1]} {
-    return 1 
-  } else {
-    return 0 
-  }
-}

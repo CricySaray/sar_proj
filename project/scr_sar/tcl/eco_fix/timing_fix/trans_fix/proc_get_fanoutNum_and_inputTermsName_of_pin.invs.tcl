@@ -4,7 +4,7 @@
 # date      : Wed Jul  2 20:38:55 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc)
-# descrip   : get number of fanout and name of input terms of a pin. ONLY one pin!!! this pin is output
+# descrip   : get number of fanout and name of input terms of a pin. ONLY one pin!!! this pin is output or input
 # ref       : link url
 # --------------------------
 proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {

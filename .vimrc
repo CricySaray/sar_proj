@@ -86,7 +86,7 @@ cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
 " insert head of proc for tcl or perl, can change DATE to time now
 function! InsertProcessHead()
   " 读取文件的前9行到当前位置
-  execute 'r! sed -n ''1,9p'' ~/project/scr_sar/ref_content/head_of_proc.txt'
+  execute 'r! sed -n ''1,10p'' ~/project/scr_sar/ref_content/head_of_proc.txt'
   " 获取当前行号（即新插入内容的第一行）
   let end_line = line('.')
   " 计算结束行号（当前行 + 9）

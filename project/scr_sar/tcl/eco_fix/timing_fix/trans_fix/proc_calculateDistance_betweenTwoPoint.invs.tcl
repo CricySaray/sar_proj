@@ -39,5 +39,5 @@ proc calculateDistance {point1 point2 {epsilon 1e-10} {maxValue 1.0e+100}} {
     return 0.0
   }
   # 计算并返回距离
-  return [expr {sqrt($sumSq)}]
+  return [format "%.3f" [expr {sqrt($sumSq)}]]
 }

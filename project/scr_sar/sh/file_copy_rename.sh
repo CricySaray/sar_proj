@@ -5,9 +5,11 @@
 
 # Default parameters
 DRY_RUN=0
-FILE_PATTERN=".*"  # 默认匹配所有文件
-PATH_PATTERN=".*"  # 默认匹配所有路径
-NAME_TEMPLATE="{dir}_{file}"  # 默认命名模板
+SOURCES=("testfiles")
+TARGET_DIR="colsong"
+FILE_PATTERN="song.*"  # 默认匹配所有文件
+PATH_PATTERN="func_song|func_an"  # 默认匹配所有路径
+NAME_TEMPLATE="{dir}.{subdir}.{file}"  # 默认命名模板
 
 # Show help information
 function show_help {
@@ -81,9 +83,9 @@ function matches_regex {
 	local pattern="$2"
 
 	if [[ "$string" =~ $pattern ]]; then
-		return 0  # Match success
+		return 0;  # Match success
 	else
-		return 1  # Match failed
+		return 1;  # Match failed
 	fi
 }
 
@@ -103,6 +105,10 @@ function replace_template {
 	}
 
 # Process each source directory
+echo "SOURCE      : ${SOURCES[@]}"
+echo "PATH PATTERN: $PATH_PATTERN"
+echo "FILE PATTERN: $FILE_PATTERN"
+echo "# --------------"
 for source_dir in "${SOURCES[@]}"; do
 	# Normalize path
 	source_dir=$(realpath "$source_dir")
@@ -112,51 +118,55 @@ for source_dir in "${SOURCES[@]}"; do
 		continue
 	fi
 
-		# Get base name of source directory
-		dir_basename=$(basename "$source_dir")
+  # Get base name of source directory
+  dir_basename=$(basename "$source_dir")
 
-		# Traverse all files in the source directory
-		find "$source_dir" -type f | while read -r source_file; do
-		# Apply path pattern filter
-		if [[ ! $(matches_regex "$source_file" "$PATH_PATTERN") ]]; then
-			continue
-		fi
+  # Traverse all files in the source directory
+  find "$source_dir" -type f | while read -r source_file; do
+  # Apply path pattern filter
+    if  ! matches_regex "$source_file" "$PATH_PATTERN" ; then
+      echo "path($source_file) is not match \"$PATH_PATTERN\" : skip"
+      continue
+    fi
 
-				# Get filename
-				filename=$(basename "$source_file")
+    # Get filename
+    filename=$(basename "$source_file")
 
-				# Apply file pattern filter
-				if [[ ! $(matches_regex "$filename" "$FILE_PATTERN") ]]; then
-					continue
-				fi
+    # Apply file pattern filter
+    if ! matches_regex "$filename" "$FILE_PATTERN" ; then
+      echo "file($filename) is not match \"$FILE_PATTERN)\" : skip"
+      continue
+    fi
 
-				# Calculate relative path (relative to source directory)
-				rel_path="${source_file#$source_dir/}"
+    # Calculate relative path (relative to source directory)
+    rel_path="${source_file#$source_dir/}"
+    #echo "rel path ; $rel_path"
 
-				# Extract subdirectory part
-				sub_dir=$(dirname "$rel_path")
-				if [[ "$sub_dir" == "." ]]; then
-					sub_dir=""
-				else
-					# Replace path separators with underscores
-					sub_dir="${sub_dir//\//_}"
-				fi
+    # Extract subdirectory part
+    sub_dir=$(dirname "$rel_path")
+    if [[ "$sub_dir" == "." ]]; then
+      sub_dir=""
+    else
+      # Replace path separators with underscores
+      sub_dir="${sub_dir//\//_}"
+    fi
 
-				# Generate new filename
-				new_filename=$(replace_template "$NAME_TEMPLATE" "$dir_basename" "$sub_dir" "$filename")
+    # Generate new filename
+    new_filename=$(replace_template "$NAME_TEMPLATE" "$dir_basename" "$sub_dir" "$filename")
+    #echo "new filename : $new_filename"
 
-				# Construct target file path
-				target_file="$TARGET_DIR/$new_filename"
+    # Construct target file path
+    target_file="$TARGET_DIR/$new_filename"
 
-				# Show operation
-				if [[ $DRY_RUN -eq 1 ]]; then
-					echo "Would copy (dry run): $source_file -> $target_file"
-				else
-					echo "Copying: $source_file -> $target_file"
-					cp -f "$source_file" "$target_file" || echo "Error: Failed to copy $source_file"
-				fi
-			done
-		done
-
-		echo "Operation completed"
-		exit 0
+    # Show operation
+    if [[ $DRY_RUN -eq 1 ]]; then
+      echo "Would copy (dry run): $source_file -> $target_file"
+    else
+      echo "Copying: $source_file -> $target_file"
+      cp -f "$source_file" "$target_file" || echo "Error: Failed to copy $source_file"
+    fi
+  done
+done
+echo "# --------------"
+echo "Operation completed"
+exit 0

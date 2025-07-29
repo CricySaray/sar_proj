@@ -201,7 +201,7 @@ proc fix_fanout {args} {
 
       } elseif {!$flagNeedUseInsertRepeater && !$flagMultipleSinksType} {
         lappend needntInsertList [list "NI" {*}$allInfo]
-        if {$driverVT != $fastestVT && $violValue >= -0.005} { ; # can change VT
+        if {$driverVT != $fastestVT && $violValue >= -0.003} { ; # can change VT
           set refCelltype [strategy_changeVT $driverCelltype {{AL9 1} {AR9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
           lappend fixedList [list "NI" "T" $refCelltype "-$numLoadedSinks-" {*}$allInfo]
           lappend cmd1 [print_ecoCommand -type change -celltype $refCelltype -inst $driverInstname]
@@ -311,7 +311,7 @@ proc ifNeedUseInsertRepeater {{celltype ""} {violValue ""} {fastestVT "AL9"} {ce
     } else {
       if {$driveCapacity == "05"} {set driveCapacity 0.5} ; # for HH40/M31 std cell library
       set cellclass [get_cell_class $celltype]
-      if {$violValue >= -0.005} {
+      if {$violValue >= -0.003} {
         if {$VTtype == $fastestVT} {
           return 1
         }

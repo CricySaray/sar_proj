@@ -89,4 +89,3 @@ write_sdf \
 -no_negative_values { cell_delays net_delays } \
 ${blk_data_dir}/${blk_name}.${session}.sdf.gz
 
-sh ln -sf ${blk_data_dir}/${blk_name}.${session}.sdf.gz ${blk_data_dir}/${blk_name}.${rc_corner}.sdf.gz

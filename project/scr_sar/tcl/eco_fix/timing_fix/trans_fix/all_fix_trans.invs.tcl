@@ -1,8 +1,3 @@
-
-#
-# START OF FILE: fix_trans.invs.tcl (depth 0)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/fix_trans.invs.tcl
-#
 proc fix_trans {args} {
   set file_viol_pin                            ""
   set violValue_pin_columnIndex                {4 1}
@@ -41,7 +36,6 @@ proc fix_trans {args} {
     set fi [open $file_viol_pin r]
     set violValue_driverPin_onylOneLoaderPin_D3List [list ];
     set violValue_drivePin_loadPin_numSinks_sinks_D5List [list ];
-    set oneToMoreList_diffSinksCellclass [list ]
     set j 0
     while {[gets $fi line] > -1} {
       incr j
@@ -58,7 +52,6 @@ proc fix_trans {args} {
           lappend violValue_driverPin_onylOneLoaderPin_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
         } elseif {[lindex $num_termName_D2List 0] > 1} { ;
           lappend violValue_drivePin_loadPin_numSinks_sinks_D5List [list $viol_value $drive_pin $load_pin [lindex $num_termName_D2List 0] [lindex $num_termName_D2List 1]]
-          lappend oneToMoreList_diffSinksCellclass [list $viol_value $drive_pin $load_pin]
         }
       } else {
         set drive_pin $viol_pin
@@ -68,7 +61,6 @@ proc fix_trans {args} {
         } elseif {[lindex $num_termName_D2List 0] > 1} { ;
           set load_pin [lindex [lindex $num_termName_D2List 1] 0]
           lappend violValue_drivePin_loadPin_numSinks_sinks_D5List [list $viol_value $drive_pin $load_pin [lindex $num_termName_D2List 0] [lindex $num_termName_D2List 1]]
-          lappend oneToMoreList_diffSinksCellclass [list $viol_value $drive_pin $load_pin]
         }
         lappend cantExtractList "(Line $j) drivePin - not extract! : $line"
       }
@@ -79,9 +71,6 @@ proc fix_trans {args} {
     set violValue_drivePin_loadPin_numSinks_sinks_D5List [lsort -index 0 -real -decreasing $violValue_drivePin_loadPin_numSinks_sinks_D5List]
     set violValue_drivePin_loadPin_numSinks_sinks_D5List [lsort -index 0 -real -increasing [lsort -unique -index 2 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]
     if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
-    set oneToMoreList_diffSinksCellclass [lsort -index 0 -real -decreasing $oneToMoreList_diffSinksCellclass]
-    set oneToMoreList_diffSinksCellclass [lsort -index 1 -increasing [lsort -unique -index 2 $oneToMoreList_diffSinksCellclass]]
-    set oneToMoreList_diffSinksCellclass [linsert $oneToMoreList_diffSinksCellclass 0 [list violValue drivePin loadPin]]
     set cantChangePrompts {
       "# error/warning symbols"
       "# changeVT:"
@@ -3013,96 +3002,175 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
     set sf [open $sumFile w]
     set di [open $one2moreDetailViolInfo w]
     if {1} {
-      puts $ce "CANT EXTRACT:"
-      puts $ce ""
-      if {[info exists cantExtractList]} { puts $ce [join $cantExtractList \n] }
-      set beginIndexOfOne2MoreCmds [expr [lsearch -exact $cmdList $beginOfOne2MoreCmds] + 2]
-      set endIndexOfOne2MoreCmds [expr [lindex [lsearch -exact -all $cmdList "setEcoMode -reset"] end] - 2]
-      set reverseOne2MoreCmdFromCmdList [reverseListRange $cmdList $beginIndexOfOne2MoreCmds $endIndexOfOne2MoreCmds 0 0 1 "#"]
-      pw $co [join $cmdList \n]
+      if {[info exists cantExtractList]} {
+        puts $ce "CANT EXTRACT:"
+        puts $ce ""
+        puts $ce [join $cantExtractList \n]
+      } else {
+        puts $ce "HAVE NO CANT EXTRACT LIST!!!"
+        puts $ce ""
+      }
+      if {[regexp {ecoChangeCell|ecoAddRepeater} $cmdList]} {
+        set beginIndexOfOne2MoreCmds [expr [lsearch -exact $cmdList $beginOfOne2MoreCmds] + 2]
+        set endIndexOfOne2MoreCmds [expr [lindex [lsearch -exact -all $cmdList "setEcoMode -reset"] end] - 2]
+        set reverseOne2MoreCmdFromCmdList [reverseListRange $cmdList $beginIndexOfOne2MoreCmds $endIndexOfOne2MoreCmds 0 0 1 "#"] ;
+        pw $co [join $cmdList \n]
+      } else {
+        pw $co ""
+        pw $co "# HAVE NO CMD!!!"
+        pw $co ""
+      }
       pw $sf "Summary of fixed:"
       pw $sf ""
-      pw $sf "FIXED CELL LIST"
+      pw $sf "FIXED LIST"
       pw $sf [join $fixedPrompts \n]
       pw $sf ""
-      pw $sf [print_formatedTable $fixedList_1v1]
-      pw $sf "total fixed : [expr [llength $fixedList_1v1] - 1]"
-      pw $sf ""
-      pw $sf "situ  num"
-      foreach s $situs { set num [eval set -nonewline \${num_${s}}]; lappend situ_number [list $s $num] }
-      pw $sf [print_formatedTable $situ_number]
-      pw $sf ""
-      pw $sf "method num"
-      foreach m $methods { set num [eval set -nonewline \${num_${m}}]; lappend method_number [list $m $num] }
-      pw $sf [print_formatedTable $method_number]
-      pw $sf ""
-      pw $sf "CANT CHANGE LIST"
-      pw $sf [join $cantChangePrompts \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $cantChangeList_1v1]
-      pw $sf ""
-      pw $sf "SKIPPED LIST"
-      pw $sf [join $skippedSituationsPrompt \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $skippedList_1v1]
-      pw $sf ""
-      pw $sf "NOT CONSIDERED LIST"
-      pw $sf ""
-      pw $sf [join $notConsideredPrompt \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $notConsideredList_1v1]
-      pw $sf "total non-considered [expr [llength $notConsideredList_1v1] - 1]"
-      pw $sf ""
-      pw $sf "FIXED CELL LIST: ONE 2 MORE"
-      pw $sf [join $fixedPrompts_one2more \n]
-      pw $sf ""
-      if {[llength $fixedList_one2more] >= 2} {
-        set reversedFixedList_one2more [reverseListRange $fixedList_one2more 1 end 0]
+      if {[llength $fixedList_1v1] > 1} {
+        pw $sf [print_formatedTable $fixedList_1v1]
+        pw $sf "total fixed : [expr [llength $fixedList_1v1] - 1]"
+        pw $sf ""
+        pw $sf "situ  num"
+        foreach s $situs { set num [eval set -nonewline \${num_${s}}]; lappend situ_number [list $s $num] }
+        pw $sf [print_formatedTable $situ_number]
+        pw $sf ""
+        pw $sf "method num"
+        foreach m $methods { set num [eval set -nonewline \${num_${m}}]; lappend method_number [list $m $num] }
+        pw $sf [print_formatedTable $method_number]
+        pw $sf ""
       } else {
-        set reversedFixedList_one2more $fixedList_one2more
+        pw $sf ""
+        pw $sf "# HAVE NO FIXED LIST!!!"
+        pw $sf ""
       }
-      pw $sf [print_formatedTable $reversedFixedList_one2more]
-      pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
-      pw $sf ""
-      pw $sf "situ  num"
-      foreach s $m_situs { set num [eval set -nonewline \${m_num_${s}}]; lappend m_situ_number [list $s $num] }
-      pw $sf [print_formatedTable $m_situ_number]
-      pw $sf ""
-      pw $sf "method num"
-      foreach m $m_methods { set num [eval set -nonewline \${m_num_${m}}]; lappend m_method_number [list $m $num] }
-      pw $sf [print_formatedTable $m_method_number]
-      pw $sf ""
-      pw $sf "CANT CHANGE LIST: ONE 2 MORE"
-      pw $sf [join $cantChangePrompts_one2more \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $cantChangeList_one2more]
-      pw $sf ""
-      pw $sf "SKIPPED LIST: ONE 2 MORE"
-      pw $sf [join $skippedSituationsPrompt_one2more \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $skippedList_one2more]
-      pw $sf ""
-      pw $sf "NOT CONSIDERED LIST: ONE 2 MORE"
-      pw $sf ""
-      pw $sf [join $notConsideredPrompt_one2more \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $notConsideredList_one2more]
-      pw $sf "total non-considered [expr [llength [lsort -unique -index 5 $notConsideredList_one2more]] - 1]"
-      pw $sf ""
-      pw $sf "DIFF TYPES OF SINKS: ONE 2 MORE"
-      pw $sf ""
-      pw $sf [print_formatedTable $one2moreList_diffTypesOfSinks]
-      pw $sf "total viol drivePin (sorted) with diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
-      puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
-      puts $di ""
-      puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
-      puts $di "total of all viol sinks : [expr [llength $one2moreDetailList_withAllViolSinkPinsInfo] - 1]"
-      puts $di "total of all viol drivePin (sorted) : [expr [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]] - 1]"
-      puts $di ""
+      if {[llength $cantChangeList_1v1] > 1} {
+        pw $sf "CANT CHANGE LIST"
+        pw $sf [join $cantChangePrompts \n]
+        pw $sf ""
+        pw $sf [print_formatedTable $cantChangeList_1v1]
+        pw $sf ""
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO CANT CHANGE LIST!!!"
+        pw $sf ""
+      }
+      if {[llength $skippedList_1v1] > 1} {
+        pw $sf "SKIPPED LIST"
+        pw $sf [join $skippedSituationsPrompt \n]
+        pw $sf ""
+        pw $sf [print_formatedTable $skippedList_1v1]
+        pw $sf ""
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO SKIPPED LIST!!!"
+        pw $sf ""
+      }
+      if {[llength $notConsideredList_1v1] > 1} {
+        pw $sf "NOT CONSIDERED LIST"
+        pw $sf ""
+        pw $sf [join $notConsideredPrompt \n]
+        pw $sf ""
+        pw $sf [print_formatedTable $notConsideredList_1v1]
+        pw $sf "total non-considered [expr [llength $notConsideredList_1v1] - 1]"
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO NON-CONSIDERED LIST!!!"
+        pw $sf ""
+      }
+      if {[llength $violValue_drivePin_loadPin_numSinks_sinks_D5List] > 1} {
+        if {[llength $fixedList_one2more] > 1} {
+          pw $sf ""
+          pw $sf "FIXED CELL LIST: ONE 2 MORE"
+          pw $sf [join $fixedPrompts_one2more \n]
+          pw $sf ""
+          if {[llength $fixedList_one2more] >= 2} {
+            set reversedFixedList_one2more [reverseListRange $fixedList_one2more 1 end 0]
+          } else {
+            set reversedFixedList_one2more $fixedList_one2more
+          }
+          pw $sf [print_formatedTable $reversedFixedList_one2more]
+          pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
+          pw $sf ""
+          pw $sf "situ  num"
+          foreach s $m_situs { set num [eval set -nonewline \${m_num_${s}}]; lappend m_situ_number [list $s $num] }
+          pw $sf [print_formatedTable $m_situ_number]
+          pw $sf ""
+          pw $sf "method num"
+          foreach m $m_methods { set num [eval set -nonewline \${m_num_${m}}]; lappend m_method_number [list $m $num] }
+          pw $sf [print_formatedTable $m_method_number]
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO FIXED LIST!!!"
+          pw $sf ""
+        }
+        if {[llength $cantChangeList_one2more] > 1} {
+          pw $sf "CANT CHANGE LIST: ONE 2 MORE"
+          pw $sf [join $cantChangePrompts_one2more \n]
+          pw $sf ""
+          pw $sf [print_formatedTable $cantChangeList_one2more]
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO CANT CHANGE LIST!!!"
+          pw $sf ""
+        }
+        if {[llength $skippedList_one2more] > 1} {
+          pw $sf "SKIPPED LIST: ONE 2 MORE"
+          pw $sf [join $skippedSituationsPrompt_one2more \n]
+          pw $sf ""
+          pw $sf [print_formatedTable $skippedList_one2more]
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO SKIPPED LIST!!!"
+          pw $sf ""
+        }
+        if {[llength $notConsideredList_one2more] > 1} {
+          pw $sf "NOT CONSIDERED LIST: ONE 2 MORE"
+          pw $sf ""
+          pw $sf [join $notConsideredPrompt_one2more \n]
+          pw $sf ""
+          pw $sf [print_formatedTable $notConsideredList_one2more]
+          pw $sf "total non-considered [expr [llength [lsort -unique -index 5 $notConsideredList_one2more]] - 1]"
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO NON-CONSIDERED LIST!!!"
+          pw $sf ""
+        }
+        if {[llength $one2moreList_diffTypesOfSinks] > 1} {
+          pw $sf "DIFF TYPES OF SINKS: ONE 2 MORE"
+          pw $sf ""
+          pw $sf [print_formatedTable $one2moreList_diffTypesOfSinks]
+          pw $sf "total viol drivePin (sorted) with diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO DIFF-TYPES-Of-SINKS LIST!!!"
+          pw $sf ""
+        }
+        puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
+        puts $di ""
+        puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
+        puts $di "total of all viol sinks : [expr [llength $one2moreDetailList_withAllViolSinkPinsInfo] - 1]"
+        puts $di "total of all viol drivePin (sorted) : [expr [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]] - 1]"
+        puts $di ""
+      } else {
+        pw $sf "HAVE NO ONE 2 MORE SITUATION!!!"
+      }
       pw $sf ""
       pw $sf "TWO SITUATIONS OF ALL VIOLATIONS:"
-      pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
-      pw $sf "1 v more number: [llength [lsort -unique -index 1 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]"
+      pw $sf "#  --------------------------- #"
+      if {[llength $violValue_driverPin_onylOneLoaderPin_D3List] > 1} {
+        pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
+      } else {
+        pw $sf "have NO 1 v 1 situation!!!"
+      }
+      if {[llength $violValue_drivePin_loadPin_numSinks_sinks_D5List] > 1} {
+        pw $sf "1 v more number: [llength [lsort -unique -index 1 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]"
+      } else {
+        pw $sf "have NO one2more situation!!!"
+      }
       pw $sf ""
     }
     close $ce
@@ -3137,26 +3205,6 @@ define_proc_arguments fix_trans \
     {-suffixFilename "specify suffix of result filename" AString string optional}
     {-debug "debug mode" "" boolean optional}
   }
-proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} { ;
-    return "0x0:1";
-  } else {
-    set wholename 0
-    set driveLevel 0
-    set VTtype 0
-    regexp $regExp $celltype wholename driveLevel VTtype
-    if {$driveLevel == "05"} {set driveLevel 0.5}
-    return $driveLevel
-  }
-}
-
-# SOURCE COMMAND: source ../../../incr_integer_inself.common.tcl; # ci(proc counter), don't use array: counters
-# Resolving: ../../../incr_integer_inself.common.tcl (from current working directory)
-
-#
-# START OF FILE: ../../../incr_integer_inself.common.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/incr_integer_inself.common.tcl
-#
 alias ci "counter"
 catch {unset counters}
 proc counter {input {holdon 0} {start 1}} {
@@ -3169,18 +3217,6 @@ proc counter {input {holdon 0} {start 1}} {
     }
     return "$counters($input)"
 }
-
-#
-# END OF FILE: ../../../incr_integer_inself.common.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ../../../logic_or_and.common.tcl; # operators: lo la ol al re eo - return 0|1
-# Resolving: ../../../logic_or_and.common.tcl (from current working directory)
-
-#
-# START OF FILE: ../../../logic_or_and.common.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/logic_or_and.common.tcl
-#
 proc la {args} {
 	if {[llength $args] == 0} {
 		error "la: requires at least one argument";
@@ -3296,18 +3332,6 @@ proc ifEmptyZero {value trueValue falseValue} {
     }
     return $trueValue
 }
-
-#
-# END OF FILE: ../../../logic_or_and.common.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
-# Resolving: ./proc_getPt_ofObj.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_getPt_ofObj.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_getPt_ofObj.invs.tcl
-#
 alias gpt "getPt_ofObj"
 proc getPt_ofObj {{obj ""}} {
   if {[lindex $obj 0] == [lindex [lindex $obj 0 ] 0]} {
@@ -3330,19 +3354,10 @@ proc getPt_ofObj {{obj ""}} {
     }
   }
 }
-
-#
-# END OF FILE: ./proc_getPt_ofObj.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_get_net_lenth.invs.tcl; # get_net_length - num
-# Resolving: ./proc_get_net_lenth.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_get_net_lenth.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl
-#
 proc get_net_length {{net ""}} {
+  if {[lindex $net 0] == [lindex $net 0 0]} {
+    set net [lindex $net 0]
+  }
 	if {$net == "0x0" || [dbget top.nets.name $net -e] == ""} {
 		return "0x0:1"
 	} else {
@@ -3355,18 +3370,6 @@ proc get_net_length {{net ""}} {
 	}
 }
 alias gl "get_net_length"
-
-#
-# END OF FILE: ./proc_get_net_lenth.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
-# Resolving: ./proc_if_driver_or_load.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_if_driver_or_load.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_if_driver_or_load.invs.tcl
-#
 proc if_driver_or_load {{pin ""}} {
   if {$pin == "" || $pin == "0x0" || [dbget top.insts.instTerms.name $pin -e] == ""} {
     return "0x0:1"
@@ -3378,18 +3381,6 @@ proc if_driver_or_load {{pin ""}} {
     }
   }
 }
-
-#
-# END OF FILE: ./proc_if_driver_or_load.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return list [num termsNameList] || get_driverPin - return drivePin
-# Resolving: ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl
-#
 proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {
   if {$pin == "" || $pin == "0x0" || [dbget top.insts.instTerms.name $pin -e] == ""} {
     return "0x0:1"
@@ -3419,23 +3410,17 @@ proc get_loadPins {{pin ""}} {
   } else {
   }
 }
-
-#
-# END OF FILE: ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl; # get_cellDriveLevel_and_VTtype_of_inst - return [instname cellName driveLevel VTtype]
-# Resolving: ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl
-#
-proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
-  if {$inst == "" || $inst == "0x0" || [dbget top.insts.name $inst -e] == ""} {
+proc get_cellDriveLevel_and_VTtype_of_inst {{instOrPin ""} {regExp "D(\\d+).*CPD(U?L?H?VT)?"}} {
+  if {$instOrPin == "" || $instOrPin == "0x0" || [dbget top.insts.name $instOrPin -e] == "" && [dbget top.insts.instTerms.name $instOrPin -e] == ""} {
     return "0x0:1"
   } else {
-    set cellName [dbget [dbget top.insts.name $inst -p].cell.name]
+    if {[dbget top.insts.name $instOrPin -e] != ""} {
+      set cellName [dbget [dbget top.insts.name $instOrPin -p].cell.name]
+      set instname $instOrPin
+    } else {
+      set cellName [dbget [dbget top.insts.instTerms.name $instOrPin -p2].cell.name]
+      set instname [dbget [dbget top.insts.instTerms.name $instOrPin -p2].name]
+    }
     set wholeName 0
     set levelNum 0
     set VTtype 0
@@ -3444,9 +3429,9 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
       return "0x0:2"
     } else {
       if {$VTtype == ""} {set VTtype "SVT"}
-      if {$levelNum == "05"} {set levelNumTemp 0.5} else {set levelNumTemp [expr int($levelNum)]}
+      if {$levelNum == "05"} {set levelNumTemp 0.5} else {set levelNumTemp [expr $levelNum]}
       set instName_cellName_driveLevel_VTtype_List [list ]
-      lappend instName_cellName_driveLevel_VTtype_List $inst
+      lappend instName_cellName_driveLevel_VTtype_List $instname
       lappend instName_cellName_driveLevel_VTtype_List $cellName
       lappend instName_cellName_driveLevel_VTtype_List $levelNumTemp
       lappend instName_cellName_driveLevel_VTtype_List $VTtype
@@ -3454,72 +3439,80 @@ proc get_cellDriveLevel_and_VTtype_of_inst {{inst ""} {regExp "D(\\d+).*CPD(U?L?
     }
   }
 }
-
-#
-# END OF FILE: ./proc_get_cellDriveLevel_and_VTtype_of_inst.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_get_cell_class.invs.tcl; # get_cell_class - return logic|buffer|inverter|CLKcell|sequential|gating|other
-# Resolving: ./proc_get_cell_class.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_get_cell_class.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_get_cell_class.invs.tcl
-#
-proc get_cell_class {{instOrPin ""}} {
-  if {$instOrPin == "" || $instOrPin == "0x0" || [expr  {[dbget top.insts.name $instOrPin -e] == "" && [dbget top.insts.instTerms.name $instOrPin -e] == ""}]} {
+proc get_cell_class {{instOrPinOrCelltype ""}} {
+  if {$instOrPinOrCelltype == "" || $instOrPinOrCelltype == "0x0" || [expr  {[dbget top.insts.name $instOrPinOrCelltype -e] == "" && [dbget top.insts.instTerms.name $instOrPinOrCelltype -e] == ""}]} {
     return "0x0:1";
   } else {
-    if {[dbget top.insts.name $instOrPin -e] != ""} {
-      return [logic_of_mux $instOrPin]
-    } elseif {[dbget top.insts.instTerms.name $instOrPin -e] != ""} {
-      set inst_ofPin [dbget [dbget top.insts.instTerms.name $instOrPin -p2].name]
+    if {[dbget top.insts.name $instOrPinOrCelltype -e] != ""} {
+      return [logic_of_mux $instOrPinOrCelltype]
+    } elseif {[dbget top.insts.instTerms.name $instOrPinOrCelltype -e] != ""} {
+      set inst_ofPin [dbget [dbget top.insts.instTerms.name $instOrPinOrCelltype -p2].name]
       return [logic_of_mux $inst_ofPin]
+    } elseif {[dbget head.libCells.name $instOrPinOrCelltype -e] != ""} {
+      return [logic_of_mux $instOrPinOrCelltype]
     }
   }
 }
-proc logic_of_mux {inst} {
-  set celltype [dbget [dbget top.insts.name $inst -p].cell.name]
-  if {[get_property [get_cells $inst] is_memory_cell]} {
-    return "mem"
-  } elseif {[get_property [get_cells $inst] is_sequential]} {
-    return "sequential"
-  } elseif {[regexp {CLK} $celltype]} {
-    if {[get_property [get_cells $inst] is_buffer]} {
-      return "CLKbuffer"
-    } elseif {[get_property [get_cells $inst] is_inverter]} {
-      return "CLKinverter"
-    } elseif {[get_property [get_cells $inst] is_combinational]} {
-      return "CLKlogic"
+proc logic_of_mux {instOrCelltype} {
+  if {[dbget top.insts.name $instOrCelltype -e] != ""} {
+    set celltype [dbget [dbget top.insts.name $instOrCelltype -p].cell.name]
+    if {[get_property [get_cells $instOrCelltype] is_memory_cell]} {
+      return "mem"
+    } elseif {[get_property [get_cells $instOrCelltype] is_sequential]} {
+      return "sequential"
+    } elseif {[regexp {CLK} $celltype]} {
+      if {[get_property [get_cells $instOrCelltype] is_buffer]} {
+        return "CLKbuffer"
+      } elseif {[get_property [get_cells $instOrCelltype] is_inverter]} {
+        return "CLKinverter"
+      } elseif {[get_property [get_cells $instOrCelltype] is_combinational]} {
+        return "CLKlogic"
+      } else {
+        return "CLKcell"
+      }
+    } elseif {[regexp {^DEL} $celltype] && [get_property [get_cells $instOrCelltype] is_buffer]} {
+      return "delay"
+    } elseif {[get_property [get_cells $instOrCelltype] is_buffer]} {
+      return "buffer"
+    } elseif {[get_property [get_cells $instOrCelltype] is_inverter]} {
+      return "inverter"
+    } elseif {[get_property [get_cells $instOrCelltype] is_integrated_clock_gating_cell]} {
+      return "gating"
+    } elseif {[get_property [get_cells $instOrCelltype] is_combinational]} {
+      return "logic"
     } else {
-      return "CLKcell"
+      return "other"
     }
-  } elseif {[regexp {^DEL} $celltype] && [get_property [get_cells $inst] is_buffer]} {
-    return "delay"
-  } elseif {[get_property [get_cells $inst] is_buffer]} {
-    return "buffer"
-  } elseif {[get_property [get_cells $inst] is_inverter]} {
-    return "inverter"
-  } elseif {[get_property [get_cells $inst] is_integrated_clock_gating_cell]} {
-    return "gating"
-  } elseif {[get_property [get_cells $inst] is_combinational]} {
-    return "logic"
-  } else {
-    return "other"
+  } elseif {[dbget head.libCells.name $instOrPinOrCelltype -e] == ""} {
+    if {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_memory_cell]]} {
+      return "mem"
+    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_sequential]]} {
+      return "sequential"
+    } elseif {[regexp {CLK} $instOrCelltype]} {
+      if {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_buffer]]} {
+        return "CLKbuffer"
+      } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_inverter]]} {
+        return "CLKinverter"
+      } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_combinational]]} {
+        return "CLKlogic"
+      } else {
+        return "CLKcell"
+      }
+    } elseif {[regexp {^DEL} $instOrCelltype] && [lsort -unique [get_property [get_lib_cells $instOrCelltype] is_buffer]]} {
+      return "delay"
+    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_buffer]]} {
+      return "buffer"
+    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_inverter]]} {
+      return "inverter"
+    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_integrated_clock_gating_cell]]} {
+      return "gating"
+    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_combinational]]} {
+      return "logic"
+    } else {
+      return "other"
+    }
   }
 }
-
-#
-# END OF FILE: ./proc_get_cell_class.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT - return VT-changed cellname
-# Resolving: ./proc_strategy_changeVT.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_strategy_changeVT.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_changeVT.invs.tcl
-#
 proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {ifForceValid 1}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
     return "0x0:1"
@@ -3596,14 +3589,6 @@ proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed
     }
   }
 }
-
-# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_whichProcess_fromStdCellPattern.invs.tcl (depth 2)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_whichProcess_fromStdCellPattern.invs.tcl
-#
 proc whichProcess_fromStdCellPattern {{celltype ""}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
     return "0x0:1";
@@ -3618,22 +3603,6 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
     return $processType
   }
 }
-
-#
-# END OF FILE: ./proc_whichProcess_fromStdCellPattern.invs.tcl (depth 2)
-#
-
-#
-# END OF FILE: ./proc_strategy_changeVT.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype - return toAddCelltype
-# Resolving: ./proc_strategy_addRepeaterCelltype.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_strategy_addRepeaterCelltype.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_addRepeaterCelltype.invs.tcl
-#
 proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {method "refDriver|refLoader|auto"} {forceSpecifyDriveCapacibility 4} {driveRange {4 16}} {ifGetBigDriveNumInAvaialbeDriveCapacityList 1} {refType "BUFD4BWP6T16P96CPD"} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} } {
   if {$driverCelltype == "" || $loaderCelltype == "" || [dbget top.insts.cell.name $driverCelltype -e] == "" || [dbget top.insts.cell.name $loaderCelltype -e] == ""} {
     error "proc strategy_addRepeaterCelltype: check your input !!!";
@@ -3703,18 +3672,7 @@ proc strategy_addRepeaterCelltype {{driverCelltype ""} {loaderCelltype ""} {meth
     }
   }
 }
-
-# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # proc: whichProcess_fromStdCellPattern
-# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
-
-# SOURCE COMMAND: source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList list num big?
-# Resolving: ./proc_find_nearestNum_atIntegerList.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_find_nearestNum_atIntegerList.invs.tcl (depth 2)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_find_nearestNum_atIntegerList.invs.tcl
-#
 proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {ifClamp 1}} {
   set s [lsort -unique -increasing -real $realList]
   set idx [lsearch -exact -real $s $number]
@@ -3740,18 +3698,6 @@ proc find_nearestNum_atIntegerList {{realList {}} number {returnBigOneFlag 1} {i
   set upperIdx [expr {$lowerIdx + 1}]
   return [lindex $s [expr {$returnBigOneFlag ? $upperIdx : $lowerIdx}]]
 }
-
-#
-# END OF FILE: ./proc_find_nearestNum_atIntegerList.invs.tcl (depth 2)
-#
-
-# SOURCE COMMAND: source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
-# Resolving: ./proc_changeDriveCapacity_of_celltype.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_changeDriveCapacity_of_celltype.invs.tcl (depth 2)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_changeDriveCapacity_of_celltype.invs.tcl
-#
 proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDriveCapacibility 0} {toDriverCapacibility 0}} {
   set processType [whichProcess_fromStdCellPattern $refType]
   if {$processType == "TSMC"} { ;
@@ -3765,26 +3711,7 @@ proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDr
     error "proc changeDriveCapacity_of_celltype: process of std cell is not belong to TSMC or HH!!!"
   }
 }
-
-# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
-
-#
-# END OF FILE: ./proc_changeDriveCapacity_of_celltype.invs.tcl (depth 2)
-#
-
-#
-# END OF FILE: ./proc_strategy_addRepeaterCelltype.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
-# Resolving: ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl
-#
 proc strategy_changeDriveCapacity {{celltype ""} {forceSpecifyDriveCapacity 4} {changeStairs 1} {driveRange {1 16}} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {ifClamp 1} {debug 0}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
     error "proc strategy_changeDriveCapacity: check your input!!!"
@@ -3868,26 +3795,8 @@ if {$debug} { puts "- > $minAvailableDriveOnRnage $maxAvailableDriveOnRange" }
     }
   }
 }
-
-# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
-
-# SOURCE COMMAND: source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-# Resolving: ./proc_find_nearestNum_atIntegerList.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_find_nearestNum_atIntegerList.invs.tcl
-
-#
-# END OF FILE: ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
-# Resolving: ./proc_print_ecoCommands.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_print_ecoCommands.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_print_ecoCommands.invs.tcl
-#
 proc print_ecoCommand {args} {
   set type                "change";
   set inst                ""
@@ -3896,6 +3805,7 @@ proc print_ecoCommand {args} {
   set newInstNamePrefix   ""
   set loc                 {}
   set relativeDistToSink  ""
+  set radius              ""
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -3915,33 +3825,37 @@ proc print_ecoCommand {args} {
       }
       if {$newInstNamePrefix != ""} {
         if {[llength $loc] && [ifInBoxes $loc]} {
-          if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink"
-          } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
-            return "0x0:5";
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\} -radius $radius"
           } else {
             return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -loc \{$loc\}"
           }
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:4";
         } elseif {![llength $loc] && $relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-          return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink"
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink -radius $radius"
+          } else {
+            return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink"
+          }
         } else {
           return "ecoAddRepeater -name $newInstNamePrefix -cell $celltype -term \{$terms\}"
         }
       } else {
         if {[llength $loc] && [ifInBoxes $loc]} {
-          if {$relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -relativeDistToSink $relativeDistToSink"
-          } elseif {$relativeDistToSink != "" && $relativeDistToSink < 0 || $relativeDistToSink != "" && $relativeDistToSink > 1} {
-            return "0x0:5";
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\} -radius $radius"
           } else {
             return "ecoAddRepeater -cell $celltype -term \{$terms\} -loc \{$loc\}"
           }
         } elseif {[llength $loc] && ![ifInBoxes $loc]} {
           return "0x0:6";
         } elseif {![llength $loc] && $relativeDistToSink != "" && $relativeDistToSink > 0 && $relativeDistToSink < 1} {
-          return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink"
+          if {$radius != "" && [string is double $radius]} {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink -radius $radius"
+          } else {
+            return "ecoAddRepeater -cell $celltype -term \{$terms\} -relativeDistToSink $relativeDistToSink"
+          }
         } elseif {$relativeDistToSink != "" && $relativeDistToSink <= 0 || $relativeDistToSink >= 1} {
           return "0x0:7";
         } else {
@@ -3968,6 +3882,7 @@ define_proc_arguments print_ecoCommand \
     {-newInstNamePrefix "specify new inst name prefix when type is add" AString string optional}
     {-loc "specify location of new inst when type is add" AString string optional}
     {-relativeDistToSink "specify relative value when type is add.(use it when loader is only one)" AFloat float optional}
+    {-radius "specify radius searching location" AFloat float optional}
   }
 proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
   if {![llength [lindex $boxes 0]]} {
@@ -3991,18 +3906,7 @@ proc ifInBox {{loc {0 0}} {box {0 0 10 10}}} {
     return 0
   }
 }
-
-#
-# END OF FILE: ./proc_print_ecoCommands.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
-# Resolving: ./proc_print_formatedTable.common.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_print_formatedTable.common.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_print_formatedTable.common.tcl
-#
+# Skipping already processed file: ./proc_ifInBoxes.invs.tcl
 proc print_formatedTable {{dataList {}}} {
   set text ""
   foreach row $dataList {
@@ -4019,34 +3923,10 @@ proc print_formatedTable {{dataList {}}} {
   close $pipe
   return [join $formattedLines \n]
 }
-
-#
-# END OF FILE: ./proc_print_formatedTable.common.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
-# Resolving: ./proc_pw_puts_message_to_file_and_window.common.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_pw_puts_message_to_file_and_window.common.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_pw_puts_message_to_file_and_window.common.tcl
-#
 proc pw {{fileId ""} {message ""}} {
   puts $message
   puts $fileId $message
 }
-
-#
-# END OF FILE: ./proc_pw_puts_message_to_file_and_window.common.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl; # strategy_clampDriveCapacity_BetweenDriverSink - return celltype
-# Resolving: ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl
-#
 proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCelltype ""} {toCheckCelltype ""} {regExp "D(\\d+)BWP.*CPD(U?L?H?VT)?"} {refDriverOrSink "refSink"} {maxExcessRatio 0.5}} {
   if {$driverCelltype == "" || [dbget head.libCells.name $driverCelltype -e] == "" || $sinkCelltype == "" || [dbget head.libCells.name $sinkCelltype -e] == "" || $toCheckCelltype == "" || [dbget head.libCells.name $toCheckCelltype -e] == ""} {
     error "proc strategy_clampDriveCapacity_BetweenDriverSink: check your input!!!"
@@ -4089,30 +3969,9 @@ proc strategy_clampDriveCapacity_BetweenDriverSink {{driverCelltype ""} {sinkCel
     }
   }
 }
-
-# SOURCE COMMAND: source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
-# Resolving: ./proc_whichProcess_fromStdCellPattern.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_whichProcess_fromStdCellPattern.invs.tcl
-
-# SOURCE COMMAND: source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
-# Resolving: ./proc_find_nearestNum_atIntegerList.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_find_nearestNum_atIntegerList.invs.tcl
-
-# SOURCE COMMAND: source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
-# Resolving: ./proc_changeDriveCapacity_of_celltype.invs.tcl (from current working directory)
 # Skipping already processed file: ./proc_changeDriveCapacity_of_celltype.invs.tcl
-
-#
-# END OF FILE: ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints - input pointsList, return center pt
-# Resolving: ./proc_calculateResistantCenter_advanced.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_calculateResistantCenter_advanced.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter_advanced.invs.tcl
-#
 proc calculateResistantCenter_fromPoints {pointsList {filterStrategy "auto"} {threshold 3.0} {densityThreshold 0.75} {minPoints 5}} {
   set pointCount [llength $pointsList]
   if {$pointCount == 0} {
@@ -4243,18 +4102,6 @@ proc zip {list1 list2} {
 proc min {a b} {
   expr {$a < $b ? $a : $b}
 }
-
-#
-# END OF FILE: ./proc_calculateResistantCenter_advanced.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint - return relative point
-# Resolving: ./proc_calculateRelativePoint.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_calculateRelativePoint.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_calculateRelativePoint.invs.tcl
-#
 proc calculateRelativePoint {startPoint endPoint {relativeValue 0.5} {clampValue 1} {epsilon 1e-10}} {
   if {[llength $startPoint] != 2 || [llength $endPoint] != 2} {
     error "Both startPoint and endPoint must be 2D coordinates in the format {x y}"
@@ -4285,18 +4132,6 @@ proc calculateRelativePoint {startPoint endPoint {relativeValue 0.5} {clampValue
   set y [format "%.3f" $y]
   return [list $x $y]
 }
-
-#
-# END OF FILE: ./proc_calculateRelativePoint.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance - return value of distance
-# Resolving: ./proc_calculateDistance_betweenTwoPoint.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_calculateDistance_betweenTwoPoint.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_calculateDistance_betweenTwoPoint.invs.tcl
-#
 proc calculateDistance {point1 point2 {epsilon 1e-10} {maxValue 1.0e+100}} {
   if {[llength $point1] != 2 || [llength $point2] != 2} {
     error "Both points must be 2D coordinates in the format {x y}"
@@ -4320,20 +4155,8 @@ proc calculateDistance {point1 point2 {epsilon 1e-10} {maxValue 1.0e+100}} {
   if {$sumSq < $epsilon} {
     return 0.0
   }
-  return [expr {sqrt($sumSq)}]
+  return [format "%.3f" [expr {sqrt($sumSq)}]]
 }
-
-#
-# END OF FILE: ./proc_calculateDistance_betweenTwoPoint.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement - return string
-# Resolving: ./proc_findMostFrequentElementOfList.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_findMostFrequentElementOfList.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.invs.tcl
-#
 proc findMostFrequentElement {inputList {minPercentage 50.0} {returnUnique 1}} {
 	set listLength [llength $inputList]
 	if {$listLength == 0} {
@@ -4365,18 +4188,6 @@ proc findMostFrequentElement {inputList {minPercentage 50.0} {returnUnique 1}} {
 	}
 	return [lindex $mostFrequentElements 0]
 }
-
-#
-# END OF FILE: ./proc_findMostFrequentElementOfList.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_reverseListRange.invs.tcl; # reverseListRange - return reversed list
-# Resolving: ./proc_reverseListRange.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_reverseListRange.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_reverseListRange.invs.tcl
-#
 proc reverseListRange {listVar {startIdx ""} {endIdx ""} {deep 0} {groupSize 0} {groupByHash 0} {hashMarker "#"} {allowMixedGroups 0}} {
   if {![string is list -strict $listVar]} {
     error "Input is not a valid list: '$listVar'"
@@ -4518,18 +4329,6 @@ if {0} {
   puts "原始: {1 {2 3} 4 #5 6 {7 8} #9 10}"
   puts "结果: [reverseListRange {1 {2 3} 4 #5 6 {7 8} #9 10} 0 end 1 0 1]"
 }
-
-#
-# END OF FILE: ./proc_reverseListRange.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_formatDecimal.invs.tcl; # formatDecimal/fm - return string converted from number
-# Resolving: ./proc_formatDecimal.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_formatDecimal.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_formatDecimal.invs.tcl
-#
 alias fm "formatDecimal"
 proc formatDecimal {value {fixedLength 2} {strictRange 1} {padZero 1}} {
 	if {![string is double -strict $value]} {
@@ -4561,18 +4360,6 @@ proc formatDecimal {value {fixedLength 2} {strictRange 1} {padZero 1}} {
 		return "0$strValue"
 	}
 }
-
-#
-# END OF FILE: ./proc_formatDecimal.invs.tcl (depth 1)
-#
-
-# SOURCE COMMAND: source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop - return number
-# Resolving: ./proc_checkRoutingLoop.invs.tcl (from current working directory)
-
-#
-# START OF FILE: ./proc_checkRoutingLoop.invs.tcl (depth 1)
-# Resolved path: /home/cricy/project/scr_sar/tcl/eco_fix/timing_fix/trans_fix/proc_checkRoutingLoop.invs.tcl
-#
 proc checkRoutingLoop {straightDistance netLength {severityLevel "normal"}} {
 	if {![string is double -strict $straightDistance] || $straightDistance <= 0} {
 		error "PROC checkRoutingLoop: Invalid parameter 'straightDistance' - must be a positive number ($straightDistance)"
@@ -4635,11 +4422,3 @@ if {0} {
 		}
 	}
 }
-
-#
-# END OF FILE: ./proc_checkRoutingLoop.invs.tcl (depth 1)
-#
-
-#
-# END OF FILE: fix_trans.invs.tcl (depth 0)
-#

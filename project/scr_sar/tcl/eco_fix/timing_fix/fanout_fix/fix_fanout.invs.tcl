@@ -12,6 +12,7 @@ source ./proc_get_driverSinksNameLocations.invs.tcl; # get_driverSinksNameLocati
 source ./proc_group_points_by_distribution.invsGUI.tcl; # group_points_by_distribution 
 source ./proc_canSolveViolation_byBufferVT.invs.tcl; # can_solve_violation_by_buffer_vt - return 1, need addRepeater to fix fanout
 source ./proc_print_cmdDeleteNet.invs.tcl; # print_cmdDeleteNet
+source ./proc_ifNeedInsertRepeater.invs.tcl; # ifNeedInsertRepeater
 source ../trans_fix/proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint - return {x y}
 source ../trans_fix/proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_fanoutNum_and_inputTermsName_of_pin - return {num {numNameList}}
 source ../trans_fix/proc_print_ecoCommands.invs.tcl; # print_ecoCommand
@@ -132,8 +133,8 @@ proc fix_fanout {args} {
       } 
       set allInfo [list $violValue $netLength $distanceOfDriver2CenterOfAllSinks "/" $driverCellClass $driverCelltype $driverPin "-$numSinks-" $uniqueSinksCellClass]
       set cmd1 ""
-      set flagNeedUseInsertRepeater [ifNeedUseInsertRepeater $driverCelltype $violValue $fastestVT $cellRegExp]
-      if {$flagNeedUseInsertRepeater && !$flagMultipleSinksType} {
+      set flagNeedInsertRepeater [ifNeedInsertRepeater $driverCelltype $violValue $fastestVT $cellRegExp]
+      if {$flagNeedInsertRepeater && !$flagMultipleSinksType} {
         # select drive capacity
         set flagNeedChangeCapacityOrVT 0
         set refCelltype $refNormalCelltype
@@ -199,7 +200,7 @@ proc fix_fanout {args} {
           lappend selectLoadedTermsList "alias so[ci select] \"select_obj \{$loadedSinkPinnames\}\""
         }
 
-      } elseif {!$flagNeedUseInsertRepeater && !$flagMultipleSinksType} {
+      } elseif {!$flagNeedInsertRepeater && !$flagMultipleSinksType} {
         lappend needntInsertList [list "NI" {*}$allInfo]
         if {$driverVT != $fastestVT && $violValue >= -0.003} { ; # can change VT
           set refCelltype [strategy_changeVT $driverCelltype {{AL9 1} {AR9 0} {AH9 0}} {AL9 AR9 AH9} $cellRegExp 1]
@@ -299,37 +300,3 @@ proc get_driver_pin {{pinname ""}} {
   return [dbget [dbget [dbget top.insts.instTerms.name $pinname -p].net.allTerms {.isOutput}].name ]
 }
 
-source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class
-proc ifNeedUseInsertRepeater {{celltype ""} {violValue ""} {fastestVT "AL9"} {cellRegExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
-  if {$celltype == "" || [dbget head.libCells.name $celltype -e] == "" || ![string is double $violValue]} {
-    error "proc ifNeedUseInsertRepeater: check your input!!!"
-  } else {
-    if {[catch {regexp $cellRegExp $celltype wholename driveCapacity VTtype} errorInfo]} {
-      error "can't regexp for celltype: $celltype\n ERROR info: $errorInfo"
-    } elseif {![info exists wholename] || ![info exists driveCapacity] || ![info exists VTtype]} {
-      error "regexp error: have no expression result for $celltype"
-    } else {
-      if {$driveCapacity == "05"} {set driveCapacity 0.5} ; # for HH40/M31 std cell library
-      set cellclass [get_cell_class $celltype]
-      if {$violValue >= -0.003} {
-        if {$VTtype == $fastestVT} {
-          return 1
-        }
-        return 0
-      } elseif {$violValue >= -0.06} {
-        if {$cellclass in {buffer inverter CLKbuffer CLKinverter} && $driveCapacity < 12} {
-          if {[regexp CLK $celltype] && $driveCapacity < 8} {; # special rule for clk celltype
-            return 0; # can fix viol by changing VT or capacity
-          } 
-          return 1; # need insert repeater to solve viol
-        }
-        if {$cellclass in {logic CLKlogic} && $driveCapacity <= 4 } {
-          return 0
-        }
-        return 1
-      } else {
-        return 1
-      }
-    }
-  }
-}

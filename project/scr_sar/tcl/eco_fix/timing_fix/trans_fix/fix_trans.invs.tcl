@@ -129,7 +129,6 @@ proc fix_trans {args} {
     set fi [open $file_viol_pin r]
     set violValue_driverPin_onylOneLoaderPin_D3List [list ]; # one to one
     set violValue_drivePin_loadPin_numSinks_sinks_D5List [list ]; # one to more
-    set oneToMoreList_diffSinksCellclass [list ]
     # ------------------------------------
     # sort two class for all viol situations
     set j 0
@@ -148,7 +147,6 @@ proc fix_trans {args} {
           lappend violValue_driverPin_onylOneLoaderPin_D3List [list $viol_value $drive_pin [lindex $num_termName_D2List 1]]
         } elseif {[lindex $num_termName_D2List 0] > 1} { ; # load cell are several, need consider other method
           lappend violValue_drivePin_loadPin_numSinks_sinks_D5List [list $viol_value $drive_pin $load_pin [lindex $num_termName_D2List 0] [lindex $num_termName_D2List 1]]
-          lappend oneToMoreList_diffSinksCellclass [list $viol_value $drive_pin $load_pin]
           # songNOTE: TODO show one drivePin , but all sink Pins
           #           annotate a X flag in violated sink Pin
         }
@@ -161,7 +159,6 @@ proc fix_trans {args} {
         } elseif {[lindex $num_termName_D2List 0] > 1} { ; # load cell are several, need consider other method
           set load_pin [lindex [lindex $num_termName_D2List 1] 0]
           lappend violValue_drivePin_loadPin_numSinks_sinks_D5List [list $viol_value $drive_pin $load_pin [lindex $num_termName_D2List 0] [lindex $num_termName_D2List 1]]
-          lappend oneToMoreList_diffSinksCellclass [list $viol_value $drive_pin $load_pin]
           # songNOTE: TODO show one drivePin , but all sink Pins
           #           annotate a X flag in violated sink Pin
         }
@@ -175,13 +172,10 @@ proc fix_trans {args} {
     # 1 v 1
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing $violValue_driverPin_onylOneLoaderPin_D3List]
     set violValue_driverPin_onylOneLoaderPin_D3List [lsort -index 0 -real -decreasing [lsort -unique -index 1 $violValue_driverPin_onylOneLoaderPin_D3List]]
+    # 1 v more
     set violValue_drivePin_loadPin_numSinks_sinks_D5List [lsort -index 0 -real -decreasing $violValue_drivePin_loadPin_numSinks_sinks_D5List]
     set violValue_drivePin_loadPin_numSinks_sinks_D5List [lsort -index 0 -real -increasing [lsort -unique -index 2 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]
     if {$debug} { puts [join $violValue_driverPin_onylOneLoaderPin_D3List \n] }
-    # 1 v more
-    set oneToMoreList_diffSinksCellclass [lsort -index 0 -real -decreasing $oneToMoreList_diffSinksCellclass]
-    set oneToMoreList_diffSinksCellclass [lsort -index 1 -increasing [lsort -unique -index 2 $oneToMoreList_diffSinksCellclass]]
-    set oneToMoreList_diffSinksCellclass [linsert $oneToMoreList_diffSinksCellclass 0 [list violValue drivePin loadPin]]
     # ----------------------
     # info collections
     ## cant change info
@@ -3318,107 +3312,187 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
     set sf [open $sumFile w]
     set di [open $one2moreDetailViolInfo w]
     if {1} {
-      ## 1 v 1
+      
       ### can't extract
-      puts $ce "CANT EXTRACT:"
-      puts $ce ""
-      if {[info exists cantExtractList]} { puts $ce [join $cantExtractList \n] }
-      ### file of cmds 
-      set beginIndexOfOne2MoreCmds [expr [lsearch -exact $cmdList $beginOfOne2MoreCmds] + 2]
-      set endIndexOfOne2MoreCmds [expr [lindex [lsearch -exact -all $cmdList "setEcoMode -reset"] end] - 2]
-      set reverseOne2MoreCmdFromCmdList [reverseListRange $cmdList $beginIndexOfOne2MoreCmds $endIndexOfOne2MoreCmds 0 0 1 "#"]
-      pw $co [join $cmdList \n]
-
+      if {[info exists cantExtractList]} { 
+        puts $ce "CANT EXTRACT:"
+        puts $ce ""
+        puts $ce [join $cantExtractList \n] 
+      } else {
+        puts $ce "HAVE NO CANT EXTRACT LIST!!!" 
+        puts $ce ""
+      }
+      if {[regexp {ecoChangeCell|ecoAddRepeater} $cmdList]} {
+        ### file of cmds 
+        set beginIndexOfOne2MoreCmds [expr [lsearch -exact $cmdList $beginOfOne2MoreCmds] + 2]
+        set endIndexOfOne2MoreCmds [expr [lindex [lsearch -exact -all $cmdList "setEcoMode -reset"] end] - 2]
+        set reverseOne2MoreCmdFromCmdList [reverseListRange $cmdList $beginIndexOfOne2MoreCmds $endIndexOfOne2MoreCmds 0 0 1 "#"] ; # BUG: have no effect
+        pw $co [join $cmdList \n]
+      } else {
+        pw $co ""
+        pw $co "# HAVE NO CMD!!!" 
+        pw $co ""
+      }
       ### file of summary
       pw $sf "Summary of fixed:"
       pw $sf ""
-      pw $sf "FIXED CELL LIST"
+      pw $sf "FIXED LIST"
       pw $sf [join $fixedPrompts \n]
       pw $sf ""
-      pw $sf [print_formatedTable $fixedList_1v1]
-      pw $sf "total fixed : [expr [llength $fixedList_1v1] - 1]"
-      pw $sf ""
-      pw $sf "situ  num"
-      foreach s $situs { set num [eval set -nonewline \${num_${s}}]; lappend situ_number [list $s $num] }
-      pw $sf [print_formatedTable $situ_number]
-      pw $sf ""
-      pw $sf "method num"
-      foreach m $methods { set num [eval set -nonewline \${num_${m}}]; lappend method_number [list $m $num] }
-      pw $sf [print_formatedTable $method_number]
-      pw $sf ""
-      pw $sf "CANT CHANGE LIST"
-      pw $sf [join $cantChangePrompts \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $cantChangeList_1v1]
-      pw $sf ""
-      pw $sf "SKIPPED LIST"
-      pw $sf [join $skippedSituationsPrompt \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $skippedList_1v1]
-      pw $sf ""
-      pw $sf "NOT CONSIDERED LIST"
-      pw $sf ""
-      pw $sf [join $notConsideredPrompt \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $notConsideredList_1v1]
-      pw $sf "total non-considered [expr [llength $notConsideredList_1v1] - 1]"
+
+      ## 1 v 1
+      if {[llength $fixedList_1v1] > 1} {
+        pw $sf [print_formatedTable $fixedList_1v1]
+        pw $sf "total fixed : [expr [llength $fixedList_1v1] - 1]"
+        pw $sf ""
+        pw $sf "situ  num"
+        foreach s $situs { set num [eval set -nonewline \${num_${s}}]; lappend situ_number [list $s $num] }
+        pw $sf [print_formatedTable $situ_number]
+        pw $sf ""
+        pw $sf "method num"
+        foreach m $methods { set num [eval set -nonewline \${num_${m}}]; lappend method_number [list $m $num] }
+        pw $sf [print_formatedTable $method_number]
+        pw $sf ""
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO FIXED LIST!!!" 
+        pw $sf ""
+      }
+      if {[llength $cantChangeList_1v1] > 1} {
+        pw $sf "CANT CHANGE LIST"
+        pw $sf [join $cantChangePrompts \n]
+        pw $sf ""
+        pw $sf [print_formatedTable $cantChangeList_1v1]
+        pw $sf ""
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO CANT CHANGE LIST!!!" 
+        pw $sf ""
+      }
+      if {[llength $skippedList_1v1] > 1} {
+        pw $sf "SKIPPED LIST"
+        pw $sf [join $skippedSituationsPrompt \n]
+        pw $sf ""
+        pw $sf [print_formatedTable $skippedList_1v1]
+        pw $sf ""
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO SKIPPED LIST!!!" 
+        pw $sf ""
+      }
+      if {[llength $notConsideredList_1v1] > 1} {
+        pw $sf "NOT CONSIDERED LIST"
+        pw $sf ""
+        pw $sf [join $notConsideredPrompt \n]
+        pw $sf ""
+        pw $sf [print_formatedTable $notConsideredList_1v1]
+        pw $sf "total non-considered [expr [llength $notConsideredList_1v1] - 1]"
+      } else {
+        pw $sf ""
+        pw $sf "# HAVE NO NON-CONSIDERED LIST!!!"
+        pw $sf "" 
+      }
 
       ## one 2 more
       ### primarily focus on driver capacity and cell type, if have too many loaders, can fix fanout! (need notice some sticks)
-      pw $sf ""
-      pw $sf "FIXED CELL LIST: ONE 2 MORE"
-      pw $sf [join $fixedPrompts_one2more \n]
-      pw $sf ""
-      if {[llength $fixedList_one2more] >= 2} {
-        set reversedFixedList_one2more [reverseListRange $fixedList_one2more 1 end 0]
-      } else {
-        set reversedFixedList_one2more $fixedList_one2more
-      }
-      pw $sf [print_formatedTable $reversedFixedList_one2more]
-      pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
-      pw $sf ""
-      pw $sf "situ  num"
-      foreach s $m_situs { set num [eval set -nonewline \${m_num_${s}}]; lappend m_situ_number [list $s $num] }
-      pw $sf [print_formatedTable $m_situ_number]
-      pw $sf ""
-      pw $sf "method num"
-      foreach m $m_methods { set num [eval set -nonewline \${m_num_${m}}]; lappend m_method_number [list $m $num] }
-      pw $sf [print_formatedTable $m_method_number]
-      pw $sf ""
-      pw $sf "CANT CHANGE LIST: ONE 2 MORE"
-      pw $sf [join $cantChangePrompts_one2more \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $cantChangeList_one2more]
-      pw $sf ""
-      pw $sf "SKIPPED LIST: ONE 2 MORE"
-      pw $sf [join $skippedSituationsPrompt_one2more \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $skippedList_one2more]
-      pw $sf ""
-      pw $sf "NOT CONSIDERED LIST: ONE 2 MORE"
-      pw $sf ""
-      pw $sf [join $notConsideredPrompt_one2more \n]
-      pw $sf ""
-      pw $sf [print_formatedTable $notConsideredList_one2more]
-      pw $sf "total non-considered [expr [llength [lsort -unique -index 5 $notConsideredList_one2more]] - 1]"
-      pw $sf ""
-      pw $sf "DIFF TYPES OF SINKS: ONE 2 MORE"
-      pw $sf ""
-      pw $sf [print_formatedTable $one2moreList_diffTypesOfSinks]
-      pw $sf "total viol drivePin (sorted) with diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
-      
-      puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
-      puts $di ""
-      puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
-      puts $di "total of all viol sinks : [expr [llength $one2moreDetailList_withAllViolSinkPinsInfo] - 1]"
-      puts $di "total of all viol drivePin (sorted) : [expr [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]] - 1]"
-      puts $di ""
+      if {[llength $violValue_drivePin_loadPin_numSinks_sinks_D5List] > 1} {
+        if {[llength $fixedList_one2more] > 1} {
+          pw $sf ""
+          pw $sf "FIXED CELL LIST: ONE 2 MORE"
+          pw $sf [join $fixedPrompts_one2more \n]
+          pw $sf ""
+          if {[llength $fixedList_one2more] >= 2} {
+            set reversedFixedList_one2more [reverseListRange $fixedList_one2more 1 end 0]
+          } else {
+            set reversedFixedList_one2more $fixedList_one2more
+          }
+          pw $sf [print_formatedTable $reversedFixedList_one2more]
+          pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
+          pw $sf ""
+          pw $sf "situ  num"
+          foreach s $m_situs { set num [eval set -nonewline \${m_num_${s}}]; lappend m_situ_number [list $s $num] }
+          pw $sf [print_formatedTable $m_situ_number]
+          pw $sf ""
+          pw $sf "method num"
+          foreach m $m_methods { set num [eval set -nonewline \${m_num_${m}}]; lappend m_method_number [list $m $num] }
+          pw $sf [print_formatedTable $m_method_number]
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO FIXED LIST!!!" 
+          pw $sf ""
+        }
+        if {[llength $cantChangeList_one2more] > 1} {
+          pw $sf "CANT CHANGE LIST: ONE 2 MORE"
+          pw $sf [join $cantChangePrompts_one2more \n]
+          pw $sf ""
+          pw $sf [print_formatedTable $cantChangeList_one2more]
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO CANT CHANGE LIST!!!"
+          pw $sf ""
+        }
+        if {[llength $skippedList_one2more] > 1} {
+          pw $sf "SKIPPED LIST: ONE 2 MORE"
+          pw $sf [join $skippedSituationsPrompt_one2more \n]
+          pw $sf ""
+          pw $sf [print_formatedTable $skippedList_one2more]
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO SKIPPED LIST!!!" 
+          pw $sf ""
+        }
+        if {[llength $notConsideredList_one2more] > 1} {
+          pw $sf "NOT CONSIDERED LIST: ONE 2 MORE"
+          pw $sf ""
+          pw $sf [join $notConsideredPrompt_one2more \n]
+          pw $sf ""
+          pw $sf [print_formatedTable $notConsideredList_one2more]
+          pw $sf "total non-considered [expr [llength [lsort -unique -index 5 $notConsideredList_one2more]] - 1]"
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO NON-CONSIDERED LIST!!!" 
+          pw $sf ""
+        }
+        if {[llength $one2moreList_diffTypesOfSinks] > 1} {
+          pw $sf "DIFF TYPES OF SINKS: ONE 2 MORE"
+          pw $sf ""
+          pw $sf [print_formatedTable $one2moreList_diffTypesOfSinks]
+          pw $sf "total viol drivePin (sorted) with diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
+          pw $sf ""
+        } else {
+          pw $sf ""
+          pw $sf "# HAVE NO DIFF-TYPES-Of-SINKS LIST!!!" 
+          pw $sf ""
+        }
+        
+        puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
+        puts $di ""
+        puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
+        puts $di "total of all viol sinks : [expr [llength $one2moreDetailList_withAllViolSinkPinsInfo] - 1]"
+        puts $di "total of all viol drivePin (sorted) : [expr [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]] - 1]"
+        puts $di ""
 
+      } else {
+        pw $sf "HAVE NO ONE 2 MORE SITUATION!!!" 
+      }
       # summary of two situations
       pw $sf ""
       pw $sf "TWO SITUATIONS OF ALL VIOLATIONS:"
-      pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
-      pw $sf "1 v more number: [llength [lsort -unique -index 1 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]"
+      pw $sf "#  --------------------------- #"
+      if {[llength $violValue_driverPin_onylOneLoaderPin_D3List] > 1} {
+        pw $sf "1 v 1    number: [llength $violValue_driverPin_onylOneLoaderPin_D3List]"
+      } else {
+        pw $sf "have NO 1 v 1 situation!!!" 
+      }
+      if {[llength $violValue_drivePin_loadPin_numSinks_sinks_D5List] > 1} {
+        pw $sf "1 v more number: [llength [lsort -unique -index 1 $violValue_drivePin_loadPin_numSinks_sinks_D5List]]"
+      } else {
+        pw $sf "have NO one2more situation!!!" 
+      }
       pw $sf ""
     }
     close $ce

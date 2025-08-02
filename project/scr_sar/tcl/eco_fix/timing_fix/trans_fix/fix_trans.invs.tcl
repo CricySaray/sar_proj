@@ -60,8 +60,9 @@
 #     buf/inv cell | drive net len
 # --------
 # 01 get info of viol cell: pin cellname celltype driveNum netlength
-source ../../../incr_integer_inself.common.tcl; # ci(proc counter), don't use array: counters
-source ../../../logic_or_and.common.tcl; # operators: lo la ol al re eo - return 0|1
+source ../../../packages/incr_integer_inSelf.package.tcl; # ci(proc counter), don't use array: counters
+source ../../../packages/logic_AND_OR.package.tcl; # operators: lo la ol al re eo - return 0|1
+source ../../../packages/print_formatedTable.package.tcl; # print_formatedTable D2 list - return 0, puts formated table
 source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
 source ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
@@ -73,7 +74,6 @@ source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCellt
 source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 source ./proc_ifInBoxes.invs.tcl; # ifInBoxes - return 0|1
-source ./proc_print_formatedTable.common.tcl; # print_formatedTable D2 list - return 0, puts formated table
 source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
 source ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl; # strategy_clampDriveCapacity_BetweenDriverSink - return celltype
 

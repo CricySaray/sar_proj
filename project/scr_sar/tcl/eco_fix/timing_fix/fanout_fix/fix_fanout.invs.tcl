@@ -7,7 +7,10 @@
 # descrip   : fix maxFanout/maxCap using K-means algorithm
 # ref       : link url
 # --------------------------
-source ./proc_every.common.tcl; # every
+source ../../../packages/every_any.package.tcl; # every any
+source ../../../packages/print_formatedTable.package.tcl; # print_formatedTable
+source ../../../packages/logic_AND_OR.package.tcl; # eo
+source ../../../packages/incr_integer_inSelf.package.tcl; # ci
 source ./proc_get_driverSinksNameLocations.invs.tcl; # get_driverSinksNameLocations - return {{drivename {x y}} {{sink1name {x y}} {sink2name {x y}} ...}}
 source ./proc_group_points_by_distribution.invsGUI.tcl; # group_points_by_distribution 
 source ./proc_canSolveViolation_byBufferVT.invs.tcl; # can_solve_violation_by_buffer_vt - return 1, need addRepeater to fix fanout
@@ -26,11 +29,8 @@ source ../trans_fix/proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDrive
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.invs.tcl; # get_driveCapacity_of_celltype
 source ../trans_fix/proc_formatDecimal.invs.tcl; # fm - formatDecimal
 source ../trans_fix/proc_get_net_lenth.invs.tcl; # get_net_length
-source ../trans_fix/proc_print_formatedTable.common.tcl; # print_formatedTable
 source ../trans_fix/proc_pw_puts_message_to_file_and_window.common.tcl; # pw
 source ../trans_fix/proc_strategy_changeVT.invs.tcl; # strategy_changeVT
-source ../../../logic_or_and.common.tcl; # eo
-source ../../../incr_integer_inself.common.tcl; # ci
 
 proc fix_fanout {args} {
   set file_viol            ""
@@ -51,7 +51,7 @@ proc fix_fanout {args} {
 
   if {$file_viol == "" || [glob -nocomplain $file_viol] == ""} {
     error "proc fix_fanout: check your input, have no file name: $file_viol !!!"
-  } elseif { [llength $column_viol_pinname] != 2 || [every [lmap c $column_viol_pinname {[string is integer $c]}] 1] } {
+  } elseif { [llength $column_viol_pinname] != 2 || [every x [lmap c $column_viol_pinname {[string is integer $c]}] {expr $x == 1}] } {
     error "proc fix_fanout: check your input, or column_viol_pinname($column_viol_pinname) has error!!!"
   } else {
 

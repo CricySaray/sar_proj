@@ -3,7 +3,7 @@
 # author    : sar song
 # date      : DATE
 # label     : 
-#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|misc_proc)
 # descrip   : what?
 # return    : 
 # ref       : link url
@@ -20,4 +20,6 @@
 #   -> check_proc : only for checking for some stage(FP/place/cts/route/finish...)
 #   -> math_proc  : manages mathematical computations and geometric logic—including coordinate/shape operations—optimized 
 #                   for large datasets and graphics-related numerical tasks.
+#   -> package_proc : The "package_proc" procedures implement functionalities similar to those in packages, 
+#                     while incorporating custom minor features.
 #   -> misc_proc  : some other uses of procs

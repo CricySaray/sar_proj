@@ -16,7 +16,7 @@ source ../packages/print_formattedTable.package.tcl; # print_formattedTable
 source ../packages/print_formattedTable_D2withCategory.package.tcl; # print_formattedTable_D2withCategory
 source ../packages/count_items.package.tcl; # count_items
 source ../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
-proc check_CTScelltype {{specify_VT "ULVT"} {promptERROR "songERROR"} {filter_list {RCLIB_PLB DEL}}} {
+proc check_CTScelltype {{filter_list {RCLIB_PLB DEL}} {specify_VT "ULVT"} {promptERROR "songERROR"}} {
   # $specify_VT : ULVT|AR9
   set allCTSinstname_collection [get_clock_network_objects -type cell -include_clock_gating_network]
   set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]

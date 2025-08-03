@@ -193,7 +193,7 @@ vn() {
 # GIT alias 
 alias vg='vim ~/.gitconfig'
 alias gs='git status -s'
-alias gp='g p'
+alias gpu='g p'
 # 在.bashrc或.zshrc中添加
 if [ -f /usr/share/bash-completion/completions/git ]; then
   source /usr/share/bash-completion/completions/git

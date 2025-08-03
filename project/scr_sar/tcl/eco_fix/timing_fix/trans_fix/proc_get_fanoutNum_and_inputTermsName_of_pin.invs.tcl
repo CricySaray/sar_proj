@@ -26,6 +26,7 @@ proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {
     return $numToInputTermName
   }
 }
+
 proc get_driverPin {{pin ""}} {
   if {$pin == "" || [dbget top.insts.instTerms.name $pin -e] == ""} {
     error "proc get_driverPin: pin ($pin) can't find in invs db!!!"; # no pin
@@ -34,11 +35,16 @@ proc get_driverPin {{pin ""}} {
     return $driver
   }
 }
-# TODO
-proc get_loadPins {{pin ""}} {
+
+proc get_sinkPins {{pin ""}} {
   if {$pin == "" || [dbget top.insts.instTerms.name $pin -e] == ""} {
-    error "proc get_loadPins: pin ($pin) can't find in invs db!!!" 
+    error "proc [regsub ":" [lindex [info level 0] 0] ""]: pin ($pin) can't find in invs db!!!" 
   } else {
-     
+    set sinks [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isInput 1 -p].name ]
+    set sinks [lmap sink $sinks {
+      set sink [lindex $sink 0]
+      return "$sink"
+    }]
+    return $sinks
   }
 }

@@ -8,7 +8,7 @@
 # return    : integer
 # ref       : link url
 # --------------------------
-proc get_driveCapacity_of_celltype {{celltype ""} {regExp "X(\\d+).*(A\[HRL\]\\d+)$"}} {
+proc get_driveCapacity_of_celltype {{celltype ""} {regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"}} {
   if {$celltype == "" || $celltype == "0x0" || ![sizeof_collection [get_lib_cells -q "*/$celltype"]]} { 
     return "0x0:1"; # check your input 
   } else {

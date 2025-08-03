@@ -8,9 +8,10 @@
 # ref       : link url
 # --------------------------
 source ../../../packages/every_any.package.tcl; # every any
-source ../../../packages/print_formatedTable.package.tcl; # print_formatedTable
+source ../../../packages/print_formattedTable.package.tcl; # print_formattedTable
 source ../../../packages/logic_AND_OR.package.tcl; # eo
 source ../../../packages/incr_integer_inSelf.package.tcl; # ci
+source ../../../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
 source ./proc_get_driverSinksNameLocations.invs.tcl; # get_driverSinksNameLocations - return {{drivename {x y}} {{sink1name {x y}} {sink2name {x y}} ...}}
 source ./proc_group_points_by_distribution.invsGUI.tcl; # group_points_by_distribution 
 source ./proc_canSolveViolation_byBufferVT.invs.tcl; # can_solve_violation_by_buffer_vt - return 1, need addRepeater to fix fanout
@@ -29,7 +30,6 @@ source ../trans_fix/proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDrive
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.invs.tcl; # get_driveCapacity_of_celltype
 source ../trans_fix/proc_formatDecimal.invs.tcl; # fm - formatDecimal
 source ../trans_fix/proc_get_net_lenth.invs.tcl; # get_net_length
-source ../trans_fix/proc_pw_puts_message_to_file_and_window.common.tcl; # pw
 source ../trans_fix/proc_strategy_changeVT.invs.tcl; # strategy_changeVT
 
 proc fix_fanout {args} {
@@ -247,7 +247,7 @@ proc fix_fanout {args} {
     }
     if {[llength $fixedList] > 1} {
       pw $su "FIXED LIST:"
-      pw $su [print_formatedTable $fixedList]
+      pw $su [print_formattedTable $fixedList]
       pw $su ""
     } else {
       pw $su "HAVE NO FIXED SITUATION!!!"
@@ -256,7 +256,7 @@ proc fix_fanout {args} {
     if {[llength $multipleSinksTypeList] > 1} {
       pw $su "MULTIPLE SINKS TYPE LIST:"
       pw $su ""
-      pw $su [print_formatedTable $multipleSinksTypeList]
+      pw $su [print_formattedTable $multipleSinksTypeList]
       pw $su ""
     } else {
       pw $su "HAVE NO MULTIPLE-SINKS-TYPE SITUATION!!!"
@@ -265,7 +265,7 @@ proc fix_fanout {args} {
     if {[llength $needntInsertList] > 1} {
       pw $su "NEED NOT INSERT REPEATER (have changed VT or capacity in cmd file):"
       pw $su ""
-      pw $su [print_formatedTable $needntInsertList]
+      pw $su [print_formattedTable $needntInsertList]
       pw $su ""
     } else {
       pw $su "HAVE NO NEED-NOT-INSERT-REPEATER SITUATION!!!"
@@ -273,7 +273,7 @@ proc fix_fanout {args} {
     }
     if {[llength $notConsideredList] > 1} {
       pw $su "NOT CONSIDERED:"
-      pw $su [print_formatedTable $notConsideredList]
+      pw $su [print_formattedTable $notConsideredList]
       pw $su ""
     } else {
       pw $su "HAVE NO NOT-CONSIDERED SITUATION!!!"

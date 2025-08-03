@@ -15,6 +15,7 @@
 !.ctags
 !.vim/
 !.vim/**
+all_*
 .vim/pack/jetpack/opt/vim-jetpack
 .vim/pack/jetpack/opt/diffchar.vim
 *.swp

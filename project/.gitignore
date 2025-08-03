@@ -8,6 +8,7 @@
 !backend/**
 !ref_from_others/
 !ref_from_others/**
+all_*
 *.swp
 *.swo
 *.swn

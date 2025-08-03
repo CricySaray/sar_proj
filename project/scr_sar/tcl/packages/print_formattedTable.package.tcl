@@ -7,7 +7,7 @@
 # descrip   : format input List(only for D2 List), print table using linux command column
 # ref       : link url
 # --------------------------
-proc print_formatedTable {{dataList {}}} {
+proc print_formattedTable {{dataList {}}} {
   set text ""
   foreach row $dataList {
       append text [join $row "\t"]

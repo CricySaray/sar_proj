@@ -62,7 +62,8 @@
 # 01 get info of viol cell: pin cellname celltype driveNum netlength
 source ../../../packages/incr_integer_inSelf.package.tcl; # ci(proc counter), don't use array: counters
 source ../../../packages/logic_AND_OR.package.tcl; # operators: lo la ol al re eo - return 0|1
-source ../../../packages/print_formatedTable.package.tcl; # print_formatedTable D2 list - return 0, puts formated table
+source ../../../packages/print_formattedTable.package.tcl; # print_formattedTable D2 list - return 0, puts formated table
+source ../../../packages/pw_puts_message_to_file_and_window.package.tcl; # pw - advanced puts
 source ./proc_getPt_ofObj.invs.tcl; # gpt - return pt(location) of object
 source ./proc_get_net_lenth.invs.tcl; # get_net_length - num
 source ./proc_if_driver_or_load.invs.tcl; # if_driver_or_load - 1: driver  0: load
@@ -74,7 +75,6 @@ source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCellt
 source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity - return toChangeCelltype
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand - return command string (only one command)
 source ./proc_ifInBoxes.invs.tcl; # ifInBoxes - return 0|1
-source ./proc_pw_puts_message_to_file_and_window.common.tcl; # pw - advanced puts
 source ./proc_strategy_clampDriveCapacity_BetweenDriverSink.invs.tcl; # strategy_clampDriveCapacity_BetweenDriverSink - return celltype
 
 source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints - input pointsList, return center pt
@@ -99,7 +99,7 @@ proc fix_trans {args} {
   set refInverterCelltype                      "INVX4AR9"
   set refCLKBufferCelltype                     "CLKBUFX4AL9"
   set refCLKInverterCelltype                   "CLKINVX4AL9"
-  set cellRegExp                               "X(\\d+).*(A\[HRL\]\\d+)$"
+  set cellRegExp                               ".*X(\\d+).*(A\[HRL\]\\d+)$"
   set rangeOfVtSpeed                           {AL9 AR9 AH9}
   set clkNeedVtWeightList                      {{AL9 3} {AR9 0} {AH9 0}}; # weight:0 is stand for forbidden using
   set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
@@ -3342,16 +3342,16 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
 
       ## 1 v 1
       if {[llength $fixedList_1v1] > 1} {
-        pw $sf [print_formatedTable $fixedList_1v1]
+        pw $sf [print_formattedTable $fixedList_1v1]
         pw $sf "total fixed : [expr [llength $fixedList_1v1] - 1]"
         pw $sf ""
         pw $sf "situ  num"
         foreach s $situs { set num [eval set -nonewline \${num_${s}}]; lappend situ_number [list $s $num] }
-        pw $sf [print_formatedTable $situ_number]
+        pw $sf [print_formattedTable $situ_number]
         pw $sf ""
         pw $sf "method num"
         foreach m $methods { set num [eval set -nonewline \${num_${m}}]; lappend method_number [list $m $num] }
-        pw $sf [print_formatedTable $method_number]
+        pw $sf [print_formattedTable $method_number]
         pw $sf ""
       } else {
         pw $sf ""
@@ -3362,7 +3362,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
         pw $sf "CANT CHANGE LIST"
         pw $sf [join $cantChangePrompts \n]
         pw $sf ""
-        pw $sf [print_formatedTable $cantChangeList_1v1]
+        pw $sf [print_formattedTable $cantChangeList_1v1]
         pw $sf ""
       } else {
         pw $sf ""
@@ -3373,7 +3373,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
         pw $sf "SKIPPED LIST"
         pw $sf [join $skippedSituationsPrompt \n]
         pw $sf ""
-        pw $sf [print_formatedTable $skippedList_1v1]
+        pw $sf [print_formattedTable $skippedList_1v1]
         pw $sf ""
       } else {
         pw $sf ""
@@ -3385,7 +3385,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
         pw $sf ""
         pw $sf [join $notConsideredPrompt \n]
         pw $sf ""
-        pw $sf [print_formatedTable $notConsideredList_1v1]
+        pw $sf [print_formattedTable $notConsideredList_1v1]
         pw $sf "total non-considered [expr [llength $notConsideredList_1v1] - 1]"
       } else {
         pw $sf ""
@@ -3406,16 +3406,16 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
           } else {
             set reversedFixedList_one2more $fixedList_one2more
           }
-          pw $sf [print_formatedTable $reversedFixedList_one2more]
+          pw $sf [print_formattedTable $reversedFixedList_one2more]
           pw $sf "total fixed : [expr [llength $fixedList_one2more] - 1]"
           pw $sf ""
           pw $sf "situ  num"
           foreach s $m_situs { set num [eval set -nonewline \${m_num_${s}}]; lappend m_situ_number [list $s $num] }
-          pw $sf [print_formatedTable $m_situ_number]
+          pw $sf [print_formattedTable $m_situ_number]
           pw $sf ""
           pw $sf "method num"
           foreach m $m_methods { set num [eval set -nonewline \${m_num_${m}}]; lappend m_method_number [list $m $num] }
-          pw $sf [print_formatedTable $m_method_number]
+          pw $sf [print_formattedTable $m_method_number]
           pw $sf ""
         } else {
           pw $sf ""
@@ -3426,7 +3426,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
           pw $sf "CANT CHANGE LIST: ONE 2 MORE"
           pw $sf [join $cantChangePrompts_one2more \n]
           pw $sf ""
-          pw $sf [print_formatedTable $cantChangeList_one2more]
+          pw $sf [print_formattedTable $cantChangeList_one2more]
           pw $sf ""
         } else {
           pw $sf ""
@@ -3437,7 +3437,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
           pw $sf "SKIPPED LIST: ONE 2 MORE"
           pw $sf [join $skippedSituationsPrompt_one2more \n]
           pw $sf ""
-          pw $sf [print_formatedTable $skippedList_one2more]
+          pw $sf [print_formattedTable $skippedList_one2more]
           pw $sf ""
         } else {
           pw $sf ""
@@ -3449,7 +3449,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
           pw $sf ""
           pw $sf [join $notConsideredPrompt_one2more \n]
           pw $sf ""
-          pw $sf [print_formatedTable $notConsideredList_one2more]
+          pw $sf [print_formattedTable $notConsideredList_one2more]
           pw $sf "total non-considered [expr [llength [lsort -unique -index 5 $notConsideredList_one2more]] - 1]"
           pw $sf ""
         } else {
@@ -3460,7 +3460,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
         if {[llength $one2moreList_diffTypesOfSinks] > 1} {
           pw $sf "DIFF TYPES OF SINKS: ONE 2 MORE"
           pw $sf ""
-          pw $sf [print_formatedTable $one2moreList_diffTypesOfSinks]
+          pw $sf [print_formattedTable $one2moreList_diffTypesOfSinks]
           pw $sf "total viol drivePin (sorted) with diff types of sinks: [expr [llength [lsort -unique -index 6 $one2moreList_diffTypesOfSinks]] - 1]"
           pw $sf ""
         } else {
@@ -3471,7 +3471,7 @@ if {$debug} { puts "TEST: $toChangeCelltype2" }
         
         puts $di "ONE to MORE SITUATIONS (different sinks cell class!!! need to improve, i can't fix now)"
         puts $di ""
-        puts $di [print_formatedTable $one2moreDetailList_withAllViolSinkPinsInfo]
+        puts $di [print_formattedTable $one2moreDetailList_withAllViolSinkPinsInfo]
         puts $di "total of all viol sinks : [expr [llength $one2moreDetailList_withAllViolSinkPinsInfo] - 1]"
         puts $di "total of all viol drivePin (sorted) : [expr [llength [lsort -unique -index 5 $one2moreDetailList_withAllViolSinkPinsInfo]] - 1]"
         puts $di ""

@@ -20,7 +20,7 @@ proc check_CTScelltype {{specify_VT "ULVT"} {promptERROR "songERROR"} {filter_li
   # $specify_VT : ULVT|AR9
   set allCTSinstname_collection [get_clock_network_objects -type cell -include_clock_gating_network]
   set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
-  # deal with and classify collection
+  # deal with and categorize collection
   set process [whichProcess_fromStdCellPattern [lindex [get_attribute $allCTSinstname_collection ref_name] 0]]
   set error_driveCapacity [add_to_collection "" ""]
   set error_VTtype [add_to_collection "" ""]

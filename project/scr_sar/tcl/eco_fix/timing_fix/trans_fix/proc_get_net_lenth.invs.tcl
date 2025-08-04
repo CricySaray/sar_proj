@@ -9,6 +9,7 @@
 #             fix bug: for net: {{xxx/xxx/xxx[12]}}, it can be converted to {xxx/xxx/xxx[12]}
 # ref       : link url
 # --------------------------
+alias gl "get_net_length"
 proc get_net_length {{net ""}} {
   if {[lindex $net 0] == [lindex $net 0 0]} {
     set net [lindex $net 0]
@@ -24,4 +25,3 @@ proc get_net_length {{net ""}} {
     return $net_length
 	}
 }
-alias gl "get_net_length"

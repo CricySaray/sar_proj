@@ -42,8 +42,7 @@ proc get_sinkPins {{pin ""}} {
   } else {
     set sinks [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isInput 1 -p].name ]
     set sinks [lmap sink $sinks {
-      set sink [lindex $sink 0]
-      return "$sink"
+      set temp "[lindex $sink 0]"
     }]
     return $sinks
   }

@@ -27,7 +27,7 @@ proc get_allInfo_fromPin {{pinname ""}} {
     dict set allInfo driverPin [get_driverPin $pinname]
     dict set allInfo sinksPin [get_sinkPins $pinname]
     dict set allInfo driverCellClass [get_cell_class [dict get $allInfo driverPin]]
-    dict set allInfo sinkCellClass [lmap sinkpin [dict get $allInfo sinksPin] { get_cell_class $sinkpin }]
+    dict set allInfo sinksCellClass [lmap sinkpin [dict get $allInfo sinksPin] { get_cell_class $sinkpin }]
     dict set allInfo netName [get_object_name [get_nets -of $pinname]]
     dict set allInfo netLen [get_net_length [dict get $allInfo netName]]
     dict set allInfo driverInstname [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].name]

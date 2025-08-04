@@ -10,6 +10,8 @@
 # update    : 2025/07/17 10:11:36 Thursday
 #             add eo proc: judge if the first arg is empty string or number 0. advanced version of [expr $test ? trueValue : falseValue ]
 #             it(eo) can input string and the trueValue and falseValue can also be string
+# update    : 2025/08/04 17:43:42 Monday
+#             add er proc: judge if the first arg is empty string or number 0, run trueScript if not
 # ref       : link url
 # --------------------------
 
@@ -172,7 +174,7 @@ proc ifEmptyZero {value trueValue falseValue} {
 #     if it is, return secondArg(trueScript)
 #     if it is not , return thirdArg(falseScript)
 alias er "ifEmptyZeroRUN"
-proc ifEmptyZeroRUN {value trueScript falseScript} {
+proc ifEmptyZeroRUN {value trueScript {falseScript {}}} {
     # 错误检查：使用 [info level 0] 获取当前过程的参数数量
     if {[llength [info level 0]] != 4} {
         error "Usage: ifEmptyZero value trueScript falseScript"

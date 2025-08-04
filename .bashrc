@@ -5,7 +5,7 @@ alias ct='cd ~/project/test_temp/'
 
 alias va='vim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
 alias ca='tclsh ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
-alias fd='fdfind'
+alias fd='fdfind -Ist f'
 alias cs='ca ./fix_trans.invs.tcl'
 alias ts='tclsh'
 alias tk='touch .gitkeep'; # for updating empty dir to git

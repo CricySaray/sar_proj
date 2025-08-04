@@ -20,6 +20,9 @@ proc check_longnet {{clockOne2OneThreshold 130} {clockOne2MoreThreshold 350} {da
   if {![string is integer $dataOne2OneThreshold] || ![string is integer $dataOne2MoreThreshold] || ![string is integer $clockOne2OneThreshold] || ![string is integer $clockOne2MoreThreshold]} {
     error "proc check_longnet: check your input : dataThreshold($dataOne2OneThreshold | $dataOne2MoreThreshold) and clockThreshold($clockOne2OneThreshold | $clockOne2MoreThreshold) must be integer!!!" 
   } else {
+    set cates [list violClkOne2OneNets violClkOne2MoreNets violDataOne2OneNets violDataOne2MoreNets]
+    set thresholds [list $clockOne2OneThreshold $clockOne2MoreThreshold $dataOne2OneThreshold $dataOne2MoreThreshold]
+    foreach cate_temp $cates { set $cate_temp [list ] }
     set clockNets_col [get_nets -of [get_clock_network_objects -type pin]]
     set clockNets [get_object_name $clockNets_col]
     foreach clknet $clockNets {
@@ -43,8 +46,6 @@ proc check_longnet {{clockOne2OneThreshold 130} {clockOne2MoreThreshold 350} {da
         lappend violDataOne2MoreNets [list $datanetLen $datanetFanout $datanet]
       }
     }
-    set cates [list violClkOne2OneNets violClkOne2MoreNets violDataOne2OneNets violDataOne2MoreNets]
-    set thresholds [list $clockOne2OneThreshold $clockOne2MoreThreshold $dataOne2OneThreshold $dataOne2MoreThreshold]
     set allNumNet 0
     foreach cate_temp $cates { ; # U001
       set $cate_temp [lsort -index 0 -real -decreasing [eval set temp \${$cate_temp}]]
@@ -57,6 +58,7 @@ proc check_longnet {{clockOne2OneThreshold 130} {clockOne2MoreThreshold 350} {da
         lappend summaryOfCates [list "-" ${cate_temp}_greaterThan_$threshold $cate($cate_temp)]
         lappend cmd_so_longnet "alias so_$cate_temp select_obj \{ \\\n[join [lmap items [eval set temp \${$cate_temp}] { set itemtemp "[lindex $items end]"}] " \\\n"] \\\n\}"
       }
+      lappend summaryOfCates [list "-" allNumNet $allNumNet]
       set fo [open $rpt_file w]
       set so [open $cmd_selectViolNets w]
       puts $fo [print_formattedTable_D2withCategory $violNets]

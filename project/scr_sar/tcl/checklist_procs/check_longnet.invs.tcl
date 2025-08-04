@@ -6,6 +6,7 @@
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|misc_proc)
 # descrip   : check long net
 # return    : rpt of long nets
+# TODO      : U001: classify four parts: data(1v1 one2more) and clk(1v1 and one2more), can specify thresholds seperately
 # ref       : link url
 # --------------------------
 source ../eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl; # get_net_length

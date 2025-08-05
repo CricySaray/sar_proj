@@ -30,7 +30,7 @@ proc mux_of_strategies {{violValue 0} {violPin ""}} {
 
     ## bl - buffer to logic
     set crosspoint {15 15} ; # for bl situ
-    set farThresholdPoint {130 30}
+    set farThresholdPoint {30 130}
     set coefficientsABC [solve_quadratic_equation {0 0} $crosspoint $farThresholdPoint]
     # x : $validViolValue   y : netLen
     set netLenLine [expr {[dict get $coefficientsABC a]*($validViolValue**2) + [dict get $coefficientsABC b]*$validViolValue + [dict get $coefficientsABC c]}] ; # U002: function bewteen netLen and violValue when one2one 

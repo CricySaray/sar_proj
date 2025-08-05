@@ -19,7 +19,8 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #                 sinksPinPT/numSinks/shortenedSinksCellClassRaw/simplizedSinksCellClass/shortenedSinksCellClassSimplized/
 #                 uniqueSinksCellClass/mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #                 distanceOfDriver2CenterOfSinksPinPt/ifLoop
-proc mux_of_strategies {{violValue 0} {violPin ""}} {
+alias mux_of_strategies "sliding_rheostat_of_strategies"
+proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""}} {
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
     error "proc mux_of_strategies: check your input, violValue($violValue) is not double number or greater than 0 or violPin($violPin) is not found!!!"
   } else {

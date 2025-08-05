@@ -8,7 +8,9 @@
 # mini descrip: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/driverInstname/sinksInstname/
 #               driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
 #               sinksPinPT/numSinks/shortenedSinksCellClassRaw/simplizedSinksCellClass/shortenedSinksCellClassSimplized/
-#               uniqueSinksCellClass/mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/distanceOfDriver2CenterOfSinksPinPt/ifLoop
+#               uniqueSinksCellClass/mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
+#               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastVTinRange/
+#               ifHaveBeenLargestCapacityInRange
 # return    : dict variable
 # ref       : link url
 # --------------------------
@@ -49,11 +51,11 @@ proc get_allInfo_fromPin {{pinname ""}} {
     dict set allInfo shortenedSinksCellClassRaw [shortenCellClass [dict get $allInfo sinksCellClass]] 
     dict set allInfo simplizedSinksCellClass [simplizeCellClass [dict get $allInfo sinksCellClass]]
     dict set allInfo shortenedSinksCellClassSimplized [shortenCellClass [dict get $allInfo simplizedSinksCellClass]]
-    dict set allInfo uniqueSinksCellClass [lsort -unique [dict get $allInfo sinksCellType] ]
-    dict set allInfo mostFrequentInSinksCellClass [findMostFrequentElement [dict get $allInfo sinksCellType]]
+    dict set allInfo uniqueSinksCellClass [lsort -unique [dict get $allInfo sinksCellClass] ]
+    dict set allInfo mostFrequentInSinksCellClass [findMostFrequentElement [dict get $allInfo simplizedSinksCellClass]]
     dict set allInfo numOfMostFrequentInSinksCellClass [llength [dict get $allInfo mostFrequentInSinksCellClass]]
 
-    dict set allInfo centerPtOfSinksPinPT [calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT]]
+    dict set allInfo centerPtOfSinksPinPT [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT]]]
     dict set allInfo distanceOfDriver2CenterOfSinksPinPt [format "%.3f" [calculateDistance [dict get $allInfo driverPinPT] [dict get $allInfo centerPtOfSinksPinPT]]]
     set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
     dict set allInfo ifLoop [switch $resultOfCheckRoutingLoop {
@@ -62,6 +64,13 @@ proc get_allInfo_fromPin {{pinname ""}} {
       2 {set result "moderate"}
       3 {set result "severe"}
     }]
+    
+    dict set allInfo ifOne2One [expr ([dict get $allInfo numSinks] == 1) ? 1 : 0]
+    dict set allInfo ifSimpleOne2More [expr ([dict get $allInfo numOfMostFrequentInSinksCellClass] == 1) ? 1 : 0]
+    dict set allInfo driverSinksSymbol [zipCellClass [dict get $allInfo driverCellClass] [dict get $allInfo mostFrequentInSinksCellClass]]
+
+    dict set allInfo ifHaveBeenFastVTinRange []
+    dict set allInfo ifHaveBeenLargestCapacityInRange []
     return $allInfo
   }
 }
@@ -81,17 +90,26 @@ proc simplizeCellClass {{sinksCellClass {}}} {
 proc shortenCellClass {{sinksCellClass {}}} { ; # return a string like "b/i/l/f/s/N"
   set shortened [lmap sinkcellclass $sinksCellClass {
     switch $sinkcellclass {
-      "buffer" {set t "b"}
-      "inverter" {set t "i"}
-      "logic" {set t "l"}
-      "CLKbuffer" {set t "f"}
+      "buffer"      {set t "b"}
+      "inverter"    {set t "v"}
+      "logic"       {set t "l"}
+      "CLKbuffer"   {set t "f"}
       "CLKinverter" {set t "n"}
-      "CLKlogic" {set t "o"}
-      "delay" {set t "d"}
-      "sequential" {set t "s"}
-      default {set t "N"}
+      "CLKlogic"    {set t "o"}
+      "delay"       {set t "d"}
+      "sequential"  {set t "s"}
+      "memory"      {set t "m"}
+      "IP"          {set t "P"}
+      "IOpad"       {set t "p"}
+      default       {set t "N"}
     }
     set t
   }]
+
   return [join [lsort -unique $shortened] "/"]
+}
+proc zipCellClass {driverCellClass mostFrequentInSinksCellClass} {
+  set shortenedDriverCellClass [shortenCellClass $driverCellClass]
+  set shortenedSinksCellClass [shortenCellClass $mostFrequentInSinksCellClass]
+  return [append shortenedDriverCellClass $shortenedSinksCellClass]
 }

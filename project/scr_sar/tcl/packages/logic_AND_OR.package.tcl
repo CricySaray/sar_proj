@@ -142,17 +142,17 @@ proc _to_boolean {value} {
 	}
 }
 
-# test if firstArg is unempty string or non-zero number
+# test if firstArg is unempty string or non-zero number or string "false"
 #     if it is, return secondArg(trueValue)
 #     if it is not , return thirdArg(falseValue)
 alias eo "ifEmptyZero"
 proc ifEmptyZero {value trueValue falseValue} {
     # 错误检查：使用 [info level 0] 获取当前过程的参数数量
-    if {[llength [info level 0]] != 4} {
+    if {[expr {[llength [info level 0]] ni {3 4}}]} {
         error "Usage: ifEmptyZero value trueValue falseValue"
     }
     # 处理空值或空白字符串
-    if {$value eq "" || [string trim $value] eq ""} {
+    if {$value eq "" || [string trim $value] eq "" || $value == "false"} {
         return $falseValue
     }
     # 尝试将值转换为数字进行判断
@@ -170,17 +170,17 @@ proc ifEmptyZero {value trueValue falseValue} {
     return $trueValue
 }
 
-# test if firstArg is unempty string or non-zero number
+# test if firstArg is unempty string or non-zero number or string "false"
 #     if it is, return secondArg(trueScript)
 #     if it is not , return thirdArg(falseScript)
 alias er "ifEmptyZeroRUN"
 proc ifEmptyZeroRUN {value trueScript {falseScript {}}} {
     # 错误检查：使用 [info level 0] 获取当前过程的参数数量
-    if {[llength [info level 0]] != 4} {
+    if {[expr {[llength [info level 0]] ni {3 4}}]} {
         error "Usage: ifEmptyZero value trueScript falseScript"
     }
     # 处理空值或空白字符串
-    if {$value eq "" || [string trim $value] eq ""} {
+    if {$value eq "" || [string trim $value] eq "" || $value == "false"} {
         return [uplevel 1 $falseScript]
     }
     # 尝试将值转换为数字进行判断

@@ -64,7 +64,8 @@ proc check_longnet {{clockOne2OneThreshold 130} {clockOne2MoreThreshold 350} {da
       puts $fo [print_formattedTable_D2withCategory $violNets]
       puts $so [join $cmd_so_longnet \n]
       pw $fo ""
-      pw $fo "  ============================="
+      pw $fo "STATISTICS OF CATEGORIES:"
+      pw $fo " ----------------------------------"
       pw $fo [print_formattedTable $summaryOfCates]
       pw $fo ""
       close $fo; close $so

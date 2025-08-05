@@ -3,7 +3,7 @@
 # author    : sar song
 # date      : DATE
 # label     : 
-#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|misc_proc)
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|misc_proc)
 # descrip   : what?
 # return    : 
 # ref       : link url
@@ -23,4 +23,6 @@
 #   -> package_proc : The "package_proc" procedures implement functionalities similar to those in packages, 
 #                     while incorporating custom minor features.
 #   -> test_proc  : only for testing specified function or process
+#   -> datatype_proc : includes procs for defining, building, and managing custom data structures with core 
+#                     operations like storage, mapping, and basic manipulation.
 #   -> misc_proc  : some other uses of procs

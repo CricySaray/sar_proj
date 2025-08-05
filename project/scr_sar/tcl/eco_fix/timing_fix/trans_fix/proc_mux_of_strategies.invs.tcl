@@ -30,33 +30,40 @@ proc mux_of_strategies {{violValue 0} {violPin ""}} {
 
     ## bl - buffer to logic
     set crosspoint {15 15} ; # for bl situ
-    set farThresholdPoint {30 130}
+    set farThresholdPoint {30 130} ; # x: validViolValue , y: netLen
     set coefficientsABC [solve_quadratic_equation {0 0} $crosspoint $farThresholdPoint]
     # x : $validViolValue   y : netLen
     set netLenLine [expr {[dict get $coefficientsABC a]*($validViolValue**2) + [dict get $coefficientsABC b]*$validViolValue + [dict get $coefficientsABC c]}] ; # U002: function bewteen netLen and violValue when one2one 
-puts "netLen: $netLen   |  netLenLine: $netLenLine"
+    # puts "netLen: $netLen   |  netLenLine: $netLenLine"
     if {$netLen <= [lindex $crosspoint 1] || $netLen >= $netLenLine} { ; # if netLen < fixedValue, you can't insert buffer
       puts "you can fix viol by changing VT and drive capacity!!!" 
+    } else {
+      puts "you need insert buffer to fix!!!" 
     }
 
-    array set mapCond {
-      v violValue
-      n netLen
-    }
-    # specify conds that can change VT and driveCapacity, the others need to insert buffer to fix
-    # $v: violValue
-    # $n: netLen
-    set conds {
-      {bl {
-        {$v > -0.010 && $n < 15}
-        {$v > -0.030 && $n < 30}
-      }} {bb {
-        {$v > -0.020 && $n < 20}
-      }} {lb {
-        {$v > -0.020 && $n < 20}
-      }} {ll {
-        {$v > -0.020 && $n < 20}
-      }}
+
+
+    if {0} {
+      array set mapCond {
+        v violValue
+        n netLen
+      }
+      # specify conds that can change VT and driveCapacity, the others need to insert buffer to fix
+      # $v: violValue
+      # $n: netLen
+      set conds {
+        {bl {
+          {$v > -0.010 && $n < 15}
+          {$v > -0.030 && $n < 30}
+        }} {bb {
+          {$v > -0.020 && $n < 20}
+        }} {lb {
+          {$v > -0.020 && $n < 20}
+        }} {ll {
+          {$v > -0.020 && $n < 20}
+        }}
+      }
+     
     }
 
   }

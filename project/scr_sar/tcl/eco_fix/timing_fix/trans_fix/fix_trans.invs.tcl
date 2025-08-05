@@ -14,7 +14,6 @@
 #           drive capacity be smaller
 # update    : 2025/07/21 20:25:25 Monday
 #           (U004) fixed summary of situations and methods for one2more violation
-# ref       : link url
 #
 # TODO: judge powerdomain area and which powerdomain the inst is belong to, get accurate location of toAddRepeater, 
 #       to fix IMPOPT-616

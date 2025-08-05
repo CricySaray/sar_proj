@@ -5,6 +5,10 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|misc_proc)
 # descrip   : get $all information from only pin name in innovus
+# mini descrip: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/driverInstname/sinksInstname/
+#               driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
+#               sinksPinPT/numSinks/shortenedSinksCellClassRaw/simplizedSinksCellClass/shortenedSinksCellClassSimplized/
+#               uniqueSinksCellClass/mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/distanceOfDriver2CenterOfSinksPinPt/ifLoop
 # return    : dict variable
 # ref       : link url
 # --------------------------

@@ -82,7 +82,7 @@ proc filter_numberList {numbers range {include_min 1} {include_max 1} {sort 1} {
   return $result
 }
 
-if {1} {
+if {0} {
   # 基本使用
   set nums {5 12 3 15 8 1}
   set filtered [filter_numberList $nums {3 10} 0 0]

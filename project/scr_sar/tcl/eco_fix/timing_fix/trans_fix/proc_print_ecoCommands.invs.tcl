@@ -7,6 +7,8 @@
 # descrip   : print eco command refering to args, you can specify instname/celltype/terms/newInstNamePrefix/loc/relativeDistToSink to control one to print
 # update    : 2025/07/27 22:23:08 Sunday
 #             add new option: $radius, and fix some logical error
+# update    : 2025/08/06 19:13:47 Wednesday
+#             add new type: delNet, you can return "editDelete -net $net"
 # ref       : link url
 # --------------------------
 source ./proc_ifInBoxes.invs.tcl; # ifInBoxes

@@ -324,7 +324,7 @@ if {$argc > 0} {
   set filename [lindex $argv 0]
   set options [lrange $argv 1 end]
   set output ""; set verbose 1; set max_depth 10; set exclude ""
-  set include_comments 1; set preserve_order 1; set strip_comments 0; set lang "tcl"
+  set include_comments 0; set preserve_order 1; set strip_comments 3; set lang "tcl"
   for {set i 0} {$i < [llength $options]} {incr i} {
     set opt [lindex $options $i]
     switch -- $opt {

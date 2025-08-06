@@ -22,7 +22,7 @@ proc calculateResistantCenter_fromPoints {pointsList {threshold 0}} {
       set sumY [expr {$sumY + $y}]
       incr count
     }
-    return [list [expr {$sumX / $count}] [expr {$sumY / $count}]]
+    return [list [format "%.3f" [expr {$sumX / $count}]] [format "%.3f" [expr {$sumY / $count}]]]
   } else {
     # 第一次计算普通均值
     set sumX 0.0
@@ -67,7 +67,7 @@ proc calculateResistantCenter_fromPoints {pointsList {threshold 0}} {
     }
     # 如果过滤后没有点了，返回初始均值
     if {[llength $filteredPoints] == 0} {
-      return [list $meanX $meanY]
+      return [list [format "%.3f" $meanX] [format "%.3f" $meanY]]
     }
     # 重新计算过滤后的均值
     set sumX 0.0
@@ -79,7 +79,7 @@ proc calculateResistantCenter_fromPoints {pointsList {threshold 0}} {
       set sumY [expr {$sumY + $y}]
       incr count
     }
-    return [list [expr {$sumX / $count}] [expr {$sumY / $count}]]
+    return [list [format "%.3f" [expr {$sumX / $count}]] [format "%.3f" [expr {$sumY / $count}]]]
   }
 }
 

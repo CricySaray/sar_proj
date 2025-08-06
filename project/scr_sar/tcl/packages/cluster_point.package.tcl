@@ -11,6 +11,7 @@
 # ref       : link url
 # --------------------------
 source ../eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_fromPoints
+source ./group_points_by_kmeans_2clusters.package.tcl; # group_points_by_kmeans_2clusters
 proc cluster_points {points {threshold 25} {min_pts 3} {max_clusters 3} {verbose 0}} {
   # Error checking for input validity
   if {![llength $points]} {
@@ -43,61 +44,8 @@ proc cluster_points {points {threshold 25} {min_pts 3} {max_clusters 3} {verbose
 
   # Auto-select algorithm based on number of points
   if {$num_points <= 10} {
-    # Simple distance-based clustering for small datasets
-    if {$verbose} {puts "Using simple distance clustering (n=$num_points)"}
-    set clusters [list [list 0]]  ;# Initialize with first point in cluster 0
-
-    for {set i 1} {$i < $num_points} {incr i} {
-      set matched 0
-      # Try to add to existing clusters
-      for {set c 0} {$c < [llength $clusters]} {incr c} {
-        set cluster [lindex $clusters $c]
-        # Check distance to any point in current cluster
-        foreach idx $cluster {
-          set d [distance [lindex $points $i] [lindex $points $idx]]
-          if {$d <= $threshold} {
-            lset clusters $c [lappend cluster $i]
-            set matched 1
-            break
-          }
-        }
-        if {$matched} break
-      }
-      # Create new cluster if no match
-      if {!$matched && [llength $clusters] < $max_clusters} {
-        lappend clusters [list $i]
-      } elseif {!$matched} {
-        # If max clusters reached, add to closest cluster
-        set min_d [distance [lindex $points $i] [lindex $points [lindex [lindex $clusters 0] 0]]]
-        set best_c 0
-        for {set c 1} {$c < [llength $clusters]} {incr c} {
-          set d [distance [lindex $points $i] [lindex $points [lindex [lindex $clusters $c] 0]]]
-          if {$d < $min_d} {
-            set min_d $d
-            set best_c $c
-          }
-        }
-        lset clusters $best_c [lappend [lindex $clusters $best_c] $i]
-      }
-    }
-
-
-    # Convert index clusters to point clusters
-    set clustersPoint [list]
-    for {set c 0} {$c < [llength $clusters]} {incr c} {
-      set cluster_points [list]
-      foreach idx [lindex $clusters $c] {
-        lappend cluster_points [lindex $points $idx]
-      }
-      lappend clustersPoint $cluster_points
-    }
-    # Convert index clusters to point clusters
-    set centerPin_itemPins_List [lmap clusterGroup $clustersPoint {
-      set centerPtOfItems [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints $clusterGroup]]
-      set temp_center_itemPts [list $centerPtOfItems $clusterGroup]
-    }]
-    return $centerPin_itemPins_List
-
+    # Use K-means to group points
+    return [group_points_by_kmeans_2clusters $points]
   } else {
     # Optimized DBSCAN for medium datasets (11-35 points)
     if {$verbose} {puts "Using DBSCAN (n=$num_points)"}

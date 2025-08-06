@@ -13,7 +13,7 @@
 #             center1 is farther center point from startPoint
 # ref       : link url
 # --------------------------
-proc group_points_by_distribution {start_point end_points {debug 0}} {
+proc group_points_by_distribution_and_preferFartherCenterPt {start_point end_points {debug 0}} {
 	# Error checking
 	if {[llength $start_point] != 2} {
 		error "Invalid start point format, should be {name {x y}}"

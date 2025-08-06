@@ -5,6 +5,8 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|misc_proc)
 # descrip   : get $all information from only pin name in innovus
+# update    : 2025/08/06 23:25:16 Wednesday
+#             (U001) improve method to judge if the one2more situation is loopped 
 # mini descrip: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/driverInstname/sinksInstname/
 #               driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
 #               sinksPinPT/numSinks/shortenedSinksCellClassRaw/simplizedSinksCellClass/shortenedSinksCellClassSimplized/
@@ -24,6 +26,7 @@ source ./proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement
 source ./proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_fromPoints
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
+source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
 
 proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
   if {$pinname == "" || $pinname == "0x0" || [dbget top.insts.instTerms.name $pinname -e] == ""} {
@@ -57,7 +60,11 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
 
     dict set allInfo centerPtOfSinksPinPT [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT]]]
     dict set allInfo distanceOfDriver2CenterOfSinksPinPt [format "%.3f" [calculateDistance [dict get $allInfo driverPinPT] [dict get $allInfo centerPtOfSinksPinPT]]]
-    set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
+    if {[dict get $allInfo numSinks] == 1} {
+      set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
+    } elseif {[dict get $allInfo numSinks] > 1} {
+      set resultOfCheckRoutingLoop [lindex [judgeIfLoop_forOne2More [dict get $allInfo driverPinPT] [dict get $allInfo sinksPinPT] [dict get $allInfo netLen] 16] 0] ; # U001
+    }
     dict set allInfo ifLoop [switch $resultOfCheckRoutingLoop {
       0 {set result "noLoop"}
       1 {set result "mild"}

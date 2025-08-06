@@ -13,7 +13,7 @@ source ../../../packages/logic_AND_OR.package.tcl; # eo
 source ../../../packages/incr_integer_inSelf.package.tcl; # ci
 source ../../../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
 source ./proc_get_driverSinksNameLocations.invs.tcl; # get_driverSinksNameLocations - return {{drivename {x y}} {{sink1name {x y}} {sink2name {x y}} ...}}
-source ./proc_group_points_by_distribution.invsGUI.tcl; # group_points_by_distribution 
+source ../../../packages/group_points_by_distribution_and_PreferFartherCenterPt.package.tcl; # group_points_by_distribution_and_preferFartherCenterPt
 source ./proc_canSolveViolation_byBufferVT.invs.tcl; # can_solve_violation_by_buffer_vt - return 1, need addRepeater to fix fanout
 source ./proc_print_cmdDeleteNet.invs.tcl; # print_cmdDeleteNet
 source ./proc_ifNeedInsertRepeater.invs.tcl; # ifNeedInsertRepeater
@@ -92,7 +92,7 @@ proc fix_fanout {args} {
 
       set driverSinksInfo [get_driverSinksNameLocations $driverPin]
       set driverLoc [lindex $driverSinksInfo 0 1]
-      set distributionInfo [group_points_by_distribution {*}$driverSinksInfo]
+      set distributionInfo [group_points_by_distribution_and_preferFartherCenterPt {*}$driverSinksInfo]
       lassign $distributionInfo fartherGroup closerGroup
       lassign $fartherGroup groupedPinnameLocations rawCenterPoint
       set numLoadedSinks [llength $groupedPinnameLocations]

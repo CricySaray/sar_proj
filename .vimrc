@@ -27,7 +27,7 @@ cabbrev co %!column -t -s '\|'
 " - 直接匹配: ['Exact', 高亮组, [关键词1, 关键词2, ...]]
 " - 正则匹配: ['Regex', 高亮组, [正则表达式1, 正则表达式2, ...]]
 let g:highlight_groups = [
-      \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'er', 'ci', 'every', 'any', 'lextract']],
+      \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'er', 'ci', 'every', 'any', 'lextract', 'andnot']],
       \ ['Exact', 'Cursor',  ['songNOTE']],
       \ ['Exact', 'GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE', 'BUG', 'partial']],
       \ ['Regex', 'GruvboxFg0', ['U\d\{3}', 'ID\d\{4,}', 'AT\d\{3}']],

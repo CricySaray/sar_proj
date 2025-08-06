@@ -16,7 +16,7 @@ proc whichProcess_fromStdCellPattern {{celltype ""}} {
     } elseif {[regexp {A[HRL]\d+$} $celltype]} {
       set processType "HH" 
     } else {
-      return "0x0:1"; # can't indentify where the celltype is come from
+      return "other"; # can't indentify where the celltype is come from
     }
     return $processType
   }

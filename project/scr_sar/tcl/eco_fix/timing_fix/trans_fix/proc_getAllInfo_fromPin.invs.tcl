@@ -9,7 +9,7 @@
 #               driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
 #               sinksPinPT/numSinks/shortenedSinksCellClassRaw/simplizedSinksCellClass/shortenedSinksCellClassSimplized/
 #               uniqueSinksCellClass/mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
-#               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastVTinRange/
+#               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange
 # return    : dict variable
 # ref       : link url
@@ -25,7 +25,7 @@ source ./proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_from
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 
-proc get_allInfo_fromPin {{pinname ""}} {
+proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
   if {$pinname == "" || $pinname == "0x0" || [dbget top.insts.instTerms.name $pinname -e] == ""} {
     error "proc [regsub ":" [lindex [info level 0] 0] ""]: check your input: pinname($pinname) is incorrect!!!"
   } else {
@@ -69,8 +69,8 @@ proc get_allInfo_fromPin {{pinname ""}} {
     dict set allInfo ifSimpleOne2More [expr ([dict get $allInfo numOfMostFrequentInSinksCellClass] == 1) ? 1 : 0]
     dict set allInfo driverSinksSymbol [zipCellClass [dict get $allInfo driverCellClass] [dict get $allInfo mostFrequentInSinksCellClass]]
 
-    dict set allInfo ifHaveBeenFastVTinRange []
-    dict set allInfo ifHaveBeenLargestCapacityInRange []
+    dict set allInfo ifHaveBeenFastestVTinRange [judge_ifHaveBeenFastVTinRange [dict get $allInfo driverCellType] $forbidenVT]
+    dict set allInfo ifHaveBeenLargestCapacityInRange [judge_ifHaveBeenLargestCapacityInRange [dict get $allInfo driverCellType] $driveCapacityRange]
     return $allInfo
   }
 }
@@ -109,7 +109,56 @@ proc shortenCellClass {{sinksCellClass {}}} { ; # return a string like "b/i/l/f/
   return [join [lsort -unique $shortened] "/"]
 }
 proc zipCellClass {driverCellClass mostFrequentInSinksCellClass} {
-  set shortenedDriverCellClass [shortenCellClass $driverCellClass]
+  set shortenedDriverCellClass [shortenCellClass [simplizeCellClass $driverCellClass]]
   set shortenedSinksCellClass [shortenCellClass $mostFrequentInSinksCellClass]
   return [append shortenedDriverCellClass $shortenedSinksCellClass]
+}
+
+source ../../../packages/andnot_ofList.package.tcl; # andnot
+source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+source ./proc_get_VTtype_of_celltype.invs.tcl; # get_VTtype_of_celltype
+proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
+    error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
+  } else {
+    set process [whichProcess_fromStdCellPattern $celltype] 
+    if {$process == "TSMC"} {
+      set VTrange {HVT SVT LVT ULVT}
+    } elseif {$process == "HH"} {
+      set VTrange {AL9 AR9 AH9}
+    }
+    if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
+    set nowVT [get_VTtype_of_celltype $celltype]
+    set availableVTrange [andnot $VTrange $forbidenVT]
+    if {[lsearch -exact $availableVTrange $nowVT] != 0} { return 0 } else { return 1 }
+  }
+}
+source proc_getDriveCapacity_ofCelltype.invs.tcl; # get_driveCapacity_of_celltype
+source ../../../packages/filter_numberList.package.tcl; # filter_numberList
+proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {1 12}}} {
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
+    error "proc judge_ifHaveBeenLargestCapacityInRange: check your input: celltype($celltype) not valid !!!" 
+  } else {
+    set process [whichProcess_fromStdCellPattern $celltype] 
+    if {$process == "TSMC"} {
+      set regExp "D(\\d+).*CPD(U?L?H?VT)?"
+      set nowCapacity [get_driveCapacity_of_celltype $celltype $regExp]
+      regsub D${nowCapacity}BWP $celltype D*BWP searchCelltypeExp
+    } elseif {$process == "HH"} {
+      set regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"
+      set nowCapacity [get_driveCapacity_of_celltype $celltype $regExp]
+      regsub [subst {(.*)X$nowCapacity}] $celltype [subst {\\1X*}] searchCelltypeExp
+    }
+    set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
+    set availableDriveCapacityList [lmap Acelltype $availableCelltypeList {
+      regexp $regExp $Acelltype wholename AdriveLevel AVTtype
+      if {$AdriveLevel == "05"} {set AdriveLevel 0.5} else { set AdriveLevel } 
+    }]
+    set filteredAvailableDriveCapacityList [filter_numberList $availableDriveCapacityList $driveCapacityRange]
+    if {[lindex $filteredAvailableDriveCapacityList end] == $nowCapacity} {
+      return 1 
+    } else {
+      return 0 
+    }
+  }
 }

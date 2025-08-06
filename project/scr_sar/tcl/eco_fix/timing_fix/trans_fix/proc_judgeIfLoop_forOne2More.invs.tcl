@@ -1,3 +1,13 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/08/06 18:38:52 Wednesday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|misc_proc)
+# descrip   : what?
+# return    : 
+# ref       : link url
+# --------------------------
 source ./proc_ifInBoxes.invs.tcl; # ifInBoxes
 source ../../../packages/every_any.package.tcl; # every
 source ../../../packages/cluster_point.package.tcl; # cluster_points

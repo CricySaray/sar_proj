@@ -85,7 +85,6 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0}} {
         return "needInsertBufferToFix" 
       }
 
-      
       return $resultDict ; # dict data
     }
   }

@@ -3,7 +3,7 @@ source ../../../packages/every_any.package.tcl; # every
 source ../../../packages/cluster_point.package.tcl; # cluster_points
 proc judgeIfLoop_forOne2More {{driverPinPt {}} {sinksPinPt {}} {netLength 0}} {
   if {![ifInBoxes $driverPinPt] || ![every x $sinksPinPt { ifInBoxes $x }]} {
-    error "proc judgeIfLoop_forOne2More: check your input: pinname($pinname) not found!!!" 
+    error "proc judgeIfLoop_forOne2More: check your input: pts is not in fplan boxes!!!" 
   } else {
     set clusters [cluster_points $sinksPinPt]
     set ruleNetLength 0

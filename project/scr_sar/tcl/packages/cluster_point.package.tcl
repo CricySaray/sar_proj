@@ -81,8 +81,18 @@ proc cluster_points {points {threshold 25} {min_pts 3} {max_clusters 3} {verbose
       }
     }
 
+
     # Convert index clusters to point clusters
-    set centerPin_itemPins_List [lmap clusterGroup $clusters {
+    set clustersPoint [list]
+    for {set c 0} {$c < [llength $clusters]} {incr c} {
+      set cluster_points [list]
+      foreach idx [lindex $clusters $c] {
+        lappend cluster_points [lindex $points $idx]
+      }
+      lappend clustersPoint $cluster_points
+    }
+    # Convert index clusters to point clusters
+    set centerPin_itemPins_List [lmap clusterGroup $clustersPoint {
       set centerPtOfItems [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints $clusterGroup]]
       set temp_center_itemPts [list $centerPtOfItems $clusterGroup]
     }]

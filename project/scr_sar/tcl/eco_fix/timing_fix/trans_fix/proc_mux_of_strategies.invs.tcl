@@ -121,6 +121,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promp
     }
     dict for {infovar infovalue} $allInfo { trace remove variable $infovar write onlyReadTrace }
     trace remove variable allInfo write onlyReadTrace
-    return [join [list $resultDict $allInfo] \n]; # dict data
+    #return [join [list $resultDict $allInfo] \n]; # dict data
+    return $resultDict
   }
 }

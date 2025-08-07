@@ -5,6 +5,7 @@ proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
   set allOutputPin [dbget [dbget top.insts.instTerms {.isOutput == 1}].name]
   set randomViolValue [generate_randomNumber_withNormalDistribution]
   set result_test [lmap testpin $allOutputPin {
+    puts "point 1: viol: $randomViolValue | pin: $testpin"
     set dict_of_sum [mux_of_strategies $randomViolValue $testpin]
     set temp "randomViolValue: $randomViolValue | [dict get $dict_of_sum]"
   }]

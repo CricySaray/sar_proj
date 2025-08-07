@@ -95,7 +95,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
 
     dict set allInfo ifNetConnected [judge_ifAllSegmentsConnected [dict get $allInfo wiresPts]] ; # 1: connected 0: not connected
 
-    dict set allInfo ruleLen [if { [expr [dict get $allInfo numSinks] == 1]} { [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt]} else { [lindex $resultOfIfLoop_forOne2More end] }]
+    dict set allInfo ruleLen [if { [expr [dict get $allInfo numSinks] == 1]} { dict get $allInfo distanceOfDriver2CenterOfSinksPinPt } else { lindex $resultOfIfLoop_forOne2More end }]
     dict set allInfo sink_pt_D2List [lmap sinkpinname [dict get $allInfo sinksPin] { set sinkpt [gpt $sinkpinname] ; set sink_pt [list $sinkpinname $sinkpt] }]
     dict set allInfo sinkPinFarthestToDriverPin [lindex [find_farthest_sinkpoint_to_driver_pin [dict get $allInfo driverPinPT] [dict get $allInfo sink_pt_D2List]] 0] 
     dict set allInfo sinksCellClassForShow [eo [expr [dict get $allInfo numSinks] == 1] [dict get $allInfo sinksCellClass] [dict get $allInfo uniqueShortenedSinksCellClass]]

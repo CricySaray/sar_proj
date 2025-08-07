@@ -97,7 +97,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
 
     dict set allInfo ruleLen [eo [expr [dict get $allInfo numSinks] == 1] [lindex $resultOfIfLoop_forOne2More end] [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt]]
     dict set allInfo sink_pt_D2List [lmap sinkpinname [dict get $allInfo sinksPin] { set sinkpt [gpt $sinkpinname] ; set sink_pt [list $sinkpinname $sinkpt] }]
-    dict set allInfo sinkPinFarthestToDriverPin [lindex [find_farthest_sinkpoint_to_driver_pin [dict get $allInfo driverPinPT] [dict get $allInfo sink_pt_D2List]]] 
+    dict set allInfo sinkPinFarthestToDriverPin [lindex [find_farthest_sinkpoint_to_driver_pin [dict get $allInfo driverPinPT] [dict get $allInfo sink_pt_D2List]] 0] 
     dict set allInfo sinksCellClassForShow [eo [expr [dict get $allInfo numSinks] == 1] [dict get $allInfo sinksCellClass] [dict get $allInfo uniqueShortenedSinksCellClass]]
     dict set allInfo farthestSinkCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo sinkPinFarthestToDriverPin] -p2].cell.name]
     

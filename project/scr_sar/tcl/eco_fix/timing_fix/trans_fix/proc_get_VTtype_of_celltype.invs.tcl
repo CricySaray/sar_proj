@@ -14,7 +14,7 @@ proc get_VTtype_of_celltype {{celltype ""} {regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"}
   if {$celltype == "" || $celltype == "0c0" || [dbget head.libCells.name $celltype -e] == ""} {
     error "proc [regsub ":" [lindex [info level 0] 0] ""]: check your input: celltype($celltype) is incorrect!!!"
   } else {
-    if {[catch {regexp $regExp $celltype wholename driveCapacity VTtype}]} {
+    if {[catch {regexp $regExp $celltype wholename driveCapacity VTtype}] || ![info exists wholename] || ![info exists driveCapacity] || ![info exists VTtype]} {
       error "proc [regsub ":" [lindex [info level 0] 0] ""]: check your input: regExp($regExp) can't be matched!!!"
     } else {
       set process [whichProcess_fromStdCellPattern $celltype]

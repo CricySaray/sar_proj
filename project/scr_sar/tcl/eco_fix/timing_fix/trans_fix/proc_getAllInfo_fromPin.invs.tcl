@@ -51,6 +51,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo sinksInstname [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].name }]
     dict set allInfo driverCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].cell.name]
     dict set allInfo sinksCellType [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].cell.name }]
+
     dict set allInfo driverCapacity [get_driveCapacity_of_celltype [dict get $allInfo driverCellType]]
     dict set allInfo sinksCapacity [lmap sinkcelltype [dict get $allInfo sinksCellType] { get_driveCapacity_of_celltype $sinkcelltype }]
     dict set allInfo driverVTtype [get_VTtype_of_celltype [dict get $allInfo driverCellType]]

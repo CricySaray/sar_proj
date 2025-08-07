@@ -102,7 +102,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo farthestSinkCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo sinkPinFarthestToDriverPin] -p2].cell.name]
     
     dict for {key val} $allInfo  { set $key $val }
-    dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop $driverCellClass $driverCellType $driverPin $numSinks $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
+    dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop $driverCellClass $driverCellType $driverPin "-$numSinks-" $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
     return $allInfo
   }
 }

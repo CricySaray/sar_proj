@@ -31,62 +31,39 @@ proc get_cell_class {{instOrPinOrCelltype ""}} {
 proc logic_of_mux {instOrCelltype} {
   if {[dbget top.insts.name $instOrCelltype -e] != ""} {
     set celltype [dbget [dbget top.insts.name $instOrCelltype -p].cell.name]
-    if {[get_property [get_cells $instOrCelltype] is_memory_cell]} {
-      return "mem"
-    } elseif {[get_property [get_cells $instOrCelltype] is_sequential]} {
-      return "sequential"
-    } elseif {[regexp {CLK} $celltype]} {
-      if {[get_property [get_cells $instOrCelltype] is_buffer]} {
-        return "CLKbuffer"
-      } elseif {[get_property [get_cells $instOrCelltype] is_inverter]} {
-        return "CLKinverter"
-      } elseif {[get_property [get_cells $instOrCelltype] is_combinational]} {
-        return "CLKlogic" 
-      } else {
-        return "CLKcell" 
-      }
-    } elseif {[regexp {^DEL} $celltype] && [get_property [get_cells $instOrCelltype] is_buffer]} {
-      return "delay"
-    } elseif {[get_property [get_cells $instOrCelltype] is_buffer]} {
-      return "buffer" 
-    } elseif {[get_property [get_cells $instOrCelltype] is_inverter]} {
-      return "inverter" 
-    } elseif {[get_property [get_cells $instOrCelltype] is_integrated_clock_gating_cell]} {
-      return "gating"
-    } elseif {[get_property [get_cells $instOrCelltype] is_combinational]} {
-      return "logic" 
-    } else {
-      return "other" 
-    }
-  } elseif {[dbget head.libCells.name $instOrPinOrCelltype -e] == ""} {
-    if {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_memory_cell]]} {
-      return "mem"
-    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_sequential]]} {
-      return "sequential"
-    } elseif {[regexp {CLK} $instOrCelltype]} {
-      if {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_buffer]]} {
-        return "CLKbuffer"
-      } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_inverter]]} {
-        return "CLKinverter"
-      } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_combinational]]} {
-        return "CLKlogic" 
-      } else {
-        return "CLKcell" 
-      }
-    } elseif {[regexp {^DEL} $instOrCelltype] && [lsort -unique [get_property [get_lib_cells $instOrCelltype] is_buffer]]} {
-      return "delay"
-    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_buffer]]} {
-      return "buffer" 
-    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_inverter]]} {
-      return "inverter" 
-    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_integrated_clock_gating_cell]]} {
-      return "gating"
-    } elseif {[lsort -unique [get_property [get_lib_cells $instOrCelltype] is_combinational]]} {
-      return "logic" 
-    } else {
-      return "other" 
-    }
-
+  } elseif {[dbget head.libCells.name $instOrCelltype -e] != ""} {
+    set celltype $instOrCelltype
   }
+
+  if {[lsort -unique [get_property [get_lib_cells $celltype] is_memory_cell]]} {
+    return "mem"
+  } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_black_box]]} {
+    return "IP"
+  } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_sequential]]} {
+    return "sequential"
+  } elseif {[regexp {CLK} $celltype]} {
+    if {[lsort -unique [get_property [get_lib_cells $celltype] is_buffer]]} {
+      return "CLKbuffer"
+    } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_inverter]]} {
+      return "CLKinverter"
+    } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_combinational]]} {
+      return "CLKlogic" 
+    } else {
+      return "CLKcell" 
+    }
+  } elseif {[regexp {^DEL} $celltype] && [lsort -unique [get_property [get_lib_cells $celltype] is_buffer]]} {
+    return "delay"
+  } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_buffer]]} {
+    return "buffer" 
+  } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_inverter]]} {
+    return "inverter" 
+  } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_integrated_clock_gating_cell]]} {
+    return "gating"
+  } elseif {[lsort -unique [get_property [get_lib_cells $celltype] is_combinational]]} {
+    return "logic" 
+  } else {
+    return "other" 
+  }
+
 
 }

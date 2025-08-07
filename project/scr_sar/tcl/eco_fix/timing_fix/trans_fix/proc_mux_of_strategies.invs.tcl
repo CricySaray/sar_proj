@@ -108,13 +108,13 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promp
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if netLen < fixedValue, you can't insert buffer
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
         if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity} {
-          puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
+          #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
          
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer} { ; # NOTICE
-          puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
+          #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
           
         } else { ; # NOTICE
-          puts "\n$promptInfo : needInsertBufferToFix\n" 
+          #puts "\n$promptInfo : needInsertBufferToFix\n" 
         }
        
       }

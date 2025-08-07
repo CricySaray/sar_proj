@@ -52,10 +52,11 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo driverCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].cell.name]
     dict set allInfo sinksCellType [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].cell.name }]
 
-    dict set allInfo driverCapacity [get_driveCapacity_of_celltype [dict get $allInfo driverCellType]]
-    dict set allInfo sinksCapacity [lmap sinkcelltype [dict get $allInfo sinksCellType] { get_driveCapacity_of_celltype $sinkcelltype }]
-    dict set allInfo driverVTtype [get_VTtype_of_celltype [dict get $allInfo driverCellType]]
-    dict set allInfo sinksVTtype [lmap sinkcelltype [dict get $allInfo sinksCellType] { get_VTtype_of_celltype $sinkcelltype }]
+    set ifCanMapDriverCellTypeWithRegExp [judge_ifCanMapWithRegExp $pinname]
+    dict set allInfo driverCapacity [if {$ifCanMapDriverCellTypeWithRegExp} {get_driveCapacity_of_celltype [dict get $allInfo driverCellType] } else { set cantMapDriverCapacity 0 }]
+    dict set allInfo sinksCapacity [lmap sinkcelltype [dict get $allInfo sinksCellType] { if {[judge_ifCanMapWithRegExp $sinkcelltype]} { get_driveCapacity_of_celltype $sinkcelltype } else { set cantMapSinkCapacity 0 }}]
+    dict set allInfo driverVTtype [if {$ifCanMapDriverCellTypeWithRegExp} { get_VTtype_of_celltype [dict get $allInfo driverCellType] } else { set cantMapDriverVT "CantMap" }]
+    dict set allInfo sinksVTtype [lmap sinkcelltype [dict get $allInfo sinksCellType] { if {[judge_ifCanMapWithRegExp $sinkcelltype]} { get_VTtype_of_celltype $sinkcelltype } else { set cantMapSinkVT "CantMap" }}]
     dict set allInfo driverPinPT [gpt [dict get $allInfo driverPin]]
     dict set allInfo sinksPinPT [lmap sinkpin [dict get $allInfo sinksPin] { gpt $sinkpin }]
 
@@ -115,6 +116,8 @@ proc simplizeCellClass {{sinksCellClass {}}} {
       set t "buffer"
     } elseif {$sinkcellclass in {sequential}} {
       set t "sequential"
+    } else {
+      set t "cantMap_$sinkcellclass"
     }
     set t
   }]
@@ -203,4 +206,31 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
     }
   }
 }
-
+source ../../../proc_whichProcess_fromStdCellPattern.pt.tcl; # whichProcess_fromStdCellPattern
+proc judge_ifCanMapWithRegExp {{pinNameOrCelltype ""}} {
+  set testPin [dbget top.insts.instTerms.name $pinNameOrCelltype -e -p]
+  set testCellType [dbget head.libCells.name $pinNameOrCelltype -e -p]
+  if {$pinNameOrCelltype == "" || $pinNameOrCelltype == "0x0" || [expr {$testPin == "" && $testCellType == ""}]} {
+    error "proc [regsub ":" [lindex [info level 0] 0] ""]: check your input : pinNameOrCelltype($pinNameOrCelltype) not be found!!!"
+  } else {
+    if {$testPin != ""} {
+      set celltype [dbget [dbget top.insts.instTerms.name $pinNameOrCelltype -p2].cell.name]
+    } elseif {$testCellType != ""} {
+      set celltype [dbget $testCellType.name]
+    }
+    set process [whichProcess_fromStdCellPattern $celltype]
+    if {$process == "TSMC"} {
+      set regExp "D(\\d+).*CPD(U?L?H?VT)?"
+    } elseif {$process == "HH"} {
+      set regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"
+    } else {
+      set regExp "notSet"
+    }
+    regexp $regExp $celltype wholename driveCapacity VTtype
+    if {![info exists wholename] || ![info exists driverCapacity] || ![info exists VTtype]} {
+      return 0
+    } else {
+      return 1
+    }
+  }
+}

@@ -13,7 +13,7 @@
 #             only a number if $count == 1, a list if $count > 1
 # ref       : link url
 # --------------------------
-proc generate_randomNumber_withNormalDistribution {{min -0.050} {max -0.001} {count 1} {mean -0.025} {stddev 0.01} {force_seed ""}} {
+proc generate_randomNumber_withNormalDistribution {{min -0.050} {max -0.001} {count 1} {mean -0.025} {stddev 0.03} {force_seed ""}} {
   # Validate input parameters
   if {![string is double -strict $min]} {
     error "proc generate_randomNumber_withNormalDistribution: Invalid minimum value: must be a number"

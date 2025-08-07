@@ -102,11 +102,14 @@ proc generate_randomNumber_withNormalDistribution {{min -0.050} {max -0.001} {co
   }
 }
 
-# 生成1个符合默认设置的随机数
-puts [generate_normal]
+if {0} {
+  # 生成1个符合默认设置的随机数
+  puts [generate_randomNumber_withNormalDistribution]
 
-# 生成10个以-0.030为中心的随机数
-puts [lsort -real [generate_normal -0.050 -0.001 10 -0.030 0.01]]
+  # 生成10个以-0.030为中心的随机数
+  puts [lsort -real [generate_randomNumber_withNormalDistribution -0.050 -0.001 10 -0.030 0.01]]
 
-# 生成5个更集中分布的随机数（较小的标准差）
-puts [lsort -real [generate_normal -0.050 -0.001 5 -0.020 0.005]]
+  # 生成5个更集中分布的随机数（较小的标准差）
+  puts [lsort -real [generate_randomNumber_withNormalDistribution -0.050 -0.001 5 -0.020 0.005]]
+    
+}

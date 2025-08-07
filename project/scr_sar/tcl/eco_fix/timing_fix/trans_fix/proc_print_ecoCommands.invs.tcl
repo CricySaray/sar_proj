@@ -85,7 +85,7 @@ proc print_ecoCommand {args} {
       return "ecoDeleteRepeater -inst $inst" 
     } elseif {$type == "delNet"} {
       if {$terms != "" && [llength $terms] == 1 && [dbget top.insts.instTerms.name $terms -e] != "" } {
-        set netname [dbget [dbget top.insts.instTerms.name $tems -e -p].net.name]
+        set netname [dbget [dbget top.insts.instTerms.name $terms -e -p].net.name]
         return "editDelete -net $netname"
       } elseif {$net != "" && [dbget top.nets.name $net -e] != ""} {
         return "editDelete -net $net" 
@@ -100,7 +100,7 @@ proc print_ecoCommand {args} {
 define_proc_arguments print_ecoCommand \
   -info "print eco command"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater}}}}
+    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet}}}}
     {-inst "specify inst to eco when type is add/delete" AString string optional}
     {-terms "specify terms to eco when type is add" AString string optional}
     {-celltype "specify celltype to add when type is add" AString string optional}

@@ -7,15 +7,21 @@
 # descrip   : get $all information from only pin name in innovus
 # update    : 2025/08/06 23:25:16 Wednesday
 #             (U001) improve method to judge if the one2more situation is loopped 
-# mini descrip: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/driverInstname/sinksInstname/
+# update    : 2025/08/07 09:16:54 Thursday
+#             (U002) add some unique dict items
+# mini descrip: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/wiresPts/driverInstname/sinksInstname/
 #               driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
-#               sinksPinPT/numSinks/shortenedSinksCellClassRaw/simplizedSinksCellClass/shortenedSinksCellClassSimplized/
-#               uniqueSinksCellClass/mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
+#               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/shortenedSimplizedSinksCellClass/
+#               uniqueSinksCellClass/uniqueShortenedSinksCellClass/uniqueSimplizedSinksCellClass/uniqueShortenedSimplizedSinksCellClass
+#               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
-#               ifHaveBeenLargestCapacityInRange
+#               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
+#               infoToShow
 # return    : dict variable
 # ref       : link url
 # --------------------------
+source ../../../packages/logic_AND_OR.package.tcl; # eo
+source ../../../packages/judge_ifAllSegmentsConnected.package.tcl; # judge_ifAllSegmentsConnected
 source ./proc_get_cell_class.invs.tcl; # get_cell_class
 source ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_driverPin | get_sinkPins
 source ./proc_get_net_lenth.invs.tcl; # get_net_length
@@ -27,6 +33,7 @@ source ./proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_from
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
+source ./proc_findFarthestSinkPinAndPt_toDriverPin.invs.tcl; # find_farthest_sinkpoint_to_driver_pin
 
 proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
   if {$pinname == "" || $pinname == "0x0" || [dbget top.insts.instTerms.name $pinname -e] == ""} {
@@ -39,6 +46,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo sinksCellClass [lmap sinkpin [dict get $allInfo sinksPin] { get_cell_class $sinkpin }]
     dict set allInfo netName [get_object_name [get_nets -of $pinname]]
     dict set allInfo netLen [get_net_length [dict get $allInfo netName]]
+    dict set allInfo wiresPts [dbget [dbget top.nets.name [dict get $allInfo netName] -p].wires.pts]
     dict set allInfo driverInstname [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].name]
     dict set allInfo sinksInstname [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].name }]
     dict set allInfo driverCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].cell.name]
@@ -51,19 +59,25 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo sinksPinPT [lmap sinkpin [dict get $allInfo sinksPin] { gpt $sinkpin }]
 
     dict set allInfo numSinks [llength [dict get $allInfo sinksPin]]
-    dict set allInfo shortenedSinksCellClassRaw [shortenCellClass [dict get $allInfo sinksCellClass]] 
-    dict set allInfo simplizedSinksCellClass [simplizeCellClass [dict get $allInfo sinksCellClass]]
-    dict set allInfo shortenedSinksCellClassSimplized [shortenCellClass [dict get $allInfo simplizedSinksCellClass]]
-    dict set allInfo uniqueSinksCellClass [lsort -unique [dict get $allInfo sinksCellClass] ]
-    dict set allInfo mostFrequentInSinksCellClass [findMostFrequentElement [dict get $allInfo simplizedSinksCellClass]]
-    dict set allInfo numOfMostFrequentInSinksCellClass [llength [dict get $allInfo mostFrequentInSinksCellClass]]
+    dict set allInfo shortenedSinksCellClass [shortenCellClass [dict get $allInfo sinksCellClass]] ; # b/b/s/v/l/f/f
+    dict set allInfo simplizedSinksCellClass [simplizeCellClass [dict get $allInfo sinksCellClass]] ; # { buffer buffer sequential buffer logic buffer buffer  }
+    dict set allInfo shortenedSimplizedSinksCellClass [shortenCellClass [dict get $allInfo simplizedSinksCellClass]] ; # b/b/s/b/l/b/b
+    # U002
+    dict set allInfo uniqueSinksCellClass [lsort -unique [dict get $allInfo sinksCellClass] ] ; # { buffer sequential inverter logic CLKbuffer }
+    dict set allInfo uniqueShortenedSinksCellClass [join [lsort -unique [split [dict get $allInfo shortenedSinksCellClass] "/"]] "/"] ; # b/s/v/l/f
+    dict set allInfo uniqueSimplizedSinksCellClass [lsort -unique [dict get $allInfo simplizedSinksCellClass]] ; # { buffer sequential logic }
+    dict set allInfo uniqueShortenedSimplizedSinksCellClass [join [lsort -unique [split [dict get $allInfo shortenedSimplizedSinksCellClass] "/"]] "/"]; # b/s/l
+    
+    dict set allInfo mostFrequentInSinksCellClass [findMostFrequentElement [dict get $allInfo simplizedSinksCellClass]]; # { buffer }
+    dict set allInfo numOfMostFrequentInSinksCellClass [llength [dict get $allInfo mostFrequentInSinksCellClass]] ; # 1
 
     dict set allInfo centerPtOfSinksPinPT [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT]]]
     dict set allInfo distanceOfDriver2CenterOfSinksPinPt [format "%.3f" [calculateDistance [dict get $allInfo driverPinPT] [dict get $allInfo centerPtOfSinksPinPT]]]
     if {[dict get $allInfo numSinks] == 1} {
       set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
     } elseif {[dict get $allInfo numSinks] > 1} {
-      set resultOfCheckRoutingLoop [lindex [judgeIfLoop_forOne2More [dict get $allInfo driverPinPT] [dict get $allInfo sinksPinPT] [dict get $allInfo netLen] 16] 0] ; # U001
+      set resultOfIfLoop_forOne2More [judgeIfLoop_forOne2More [dict get $allInfo driverPinPT] [dict get $allInfo sinksPinPT] [dict get $allInfo netLen] 16] ; # U001
+      set resultOfCheckRoutingLoop [lindex $resultOfIfLoop_forOne2More 0] 
     }
     dict set allInfo ifLoop [switch $resultOfCheckRoutingLoop {
       0 {set result "noLoop"}
@@ -74,10 +88,21 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     
     dict set allInfo ifOne2One [expr ([dict get $allInfo numSinks] == 1) ? 1 : 0]
     dict set allInfo ifSimpleOne2More [expr ([dict get $allInfo numOfMostFrequentInSinksCellClass] == 1) ? 1 : 0]
-    dict set allInfo driverSinksSymbol [zipCellClass [dict get $allInfo driverCellClass] [dict get $allInfo mostFrequentInSinksCellClass]]
+    dict set allInfo driverSinksSymbol [zipCellClass [dict get $allInfo driverCellClass] [dict get $allInfo mostFrequentInSinksCellClass] [dict get $allInfo numSinks]]
 
     dict set allInfo ifHaveBeenFastestVTinRange [judge_ifHaveBeenFastVTinRange [dict get $allInfo driverCellType] $forbidenVT]
     dict set allInfo ifHaveBeenLargestCapacityInRange [judge_ifHaveBeenLargestCapacityInRange [dict get $allInfo driverCellType] $driveCapacityRange]
+
+    dict set allInfo ifNetConnected [judge_ifAllSegmentsConnected [dict get $allInfo wiresPts]] ; # 1: connected 0: not connected
+
+    dict set allInfo ruleLen [eo [expr [dict get $allInfo numSinks] == 1] [lindex $resultOfIfLoop_forOne2More end] [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt]]
+    dict set allInfo sink_pt_D2List [lmap sinkpinname [dict get $allInfo sinksPin { set sinkpt [gpt $sinkpinname] ; set sink_pt [list $sinkpinname $sinkpt] }]]
+    dict set allInfo sinkPinFarthestToDriverPin [lindex [find_farthest_sinkpoint_to_driver_pin [dict get $allInfo driverPinPT] [dict get $allInfo sink_pt_D2List]]] 
+    dict set allInfo sinksCellClassForShow [eo [expr [dict get $allInfo numSinks] == 1] [dict get $allInfo sinksCellClass] [dict get $allInfo uniqueShortenedSinksCellClass]]
+    dict set allInfo farthestSinkCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo sinkPinFarthestToDriverPin] -p2].cell.name]
+    
+    dict foreach {key val} $allInfo  { set $key $val }
+    dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop $driverCellClass $driverCellType $driverPin $numSinks $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
     return $allInfo
   }
 }
@@ -113,12 +138,20 @@ proc shortenCellClass {{sinksCellClass {}}} { ; # return a string like "b/i/l/f/
     set t
   }]
 
-  return [join [lsort -unique $shortened] "/"]
+  return [join $shortened "/"]
 }
-proc zipCellClass {driverCellClass mostFrequentInSinksCellClass} {
+proc zipCellClass {driverCellClass mostFrequentInSinksCellClass numSinks} {
   set shortenedDriverCellClass [shortenCellClass [simplizeCellClass $driverCellClass]]
   set shortenedSinksCellClass [shortenCellClass $mostFrequentInSinksCellClass]
-  return [append shortenedDriverCellClass $shortenedSinksCellClass]
+  if {$numSinks == 1} {
+    return [append shortenedDriverCellClass $shortenedSinksCellClass]
+  } elseif {$numSinks > 1 && [llength $mostFrequentInSinksCellClass] == 1} {
+    set simpleOne2MoreSymbol "m"
+    return [append simpleOne2MoreSymbol $shortenedDriverCellClass $shortenedSinksCellClass]
+  } elseif {$numSinks > 1 && [llength $mostFrequentInSinksCellClass] > 1} {
+    set complexOne2MoreSymbol "mm" 
+    return [append complexOne2MoreSymbol $shortenedDriverCellClass $shortenedSinksCellClass]
+  }
 }
 
 source ../../../packages/andnot_ofList.package.tcl; # andnot
@@ -169,3 +202,4 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
     }
   }
 }
+

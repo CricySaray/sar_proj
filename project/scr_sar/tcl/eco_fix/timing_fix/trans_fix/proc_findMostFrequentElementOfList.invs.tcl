@@ -8,17 +8,14 @@
 # ref       : link url
 # --------------------------
 proc findMostFrequentElement {inputList {minPercentage 50.0} {returnUnique 1}} {
-	# 检查输入是否为有效列表
 	set listLength [llength $inputList]
 	if {$listLength == 0} {
 		error "proc findMostFrequentElement: input list is empty!!!"
 	}
-	# 创建哈希表统计每个元素的出现次数
 	array set count {}
 	foreach element $inputList {
 		incr count($element)
 	}
-	# 找出最大出现次数
 	set maxCount 0
 	foreach element [array names count] {
 		if {$count($element) > $maxCount} {

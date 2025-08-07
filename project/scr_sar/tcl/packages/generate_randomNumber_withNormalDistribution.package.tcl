@@ -1,28 +1,41 @@
-proc generate_normal {{min -0.050} {max -0.001} {count 1} {mean -0.025} {stddev 0.01} {force_seed ""}} {
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/08/07 18:51:32 Thursday
+# label     : math_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|misc_proc)
+# descrip   : This proc generates normally distributed floating-point numbers with 3 decimal places within a specified 
+#             range (default: -0.050 to -0.001), allowing customization of the distribution's mean, standard deviation, 
+#             and the number of values generated. It includes seed control for reproducibility and ensures all values stay 
+#             within the defined bounds.
+# return    : random number(float/integer) in specified range, which is following normal distribution
+# ref       : link url
+# --------------------------
+proc generate_randomNumber_withNormalDistribution {{min -0.050} {max -0.001} {count 1} {mean -0.025} {stddev 0.01} {force_seed ""}} {
   # Validate input parameters
   if {![string is double -strict $min]} {
-    error "Invalid minimum value: must be a number"
+    error "proc generate_randomNumber_withNormalDistribution: Invalid minimum value: must be a number"
   }
   if {![string is double -strict $max]} {
-    error "Invalid maximum value: must be a number"
+    error "proc generate_randomNumber_withNormalDistribution: Invalid maximum value: must be a number"
   }
   if {$min >= $max} {
-    error "Minimum value must be less than maximum value"
+    error "proc generate_randomNumber_withNormalDistribution: Minimum value must be less than maximum value"
   }
   if {![string is integer -strict $count] || $count < 1} {
-    error "Count must be a positive integer"
+    error "proc generate_randomNumber_withNormalDistribution: Count must be a positive integer"
   }
   if {![string is double -strict $mean]} {
-    error "Mean must be a number"
+    error "proc generate_randomNumber_withNormalDistribution: Mean must be a number"
   }
   if {$mean <= $min || $mean >= $max} {
-    error "Mean must be within the range ($min to $max)"
+    error "proc generate_randomNumber_withNormalDistribution: Mean must be within the range ($min to $max)"
   }
   if {![string is double -strict $stddev] || $stddev <= 0} {
-    error "Standard deviation must be a positive number"
+    error "proc generate_randomNumber_withNormalDistribution: Standard deviation must be a positive number"
   }
   if {$force_seed ne "" && ![string is integer -strict $force_seed]} {
-    error "Force seed must be an integer"
+    error "proc generate_randomNumber_withNormalDistribution: Force seed must be an integer"
   }
   
   # Initialize random seed
@@ -76,7 +89,7 @@ proc generate_normal {{min -0.050} {max -0.001} {count 1} {mean -0.025} {stddev 
   }
   
   if {[llength $result] < $count} {
-    error "Could not generate enough values within range after $max_attempts attempts"
+    error "proc generate_randomNumber_withNormalDistribution: Could not generate enough values within range after $max_attempts attempts"
   }
   
   # Return single value or list

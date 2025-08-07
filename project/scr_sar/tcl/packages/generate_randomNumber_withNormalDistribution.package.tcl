@@ -9,6 +9,8 @@
 #             and the number of values generated. It includes seed control for reproducibility and ensures all values stay 
 #             within the defined bounds.
 # return    : random number(float/integer) in specified range, which is following normal distribution
+#             you can select num of generated random number,
+#             only a number if $count == 1, a list if $count > 1
 # ref       : link url
 # --------------------------
 proc generate_randomNumber_withNormalDistribution {{min -0.050} {max -0.001} {count 1} {mean -0.025} {stddev 0.01} {force_seed ""}} {

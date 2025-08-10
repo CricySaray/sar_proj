@@ -51,8 +51,8 @@ proc expandMapList {{customMapList {}}} {
     return [list ] 
   }
 }
-set customMapList_example {{filler {{FILLERC*\d+A[HRL]9}}} {ANT {{ANTENNA*}}} {noCare {{BUSHOLD*}}} {IOfiller {{RCLIB_PLFLR\d$}}} {cutCell {{RCLIB_PLFLR5_CUT*}}} {IOpad {{RCLIB_*}}} {tapCell {{TAP*}}} {tieCell {{TIE\d+X\d+A[HLR]9}}}}
-set expandedMapList [expandMapList $customMapList_example] ; # U003
+set customMapList_example {{filler {{FILLERC*\d+A[HRL]9}}} {ANT {{ANTENNA*}}} {noCare {{BUSHOLD*}}} {IOfiller {{RCLIB_PLFLR\d$}}} {cutCell {{RCLIB_PLFLR5_CUT*}}} {IOpad {{RCLIB_*}}} {tapCell {{TAP*}}} {tieCell {{TIE\d+X\d+A[HLR]9}}}} ; # U002
+set expandedMapList [expandMapList $customMapList_example] ; # U003: you need write cmd "global expandedMapList" when the beginning of proc
 proc get_class_of_celltype {celltype {customMapList {}} {clkExp "CLK"} {delayCellExp "DEL"}} {
   if {[llength $customMapList]} {
     # customMapList: for example {{physical {TAP0X1AR9 FILLER4AR9}} {IOpad {RCLIB_PLVDDHA}} {IOfiller {RCLIB_PLFLR5 RCLIB_PLFLR1}}}

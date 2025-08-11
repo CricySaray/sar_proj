@@ -60,7 +60,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set row_height [expr {$y1 - $y}]
   
   # Verify target height matches row height using expr difference
-  if {[expr {$target_h - $row_height}]} {
+  if {[expr $target_h - $row_height]} {
     if {$debug} {
       puts "Target height does not match row height: target=$target_h, row=$row_height"
     }
@@ -100,7 +100,13 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
 
   # Check for overlapping rectangles
   set overlap_found 0
-  set rect_indices [lrange [dict keys [lrepeat [llength $target_row_rects] 1]] 0 end]
+  set rect_count [llength $target_row_rects]
+  # Generate indices from 0 to rect_count-1
+  set rect_indices [list]
+  for {set i 0} {$i < $rect_count} {incr i} {
+    lappend rect_indices $i
+  }
+  
   foreach i $rect_indices {
     set r1 [lindex $target_row_rects $i 1]
     lassign $r1 x1 y1 x1_1 y1_1
@@ -130,8 +136,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set x1 [lindex $a 1 0]
       set x2 [lindex $b 1 0]
       if {$x1 < $x2} {return -1}
-      elseif {$x1 > $x2} {return 1}
-      else {return 0}
+      if {$x1 > $x2} {return 1}
+      return 0
     }}
   } $target_row_rects]
 

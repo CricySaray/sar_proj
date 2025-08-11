@@ -60,7 +60,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set row_height [expr {$y1 - $y}]
   
   # Verify target height matches row height using expr difference
-  if {[expr $target_h - $row_height]} {
+  if {[expr {$target_h - $row_height}]} {
     if {$debug} {
       puts "Target height does not match row height: target=$target_h, row=$row_height"
     }
@@ -98,10 +98,9 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     return [list $result_flag $free_region $move_list]
   }
 
-  # Check for overlapping rectangles
+  # Check for overlapping rectangles in original positions
   set overlap_found 0
   set rect_count [llength $target_row_rects]
-  # Generate indices from 0 to rect_count-1
   set rect_indices [list]
   for {set i 0} {$i < $rect_count} {incr i} {
     lappend rect_indices $i
@@ -117,7 +116,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       
       if {!($x1_1 <= $x2 || $x2_1 <= $x1)} {
         if {$debug} {
-          puts "Overlapping rectangles: [lindex $target_row_rects $i 0] and [lindex $target_row_rects $j 0]"
+          puts "Original overlapping rectangles: [lindex $target_row_rects $i 0] and [lindex $target_row_rects $j 0]"
         }
         set overlap_found 1
         break
@@ -127,7 +126,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   }
   
   if {$overlap_found} {
-    error "Overlapping rectangles detected in target row"
+    error "Overlapping rectangles detected in original target row"
   }
 
   # Sort rectangles by x coordinate
@@ -136,8 +135,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set x1 [lindex $a 1 0]
       set x2 [lindex $b 1 0]
       if {$x1 < $x2} {return -1}
-      if {$x1 > $x2} {return 1}
-      return 0
+      elseif {$x1 > $x2} {return 1}
+      else {return 0}
     }}
   } $target_row_rects]
 
@@ -223,8 +222,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
 
   # Check if expansion is possible with flexible movement strategy
   set valid 0
-  set move_left_list [list]  ;# {instname max_move} - only non-boundary rectangles
-  set move_right_list [list] ;# {instname max_move} - only non-boundary rectangles
+  set move_left_list [list]  ;# {instname max_move original_x1} - track max move and original position
+  set move_right_list [list] ;# {instname max_move original_x} - track max move and original position
   set total_left_possible 0.0  ;# total left movable distance
   set total_right_possible 0.0 ;# total right movable distance
 
@@ -232,11 +231,13 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     # Left gap: can only move right rectangles (non-right-boundary)
     foreach rect $sorted_rects {
       set instname [lindex $rect 0]
+      set coords [lindex $rect 1]
+      lassign $coords r_x r_y r_x1 r_y1
       set is_right_boundary [lindex $rect 3]
       
       # Right boundary rectangles cannot move, others can move up to delta
       set max_move [expr {$is_right_boundary ? 0.0 : $delta}]
-      lappend move_right_list [list $instname $max_move [lindex $rect 1 0]] ;# store x coordinate for proximity
+      lappend move_right_list [list $instname $max_move $r_x] ;# store original x for proximity
       set total_right_possible [expr {$total_right_possible + $max_move}]
     }
     # Sort right rectangles by proximity to gap (ascending x = closer)
@@ -249,11 +250,14 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     # Right gap: can only move left rectangles (non-left-boundary)
     foreach rect [lrange $sorted_rects 0 [expr {$left_count - 1}]] {
       set instname [lindex $rect 0]
+      set coords [lindex $rect 1]
+      lassign $coords r_x r_y r_x1 r_y1
       set is_left_boundary [lindex $rect 2]
       
       # Left boundary rectangles cannot move, others can move up to delta
       set max_move [expr {$is_left_boundary ? 0.0 : $delta}]
-      lappend move_left_list [list $instname $max_move [lindex $rect 1 2]] ;# store x1 for proximity
+      lappend move_left_list [list $instname $max_move $r_x1] ;# store original x1 for proximity
+      set total_left_possible [expr {$total_left_possible + $max_move}]
     }
     # Sort left rectangles by proximity to gap (descending x1 = closer)
     set move_left_list [lsort -decreasing -real -index 2 $move_left_list]
@@ -266,10 +270,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     # Calculate left movable rectangles and total distance (store x1 for proximity)
     foreach rect [lrange $sorted_rects 0 [expr {$left_count - 1}]] {
       set instname [lindex $rect 0]
+      set coords [lindex $rect 1]
+      lassign $coords r_x r_y r_x1 r_y1
       set is_left_boundary [lindex $rect 2]
       
       set max_move [expr {$is_left_boundary ? 0.0 : $delta}]
-      lappend move_left_list [list $instname $max_move [lindex $rect 1 2]] ;# x1 for proximity
+      lappend move_left_list [list $instname $max_move $r_x1] ;# x1 for proximity
       set total_left_possible [expr {$total_left_possible + $max_move}]
     }
     # Sort left rectangles by proximity to gap (descending x1 = closer)
@@ -278,10 +284,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     # Calculate right movable rectangles and total distance (store x for proximity)
     foreach rect [lrange $sorted_rects $left_count end] {
       set instname [lindex $rect 0]
+      set coords [lindex $rect 1]
+      lassign $coords r_x r_y r_x1 r_y1
       set is_right_boundary [lindex $rect 3]
       
       set max_move [expr {$is_right_boundary ? 0.0 : $delta}]
-      lappend move_right_list [list $instname $max_move [lindex $rect 1 0]] ;# x for proximity
+      lappend move_right_list [list $instname $max_move $r_x] ;# x for proximity
       set total_right_possible [expr {$total_right_possible + $max_move}]
     }
     # Sort right rectangles by proximity to gap (ascending x = closer)
@@ -299,83 +307,104 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   }
 
   # Generate movement list with proximity-based strategy
-  # Track total movement for each instance using dict instead of array
+  # Track total movement for each instance using dict
   set total_moves [dict create]
   
   if {$pos eq "between"} {
-    # Between gap: prioritize closest left and right rectangles, move in minWidth units
+    # Between gap: prioritize closest left and right rectangles, respect max move
     set remaining_units $total_units
-    set left_group [list]  ;# track current left group (instnames)
-    set right_group [list] ;# track current right group (instnames)
+    set left_group [list]  ;# track current left group (instnames with max moves)
+    set right_group [list] ;# track current right group (instnames with max moves)
     set left_idx 0
     set right_idx 0
 
     while {$remaining_units > 0} {
-      # Get next left candidate if needed
+      # Get next left candidate with max move if needed
       if {[llength $left_group] == 0 && $left_idx < [llength $move_left_list]} {
-        lappend left_group [lindex $move_left_list $left_idx 0]
+        set left_inst [lindex $move_left_list $left_idx 0]
+        set left_max [lindex $move_left_list $left_idx 1]
+        lappend left_group [list $left_inst $left_max]
         incr left_idx
       }
       
-      # Get next right candidate if needed
+      # Get next right candidate with max move if needed
       if {[llength $right_group] == 0 && $right_idx < [llength $move_right_list]} {
-        lappend right_group [lindex $move_right_list $right_idx 0]
+        set right_inst [lindex $move_right_list $right_idx 0]
+        set right_max [lindex $move_right_list $right_idx 1]
+        lappend right_group [list $right_inst $right_max]
         incr right_idx
       }
 
-      # Calculate available units from each side
-      set left_available_units [expr {int($total_left_possible / $minWidth)}]
-      set right_available_units [expr {int($total_right_possible / $minWidth)}]
+      # Calculate available units from each side (considering max moves)
+      set left_available_units 0
+      foreach item $left_group {
+        set max_move [lindex $item 1]
+        set used_move [expr {[dict exists $total_moves [lindex $item 0]] ? [dict get $total_moves [lindex $item 0]] : 0}]
+        set left_available_units [expr {$left_available_units + int(($max_move - $used_move) / $minWidth)}]
+      }
+      
+      set right_available_units 0
+      foreach item $right_group {
+        set max_move [lindex $item 1]
+        set used_move [expr {[dict exists $total_moves [lindex $item 0]] ? [dict get $total_moves [lindex $item 0]] : 0}]
+        set right_available_units [expr {$right_available_units + int(($max_move - $used_move) / $minWidth)}]
+      }
+      
       set total_available_units [expr {$left_available_units + $right_available_units}]
+      if {$total_available_units <= 0} {
+        if {$debug} {puts "Insufficient movable units to reach delta"}
+        return [list $result_flag $free_region $move_list]
+      }
 
       # Calculate proportional units using integer arithmetic
-      if {$total_available_units > 0} {
-        set left_ratio_num $left_available_units
-        set left_units [expr {int(($remaining_units * $left_ratio_num) / $total_available_units)}]
-        set right_units [expr {$remaining_units - $left_units}]
-        
-        # Ensure no negative values
-        if {$left_units < 0} { set left_units 0 }
-        if {$right_units < 0} { set right_units 0 }
-        
-        # Adjust if one side has no available units
-        if {$left_available_units == 0} {
-          set left_units 0
-          set right_units $remaining_units
-        }
-        if {$right_available_units == 0} {
-          set right_units 0
-          set left_units $remaining_units
-        }
-      } else {
-        set left_units 0
-        set right_units 0
-      }
+      set left_ratio_num $left_available_units
+      set left_units [expr {int(($remaining_units * $left_ratio_num) / $total_available_units)}]
+      set right_units [expr {$remaining_units - $left_units}]
+      
+      # Ensure no negative values and respect available units
+      set left_units [expr {min($left_units, $left_available_units)}]
+      set left_units [expr {max($left_units, 0)}]
+      set right_units [expr {min($right_units, $right_available_units)}]
+      set right_units [expr {max($right_units, 0)}]
 
       # Convert units to actual distance
       set left_move [expr {$left_units * $minWidth}]
       set right_move [expr {$right_units * $minWidth}]
 
-      # Apply left movement to current group
+      # Apply left movement to current group (respect max move)
       if {$left_move > 0 && [llength $left_group] > 0} {
-        foreach inst $left_group {
-          if {[dict exists $total_moves $inst]} {
-            dict set total_moves $inst [expr {[dict get $total_moves $inst] + $left_move}]
-          } else {
-            dict set total_moves $inst $left_move
+        foreach item $left_group {
+          set inst [lindex $item 0]
+          set max_move [lindex $item 1]
+          set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0}]
+          set new_move [expr {$current_move + $left_move}]
+          
+          # Ensure we don't exceed max move for this instance
+          if {$new_move > $max_move} {
+            set new_move $max_move
+            set left_move [expr {$new_move - $current_move}]
           }
+          
+          dict set total_moves $inst $new_move
         }
         set remaining_units [expr {$remaining_units - $left_units}]
       }
       
-      # Apply right movement to current group
+      # Apply right movement to current group (respect max move)
       if {$right_move > 0 && [llength $right_group] > 0} {
-        foreach inst $right_group {
-          if {[dict exists $total_moves $inst]} {
-            dict set total_moves $inst [expr {[dict get $total_moves $inst] + $right_move}]
-          } else {
-            dict set total_moves $inst $right_move
+        foreach item $right_group {
+          set inst [lindex $item 0]
+          set max_move [lindex $item 1]
+          set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0}]
+          set new_move [expr {$current_move + $right_move}]
+          
+          # Ensure we don't exceed max move for this instance
+          if {$new_move > $max_move} {
+            set new_move $max_move
+            set right_move [expr {$new_move - $current_move}]
           }
+          
+          dict set total_moves $inst $new_move
         }
         set remaining_units [expr {$remaining_units - $right_units}]
       }
@@ -384,79 +413,129 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       if {$remaining_units > 0} {
         # Add next left rectangle to group if available
         if {$left_idx < [llength $move_left_list]} {
-          lappend left_group [lindex $move_left_list $left_idx 0]
+          set left_inst [lindex $move_left_list $left_idx 0]
+          set left_max [lindex $move_left_list $left_idx 1]
+          lappend left_group [list $left_inst $left_max]
           incr left_idx
         }
         # Add next right rectangle to group if available
         if {$right_idx < [llength $move_right_list]} {
-          lappend right_group [lindex $move_right_list $right_idx 0]
+          set right_inst [lindex $move_right_list $right_idx 0]
+          set right_max [lindex $move_right_list $right_idx 1]
+          lappend right_group [list $right_inst $right_max]
           incr right_idx
         }
       }
     }
   } elseif {$pos eq "left"} {
-    # Left gap: prioritize closest right rectangles, move in groups
+    # Left gap: prioritize closest right rectangles, respect max move
     set remaining_units $total_units
-    set current_group [list]
+    set current_group [list] ;# {instname max_move}
     set idx 0
 
     while {$remaining_units > 0} {
-      # Add next closest rectangle to group if needed
+      # Add next closest rectangle with max move if needed
       if {[llength $current_group] == 0 && $idx < [llength $move_right_list]} {
-        lappend current_group [lindex $move_right_list $idx 0]
+        set inst [lindex $move_right_list $idx 0]
+        set max_move [lindex $move_right_list $idx 1]
+        lappend current_group [list $inst $max_move]
         incr idx
       }
 
-      # Calculate movement in minWidth units
-      set move_units [expr {min($remaining_units, int([lindex $move_right_list [expr {$idx - 1}] 1] / $minWidth))}]
+      # Calculate available units in current group
+      set group_available_units 0
+      foreach item $current_group {
+        set max_move [lindex $item 1]
+        set used_move [expr {[dict exists $total_moves [lindex $item 0]] ? [dict get $total_moves [lindex $item 0]] : 0}]
+        set group_available_units [expr {$group_available_units + int(($max_move - $used_move) / $minWidth)}]
+      }
+      
+      if {$group_available_units <= 0} {
+        if {$debug} {puts "Insufficient movable units in right group"}
+        return [list $result_flag $free_region $move_list]
+      }
+
+      # Calculate movement in minWidth units (respect available)
+      set move_units [expr {min($remaining_units, $group_available_units)}]
       set move [expr {$move_units * $minWidth}]
 
-      # Apply movement to current group
-      foreach inst $current_group {
-        if {[dict exists $total_moves $inst]} {
-          dict set total_moves $inst [expr {[dict get $total_moves $inst] + $move}]
-        } else {
-          dict set total_moves $inst $move
+      # Apply movement to current group (respect max move)
+      foreach item $current_group {
+        set inst [lindex $item 0]
+        set max_move [lindex $item 1]
+        set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0}]
+        set new_move [expr {$current_move + $move}]
+        
+        # Ensure we don't exceed max move
+        if {$new_move > $max_move} {
+          set new_move $max_move
         }
+        
+        dict set total_moves $inst $new_move
       }
       set remaining_units [expr {$remaining_units - $move_units}]
 
       # Expand group if still remaining
       if {$remaining_units > 0 && $idx < [llength $move_right_list]} {
-        lappend current_group [lindex $move_right_list $idx 0]
+        set inst [lindex $move_right_list $idx 0]
+        set max_move [lindex $move_right_list $idx 1]
+        lappend current_group [list $inst $max_move]
         incr idx
       }
     }
   } elseif {$pos eq "right"} {
-    # Right gap: prioritize closest left rectangles, move in groups
+    # Right gap: prioritize closest left rectangles, respect max move
     set remaining_units $total_units
-    set current_group [list]
+    set current_group [list] ;# {instname max_move}
     set idx 0
 
     while {$remaining_units > 0} {
-      # Add next closest rectangle to group if needed
+      # Add next closest rectangle with max move if needed
       if {[llength $current_group] == 0 && $idx < [llength $move_left_list]} {
-        lappend current_group [lindex $move_left_list $idx 0]
+        set inst [lindex $move_left_list $idx 0]
+        set max_move [lindex $move_left_list $idx 1]
+        lappend current_group [list $inst $max_move]
         incr idx
       }
 
-      # Calculate movement in minWidth units
-      set move_units [expr {min($remaining_units, int([lindex $move_left_list [expr {$idx - 1}] 1] / $minWidth))}]
+      # Calculate available units in current group
+      set group_available_units 0
+      foreach item $current_group {
+        set max_move [lindex $item 1]
+        set used_move [expr {[dict exists $total_moves [lindex $item 0]] ? [dict get $total_moves [lindex $item 0]] : 0}]
+        set group_available_units [expr {$group_available_units + int(($max_move - $used_move) / $minWidth)}]
+      }
+      
+      if {$group_available_units <= 0} {
+        if {$debug} {puts "Insufficient movable units in left group"}
+        return [list $result_flag $free_region $move_list]
+      }
+
+      # Calculate movement in minWidth units (respect available)
+      set move_units [expr {min($remaining_units, $group_available_units)}]
       set move [expr {$move_units * $minWidth}]
 
-      # Apply movement to current group
-      foreach inst $current_group {
-        if {[dict exists $total_moves $inst]} {
-          dict set total_moves $inst [expr {[dict get $total_moves $inst] + $move}]
-        } else {
-          dict set total_moves $inst $move
+      # Apply movement to current group (respect max move)
+      foreach item $current_group {
+        set inst [lindex $item 0]
+        set max_move [lindex $item 1]
+        set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0}]
+        set new_move [expr {$current_move + $move}]
+        
+        # Ensure we don't exceed max move
+        if {$new_move > $max_move} {
+          set new_move $max_move
         }
+        
+        dict set total_moves $inst $new_move
       }
       set remaining_units [expr {$remaining_units - $move_units}]
 
       # Expand group if still remaining
       if {$remaining_units > 0 && $idx < [llength $move_left_list]} {
-        lappend current_group [lindex $move_left_list $idx 0]
+        set inst [lindex $move_left_list $idx 0]
+        set max_move [lindex $move_left_list $idx 1]
+        lappend current_group [list $inst $max_move]
         incr idx
       }
     }
@@ -473,6 +552,76 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       }
     }
     lappend move_list [list $inst [list $dir [dict get $total_moves $inst]]]
+  }
+
+  # --------------------------
+  # Post-movement overlap check
+  # --------------------------
+  if {$debug} {puts "Performing post-movement overlap check..."}
+  
+  # Create list of moved rectangles with updated coordinates
+  set moved_rects [list]
+  foreach rect $target_row_rects {
+    lassign $rect instname coords is_left is_right width
+    lassign $coords x y x1 y1
+    
+    # Check if this rectangle was moved
+    set moved 0
+    foreach move $move_list {
+      lassign $move m_inst m_data
+      lassign $m_data m_dir m_dist
+      
+      if {$m_inst eq $instname} {
+        # Update coordinates based on movement
+        if {$m_dir eq "right"} {
+          set new_x [expr {$x + $m_dist}]
+          set new_x1 [expr {$x1 + $m_dist}]
+        } else {
+          set new_x [expr {$x - $m_dist}]
+          set new_x1 [expr {$x1 - $m_dist}]
+        }
+        lappend moved_rects [list $instname [list $new_x $y $new_x1 $y1]]
+        set moved 1
+        break
+      }
+    }
+    
+    # Add original coordinates if not moved
+    if {!$moved} {
+      lappend moved_rects [list $instname $coords]
+    }
+  }
+
+  # Check for overlaps in moved rectangles
+  set post_overlap 0
+  set moved_count [llength $moved_rects]
+  set moved_indices [list]
+  for {set i 0} {$i < $moved_count} {incr i} {
+    lappend moved_indices $i
+  }
+  
+  foreach i $moved_indices {
+    set r1 [lindex $moved_rects $i 1]
+    lassign $r1 x1 y1 x1_1 y1_1
+    
+    foreach j [lrange $moved_indices [expr {$i + 1}] end] {
+      set r2 [lindex $moved_rects $j 1]
+      lassign $r2 x2 y2 x2_1 y2_1
+      
+      if {!($x1_1 <= $x2 || $x2_1 <= $x1)} {
+        if {$debug} {
+          puts "Post-movement overlapping rectangles: [lindex $moved_rects $i 0] and [lindex $moved_rects $j 0]"
+        }
+        set post_overlap 1
+        break
+      }
+    }
+    if {$post_overlap} break
+  }
+  
+  if {$post_overlap} {
+    if {$debug} {puts "Movement caused overlaps - invalid solution"}
+    return [list "no" [list] [list]]
   }
 
   # Set free region

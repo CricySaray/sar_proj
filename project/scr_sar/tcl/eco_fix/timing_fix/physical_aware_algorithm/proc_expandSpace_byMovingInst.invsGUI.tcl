@@ -7,6 +7,14 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   #   target_size - Required free space size in format {w h}
   #   debug - Debug switch (0=off, 1=on), default 0
   #   verbose - Verbose output switch (0=off, 1=on), default 0
+  
+  # Declare global dictionary for site parameters
+  global lutDict
+  
+  # Get minimum movement unit from lookup dictionary
+  set minWidth [dict get $lutDict mainCoreSiteWidth]
+  # For vertical movement if needed in future:
+  # set minHeight [dict get $lutDict mainCoreRowHeight]
 
   # Initialize return values
   set result_flag "no"
@@ -22,6 +30,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     puts "Total area: $total_area"
     puts "Target insert location: ($insert_x, $insert_y)"
     puts "Target free space size: w=$target_w, h=$target_h"
+    puts "Minimum movement unit: $minWidth"
   }
 
   # Validate target insert location is within total area
@@ -65,7 +74,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set target_row_y1 [expr {$insert_y + $row_height}]
   
   # Filter rectangles in target row and identify boundary rectangles
-  # Boundary rectangles: (1)紧贴总区域边界 或 (2)部分在区域内部分在外，不允许移动
+  # Boundary rectangles: (1) adhere to total area boundary or (2) partially inside/outside
   set target_row_rects [list]
   foreach rect $obj_rects {
     lassign $rect instname coords
@@ -73,9 +82,9 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     
     # Check if rectangle is in target row (same y range)
     if {$r_y <= $target_row_y && $r_y1 >= $target_row_y1} {
-      # Check left boundary condition (adheres to left boundary or partially outside)
+      # Check left boundary condition
       set is_left_boundary [expr {($r_x == $total_x) || ($r_x < $total_x && $r_x1 > $total_x) ? 1 : 0}]
-      # Check right boundary condition (adheres to right boundary or partially outside)
+      # Check right boundary condition
       set is_right_boundary [expr {($r_x1 == $total_x1) || ($r_x < $total_x1 && $r_x1 > $total_x1) ? 1 : 0}]
       
       if {$verbose && ($is_left_boundary || $is_right_boundary)} {
@@ -193,6 +202,9 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set right_count [expr {$n - $left_count}]
   set delta [expr {$target_w - $gap_width}]
   
+  # Adjust delta to be a multiple of minWidth
+  set delta [expr {ceil($delta / $minWidth) * $minWidth}]
+  
   if {$delta <= 0} {
     if {$debug} {puts "Target gap is already sufficient (no movement needed)"}
     set result_flag "yes"
@@ -204,8 +216,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set valid 0
   set move_left_list [list]  ;# {instname max_move} - only non-boundary rectangles
   set move_right_list [list] ;# {instname max_move} - only non-boundary rectangles
-  set total_left_possible 0  ;# total left movable distance
-  set total_right_possible 0 ;# total right movable distance
+  set total_left_possible 0.0  ;# total left movable distance (using float)
+  set total_right_possible 0.0 ;# total right movable distance (using float)
 
   if {$pos eq "left"} {
     # Left gap: can only move right rectangles (non-right-boundary)
@@ -214,9 +226,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set is_right_boundary [lindex $rect 3]
       
       # Right boundary rectangles cannot move, others can move up to delta
-      set max_move [expr {$is_right_boundary ? 0 : $delta}]
+      set max_move [expr {$is_right_boundary ? 0.0 : $delta}]
+      # Ensure max_move is a multiple of minWidth
+      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
       lappend move_right_list [list $instname $max_move]
-      incr total_right_possible $max_move
+      # Use expr instead of incr for floating point compatibility
+      set total_right_possible [expr {$total_right_possible + $max_move}]
     }
     # Valid if total movable distance ≥ delta
     if {$total_right_possible >= $delta} {
@@ -229,9 +244,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set is_left_boundary [lindex $rect 2]
       
       # Left boundary rectangles cannot move, others can move up to delta
-      set max_move [expr {$is_left_boundary ? 0 : $delta}]
+      set max_move [expr {$is_left_boundary ? 0.0 : $delta}]
+      # Ensure max_move is a multiple of minWidth
+      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
       lappend move_left_list [list $instname $max_move]
-      incr total_left_possible $max_move
+      # Use expr instead of incr for floating point compatibility
+      set total_left_possible [expr {$total_left_possible + $max_move}]
     }
     # Valid if total movable distance ≥ delta
     if {$total_left_possible >= $delta} {
@@ -244,9 +262,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set instname [lindex $rect 0]
       set is_left_boundary [lindex $rect 2]
       
-      set max_move [expr {$is_left_boundary ? 0 : $delta}]
+      set max_move [expr {$is_left_boundary ? 0.0 : $delta}]
+      # Ensure max_move is a multiple of minWidth
+      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
       lappend move_left_list [list $instname $max_move]
-      incr total_left_possible $max_move
+      # Use expr instead of incr for floating point compatibility
+      set total_left_possible [expr {$total_left_possible + $max_move}]
     }
     
     # Calculate right movable rectangles and total distance
@@ -254,9 +275,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set instname [lindex $rect 0]
       set is_right_boundary [lindex $rect 3]
       
-      set max_move [expr {$is_right_boundary ? 0 : $delta}]
+      set max_move [expr {$is_right_boundary ? 0.0 : $delta}]
+      # Ensure max_move is a multiple of minWidth
+      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
       lappend move_right_list [list $instname $max_move]
-      incr total_right_possible $max_move
+      # Use expr instead of incr for floating point compatibility
+      set total_right_possible [expr {$total_right_possible + $max_move}]
     }
     
     # Valid if total movable distance ≥ delta
@@ -279,14 +303,16 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     set right_ratio [expr {1 - $left_ratio}]
     
     # Distribute delta based on ratio, ensuring sum is delta and not exceeding max possible
-    set left_move [expr {int(round($delta * $left_ratio))}]
+    set left_move [expr {round($delta * $left_ratio / $minWidth) * $minWidth}]
     set left_move [expr {min($left_move, $total_left_possible)}]  ;# Not exceeding left max
     set right_move [expr {$delta - $left_move}]
     
-    # Ensure right movement does not exceed maximum possible
+    # Ensure right movement is multiple of minWidth and doesn't exceed maximum possible
+    set right_move [expr {round($right_move / $minWidth) * $minWidth}]
     if {$right_move > $total_right_possible} {
       set right_move $total_right_possible
       set left_move [expr {$delta - $right_move}]
+      set left_move [expr {round($left_move / $minWidth) * $minWidth}]
     }
     
     # Apply left movement (iterate over each movable rectangle)
@@ -311,6 +337,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       lassign $item instname max_move
       if {$max_move > 0 && $remaining > 0} {
         set move [expr {min($remaining, $max_move)}]
+        # Ensure movement is multiple of minWidth
+        set move [expr {floor($move / $minWidth) * $minWidth}]
         lappend move_list [list $instname [list right $move]]
         set remaining [expr {$remaining - $move}]
       }
@@ -322,6 +350,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       lassign $item instname max_move
       if {$max_move > 0 && $remaining > 0} {
         set move [expr {min($remaining, $max_move)}]
+        # Ensure movement is multiple of minWidth
+        set move [expr {floor($move / $minWidth) * $minWidth}]
         lappend move_list [list $instname [list left $move]]
         set remaining [expr {$remaining - $move}]
       }

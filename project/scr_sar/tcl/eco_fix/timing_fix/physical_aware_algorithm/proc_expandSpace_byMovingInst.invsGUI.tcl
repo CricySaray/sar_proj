@@ -13,8 +13,6 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   
   # Get minimum movement unit from lookup dictionary
   set minWidth [dict get $lutDict mainCoreSiteWidth]
-  # For vertical movement if needed in future:
-  # set minHeight [dict get $lutDict mainCoreRowHeight]
 
   # Initialize return values
   set result_flag "no"
@@ -91,7 +89,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
         puts "Boundary rectangle $instname - left: $is_left_boundary, right: $is_right_boundary (cannot move)"
       }
       
-      lappend target_row_rects [list $instname $coords $is_left_boundary $is_right_boundary]
+      lappend target_row_rects [list $instname $coords $is_left_boundary $is_right_boundary [expr {$r_x1 - $r_x}]]
     }
   }
   
@@ -140,7 +138,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   if {$verbose} {
     puts "Sorted rectangles in target row:"
     foreach rect $sorted_rects {
-      puts "  [lindex $rect 0]: [lindex $rect 1] (left boundary: [lindex $rect 2])"
+      puts "  [lindex $rect 0]: [lindex $rect 1] (width: [lindex $rect 4])"
     }
   }
 
@@ -202,8 +200,10 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set right_count [expr {$n - $left_count}]
   set delta [expr {$target_w - $gap_width}]
   
-  # Adjust delta to be a multiple of minWidth
-  set delta [expr {ceil($delta / $minWidth) * $minWidth}]
+  # Verify delta is multiple of minWidth (as per problem constraints)
+  if {fmod($delta, $minWidth) != 0} {
+    error "Delta ($delta) is not multiple of minWidth ($minWidth) - violates problem constraints"
+  }
   
   if {$delta <= 0} {
     if {$debug} {puts "Target gap is already sufficient (no movement needed)"}
@@ -216,8 +216,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set valid 0
   set move_left_list [list]  ;# {instname max_move} - only non-boundary rectangles
   set move_right_list [list] ;# {instname max_move} - only non-boundary rectangles
-  set total_left_possible 0.0  ;# total left movable distance (using float)
-  set total_right_possible 0.0 ;# total right movable distance (using float)
+  set total_left_possible 0.0  ;# total left movable distance
+  set total_right_possible 0.0 ;# total right movable distance
 
   if {$pos eq "left"} {
     # Left gap: can only move right rectangles (non-right-boundary)
@@ -227,12 +227,11 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       
       # Right boundary rectangles cannot move, others can move up to delta
       set max_move [expr {$is_right_boundary ? 0.0 : $delta}]
-      # Ensure max_move is a multiple of minWidth
-      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
-      lappend move_right_list [list $instname $max_move]
-      # Use expr instead of incr for floating point compatibility
+      lappend move_right_list [list $instname $max_move [lindex $rect 1 0]] ;# store x coordinate for proximity
       set total_right_possible [expr {$total_right_possible + $max_move}]
     }
+    # Sort right rectangles by proximity to gap (ascending x = closer)
+    set move_right_list [lsort -real -index 2 $move_right_list]
     # Valid if total movable distance ≥ delta
     if {$total_right_possible >= $delta} {
       set valid 1
@@ -245,43 +244,39 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       
       # Left boundary rectangles cannot move, others can move up to delta
       set max_move [expr {$is_left_boundary ? 0.0 : $delta}]
-      # Ensure max_move is a multiple of minWidth
-      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
-      lappend move_left_list [list $instname $max_move]
-      # Use expr instead of incr for floating point compatibility
-      set total_left_possible [expr {$total_left_possible + $max_move}]
+      lappend move_left_list [list $instname $max_move [lindex $rect 1 2]] ;# store x1 for proximity
     }
+    # Sort left rectangles by proximity to gap (descending x1 = closer)
+    set move_left_list [lsort -decreasing -real -index 2 $move_left_list]
     # Valid if total movable distance ≥ delta
     if {$total_left_possible >= $delta} {
       set valid 1
     }
-  } else {
+  } elseif {$pos eq "between"} {
     # Middle gap: left rectangles move left + right rectangles move right (non-boundary only)
-    # Calculate left movable rectangles and total distance
+    # Calculate left movable rectangles and total distance (store x1 for proximity)
     foreach rect [lrange $sorted_rects 0 [expr {$left_count - 1}]] {
       set instname [lindex $rect 0]
       set is_left_boundary [lindex $rect 2]
       
       set max_move [expr {$is_left_boundary ? 0.0 : $delta}]
-      # Ensure max_move is a multiple of minWidth
-      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
-      lappend move_left_list [list $instname $max_move]
-      # Use expr instead of incr for floating point compatibility
+      lappend move_left_list [list $instname $max_move [lindex $rect 1 2]] ;# x1 for proximity
       set total_left_possible [expr {$total_left_possible + $max_move}]
     }
+    # Sort left rectangles by proximity to gap (descending x1 = closer)
+    set move_left_list [lsort -decreasing -real -index 2 $move_left_list]
     
-    # Calculate right movable rectangles and total distance
+    # Calculate right movable rectangles and total distance (store x for proximity)
     foreach rect [lrange $sorted_rects $left_count end] {
       set instname [lindex $rect 0]
       set is_right_boundary [lindex $rect 3]
       
       set max_move [expr {$is_right_boundary ? 0.0 : $delta}]
-      # Ensure max_move is a multiple of minWidth
-      set max_move [expr {floor($max_move / $minWidth) * $minWidth}]
-      lappend move_right_list [list $instname $max_move]
-      # Use expr instead of incr for floating point compatibility
+      lappend move_right_list [list $instname $max_move [lindex $rect 1 0]] ;# x for proximity
       set total_right_possible [expr {$total_right_possible + $max_move}]
     }
+    # Sort right rectangles by proximity to gap (ascending x = closer)
+    set move_right_list [lsort -real -index 2 $move_right_list]
     
     # Valid if total movable distance ≥ delta
     if {[expr {$total_left_possible + $total_right_possible}] >= $delta} {
@@ -294,68 +289,136 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     return [list $result_flag $free_region $move_list]
   }
 
-  # Generate movement list with balanced distribution (minimize average offset)
-  if {$pos eq "middle"} {
-    # Balanced distribution strategy: make both sides' movement as close as possible
-    # Calculate ideal distribution ratio (proportion of total movable distance)
-    set total_possible [expr {$total_left_possible + $total_right_possible}]
-    set left_ratio [expr {$total_left_possible / double($total_possible)}]
-    set right_ratio [expr {1 - $left_ratio}]
-    
-    # Distribute delta based on ratio, ensuring sum is delta and not exceeding max possible
-    set left_move [expr {round($delta * $left_ratio / $minWidth) * $minWidth}]
-    set left_move [expr {min($left_move, $total_left_possible)}]  ;# Not exceeding left max
-    set right_move [expr {$delta - $left_move}]
-    
-    # Ensure right movement is multiple of minWidth and doesn't exceed maximum possible
-    set right_move [expr {round($right_move / $minWidth) * $minWidth}]
-    if {$right_move > $total_right_possible} {
-      set right_move $total_right_possible
-      set left_move [expr {$delta - $right_move}]
-      set left_move [expr {round($left_move / $minWidth) * $minWidth}]
-    }
-    
-    # Apply left movement (iterate over each movable rectangle)
-    foreach item $move_left_list {
-      lassign $item instname max_move
-      if {$max_move > 0 && $left_move > 0} {
-        lappend move_list [list $instname [list left $left_move]]
+  # Generate movement list with proximity-based strategy
+  # Track total movement for each instance
+  array set total_moves {}
+  
+  if {$pos eq "between"} {
+    # Between gap: prioritize closest left and right rectangles, move in minWidth increments
+    set remaining $delta
+    set left_group [list]  ;# track current left group (instnames)
+    set right_group [list] ;# track current right group (instnames)
+    set left_idx 0
+    set right_idx 0
+
+    while {$remaining > 0} {
+      # Get next left candidate if needed
+      if {[llength $left_group] == 0 && $left_idx < [llength $move_left_list]} {
+        lappend left_group [lindex $move_left_list $left_idx 0]
+        incr left_idx
       }
-    }
-    
-    # Apply right movement (iterate over each movable rectangle)
-    foreach item $move_right_list {
-      lassign $item instname max_move
-      if {$max_move > 0 && $right_move > 0} {
-        lappend move_list [list $instname [list right $right_move]]
+      
+      # Get next right candidate if needed
+      if {[llength $right_group] == 0 && $right_idx < [llength $move_right_list]} {
+        lappend right_group [lindex $move_right_list $right_idx 0]
+        incr right_idx
+      }
+
+      # Calculate ratio-based movement units
+      set total_possible [expr {$total_left_possible + $total_right_possible}]
+      set left_ratio [expr {$total_left_possible / $total_possible}]
+      
+      # Calculate movement units in minWidth multiples
+      set left_units [expr {int(round($remaining * $left_ratio / $minWidth))}]
+      set right_units [expr {int(ceil($remaining / $minWidth) - $left_units)}]
+      
+      set left_move [expr {$left_units * $minWidth}]
+      set right_move [expr {$right_units * $minWidth}]
+
+      # Apply left movement to current group
+      if {$left_move > 0 && [llength $left_group] > 0} {
+        foreach inst $left_group {
+          set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $left_move : $left_move}]
+        }
+        set remaining [expr {$remaining - $left_move}]
+      }
+      
+      # Apply right movement to current group
+      if {$right_move > 0 && [llength $right_group] > 0} {
+        foreach inst $right_group {
+          set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $right_move : $right_move}]
+        }
+        set remaining [expr {$remaining - $right_move}]
+      }
+
+      # If still remaining, expand groups
+      if {$remaining > 0} {
+        # Add next left rectangle to group if available
+        if {$left_idx < [llength $move_left_list]} {
+          lappend left_group [lindex $move_left_list $left_idx 0]
+          incr left_idx
+        }
+        # Add next right rectangle to group if available
+        if {$right_idx < [llength $move_right_list]} {
+          lappend right_group [lindex $move_right_list $right_idx 0]
+          incr right_idx
+        }
       }
     }
   } elseif {$pos eq "left"} {
-    # Left gap: move right rectangles to right, prioritize those closest to the gap
+    # Left gap: prioritize closest right rectangles, move in groups
     set remaining $delta
-    foreach item $move_right_list {
-      lassign $item instname max_move
-      if {$max_move > 0 && $remaining > 0} {
-        set move [expr {min($remaining, $max_move)}]
-        # Ensure movement is multiple of minWidth
-        set move [expr {floor($move / $minWidth) * $minWidth}]
-        lappend move_list [list $instname [list right $move]]
-        set remaining [expr {$remaining - $move}]
+    set current_group [list]
+    set idx 0
+
+    while {$remaining > 0} {
+      # Add next closest rectangle to group if needed
+      if {[llength $current_group] == 0 && $idx < [llength $move_right_list]} {
+        lappend current_group [lindex $move_right_list $idx 0]
+        incr idx
+      }
+
+      # Calculate movement in minWidth units
+      set move_units [expr {int(floor($remaining / $minWidth))}]
+      set move [expr {$move_units * $minWidth}]
+
+      # Apply movement to current group
+      foreach inst $current_group {
+        set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $move : $move}]
+      }
+      set remaining [expr {$remaining - $move}]
+
+      # Expand group if still remaining
+      if {$remaining > 0 && $idx < [llength $move_right_list]} {
+        lappend current_group [lindex $move_right_list $idx 0]
+        incr idx
       }
     }
   } elseif {$pos eq "right"} {
-    # Right gap: move left rectangles to left, prioritize those closest to the gap
+    # Right gap: prioritize closest left rectangles, move in groups
     set remaining $delta
-    foreach item [lreverse $move_left_list] {
-      lassign $item instname max_move
-      if {$max_move > 0 && $remaining > 0} {
-        set move [expr {min($remaining, $max_move)}]
-        # Ensure movement is multiple of minWidth
-        set move [expr {floor($move / $minWidth) * $minWidth}]
-        lappend move_list [list $instname [list left $move]]
-        set remaining [expr {$remaining - $move}]
+    set current_group [list]
+    set idx 0
+
+    while {$remaining > 0} {
+      # Add next closest rectangle to group if needed
+      if {[llength $current_group] == 0 && $idx < [llength $move_left_list]} {
+        lappend current_group [lindex $move_left_list $idx 0]
+        incr idx
+      }
+
+      # Calculate movement in minWidth units
+      set move_units [expr {int(floor($remaining / $minWidth))}]
+      set move [expr {$move_units * $minWidth}]
+
+      # Apply movement to current group
+      foreach inst $current_group {
+        set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $move : $move}]
+      }
+      set remaining [expr {$remaining - $move}]
+
+      # Expand group if still remaining
+      if {$remaining > 0 && $idx < [llength $move_left_list]} {
+        lappend current_group [lindex $move_left_list $idx 0]
+        incr idx
       }
     }
+  }
+
+  # Format move_list with directions
+  foreach inst [array names total_moves] {
+    set dir [expr {($pos eq "left" || $pos eq "between") && [lsearch -inline $move_right_list "*$inst*"] ne "" ? "right" : "left"}]
+    lappend move_list [list $inst [list $dir $total_moves($inst)]]
   }
 
   # Set free region

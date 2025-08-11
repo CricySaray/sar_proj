@@ -53,7 +53,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set row_height [expr {$y1 - $y}]
   
   # Verify target height matches row height using expr difference
-  if {[expr {$target_h - $row_height}]} {
+  if {[expr $target_h - $row_height]} {
     if {$debug} {
       puts "Target height does not match row height: target=$target_h, row=$row_height"
     }
@@ -72,12 +72,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     
     # Check if rectangle is in target row (same y range)
     if {$r_y <= $target_row_y && $r_y1 >= $target_row_y1} {
-      # Determine movement restrictions (only for boundary rectangles)
-      set is_left_boundary [expr {$r_x == $total_x ? 1 : 0}]  ;# Left boundary can't move left
-      set is_right_boundary [expr {$r_x1 == $total_x1 ? 1 : 0}]  ;# Right boundary can't move right
+      # Mark boundary rectangles (left/right edges of total area)
+      set is_left_boundary [expr {$r_x == $total_x ? 1 : 0}]
+      set is_right_boundary [expr {$r_x1 == $total_x1 ? 1 : 0}]
       
       if {$verbose && ($is_left_boundary || $is_right_boundary)} {
-        puts "Boundary rectangle $instname - left boundary: $is_left_boundary, right boundary: $is_right_boundary"
+        puts "Boundary rectangle $instname - left: $is_left_boundary, right: $is_right_boundary"
       }
       
       lappend target_row_rects [list $instname $coords $is_left_boundary $is_right_boundary]
@@ -91,15 +91,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
 
   # Check for overlapping rectangles using foreach with index
   set overlap_found 0
-  set rect_list [llength $target_row_rects]
-  foreach i [dict keys [lrepeat $rect_list 1]] {
+  set rect_indices [lrange [dict keys [lrepeat [llength $target_row_rects] 1]] 0 end]
+  foreach i $rect_indices {
     set r1 [lindex $target_row_rects $i 1]
     lassign $r1 x1 y1 x1_1 y1_1
     
-    foreach j [dict keys [lrepeat [expr {$rect_list - $i - 1}] 1]] {
-      set j [expr {$j + $i + 1}]
-      if {$j >= $rect_list} break
-      
+    foreach j [lrange $rect_indices [expr {$i + 1}] end] {
       set r2 [lindex $target_row_rects $j 1]
       lassign $r2 x2 y2 x2_1 y2_1
       
@@ -125,8 +122,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set x1 [lindex $a 1 0]
       set x2 [lindex $b 1 0]
       if {$x1 < $x2} {return -1}
-      if {$x1 > $x2} {return 1}
-      return 0
+      elseif {$x1 > $x2} {return 1}
+      else {return 0}
     }}
   } $target_row_rects]
 
@@ -137,7 +134,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     }
   }
 
-  # Calculate all gaps with their bottom-left coordinates using foreach
+  # Calculate all gaps with their bottom-left coordinates
   set gaps [list]
   set n [llength $sorted_rects]
   
@@ -146,15 +143,15 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set left_gap_bl [list $total_x $target_row_y]
   lappend gaps [list 0 [expr {$first_rect_x - $total_x}] "left" 0 $left_gap_bl]
   
-  # Middle gaps using foreach with index
-  set idx 1
-  foreach rect $sorted_rects next_rect [lrange $sorted_rects 1 end] {
+  # Middle gaps (fix: use index-based loop to ensure equal pairs)
+  for {set i 0} {$i < [expr {$n - 1}]} {incr i} {
+    set rect [lindex $sorted_rects $i]
+    set next_rect [lindex $sorted_rects [expr {$i + 1}]]
     set curr_rect_x1 [lindex $rect 1 2]
     set next_rect_x [lindex $next_rect 1 0]
     set gap_width [expr {$next_rect_x - $curr_rect_x1}]
     set gap_bl [list $curr_rect_x1 $target_row_y]
-    lappend gaps [list $idx $gap_width "between" $idx $gap_bl]
-    incr idx
+    lappend gaps [list [expr {$i + 1}] $gap_width "between" [expr {$i + 1}] $gap_bl]
   }
   
   # Rightmost gap
@@ -203,111 +200,115 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   }
 
   # Check if expansion is possible with flexible movement strategy
-  set valid 1
-  set move_left_list [list]
-  set move_right_list [list]
-  set left_possible 0
-  set right_possible 0
-  set total_possible 0
+  set valid 0
+  set move_left_list [list]  ;# {instname max_move}
+  set move_right_list [list] ;# {instname max_move}
+  set total_left_move 0
+  set total_right_move 0
 
   if {$pos eq "left"} {
-    # Left gap - can only move right rectangles (non-right-boundary)
-    foreach rect [lrange $sorted_rects 0 end] {
+    # Left gap: only move right rectangles (non-right-boundary can move right)
+    foreach rect $sorted_rects {
       set instname [lindex $rect 0]
       set is_right_boundary [lindex $rect 3]
-      
-      if {$is_right_boundary} {
-        if {$verbose} {puts "Gap $idx invalid: Right boundary rectangle $instname can't move right"}
-        set valid 0
-        break
-      }
-      lappend move_right_list $instname
+      # Right boundary can't move right (max 0), others can move any distance (use delta)
+      set max_move [expr {$is_right_boundary ? 0 : $delta}]
+      lappend move_right_list [list $instname $max_move]
     }
-    if {$valid} {
-      set right_possible $delta
+    # Check if sum of right moves can cover delta (at least one rectangle can move)
+    set total_right_move [expr {[lindex [lsort -decreasing [lmap m $move_right_list {lindex $m 1}]] 0]}]
+    if {$total_right_move >= $delta} {
+      set valid 1
     }
   } elseif {$pos eq "right"} {
-    # Right gap - can only move left rectangles (non-left-boundary)
+    # Right gap: only move left rectangles (non-left-boundary can move left)
     foreach rect [lrange $sorted_rects 0 [expr {$left_count - 1}]] {
       set instname [lindex $rect 0]
       set is_left_boundary [lindex $rect 2]
-      
-      if {$is_left_boundary} {
-        if {$verbose} {puts "Gap $idx invalid: Left boundary rectangle $instname can't move left"}
-        set valid 0
-        break
-      }
-      lappend move_left_list $instname
+      # Left boundary can't move left (max 0), others can move any distance (use delta)
+      set max_move [expr {$is_left_boundary ? 0 : $delta}]
+      lappend move_left_list [list $instname $max_move]
     }
-    if {$valid} {
-      set left_possible $delta
+    # Check if sum of left moves can cover delta (at least one rectangle can move)
+    set total_left_move [expr {[lindex [lsort -decreasing [lmap m $move_left_list {lindex $m 1}]] 0]}]
+    if {$total_left_move >= $delta} {
+      set valid 1
     }
   } else {
-    # Middle gap - can move left rectangles left AND right rectangles right
-    # Check left movement possibility (non-left-boundary)
+    # Middle gap: move left rectangles left AND right rectangles right (sum to cover delta)
+    # Calculate max possible move for each left rectangle (non-left-boundary)
     foreach rect [lrange $sorted_rects 0 [expr {$left_count - 1}]] {
       set instname [lindex $rect 0]
       set is_left_boundary [lindex $rect 2]
-      
-      if {$is_left_boundary} {
-        if {$verbose} {puts "Left movement restricted by boundary rectangle $instname"}
-        set left_possible 0
-        break
-      }
-      lappend move_left_list $instname
-      set left_possible $delta  ;# All non-boundary can move full delta left
+      set max_move [expr {$is_left_boundary ? 0 : $delta}]  ;# 0 if boundary, else up to delta
+      lappend move_left_list [list $instname $max_move]
+      incr total_left_move $max_move
     }
     
-    # Check right movement possibility (non-right-boundary)
+    # Calculate max possible move for each right rectangle (non-right-boundary)
     foreach rect [lrange $sorted_rects $left_count end] {
       set instname [lindex $rect 0]
       set is_right_boundary [lindex $rect 3]
-      
-      if {$is_right_boundary} {
-        if {$verbose} {puts "Right movement restricted by boundary rectangle $instname"}
-        set right_possible 0
-        break
-      }
-      lappend move_right_list $instname
-      set right_possible $delta  ;# All non-boundary can move full delta right
+      set max_move [expr {$is_right_boundary ? 0 : $delta}]  ;# 0 if boundary, else up to delta
+      lappend move_right_list [list $instname $max_move]
+      incr total_right_move $max_move
     }
     
-    # Total possible expansion is sum of both directions
-    set total_possible [expr {$left_possible + $right_possible}]
-    if {$total_possible >= $delta} {
+    # Check if total possible move covers delta (sum of left and right)
+    if {[expr {$total_left_move + $total_right_move}] >= $delta} {
       set valid 1
-    } else {
-      if {$verbose} {
-        puts "Insufficient expandable space: need $delta, can get $total_possible"
-      }
-      set valid 0
     }
   }
 
   if {!$valid} {
-    if {$debug} {puts "No valid movement possible for required expansion"}
+    if {$debug} {puts "No valid movement possible for required expansion (delta=$delta)"}
     return [list $result_flag $free_region $move_list]
   }
 
   # Generate movement list with flexible distribution
   if {$pos eq "middle"} {
-    # Distribute delta between left and right movements
-    set left_move [expr {min($delta, $left_possible)}]
-    set right_move [expr {$delta - $left_move}]
+    # Distribute delta between left and right (prioritize left first)
+    set remaining $delta
+    set left_move 0
+    set right_move 0
     
-    foreach instname $move_left_list {
-      lappend move_list [list $instname [list left $left_move]]
+    # Assign left movement as much as possible
+    if {$total_left_move > 0} {
+      set left_move [expr {min($remaining, $total_left_move)}]
+      set remaining [expr {$remaining - $left_move}]
     }
-    foreach instname $move_right_list {
-      lappend move_list [list $instname [list right $right_move]]
+    
+    # Assign remaining to right movement
+    if {$remaining > 0 && $total_right_move > 0} {
+      set right_move $remaining
     }
-  } elseif {$pos eq "left" && $valid} {
-    foreach instname $move_right_list {
-      lappend move_list [list $instname [list right $delta]]
+    
+    # Add left moves (only for rectangles that can move)
+    foreach [list instname max_move] $move_left_list {
+      if {$max_move > 0 && $left_move > 0} {
+        lappend move_list [list $instname [list left $left_move]]
+      }
     }
-  } elseif {$pos eq "right" && $valid} {
-    foreach instname $move_left_list {
-      lappend move_list [list $instname [list left $delta]]
+    
+    # Add right moves (only for rectangles that can move)
+    foreach [list instname max_move] $move_right_list {
+      if {$max_move > 0 && $right_move > 0} {
+        lappend move_list [list $instname [list right $right_move]]
+      }
+    }
+  } elseif {$pos eq "left"} {
+    # Move right rectangles (only those that can move)
+    foreach [list instname max_move] $move_right_list {
+      if {$max_move >= $delta} {
+        lappend move_list [list $instname [list right $delta]]
+      }
+    }
+  } elseif {$pos eq "right"} {
+    # Move left rectangles (only those that can move)
+    foreach [list instname max_move] $move_left_list {
+      if {$max_move >= $delta} {
+        lappend move_list [list $instname [list left $delta]]
+      }
     }
   }
 
@@ -324,4 +325,3 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   # Return results
   return [list $result_flag $free_region $move_list]
 }
-    

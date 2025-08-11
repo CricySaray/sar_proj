@@ -60,7 +60,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   set row_height [expr {$y1 - $y}]
   
   # Verify target height matches row height using expr difference
-  if {[expr $target_h - $row_height]} {
+  if {[expr {$target_h - $row_height}]} {
     if {$debug} {
       puts "Target height does not match row height: target=$target_h, row=$row_height"
     }
@@ -130,8 +130,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set x1 [lindex $a 1 0]
       set x2 [lindex $b 1 0]
       if {$x1 < $x2} {return -1}
-      if {$x1 > $x2} {return 1}
-      return 0
+      elseif {$x1 > $x2} {return 1}
+      else {return 0}
     }}
   } $target_row_rects]
 
@@ -293,8 +293,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   }
 
   # Generate movement list with proximity-based strategy
-  # Track total movement for each instance
-  array set total_moves {}
+  # Track total movement for each instance using dict instead of array
+  set total_moves [dict create]
   
   if {$pos eq "between"} {
     # Between gap: prioritize closest left and right rectangles, move in minWidth units
@@ -353,10 +353,10 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       # Apply left movement to current group
       if {$left_move > 0 && [llength $left_group] > 0} {
         foreach inst $left_group {
-          if {[info exists total_moves($inst)]} {
-            set total_moves($inst) [expr {$total_moves($inst) + $left_move}]
+          if {[dict exists $total_moves $inst]} {
+            dict set total_moves $inst [expr {[dict get $total_moves $inst] + $left_move}]
           } else {
-            set total_moves($inst) $left_move
+            dict set total_moves $inst $left_move
           }
         }
         set remaining_units [expr {$remaining_units - $left_units}]
@@ -365,10 +365,10 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       # Apply right movement to current group
       if {$right_move > 0 && [llength $right_group] > 0} {
         foreach inst $right_group {
-          if {[info exists total_moves($inst)]} {
-            set total_moves($inst) [expr {$total_moves($inst) + $right_move}]
+          if {[dict exists $total_moves $inst]} {
+            dict set total_moves $inst [expr {[dict get $total_moves $inst] + $right_move}]
           } else {
-            set total_moves($inst) $right_move
+            dict set total_moves $inst $right_move
           }
         }
         set remaining_units [expr {$remaining_units - $right_units}]
@@ -407,10 +407,10 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
 
       # Apply movement to current group
       foreach inst $current_group {
-        if {[info exists total_moves($inst)]} {
-          set total_moves($inst) [expr {$total_moves($inst) + $move}]
+        if {[dict exists $total_moves $inst]} {
+          dict set total_moves $inst [expr {[dict get $total_moves $inst] + $move}]
         } else {
-          set total_moves($inst) $move
+          dict set total_moves $inst $move
         }
       }
       set remaining_units [expr {$remaining_units - $move_units}]
@@ -440,10 +440,10 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
 
       # Apply movement to current group
       foreach inst $current_group {
-        if {[info exists total_moves($inst)]} {
-          set total_moves($inst) [expr {$total_moves($inst) + $move}]
+        if {[dict exists $total_moves $inst]} {
+          dict set total_moves $inst [expr {[dict get $total_moves $inst] + $move}]
         } else {
-          set total_moves($inst) $move
+          dict set total_moves $inst $move
         }
       }
       set remaining_units [expr {$remaining_units - $move_units}]
@@ -457,7 +457,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   }
 
   # Format move_list with directions
-  foreach inst [array names total_moves] {
+  foreach inst [dict keys $total_moves] {
     set dir "left"
     # Check if instance is in right move list
     foreach item $move_right_list {
@@ -466,7 +466,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
         break
       }
     }
-    lappend move_list [list $inst [list $dir $total_moves($inst)]]
+    lappend move_list [list $inst [list $dir [dict get $total_moves $inst]]]
   }
 
   # Set free region

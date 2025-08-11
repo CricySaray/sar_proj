@@ -1,3 +1,13 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/08/11 10:06:22 Monday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
+# descrip   : get name+rect list of obj(instance)
+# return    : {{instname {x y x1 y1}} {instname2 {x y x1 y1}} ...}
+# ref       : link url
+# --------------------------
 proc get_objRect {{BoxList {}}} {
   set instsInRect_enclosed_ptr [dbQuery -areas $BoxList -objType inst -enclosed_only]
   set instsInRect_overlap_ptr [dbQuery -areas $BoxList -objType inst -overlap_only]

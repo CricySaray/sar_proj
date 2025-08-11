@@ -1,7 +1,7 @@
 # now problem is movement algorithm, it can't move more than one objects to get box to insert obj 
 
 source ./get_objRect.tcl; # get_objRect
-source ./judge_ifHaveSpaceToInsertBuffer_findNearestPosition.invs.tcl; # judge_ifHaveSpaceToInsertBuffer_findNearestPosition
+source ./proc_judge_ifHaveSpaceToInsertBuffer_findNearestPosition.invsGUI.tcl # judge_ifHaveSpaceToInsertBuffer_findNearestPosition
 proc smart_insert_position {center_point expand_range object_size {secondary_expand {0 0}} {min_move {0.14 1.26}} {debug 0}} {
   # Extract center coordinates
   set center_x [lindex $center_point 0]

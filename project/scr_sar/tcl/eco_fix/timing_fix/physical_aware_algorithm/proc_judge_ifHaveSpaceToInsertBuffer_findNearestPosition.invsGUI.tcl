@@ -7,10 +7,12 @@
 # descrip   : This proc checks if an object with specified dimensions can fit into any of the given free spaces and 
 #             returns the bottom-left coordinate of the object's optimal position (within a valid space) that minimizes 
 #             the distance between the object's center and the specified target point, or 0 if no suitable space exists.
+# update    : 2025/08/11 10:37:05 Monday
+#             (U001) add function: $ifForceInsert, if it is 1, it will force insert repeater in non-sufficient space finding biggest space, which you can specify extra space list.
 # return    : [list [list x y] minDistance] or 0 (have no available space)
 # ref       : link url
 # --------------------------
-proc judge_ifHaveSpaceToInsertBuffer_findNearestPosition {target_point object_dimensions free_spaces {debug 0}} {
+proc judge_ifHaveSpaceToInsertBuffer_findNearestPosition {target_point object_dimensions free_spaces {ifForceInsert 0} {forceInsert_freeSpace {}} {debug 0}} {
   # Extract target point coordinates
   set target_x [lindex $target_point 0]
   set target_y [lindex $target_point 1]
@@ -22,6 +24,7 @@ proc judge_ifHaveSpaceToInsertBuffer_findNearestPosition {target_point object_di
   set best_distance [expr {inf}]
   set best_position 0
   
+  set ifHaveSufficientSpace 0
   # Check each free space in the list
   foreach space $free_spaces {
     # Extract coordinates of the free space
@@ -73,11 +76,94 @@ proc judge_ifHaveSpaceToInsertBuffer_findNearestPosition {target_point object_di
         if {$debug} {
           puts "Found better position: $best_position with distance: $distance"
         }
+        set ifHaveSufficientSpace 1
+      }
+    }
+  }
+  
+  # U001 If no position found and force insert is enabled, check force insert spaces 
+  if {$best_position == 0 && $ifForceInsert == 1} {
+    if {$debug} { puts "No suitable space found, checking force insert spaces..." }
+    
+    set max_area 0
+    set candidate_spaces [list]
+    
+    # First pass: find all spaces that can fit the object and determine maximum area
+    foreach space $forceInsert_freeSpace {
+      set space_x [lindex $space 0]
+      set space_y [lindex $space 1]
+      set space_width [db_rect -sizex $space]
+      set space_height [db_rect -sizey $space]
+      set area [expr {$space_width * $space_height}]
+      
+      # Update maximum area if current space is larger
+      if {$area > $max_area} {
+        set max_area $area
+        set candidate_spaces [list $space]
+      } elseif {$area == $max_area} {
+        lappend candidate_spaces $space
+      }
+      
+      if {$debug} {
+        puts "Force insert space [list $space_x $space_y] with area $area (max so far: $max_area)"
+      }
+    }
+    
+    # Second pass: among spaces with maximum area, find the one closest to target point
+    if {[llength $candidate_spaces] > 0} {
+      set best_force_distance [expr {inf}]
+      set best_force_position 0
+      
+      foreach space $candidate_spaces {
+        set space_x [lindex $space 0]
+        set space_y [lindex $space 1]
+        
+        # For force insert, simply return the bottom-left corner of the space
+        set force_position [list $space_x $space_y]
+        
+        # Calculate distance from space center to target point
+        set space_width [db_rect -sizex $space]
+        set space_height [db_rect -sizey $space]
+        set space_center_x [expr {$space_x + $space_width / 2.0}]
+        set space_center_y [expr {$space_y + $space_height / 2.0}]
+        
+        set dx [expr {$space_center_x - $target_x}]
+        set dy [expr {$space_center_y - $target_y}]
+        set distance [expr {sqrt($dx*$dx + $dy*$dy)}]
+        
+        if {$debug} {
+          puts "Candidate force position $force_position with distance $distance"
+        }
+        
+        # Update best force position if closer
+        if {$distance < $best_force_distance} {
+          set best_force_distance $distance
+          set best_force_position $force_position
+        }
+      }
+      
+      # Update return values with best force insert position
+      set best_position $best_force_position
+      set best_distance $best_force_distance
+      
+      if {$debug} {
+        puts "Selected force insert position: $best_position with distance: $best_distance"
+      }
+    } else {
+      if {$debug} {
+        puts "No suitable spaces in forceInsert_freeSpace for insertion"
       }
     }
   }
   
   # Return the best position found or 0 if none
-  return [list $best_position [format "%.3f" $best_distance]]
+  if {$ifHaveSufficientSpace} {
+    set spaceType "sufficient"
+  } elseif {!$ifHaveSufficientSpace && $best_position != 0} {
+    set spaceType "forceInsert" 
+  } else {
+    set spaceType "noSpace" 
+  }
+  return [list $spaceType $best_position [format "%.3f" $best_distance]]
 }
 

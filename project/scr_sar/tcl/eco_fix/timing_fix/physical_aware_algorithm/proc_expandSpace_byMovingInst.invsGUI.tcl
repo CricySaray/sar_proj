@@ -122,8 +122,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       set x1 [lindex $a 1 0]
       set x2 [lindex $b 1 0]
       if {$x1 < $x2} {return -1}
-      elseif {$x1 > $x2} {return 1}
-      else {return 0}
+      if {$x1 > $x2} {return 1}
+      return 0
     }}
   } $target_row_rects]
 

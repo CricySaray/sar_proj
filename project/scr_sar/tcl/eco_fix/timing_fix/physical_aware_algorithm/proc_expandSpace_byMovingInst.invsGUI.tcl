@@ -212,6 +212,9 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     return [list $result_flag $free_region $move_list]
   }
 
+  # Convert delta to units of minWidth for precise distribution
+  set total_units [expr {int($delta / $minWidth)}]
+
   # Check if expansion is possible with flexible movement strategy
   set valid 0
   set move_left_list [list]  ;# {instname max_move} - only non-boundary rectangles
@@ -294,14 +297,14 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
   array set total_moves {}
   
   if {$pos eq "between"} {
-    # Between gap: prioritize closest left and right rectangles, move in minWidth increments
-    set remaining $delta
+    # Between gap: prioritize closest left and right rectangles, move in minWidth units
+    set remaining_units $total_units
     set left_group [list]  ;# track current left group (instnames)
     set right_group [list] ;# track current right group (instnames)
     set left_idx 0
     set right_idx 0
 
-    while {$remaining > 0} {
+    while {$remaining_units > 0} {
       # Get next left candidate if needed
       if {[llength $left_group] == 0 && $left_idx < [llength $move_left_list]} {
         lappend left_group [lindex $move_left_list $left_idx 0]
@@ -314,35 +317,65 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
         incr right_idx
       }
 
-      # Calculate ratio-based movement units
-      set total_possible [expr {$total_left_possible + $total_right_possible}]
-      set left_ratio [expr {$total_left_possible / $total_possible}]
-      
-      # Calculate movement units in minWidth multiples
-      set left_units [expr {int(round($remaining * $left_ratio / $minWidth))}]
-      set right_units [expr {int(ceil($remaining / $minWidth) - $left_units)}]
-      
+      # Calculate available units from each side
+      set left_available_units [expr {int($total_left_possible / $minWidth)}]
+      set right_available_units [expr {int($total_right_possible / $minWidth)}]
+      set total_available_units [expr {$left_available_units + $right_available_units}]
+
+      # Calculate proportional units using integer arithmetic
+      if {$total_available_units > 0} {
+        set left_ratio_num $left_available_units
+        set left_units [expr {int(($remaining_units * $left_ratio_num) / $total_available_units)}]
+        set right_units [expr {$remaining_units - $left_units}]
+        
+        # Ensure no negative values
+        if {$left_units < 0} { set left_units 0 }
+        if {$right_units < 0} { set right_units 0 }
+        
+        # Adjust if one side has no available units
+        if {$left_available_units == 0} {
+          set left_units 0
+          set right_units $remaining_units
+        }
+        if {$right_available_units == 0} {
+          set right_units 0
+          set left_units $remaining_units
+        }
+      } else {
+        set left_units 0
+        set right_units 0
+      }
+
+      # Convert units to actual distance
       set left_move [expr {$left_units * $minWidth}]
       set right_move [expr {$right_units * $minWidth}]
 
       # Apply left movement to current group
       if {$left_move > 0 && [llength $left_group] > 0} {
         foreach inst $left_group {
-          set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $left_move : $left_move}]
+          if {[info exists total_moves($inst)]} {
+            set total_moves($inst) [expr {$total_moves($inst) + $left_move}]
+          } else {
+            set total_moves($inst) $left_move
+          }
         }
-        set remaining [expr {$remaining - $left_move}]
+        set remaining_units [expr {$remaining_units - $left_units}]
       }
       
       # Apply right movement to current group
       if {$right_move > 0 && [llength $right_group] > 0} {
         foreach inst $right_group {
-          set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $right_move : $right_move}]
+          if {[info exists total_moves($inst)]} {
+            set total_moves($inst) [expr {$total_moves($inst) + $right_move}]
+          } else {
+            set total_moves($inst) $right_move
+          }
         }
-        set remaining [expr {$remaining - $right_move}]
+        set remaining_units [expr {$remaining_units - $right_units}]
       }
 
       # If still remaining, expand groups
-      if {$remaining > 0} {
+      if {$remaining_units > 0} {
         # Add next left rectangle to group if available
         if {$left_idx < [llength $move_left_list]} {
           lappend left_group [lindex $move_left_list $left_idx 0]
@@ -357,11 +390,11 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
     }
   } elseif {$pos eq "left"} {
     # Left gap: prioritize closest right rectangles, move in groups
-    set remaining $delta
+    set remaining_units $total_units
     set current_group [list]
     set idx 0
 
-    while {$remaining > 0} {
+    while {$remaining_units > 0} {
       # Add next closest rectangle to group if needed
       if {[llength $current_group] == 0 && $idx < [llength $move_right_list]} {
         lappend current_group [lindex $move_right_list $idx 0]
@@ -369,28 +402,32 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       }
 
       # Calculate movement in minWidth units
-      set move_units [expr {int(floor($remaining / $minWidth))}]
+      set move_units [expr {min($remaining_units, int([lindex $move_right_list [expr {$idx - 1}] 1] / $minWidth))}]
       set move [expr {$move_units * $minWidth}]
 
       # Apply movement to current group
       foreach inst $current_group {
-        set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $move : $move}]
+        if {[info exists total_moves($inst)]} {
+          set total_moves($inst) [expr {$total_moves($inst) + $move}]
+        } else {
+          set total_moves($inst) $move
+        }
       }
-      set remaining [expr {$remaining - $move}]
+      set remaining_units [expr {$remaining_units - $move_units}]
 
       # Expand group if still remaining
-      if {$remaining > 0 && $idx < [llength $move_right_list]} {
+      if {$remaining_units > 0 && $idx < [llength $move_right_list]} {
         lappend current_group [lindex $move_right_list $idx 0]
         incr idx
       }
     }
   } elseif {$pos eq "right"} {
     # Right gap: prioritize closest left rectangles, move in groups
-    set remaining $delta
+    set remaining_units $total_units
     set current_group [list]
     set idx 0
 
-    while {$remaining > 0} {
+    while {$remaining_units > 0} {
       # Add next closest rectangle to group if needed
       if {[llength $current_group] == 0 && $idx < [llength $move_left_list]} {
         lappend current_group [lindex $move_left_list $idx 0]
@@ -398,17 +435,21 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
       }
 
       # Calculate movement in minWidth units
-      set move_units [expr {int(floor($remaining / $minWidth))}]
+      set move_units [expr {min($remaining_units, int([lindex $move_left_list [expr {$idx - 1}] 1] / $minWidth))}]
       set move [expr {$move_units * $minWidth}]
 
       # Apply movement to current group
       foreach inst $current_group {
-        set total_moves($inst) [expr {[info exists total_moves($inst)] ? $total_moves($inst) + $move : $move}]
+        if {[info exists total_moves($inst)]} {
+          set total_moves($inst) [expr {$total_moves($inst) + $move}]
+        } else {
+          set total_moves($inst) $move
+        }
       }
-      set remaining [expr {$remaining - $move}]
+      set remaining_units [expr {$remaining_units - $move_units}]
 
       # Expand group if still remaining
-      if {$remaining > 0 && $idx < [llength $move_left_list]} {
+      if {$remaining_units > 0 && $idx < [llength $move_left_list]} {
         lappend current_group [lindex $move_left_list $idx 0]
         incr idx
       }
@@ -417,7 +458,14 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {debug 0
 
   # Format move_list with directions
   foreach inst [array names total_moves] {
-    set dir [expr {($pos eq "left" || $pos eq "between") && [lsearch -inline $move_right_list "*$inst*"] ne "" ? "right" : "left"}]
+    set dir "left"
+    # Check if instance is in right move list
+    foreach item $move_right_list {
+      if {[lindex $item 0] eq $inst} {
+        set dir "right"
+        break
+      }
+    }
     lappend move_list [list $inst [list $dir $total_moves($inst)]]
   }
 

@@ -9,7 +9,8 @@
 #             the distance between the object's center and the specified target point, or 0 if no suitable space exists.
 # update    : 2025/08/11 10:37:05 Monday
 #             (U001) add function: $ifForceInsert, if it is 1, it will force insert repeater in non-sufficient space finding biggest space, which you can specify extra space list.
-# return    : [list [list x y] minDistance] or 0 (have no available space)
+# return    : [list $spaceType [list x y] minDistance] or 0 (have no available space)
+#             $spaceType: noSpace|sufficient|forceInsert
 # ref       : link url
 # --------------------------
 proc judge_ifHaveSpaceToInsertBuffer_findNearestPosition {target_point object_dimensions free_spaces {ifForceInsert 0} {forceInsert_freeSpace {}} {debug 0}} {

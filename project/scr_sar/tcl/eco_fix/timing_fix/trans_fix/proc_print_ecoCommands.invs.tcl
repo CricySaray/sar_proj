@@ -8,12 +8,14 @@
 # update    : 2025/07/27 22:23:08 Sunday
 #             add new option: $radius, and fix some logical error
 # update    : 2025/08/06 19:13:47 Wednesday
-#             add new type: delNet, you can return "editDelete -net $net"
+#             (U001) add new type: delNet, you can return "editDelete -net $net"
+# update    : 2025/08/12 16:47:52 Tuesday
+#             (U002) add new type: move, you can control movement of inst to fix some no-sufficient space or overlap viol
 # ref       : link url
 # --------------------------
 source ./proc_ifInBoxes.invs.tcl; # ifInBoxes
 proc print_ecoCommand {args} {
-  set type                "change"; # change|add|delRepeater|delNet
+  set type                "change"; # change|add|delRepeater|delNet|move
   set inst                ""
   set terms               ""
   set celltype            ""
@@ -22,6 +24,8 @@ proc print_ecoCommand {args} {
   set relativeDistToSink  ""
   set radius              ""
   set net                 ""
+  set direction           ""
+  set distance            ""
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -32,7 +36,7 @@ proc print_ecoCommand {args} {
   } else {
     if {$type == "change"} {
       if {$inst == "" || $celltype == "" || [dbget top.insts.name $inst -e] == "" || [dbget head.libCells.name $celltype -e] == ""} {
-        error "proc print_ecoCommand: check your input: not found instname($instname) or celltype($celltype) when type is $type"; # change: error instname or celltype 
+        error "proc print_ecoCommand: check your input: not found instname($inst) or celltype($celltype) when type is $type"; # change: error instname or celltype 
       }
       return "ecoChangeCell -cell $celltype -inst $inst"
     } elseif {$type == "add"} {
@@ -80,10 +84,10 @@ proc print_ecoCommand {args} {
       }
     } elseif {$type == "delRepeater"} {
       if {$inst == "" || [dbget top.insts.name $inst -e] == ""} {
-        error "proc print_ecoCommand: check your input : not find instname($instname)"; # delRepeater: error instname
+        error "proc print_ecoCommand: check your input : not find instname($inst)"; # delRepeater: error instname
       }
       return "ecoDeleteRepeater -inst $inst" 
-    } elseif {$type == "delNet"} {
+    } elseif {$type == "delNet"} { ; # U001
       if {$terms != "" && [llength $terms] == 1 && [dbget top.insts.instTerms.name $terms -e] != "" } {
         set netname [dbget [dbget top.insts.instTerms.name $terms -e -p].net.name]
         return "editDelete -net $netname"
@@ -91,6 +95,12 @@ proc print_ecoCommand {args} {
         return "editDelete -net $net" 
       } else {
         error "proc print_ecoCommand: check your input of net($net) or terms($terms) when type is $type" 
+      }
+    } elseif {$type == "move"} { ; # U002
+      if {$inst == "" || [dbget top.insts.name $inst -e] == ""} {
+        error "proc print_ecoCommand: check your input: not found instname($inst)!!!" ; # move_obj
+      } else {
+        return "move_obj -direction $direction -distance $distance $inst"
       }
     } else {
       error "proc print_ecoCommand: check your input: have no this type of action: $type"; # have no choice in type
@@ -100,7 +110,7 @@ proc print_ecoCommand {args} {
 define_proc_arguments print_ecoCommand \
   -info "print eco command"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet}}}}
+    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}
     {-inst "specify inst to eco when type is add/delete" AString string optional}
     {-terms "specify terms to eco when type is add" AString string optional}
     {-celltype "specify celltype to add when type is add" AString string optional}
@@ -109,4 +119,6 @@ define_proc_arguments print_ecoCommand \
     {-relativeDistToSink "specify relative value when type is add.(use it when loader is only one)" AFloat float optional}
     {-radius "specify radius searching location" AFloat float optional}
     {-net "specify netname to delete" AString string optional}
+    {-direction "specify the direction of movement of inst" oneOfString one_of_string {optional value_type {values {left right up down}}}}
+    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
   }

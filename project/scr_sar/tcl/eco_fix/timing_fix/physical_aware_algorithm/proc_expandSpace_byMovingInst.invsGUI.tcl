@@ -950,7 +950,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   }
 
   # Calculate free region position, adjusting for left movements
-  lassign $target_insert_loc original_gap_x original_gap_y
+  set target_gap_bl [lindex $target_gap end]
+  lassign $target_gap_bl original_gap_x original_gap_y
   set left_shift 0.0
   
   # Get left shift amount from closest left-moving rectangle (all left-moving rectangles shift equally)

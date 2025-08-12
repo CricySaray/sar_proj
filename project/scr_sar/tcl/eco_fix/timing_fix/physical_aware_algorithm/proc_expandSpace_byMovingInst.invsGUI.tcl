@@ -252,7 +252,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   foreach gap $gaps {
     lassign $gap idx width pos left_count bl
     lassign $bl gap_x gap_y
-    if {$gap_x < $insert_x && $insert_x < [expr $gap_x + $width]} {
+    if {$gap_x <= $insert_x && $insert_x < [expr $gap_x + $width]} {
       set target_gap $gap
       break
     }

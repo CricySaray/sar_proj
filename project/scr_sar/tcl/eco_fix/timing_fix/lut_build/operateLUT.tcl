@@ -24,12 +24,19 @@ proc operateLUT {args} {
     } else {
       return $result
     }
+  } elseif {$type == "test"} {
+    set ifErr [catch {set result [dict exists $lutDict {*}$attr]} errInfo]
+    if {$ifErr} {
+      return 0
+    } else {
+      return 1
+    }
   }
 }
 define_proc_arguments operateLUT \
   -info "operateLUT" \
   -define_args {
-    {-type "specify type of operation" oneOfString one_of_string {required value_type {values {read}}}} 
+    {-type "specify type of operation" oneOfString one_of_string {required value_type {values {read exists}}}} 
     {-attr "specify attribute of obj" AList list required}
   }
 

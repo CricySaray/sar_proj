@@ -8,19 +8,13 @@
 # return    : 
 # ref       : link url
 # --------------------------
-proc get_blank_box {{centerPt {}} {multiHeightOfRow 20} {multiWidthOfSite 180} {debug 0}} {
+proc get_blank_box {{centerPt {}} {halfOfWidth 12.6} {halfOfHeight 12.6} {debug 0}} {
   if {![string is double [lindex $centerPt 0]] || ![string is double [lindex $centerPt 1]]} {
     error "proc get_blank_box: check your input : centerPt($centerPt) is not real pt!!!"
   } else {
-    set mainCoreRowHeight [lindex [lsort -real -increasing [dbget top.fplan.rows.box_sizey -u]] 0]
-    set mainCoreSiteWidth [lindex [lsort -real -increasing [dbget top.fplan.rows.site.size_x -u]] 0]
-    set height [expr $mainCoreRowHeight * $multiHeightOfRow]
-    set width  [expr $mainCoreSiteWidth * $multiWidthOfSite]
-    set halfOfHeight [expr $height / 2]
-    set halfOfWidth  [expr $width / 2]
     lassign $centerPt x y
     set pointLeftBottom [list [expr $x - $halfOfWidth] [expr $y - $halfOfHeight]]
-    set pointRightTop   [list [expr $x + $halfOfWidth] [expr $y + $halfOfWidth]]
+    set pointRightTop   [list [expr $x + $halfOfWidth] [expr $y + $halfOfHeight]]
     set searchingBox  [list {*}$pointLeftBottom {*}$pointRightTop]
     set searchingArea [db_rect -area $searchingBox]
     if {$debug} { puts "searchingArea: $searchingArea" }

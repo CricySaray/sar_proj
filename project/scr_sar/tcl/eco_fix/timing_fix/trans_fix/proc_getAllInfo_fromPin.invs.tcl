@@ -193,17 +193,12 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
       set regExp "D(\\d+).*CPD(U?L?H?VT)?"
       set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
       if {$nowCapacity eq "NaN"} {return 1}
-      regsub D${nowCapacity}BWP $celltype D*BWP searchCelltypeExp
     } elseif {$process == {M31GPSC900NL040P*_40N}} {
       set regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"
       set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
       if {$nowCapacity eq "NaN"} {return 1}
-      regsub [subst {(.*)X$nowCapacity}] $celltype [subst {\\1X*}] searchCelltypeExp
     }
-    set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
-    set availableDriveCapacityList [lmap Acelltype $availableCelltypeList {
-      operateLUT -type read -attr [list celltype $Acelltype capacity]
-    }]
+    set availableDriveCapacityList [operateLUT -type read -attr [list celltype $celltype caplist]]
     set filteredAvailableDriveCapacityList [filter_numberList $availableDriveCapacityList $driveCapacityRange]
     if {[lindex $filteredAvailableDriveCapacityList end] == $nowCapacity} {
       return 1 

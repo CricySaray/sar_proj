@@ -23,7 +23,7 @@ source ./proc_32_solve_quadratic_equation.common.tcl; # solve_quadratic_equation
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand
 source ./proc_cond_meet_any.invs.tcl; # cond_met_any
 source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT_withLUT
-source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # 
+source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity_withLUT
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
@@ -124,7 +124,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
           lappend skipped_list [concat $driverSinksSymbol "Fvt" $addedInfoToShow]
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
-          set toCap [strategy_]
+          set toCap [strategy_changeDriveCapacity_withLUT $driverCellType ]
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]

@@ -14,6 +14,8 @@
 #             adopt an incremental update method by renaming the proc. The original proc name will remain, and a new proc name will be 
 #             added to achieve the same function. However, the internal information calling method has changed, which is more efficient 
 #             and faster compared to the previous method of obtaining information for the proc.
+# update    : 2025/08/13 19:53:24 Wednesday
+#             TODO(U003) add mapList to from original capacity to specified capacity by user at the beginning which is can be saved in variable. it is more flexible.
 # ref       : link url
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern

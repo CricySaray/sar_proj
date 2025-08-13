@@ -122,13 +122,16 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Fvt" $addedInfoToShow]
-        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
+        } 
+        if {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
           set toCap [strategy_changeDriveCapacity_withLUT $driverCellType ]
-        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
+          if {[operateLUT -type exists -attr [list celltype $toCap]]} {set ifFixedSuccessfully 1} else {set ifFixedButFailed 1}
+        } elseif {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
-        } else { ; # NOTICE
+        } 
+        if {!$ifFixedSuccessfully} { ; # NOTICE
           #puts "\n$promptInfo : needInsertBufferToFix\n" 
         }
        

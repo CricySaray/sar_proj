@@ -19,7 +19,7 @@ source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib
 alias sus "subst -nocommands -nobackslashes"
-proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {promptPrefix "# song"} {lutDictName "lutDict"}} {
+proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag "BWP"} {promptPrefix "# song"} {lutDictName "lutDict"}} {
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
@@ -30,6 +30,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
   } else {
     puts $fo "dict set $lutDictName process $process" 
   }
+  
   set designName [dbget top.name -e] 
   if {$designName == ""} { puts $fo "$promptERROR : have no design name!!!" } else { puts $fo "dict set $lutDictName designName $designName" }
   set rowHeightAllList [dbget top.fplan.rows.box_sizey -e]

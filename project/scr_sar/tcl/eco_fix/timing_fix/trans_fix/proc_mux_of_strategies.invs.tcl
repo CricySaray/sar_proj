@@ -71,18 +71,18 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
       set ifPassPreCheck [expr ![cond_met_any {*}$preCheckConds]]
       if {!$ifPassPreCheck} { ; # NOTICE: include nonConsider and dirtyCase list
         if {$ifDirtyCase} {
-          lappend dirtyCase_list [concat "dirty" $addedInfoToShow]
+          lappend dirtyCase_list [concat $driverSinksSymbol "dirty" $addedInfoToShow]
         }
         if {$ifNeedReRouteNet} {
           set ifFixedSuccessfully 1
-          lappend fixed_reRoute_list [concat "reRoute" $addedInfoToShow]
+          lappend fixed_reRoute_list [concat $driverSinksSymbol "reRoute" $addedInfoToShow]
           lappend cmd_reRoute_list [print_ecoCommand -type delNet -terms $driverPin]
         }
         if {$ifNotSupportCellClass} {
-          lappend nonConsidered_list [concat "classNotSupport" $addedInfoToShow]
+          lappend nonConsidered_list [concat $driverSinksSymbol "classNotSupport" $addedInfoToShow]
         }
         if {$ifComplexOne2More} {
-          lappend nonConsideredList [concat "complexMore" $addedInfoToShow]
+          lappend nonConsideredList [concat $driverSinksSymbol "complexMore" $addedInfoToShow]
         }
       } elseif {$ifPassPreCheck} {
         er $debug { puts "Congratulations!!! pass precheck" }
@@ -114,16 +114,19 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
           set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
           if {[operateLUT -type exists -attr [list celltype $toVT]]} {set ifFixedSuccessfully 1} else {set ifFixedButFailed 1}
           if {$ifOne2One} {
-            lappend fixed_one_list [concat $driverSinksSymbol "T"] 
+            lappend fixed_one_list [concat $driverSinksSymbol "T" $toVT $addedInfoToShow] 
           } elseif {$ifSimpleOne2More} {
-            lappend fixed_more_list [concat $driverSinksSymbol "T"] 
+            lappend fixed_more_list [concat $driverSinksSymbol "T" $toVT $addedInfoToShow] 
           }
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
           set ifSkipped 1
-          lappend skipped_list [concat "Fvt" $addedInfoToShow]
-        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} { ; # NOTICE
+          lappend skipped_list [concat $driverSinksSymbol "Fvt" $addedInfoToShow]
+        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
           
+        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
+          set ifSkipped 1
+          lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
         } else { ; # NOTICE
           #puts "\n$promptInfo : needInsertBufferToFix\n" 
         }

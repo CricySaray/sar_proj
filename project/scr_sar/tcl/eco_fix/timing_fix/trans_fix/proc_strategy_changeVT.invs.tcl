@@ -21,26 +21,25 @@
 # TODO: consider mix fluence between speed and weight!!!
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ../lut_build/operateLUT.tcl; # operateLUT
-proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {ifForceValid 1}} {
+proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {ifForceValid 1}} {
   # $weight:0 is stand for no using
   # $speed: the fastest must be in front. like ULVT must be the first
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
-    error "proc strategy_changeVT_withLUT: check your input: celltype($celltype) not found!!!" 
+    return "0x0:1" 
   } else {
-    # get now VTtype
-    if {$runError || $wholeName == ""} {
-      return "0x0:2"; # check if $regExp pattern is correct 
-    } else {
-      set processType [whichProcess_fromStdCellPattern $celltype]
-      if {$VTtype == ""} {set VTtype "SVT"; puts "notice: blank vt type"} 
-      set weight0VTList [lmap vt_weight [lsort -unique -index 0 [lsearch -all -inline -index 1 -regexp $weight "0"]] {set vt [lindex $vt_weight 0]}]
-      set avaiableVT [lsearch -all -inline -index 1 -regexp $weight "\[1-9\]"]; # remove weight:0 VT
-      # user-defined avaiable VT type
-      set availableVTsorted [lsort -index 1 -integer -decreasing $avaiableVT]
-      set ifInAvailableVTList [lsearch -index 0 $availableVTsorted $VTtype]
-      set availableVTnameList [lmap vt_weight $availableVTsorted {set temp [lindex $vt_weight 0]}]
+    set processType [operateLUT -type read -attr {process}]
+    set VTtype [operateLUT -type read -attr [list celltype $celltype vt]]
+    set weight0VTList [lmap vt_weight [lsort -unique -index 0 [lsearch -all -inline -index 1 -regexp $weight "0"]] {set vt [lindex $vt_weight 0]}]
+    set avaiableVT [lsearch -all -inline -index 1 -regexp $weight "\[1-9\]"]; # remove weight:0 VT
+    # user-defined avaiable VT type
+    set availableVTsorted [lsort -index 1 -integer -decreasing $avaiableVT]
+    set ifInAvailableVTList [lsearch -index 0 $availableVTsorted $VTtype]
+    set availableVTnameList [lmap vt_weight $availableVTsorted {set temp [lindex $vt_weight 0]}]
 
 #puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype $celltype -"
+    if {$availableVTnameList == $VTtype} {
+      return $celltype; # if list only have now vt type, return now celltype
+    } elseif {$ifInAvailableVTList == -1} {
       if {$ifForceValid} {
         if {[lsearch -inline $weight0VTList $VTtype] != ""} {
           set speedList_notWeight0 $speed
@@ -111,7 +110,6 @@ proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}
     }
   }
 }
-
 
 # U002: This proc has been abandoned and will no longer be updated
 proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {ifForceValid 1}} {

@@ -67,16 +67,16 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
         if {![info exists wholname]} {lappend cantMatchList [list $temptypename $tempclass]}
       } else {
         lassign [get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib $temptypename $process] tempcapacity tempvttype
-        if {$tempcapacity == 0.5} {set tempcapacity_2 05}
+        if {$tempcapacity == 0.5} {set tempcapacity_2 05} else {set tempcapacity_2 $tempcapacity}
         set tempvtcapacityExp [regsub [sus {^(.*X)${tempcapacity_2}(.*)${tempvttype}$}] $temptypename [sus {^\1\d+\2A[HRL]9$}]]
         # set tempvtExp [regsub [sus {(.*)${tempvttype}$}] $temptypename [sus {^\1A\w9$}]]
         # set tempcapacityExp [regsub [sus {(.*X)${tempcapacity}(.*)}] $temptypename [sus {^\1*\2$}]] ; # sus - subst -nocommands -nobackslashes
         set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]
-        set tempvtList [lsort -unique -real -increasing [lmap tmpvt $tempvtcapacityList_raw {
+        set tempvtList [lsort -unique [lmap tmpvt $tempvtcapacityList_raw {
           regexp {^.*X(\d+).*(A[HRL]9)$} $tmpvt vtwholename vtcapacity vtvt
           set vtvt
         }]]
-        set tempcapacityList [lsort -unique [lmap tmpcapacity $tempvtcapacityList_raw {
+        set tempcapacityList [lsort -unique -real -increasing [lmap tmpcapacity $tempvtcapacityList_raw {
           regexp {^.*X(\d+).*(A[HRL]9)$} $tmpcapacity capwholename capcapacity capvt
           if {$capcapacity == 05} {set capcapacity 0.5}
           set capcapacity

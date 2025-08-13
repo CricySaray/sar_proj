@@ -66,7 +66,7 @@ proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}
           }
         } 
       } else {
-        return "0x0:3"; # cell type can't be allowed to use, don't change VT type
+        error "proc strategy_changeVT_withLUT: error operation, \$ifForceValid is 0, cell type can't be allowed to use, don't change VT type!!!"; # cell type can't be allowed to use, don't change VT type
       }
     } else {
       # get changeable VT type according to provided cell type 

@@ -19,7 +19,8 @@
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
 source ../lut_build/operateLUT.tcl; # operateLUT
-proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapacity 4} {changeStairs 1} {driveRange {1 16}} {ifClamp 1} {debug 0}} {
+alias sus "subst -nocommands -nobackslashes"
+proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapacity 4} {changeStairs 1} {driveRange {1 12}} {ifClamp 1} {debug 0}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
@@ -28,15 +29,13 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
     #get now Drive Capacibility
     set driveLevel [operateLUT -type read -attr [list celltype $celltype capacity]]
     #puts "driveLevel : $driveLevel"
-    if {$driveLevel == "05"} { ; # M31 std cell library have X05(0.5) driveCapacity
-      set driveLevelNum 0.5
-    } else {
-      set driveLevelNum [expr int($driveLevel)]
-    }
-    set processType [whichProcess_fromStdCellPattern $celltype]
+    set processType [operateLUT -type read -attr {process}]
     set toDrive 0
     if {$forceSpecifyDriveCapacity } {
       set toDrive $forceSpecifyDriveCapacity
+      set capacityFlag [operateLUT -type read -attr {capacityflag}]
+      set stdCellFlag [operateLUT -type read -attr {stdcellflag}]
+      regsub [sus {^(.*$capacityFlag)$driveLevel(.*)$}] $celltype [sus {\1$toDrive\2}]
       if {$processType == "TSMC"} {
         regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
         if {[dbget head.libCells.name $toCelltype -e] == ""} {
@@ -48,7 +47,6 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
         regsub [subst {(.*)X${driveLevel}}] $celltype [subst {\\1X${toDrive}}] toCelltype
         if {[dbget head.libCells.name $toCelltype -e] == ""} {
           return $celltype ; # songNOTE: temp!!!
-          return "0x0:4"; # forceSpecifyDriveCapacity: have no this celltype 
         } else {
           return $toCelltype
         }

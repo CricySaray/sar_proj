@@ -31,11 +31,18 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
     #puts "driveLevel : $driveLevel"
     set processType [operateLUT -type read -attr {process}]
     set toDrive 0
+    set availableDriveCapacityList [operateLUT -type read -attr [list celltype $celltype caplist]]
     if {$forceSpecifyDriveCapacity } {
+      if {$forceSpecifyDriveCapacity ni $availableDriveCapacityList} {
+        error "proc strategy_changeDriveCapacity_withLUT: error operation, the \$forceSpecifyDriveCapacity($forceSpecifyDriveCapacity) is not valid which is not found in available capacity list($availableDriveCapacityList)!!!" 
+      }
       set toDrive $forceSpecifyDriveCapacity
       set capacityFlag [operateLUT -type read -attr {capacityflag}]
       set stdCellFlag [operateLUT -type read -attr {stdcellflag}]
-      regsub [sus {^(.*$capacityFlag)$driveLevel(.*)$}] $celltype [sus {\1$toDrive\2}]
+      regsub [sus {^(.*$capacityFlag)$driveLevel(.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
+      if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
+        error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it" 
+      }
       if {$processType == "TSMC"} {
         regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
         if {[dbget head.libCells.name $toCelltype -e] == ""} {
@@ -61,17 +68,6 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
     # simple version, provided fixed drive capacibility for 
     set toDrive_temp [expr $driveLevelNum * ($changeStairs * 2)]
 if {$debug} { puts "strategy_changeDriveCapacity : celltype : $celltype  driveLevelNum : $driveLevelNum stairs : $changeStairs toDrive_tmp : $toDrive_temp" }
-    if {$processType == "TSMC"} {
-      regsub D${driveLevel}BWP $celltype D*BWP searchCelltypeExp
-    } elseif {$processType == "HH"} {
-      regsub [subst {(.*)X$driveLevel}] $celltype [subst {\\1X*}] searchCelltypeExp
-    }
-    set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
-    set availableDriveCapacityList [lmap Acelltype $availableCelltypeList {
-      regexp $regExp $Acelltype wholename AdriveLevel AVTtype
-      if {$AdriveLevel == "05"} {set AdriveLevel 0.5} else { set AdriveLevel}
-    }]
-#puts $availableDriveCapacityList
     if {$toDrive_temp <= 8} {
       set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 1 1]
     } else {

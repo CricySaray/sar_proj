@@ -47,8 +47,8 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
     er $debug { puts [join [dict get $allInfo] \n] }
     set validViolValue [expr abs($violValue) * 1000]
     # U004 $ifNeedConsiderThisDriverSinksSymbol : this flag tell that you need add this mix of type from driverSymbol to sinksSymbol
-    set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixedButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 ifNeedConsiderThisDriverSinksSymbol 0 \
-                                ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
+    set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixedButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 \
+                        ifNeedConsiderThisDriverSinksSymbol 0 ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
     set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list ]
     foreach lists_item $resultDict_lists { dict set resultDict $lists_item [list ] }
 
@@ -114,7 +114,9 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
           set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
           if {[operateLUT -type exists -attr [list celltype $toVT]]} {set ifFixedSuccessfully 1} else {set ifFixedButFailed 1}
           if {$ifOne2One} {
-            lappend fixed_one_list [concat $driverSinksSymbol "T" ] 
+            lappend fixed_one_list [concat $driverSinksSymbol "T"] 
+          } elseif {$ifSimpleOne2More} {
+            lappend fixed_more_list [concat $driverSinksSymbol "T"] 
           }
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
           set ifSkipped 1

@@ -19,7 +19,7 @@ source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib
 alias sus "subst -nocommands -nobackslashes"
-proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag ""} {celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$}} {promptPrefix "# song"} {lutDictName "lutDict"}} {
+proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag ""} {celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$}} {refBuffer "BUFX3AR9"} {refClkBuffer "CLKBUFX3AR9"} {promptPrefix "# song"} {lutDictName "lutDict"}} {
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
@@ -100,6 +100,16 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
       set temp_typename_class_size "{{$temptypename $tempclass {$tempsize} $tempvttype $tempcapacity {$tempvtList} {$tempcapacityList}}}"
     }]
     set sorted_celltype_class_size_D3List [lsort $celltype_class_size_D3List]
+    if {$refBuffer == ""} {
+      puts $fo "$promptWARN: have no refBuffer defination!!!"
+    } else {
+      puts $fo "dict set $lutDictName refbuffer $refBuffer"
+    }
+    if {$refClkBuffer == ""} {
+      puts $fo "$promptWARN: have no refClkBuffer defination!!!"
+    } else {
+      puts $fo "dict set $lutDictName refclkbuffer $refClkBuffer"
+    }
     puts $fo "set celltype_subAttributes \{"
     puts $fo [print_formattedTable $sorted_celltype_class_size_D3List]
     puts $fo "\}"

@@ -19,7 +19,7 @@
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               infoToShow
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPin]/infoToShow
 # return    : dict variable
 # ref       : link url
 # --------------------------
@@ -36,6 +36,7 @@ source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
 source ./proc_findFarthestSinkPinAndPt_toDriverPin.invs.tcl; # find_farthest_sinkpoint_to_driver_pin
+source ../../../packages/group_points_by_distribution_and_preferFartherCenterPt.package.tcl; # group_points_by_distribution_and_preferFartherCenterPt
 source ../lut_build/operateLUT.tcl; # operateLUT
 
 proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
@@ -104,7 +105,16 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo sinkPinFarthestToDriverPin [lindex [find_farthest_sinkpoint_to_driver_pin [dict get $allInfo driverPinPT] [dict get $allInfo sink_pt_D2List]] 0] 
     dict set allInfo sinksCellClassForShow [eo [expr [dict get $allInfo numSinks] == 1] [dict get $allInfo sinksCellClass] [dict get $allInfo uniqueShortenedSinksCellClass]]
     dict set allInfo farthestSinkCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo sinkPinFarthestToDriverPin] -p2].cell.name]
-    
+
+    if {!$ifOne2One} {
+      set sinksPinNameAndPt [lmap sinkpin [dict get $allInfo sinksPin] { set sinkpt [gpt $sinkpin] ; set temp_pinname_pt [list $sinkpin $sinkpt] }]
+      set distributionInfo [group_points_by_distribution_and_preferFartherCenterPt [list [dict get $allInfo driverPin] [dict get $allInfo driverPinPT]] $sinksPinNameAndPt]
+      lassign $distributionInfo fartherGroup closerGroup 
+      lassign $fartherGroup groupPinnameLocations fartherCenterPoint
+      dict set allInfo numFartherGroupSinks [llength $groupPinnameLocations]
+      dict set allInfo fartherGroupSinksPin [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 0 }]
+    }    
+
     dict for {key val} $allInfo  { set $key $val }
     dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop $driverCellClass $driverCellType $driverPin "-$numSinks-" $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
     return $allInfo

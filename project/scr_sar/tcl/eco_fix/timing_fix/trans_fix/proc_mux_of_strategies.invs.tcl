@@ -7,13 +7,13 @@
 # descrip   : selector of strategies for fix_trans.invs.tcl
 # return    : dict data: $resultDict: cmdList/fixedList/cantChangeList/skippedList/nonConsideredList
 # TODO      : 
-#             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U003: judge if the driver cell can change VT and drive capacity, if not, using inserting buffer or add to NOTICEList(need to fix by yourself)
-#             U004: add judgement for non-consider driver-sinks symbol
 #             U005: need shorten too long string of pinname using stringstore::*
+#             U006: change strategy according to the sinks capacity
 # FIXED     :
-#             U001(partial): only pick out this situation, need to improve return value
+#             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
+#             U004: add judgement for non-consider driver-sinks symbol
 # ref       : link url
 # --------------------------
 source ../../../packages/stringstore.package.tcl; # stringstore::*
@@ -24,6 +24,7 @@ source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand
 source ./proc_cond_meet_any.invs.tcl; # cond_met_any
 source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT_withLUT
 source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity_withLUT
+source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype_withLUT
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
@@ -33,9 +34,9 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               infoToShow
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPin]/infoToShow
 alias mux_of_strategies "sliding_rheostat_of_strategies"
-proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 3} {LVT 1} {ULVT 0}}} {debug 0} {promptPrefix "# song"}} {
+proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 3} {LVT 1} {ULVT 0}}} {ifNeedChangeVTWhenChangeCapacity 1} {debug 0} {promptPrefix "# song"}} {
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
     error "proc mux_of_strategies: check your input, violValue($violValue) is not double number or greater than 0 or violPin($violPin) is not found!!!"
   } else {
@@ -48,9 +49,9 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
     er $debug { puts [join [dict get $allInfo] \n] }
     set validViolValue [expr abs($violValue) * 1000]
     # U004 $ifNeedConsiderThisDriverSinksSymbol : this flag tell that you need add this mix of type from driverSymbol to sinksSymbol
-    set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixedButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 \
+    set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 \
                         ifNeedConsiderThisDriverSinksSymbol 0 ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
-    set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list ]
+    set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list ]
     foreach lists_item $resultDict_lists { dict set resultDict $lists_item [list ] }
 
     er $debug { puts "ifLoop : $ifLoop  | numSinks : $numSinks" }
@@ -90,11 +91,11 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
         # ---------------------------------------------- 
         # begin process valid situations!!!
         switch -regexp $driverSinksSymbol {
-          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4}}
-          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6}}
-          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5}}
-          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3}}
-          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set ifNeedConsiderThisDriverSinksSymbol 1}
+          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0.5 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refDriver" ; set capacityRange {2 12}}
+          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0.5 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refSink" ; set capacityRange {3 12}}
+          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0.5 4} {1 4} {2 4} {3 8} {4 8} {8 8}} ; set relativeLoc 0.9 ; set addMethod "auto" ; set capacityRange {4 12}}
+          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0.5 4} {1 4} {2 4} {3 8} {4 8} {8 8}} ; set relativeLoc 0.9 ; set addMethod "auto" ; set capacityRange {4 12}}
+          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0.5 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.7 ; set addMethod "auto" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
         }
         if {$ifNeedConsiderThisDriverSinksSymbol} { puts "\n$promptWarning : this driverSinksSymbol($driverSinksSymbol) is not considered, you need add it!!!\n" }
         set farThresholdPointOfChangeCapacityAndInsertBuffer {30 130} ; # x: validViolValue , y: netLen
@@ -110,10 +111,11 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
         set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if netLen < fixedValue, you can't insert buffer
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if netLen < fixedValue, you can't insert buffer
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
+
         if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
           set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
-          if {[operateLUT -type exists -attr [list celltype $toVT]]} {set ifFixedSuccessfully 1} else {set ifFixedButFailed 1}
+          if {[operateLUT -type exists -attr [list celltype $toVT]]} {set ifFixedSuccessfully 1} else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failed" $toVT $addedInfoToShow]}
           if {$ifOne2One} {
             lappend fixed_one_list [concat $driverSinksSymbol "T" $toVT $addedInfoToShow] 
           } elseif {$ifSimpleOne2More} {
@@ -125,16 +127,30 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
         } 
         if {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
-          set toCap [strategy_changeDriveCapacity_withLUT $driverCellType ]
-          if {[operateLUT -type exists -attr [list celltype $toCap]]} {set ifFixedSuccessfully 1} else {set ifFixedButFailed 1}
+          if {$ifNeedChangeVTWhenChangeCapacity && !$ifHaveBeenFastestVTinRange} {
+            set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
+            if {[operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
+          } else { set toVT $driverCellType }
+          if {$ifFixButFailed} {
+            lappend fix_but_failed_list [concat $driverSinksSymbol "failed" $toVT $addedInfoToShow]
+          } else {
+            set toCap [strategy_changeDriveCapacity_withLUT $toVT 0 $mapList 0 1] ; # TODO: U006: change strategy according to the sinks capacity
+            if {[operateLUT -type exists -attr [list celltype $toCap]]} {set ifFixedSuccessfully 1} else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failed" $toCap $addedInfoToShow]}
+          }
         } elseif {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
         } 
-        if {!$ifFixedSuccessfully} { ; # NOTICE
+        if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           #puts "\n$promptInfo : needInsertBufferToFix\n" 
+          if {$ifOne2One} {
+            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $sinksCellType $addMethod 0 $capacityRange 1 [operateLUT -type read -attr [list celltype refbuffer]]]
+          } elseif {$ifSimpleOne2More} {
+
+          }
+        } elseif {!$ifFixedSuccessfully && [expr $netLen < [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} {
+
         }
-       
       }
     }
     dict for {infovar infovalue} $allInfo { trace remove variable $infovar write onlyReadTrace }

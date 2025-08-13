@@ -7,17 +7,16 @@
 # descrip   : change cell drive capacity of cell type according to different std process
 # ref       : link url
 # --------------------------
-source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+source ../lut_build/operateLUT.tcl; # operateLUT
+alias sus "subst -nocommands -nobackslashes"
 proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDriveCapacibility 0} {toDriverCapacibility 0}} {
-  set processType [whichProcess_fromStdCellPattern $refType]
-  if {$processType == "TSMC"} { ; # TSMC
-    regsub "D${originalDriveCapacibility}BWP" $refType "D${toDriverCapacibility}BWP" toCelltype
-    return $toCelltype
-  } elseif {$processType == "HH"} { ; # HH40 huahonghongli
-    if {$toDriverCapacibility == 0.5} {set toDriverCapacibility "05"}
-    regsub [subst {(.*)X${originalDriveCapacibility}}] $refType [subst {\\1X${toDriverCapacibility}}] toCelltype
-    return $toCelltype
+  set processType [operateLUT -type read -attr {process}]
+  set stdCellFlag [operateLUT -type read -attr {stdcellflag}]
+  set capacityFlag [operateLUT -type read -attr {capacityflag}]
+  regsub [sus {^(.*$capacityFlag)$originalDriveCapacibility($stdCellFlag.*)$}] $refType [sus {\1$toDriverCapacibility\2}] toCelltype
+  if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
+    error "proc changeDriveCapacity_of_celltype: error toCelltype($toCelltype), double check it!!!"
   } else {
-    error "proc changeDriveCapacity_of_celltype: process of std cell is not belong to TSMC or HH!!!"
+    return $toCelltype
   }
 }

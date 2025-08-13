@@ -15,14 +15,15 @@
 #             added to achieve the same function. However, the internal information calling method has changed, which is more efficient 
 #             and faster compared to the previous method of obtaining information for the proc.
 # update    : 2025/08/13 19:53:24 Wednesday
-#             TODO(U003) add mapList to from original capacity to specified capacity by user at the beginning which is can be saved in variable. it is more flexible.
+#             (U003) add mapList to from original capacity to specified capacity by user at the beginning which is can be saved in variable. it is more flexible.
+#             if have mapList, it will ignore the restriction of driveRange!!
 # ref       : link url
 # --------------------------
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
 source ../lut_build/operateLUT.tcl; # operateLUT
 alias sus "subst -nocommands -nobackslashes"
-proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapacity 4} {mapList {{0.5 2} {1 4} {2 4} {4 8} {8 12}}} {changeStairs 1} {driveRange {1 12}} {ifClamp 1} {debug 0}} {
+proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapacity 4} {mapList {{0.5 2} {1 4} {2 4} {4 8} {8 12}}} {ifStrictCheckForMapList 0} {ifAutoSelectBiggerWhenNotMatch 1} {changeStairs 1} {driveRange {1 12}} {ifClamp 1} {debug 0}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
@@ -48,6 +49,31 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
       } else {
         return $toCelltype 
       }
+    } elseif {[llength $mapList]} {
+      # check validation
+      set fromCapacityList [lmap fromtemp $mapList { lindex $fromtemp 0 }]
+      set toCapacityList [lmap totemp $mapList { lindex $totemp 1 }]
+      set ifValidMapList [every x [concat $fromCapacityList $toCapacityList] { expr {$x in $availableDriveCapacityList} }]
+      set ifHaveDuplicateItems [every x $fromCapacityList { expr {[llength [lsearch -all -index 0 $mapList $x]] == 1} }]
+      if {!$ifValidMapList && $ifStrictCheckForMapList} {
+        error "proc strategy_changeDriveCapacity_withLUT: check your input: mapList($mapList) has invalid item!!! double check it!!!"
+      } elseif {$ifHaveDuplicateItems} {
+        error "proc strategy_changeDriveCapacity_withLUT: check your input: mapList($mapList) has duplicate items!!! double check it!!!"
+      } else {
+        set toCapacityMatched [lindex [lsearch -index 0 -inline $mapList $driveLevel] 1]
+        set ifInToCapacityList [lsearch -inline $toCapacityList $toCapacityMatched]
+        if {$ifInToCapacityList == "" && $ifAutoSelectBiggerWhenNotMatch} {
+          set toCapacityMatched [find_nearestNum_atIntegerList $availableDriveCapacityList $toCapacityMatched 1 1]
+        } elseif {$ifInToCapacityList == "" && !$ifAutoSelectBiggerWhenNotMatch} {
+          set toCapacityMatched [find_nearestNum_atIntegerList $availableDriveCapacityList $toCapacityMatched 0 1]
+        }
+        regsub [sus {^(.*$capacityFlag)$driveLevel($stdCellFlag.*)$}] $celltype [sus {\1$toCapacityMatched\2}] toCelltype
+        if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
+          error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it (mapList mode)" 
+        } else {
+          return $toCelltype 
+        }
+      }
     }
     if {![llength $driveRange]} {
       error "proc strategy_changeDriveCapacity_withLUT: check your input: \$driveRange is empty!!!"
@@ -55,8 +81,8 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
       set driveRangeRight [lsort -integer -increasing $driveRange]
     }
     # simple version, provided fixed drive capacibility for 
-    set toDrive_temp [expr $driveLevelNum * ($changeStairs * 2)]
-if {$debug} { puts "strategy_changeDriveCapacity : celltype : $celltype  driveLevelNum : $driveLevelNum stairs : $changeStairs toDrive_tmp : $toDrive_temp" }
+    set toDrive_temp [expr $driveLevel * ($changeStairs * 2)]
+if {$debug} { puts "strategy_changeDriveCapacity : celltype : $celltype  driveLevel : $driveLevel stairs : $changeStairs toDrive_tmp : $toDrive_temp" }
     if {$toDrive_temp <= 8} {
       set toDrive [find_nearestNum_atIntegerList $availableDriveCapacityList $toDrive_temp 1 1]
     } else {

@@ -61,7 +61,7 @@ proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}
                 return [regsub $VTtype $celltype $useVT] 
               }
             }
-          } elseif {$processType == "HH"} {
+          } elseif {$processType == "M31GPSC900NL040P*_40N"} {
             return [regsub $VTtype $celltype [lindex $speedList_notWeight0 end]] 
           }
         } 
@@ -102,7 +102,7 @@ proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}
             return [regsub $VTtype $celltype $useVT] 
           }
         }
-      } elseif {$processType == "HH"} {
+      } elseif {$processType == "M31GPSC900NL040P*_40N"} {
         # HH40 :
         # AR9 AL9 AH9
         return [regsub $VTtype $celltype $useVT] 

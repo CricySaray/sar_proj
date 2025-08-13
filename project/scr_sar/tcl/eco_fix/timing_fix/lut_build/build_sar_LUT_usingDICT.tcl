@@ -19,7 +19,7 @@ source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib
 alias sus "subst -nocommands -nobackslashes"
-proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag "BWP"} {promptPrefix "# song"} {lutDictName "lutDict"}} {
+proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag ""} {promptPrefix "# song"} {lutDictName "lutDict"}} {
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
@@ -30,7 +30,21 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
   } else {
     puts $fo "dict set $lutDictName process $process" 
   }
-  
+  if {$capacityFlag == ""} {
+    puts $fo "$promptWARN: have no process capacity flag defination!!!" 
+  } else {
+    puts $fo "dict set $lutDictName capacityflag $capacityFlag" 
+  }
+  if {$vtFastRange == ""} {
+    puts $fo "$promptWARN: have no process vt fast range defination!!!"
+  } else {
+    puts $fo "dict set $lutDictName vtrange \{$vtFastRange\}" 
+  }
+  if {$stdCellFlag == ""} {
+    puts $fo "$promptWARN: have no process std cell flag defination!!!" 
+  } else {
+    puts $fo "dict set $lutDictName stdcellflag $stdCellFlag" 
+  }
   set designName [dbget top.name -e] 
   if {$designName == ""} { puts $fo "$promptERROR : have no design name!!!" } else { puts $fo "dict set $lutDictName designName $designName" }
   set rowHeightAllList [dbget top.fplan.rows.box_sizey -e]

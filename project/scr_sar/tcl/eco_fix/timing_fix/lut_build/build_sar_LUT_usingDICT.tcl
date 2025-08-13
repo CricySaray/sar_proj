@@ -83,7 +83,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
       } else {
         lassign [get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib $temptypename $process] tempcapacity tempvttype
         if {$tempcapacity == 0.5} {set tempcapacity_2 05} else {set tempcapacity_2 $tempcapacity}
-        set tempvtcapacityExp [regsub [sus {^(.*X)${tempcapacity_2}(.*)${tempvttype}$}] $temptypename [sus {^\1\d+\2A[HRL]9$}]]
+        set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_2}(.*)${tempvttype}$}] $temptypename [sus {^\1\d+\2A[HRL]9$}]]
         # set tempvtExp [regsub [sus {(.*)${tempvttype}$}] $temptypename [sus {^\1A\w9$}]]
         # set tempcapacityExp [regsub [sus {(.*X)${tempcapacity}(.*)}] $temptypename [sus {^\1*\2$}]] ; # sus - subst -nocommands -nobackslashes
         set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]

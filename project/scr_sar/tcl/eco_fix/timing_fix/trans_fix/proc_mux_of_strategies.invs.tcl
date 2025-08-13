@@ -22,6 +22,8 @@ source ../../../packages/every_any.package.tcl; # every any
 source ./proc_32_solve_quadratic_equation.common.tcl; # solve_quadratic_equation
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand
 source ./proc_cond_meet_any.invs.tcl; # cond_met_any
+source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT_withLUT
+source ../lut_build/operateLUT.tcl; # operateLUT
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
 #               driverCellClass/sinksCellClass/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
@@ -32,7 +34,7 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
 #               infoToShow
 alias mux_of_strategies "sliding_rheostat_of_strategies"
-proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promptPrefix "# song"}} {
+proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 3} {LVT 1} {ULVT 0}}} {debug 0} {promptPrefix "# song"}} {
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
     error "proc mux_of_strategies: check your input, violValue($violValue) is not double number or greater than 0 or violPin($violPin) is not found!!!"
   } else {
@@ -109,7 +111,8 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promp
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
         if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
-          set ifFixedSuccessfully 1
+          set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
+          if {[operateLUT -type exists -attr [list celltype $toVT]]}set ifFixedSuccessfully 1
           if {$ifOne2One} {
             lappend fixed_one_list [concat $driverSinksSymbol "T" ] 
           }

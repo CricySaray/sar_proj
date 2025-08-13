@@ -39,24 +39,11 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
       set toDrive $forceSpecifyDriveCapacity
       set capacityFlag [operateLUT -type read -attr {capacityflag}]
       set stdCellFlag [operateLUT -type read -attr {stdcellflag}]
-      regsub [sus {^(.*$capacityFlag)$driveLevel(.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
+      regsub [sus {^(.*$capacityFlag)$driveLevel($stdCellFlag.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
       if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
         error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it" 
-      }
-      if {$processType == "TSMC"} {
-        regsub "D${driveLevel}BWP" $celltype "D${toDrive}BWP" toCelltype
-        if {[dbget head.libCells.name $toCelltype -e] == ""} {
-          return "0x0:4"; # forceSpecifyDriveCapacity: have no this celltype 
-        } else {
-          return $toCelltype
-        }
-      } elseif {$processType == "HH"} {
-        regsub [subst {(.*)X${driveLevel}}] $celltype [subst {\\1X${toDrive}}] toCelltype
-        if {[dbget head.libCells.name $toCelltype -e] == ""} {
-          return $celltype ; # songNOTE: temp!!!
-        } else {
-          return $toCelltype
-        }
+      } else {
+        return $toCelltype 
       }
     }
     set ifHaveRangeFlag 1

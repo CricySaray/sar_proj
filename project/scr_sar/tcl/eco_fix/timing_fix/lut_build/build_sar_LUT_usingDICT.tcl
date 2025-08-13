@@ -18,12 +18,18 @@ source ../../../packages/print_formattedTable.package.tcl; # print_formattedTabl
 source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib
+alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {promptPrefix "# song"} {lutDictName "lutDict"}} {
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
   set fo [open $LUT_filename w]
   puts $fo "set $lutDictName \[dict create\]"
+  if {$process == ""} {
+    puts $fo "$promptERROR: have no process defination!!!" 
+  } else {
+    puts $fo "dict set $lutDictName process $process" 
+  }
   set designName [dbget top.name -e] 
   if {$designName == ""} { puts $fo "$promptERROR : have no design name!!!" } else { puts $fo "dict set $lutDictName designName $designName" }
   set rowHeightAllList [dbget top.fplan.rows.box_sizey -e]
@@ -52,18 +58,29 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
       set tempsize [lindex [dbget $temptype_ptr.size] 0]
       set ifInNoCare [expr {$tempclass in {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}}]
       # songNOTE: NOTICE: you can't judge if have error using catch cmd monitoring cmd 'regexp'. cuz regexp will not prompt error when it is not match successfully!!!
-      if {!$ifInNoCare} { catch {unset wholname} ; catch {unset capacity} ; catch {unset vt} ; set ifErr [catch {regexp {.*X(\d+).*(A[HRL]9)$} $temptypename wholname capacity vt} errInfo] }
-      if {$ifInNoCare} {
+      if {!$ifInNoCare} { catch {unset wholname} ; catch {unset capacity} ; catch {unset vt} ; set ifErr [catch {regexp {^.*X(\d+).*(A[HRL]9)$} $temptypename wholname capacity vt} errInfo] }
+      if {$ifInNoCare || ![info exists wholname]} {
         set tempcapacity "NaN" 
         set tempvttype "NaN"
-      } elseif {![info exist wholname]} {
-        set tempcapacity "NaN" 
-        set tempvttype "NaN"
-        lappend cantMatchList [list $temptypename $tempclass]
+        set tempvtList "NaN"
+        set tempcapacityList "NaN"
+        if {![info exists wholname]} {lappend cantMatchList [list $temptypename $tempclass]}
       } else {
         lassign [get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib $temptypename $process] tempcapacity tempvttype
+        set tempvtcapacityExp [regsub [sus {^(.*X)${tempcapacity}(.*)${tempvttype}$}] $temptypename [sus {^\1\d+\2A[HRL]9$}]]
+        # set tempvtExp [regsub [sus {(.*)${tempvttype}$}] $temptypename [sus {^\1A\w9$}]]
+        # set tempcapacityExp [regsub [sus {(.*X)${tempcapacity}(.*)}] $temptypename [sus {^\1*\2$}]] ; # sus - subst -nocommands -nobackslashes
+        set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]
+        set tempvtList [lsort -unique [lmap tmpvt $tempvtcapacityList_raw {
+          regexp {^.*X(\d+).*(A[HRL]9)$} $tmpvt vtwholename vtcapacity vtvt
+          set vtvt
+        }]]
+        set tempcapacityList [lsort -unique [lmap tmpcapacity $tempvtcapacityList_raw {
+          regexp {^.*X(\d+).*(A[HRL]9)$} $tmpcapacity capwholename capcapacity capvt
+          set capcapacity
+        }]]
       }
-      set temp_typename_class_size "{{$temptypename $tempclass {$tempsize} $tempcapacity $tempvttype}}"
+      set temp_typename_class_size "{{$temptypename $tempclass {$tempsize} $tempvttype $tempcapacity {$tempvtList} {$tempcapacityList}}}"
     }]
     set sorted_celltype_class_size_D3List [lsort $celltype_class_size_D3List]
     puts $fo "set celltype_subAttributes \{"
@@ -73,12 +90,16 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
     puts $fo "  set celltypeName \[lindex \$temp_celltype_attribute 0\]"
     puts $fo "  set cellclass \[lindex \$temp_celltype_attribute 1\]"
     puts $fo "  set cellsize \[lindex \$temp_celltype_attribute 2\]"
-    puts $fo "  set cellcapacity \[lindex \$temp_celltype_attribute 3\]"
-    puts $fo "  set cellvt \[lindex \$temp_celltype_attribute 4\]"
+    puts $fo "  set cellvt \[lindex \$temp_celltype_attribute 3\]"
+    puts $fo "  set cellcapacity \[lindex \$temp_celltype_attribute 4\]"
+    puts $fo "  set cellvtList \[lindex \$temp_celltype_attribute 5\]"
+    puts $fo "  set cellcapacityList \[lindex \$temp_celltype_attribute 6\]"
     puts $fo "  dict set $lutDictName celltype \$celltypeName class \$cellclass" ; # AT001
     puts $fo "  dict set $lutDictName celltype \$celltypeName size \$cellsize" ; # AT001
-    puts $fo "  dict set $lutDictName celltype \$celltypeName capacity \$cellcapacity" ; # AT002
     puts $fo "  dict set $lutDictName celltype \$celltypeName vt \$cellvt" ; # AT002
+    puts $fo "  dict set $lutDictName celltype \$celltypeName capacity \$cellcapacity" ; # AT002
+    puts $fo "  dict set $lutDictName celltype \$celltypeName vtlist \$cellvtList" ; # AT002
+    puts $fo "  dict set $lutDictName celltype \$celltypeName caplist \$cellcapacityList" ; # AT002
     puts $fo "\}"
   }
   close $fo

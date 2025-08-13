@@ -6,9 +6,10 @@ proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
   set allOutputPin [dbget [dbget top.insts.instTerms {.isOutput == 1}].name]
   set fo [open $sumFile w]
   foreach testpin $allOutputPin {
-    set netname [dbget [dbget top.insts.instTerms.name $testpin .p2].net.name ]
+    set netname [dbget [dbget top.insts.instTerms.name $testpin -p].net.name -e]
+    if {$netname == ""} {continue}
     set netLen [get_net_length $netname]
-    if {!$netLen} {continue}
+    if {$netLen == 0} {continue}
     set randomViolValue [generate_randomNumber_withNormalDistribution]
     puts "point [incr i]: viol: $randomViolValue | pin: $testpin"
     set dict_of_sum [mux_of_strategies $randomViolValue $testpin]

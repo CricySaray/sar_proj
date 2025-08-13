@@ -23,14 +23,14 @@ source ./proc_32_solve_quadratic_equation.common.tcl; # solve_quadratic_equation
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand
 source ./proc_cond_meet_any.invs.tcl; # cond_met_any
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
-# allInfo: dict keys: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/wiresPts/driverInstname/sinksInstname/
-#                 driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
-#                 sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/shortenedSimplizedSinksCellClass/
-#                 uniqueSinksCellClass/uniqueShortenedSinksCellClass/uniqueSimplizedSinksCellClass/uniqueShortenedSimplizedSinksCellClass
-#                 mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
-#                 distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
-#                 ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType
-#                 infoToShow
+# mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
+#               driverCellClass/sinksCellClass/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
+#               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/shortenedSimplizedSinksCellClass/
+#               uniqueSinksCellClass/uniqueShortenedSinksCellClass/uniqueSimplizedSinksCellClass/uniqueShortenedSimplizedSinksCellClass
+#               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
+#               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
+#               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
+#               infoToShow
 alias mux_of_strategies "sliding_rheostat_of_strategies"
 proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promptPrefix "# song"}} {
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
@@ -58,7 +58,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promp
       # it will return 1 if any of scripts return true or 1
       set ifDirtyCase [expr !$numSinks || !$netLen || !$ifNetConnected] ; # if 1: have problem
       set ifNeedReRouteNet [expr {$ifLoop in {moderate severe}}] ; # if 1: the net has looped (adapted to one2one and one2more)
-      set ifNotSupportCellClass [any x [list $driverCellClass {*}$sinksCellClass] { expr {$x in {memory IP IOpad}} }] ; # now not support these cell class
+      set ifNotSupportCellClass [any x [list $driverCellClass {*}$simplizedSinksCellClass] { regexp cantMap_ $x }] ; # now not support these cell class
       set ifComplexOne2More [expr !$ifSimpleOne2More] ; # if 1, now can't fix. it need fix by yourself
       set preCheckConds { 
         {expr $ifDirtyCase}
@@ -107,10 +107,16 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {debug 0} {promp
         set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if netLen < fixedValue, you can't insert buffer
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if netLen < fixedValue, you can't insert buffer
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
-        if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity} {
+        if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
-         
-        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer} { ; # NOTICE
+          set ifFixedSuccessfully 1
+          if {$ifOne2One} {
+            lappend fixed_one_list [concat $driverSinksSymbol "T" ] 
+          }
+        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
+          set ifSkipped 1
+          lappend skipped_list [concat "Fvt" $addedInfoToShow]
+        } elseif {$ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} { ; # NOTICE
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
           
         } else { ; # NOTICE

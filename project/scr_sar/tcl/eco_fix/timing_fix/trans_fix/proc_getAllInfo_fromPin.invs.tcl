@@ -9,8 +9,11 @@
 #             (U001) improve method to judge if the one2more situation is loopped 
 # update    : 2025/08/07 09:16:54 Thursday
 #             (U002) add some unique dict items
-# mini descrip: driverPin/sinksPin/driverCellClass/sinksCellClass/netName/netLen/wiresPts/driverInstname/sinksInstname/
-#               driverCellType/sinksCellType/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
+# update    : 2025/08/13 09:07:43 Wednesday
+#             (U003) NOTICE: add access for LUT using proc operateLUT, you need load lutDict dict variable before run this proc
+#             build LUT using build_sar_LUT_usingDICT at  ../lut_build/build_sar_LUT_usingDICT.tcl
+# mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
+#               driverCellClass/sinksCellClass/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
 #               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/shortenedSimplizedSinksCellClass/
 #               uniqueSinksCellClass/uniqueShortenedSinksCellClass/uniqueSimplizedSinksCellClass/uniqueShortenedSimplizedSinksCellClass
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
@@ -22,7 +25,6 @@
 # --------------------------
 source ../../../packages/logic_AND_OR.package.tcl; # eo
 source ../../../packages/judge_ifAllSegmentsConnected.package.tcl; # judge_ifAllSegmentsConnected
-source ./proc_get_cell_class.invs.tcl; # get_cell_class
 source ./proc_get_fanoutNum_and_inputTermsName_of_pin.invs.tcl; # get_driverPin | get_sinkPins
 source ./proc_get_net_lenth.invs.tcl; # get_net_length
 source ./proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacity_of_celltype
@@ -34,6 +36,7 @@ source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
 source ./proc_findFarthestSinkPinAndPt_toDriverPin.invs.tcl; # find_farthest_sinkpoint_to_driver_pin
+source ../lut_build/operateLUT.tcl; # operateLUT
 
 proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
   if {$pinname == "" || $pinname == "0x0" || [dbget top.insts.instTerms.name $pinname -e] == ""} {
@@ -42,8 +45,6 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     set allInfo [dict create ]
     dict set allInfo driverPin [get_driverPin $pinname]
     dict set allInfo sinksPin [get_sinkPins $pinname]
-    dict set allInfo driverCellClass [get_cell_class [dict get $allInfo driverPin]]
-    dict set allInfo sinksCellClass [lmap sinkpin [dict get $allInfo sinksPin] { get_cell_class $sinkpin }]
     dict set allInfo netName [get_object_name [get_nets -of $pinname]]
     dict set allInfo netLen [get_net_length [dict get $allInfo netName]]
     dict set allInfo wiresPts [dbget [dbget top.nets.name [dict get $allInfo netName] -p].wires.pts]
@@ -51,12 +52,13 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo sinksInstname [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].name }]
     dict set allInfo driverCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].cell.name]
     dict set allInfo sinksCellType [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].cell.name }]
+    dict set allInfo driverCellClass [operateLUT -type read -attr [list celltype [dict get $allInfo driverCellType] class]]
+    dict set allInfo sinksCellClass [lmap sinkcelltype [dict get $allInfo sinksCellType] { operateLUT -type read -attr [list celltype $sinkcelltype class] }]
 
-    set ifCanMapDriverCellTypeWithRegExp [judge_ifCanMapWithRegExp $pinname]
-    dict set allInfo driverCapacity [if {$ifCanMapDriverCellTypeWithRegExp} {get_driveCapacity_of_celltype [dict get $allInfo driverCellType] } else { set cantMapDriverCapacity 0 }]
-    dict set allInfo sinksCapacity [lmap sinkcelltype [dict get $allInfo sinksCellType] { if {[judge_ifCanMapWithRegExp $sinkcelltype]} { get_driveCapacity_of_celltype $sinkcelltype } else { set cantMapSinkCapacity 0 }}]
-    dict set allInfo driverVTtype [if {$ifCanMapDriverCellTypeWithRegExp} { get_VTtype_of_celltype [dict get $allInfo driverCellType] } else { set cantMapDriverVT "CantMap" }]
-    dict set allInfo sinksVTtype [lmap sinkcelltype [dict get $allInfo sinksCellType] { if {[judge_ifCanMapWithRegExp $sinkcelltype]} { get_VTtype_of_celltype $sinkcelltype } else { set cantMapSinkVT "CantMap" }}]
+    dict set allInfo driverCapacity [operateLUT -type read -attr [list celltype [dict get $allInfo driverCellType] capacity]]
+    dict set allInfo sinksCapacity [lmap sinkcelltype [dict get $allInfo sinksCellType] { operateLUT -type read -attr [list celltype $sinkcelltype capacity] }]
+    dict set allInfo driverVTtype [operateLUT -type read -attr [list celltype [dict get $allInfo driverCellType] vt]]
+    dict set allInfo sinksVTtype [lmap sinkcelltype [dict get $allInfo sinksCellType] { operateLUT -type read -attr [list celltype $sinkcelltype vt] }]
     dict set allInfo driverPinPT [gpt [dict get $allInfo driverPin]]
     dict set allInfo sinksPinPT [lmap sinkpin [dict get $allInfo sinksPin] { gpt $sinkpin }]
 
@@ -93,7 +95,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo driverSinksSymbol [zipCellClass [dict get $allInfo driverCellClass] [dict get $allInfo mostFrequentInSinksCellClass] [dict get $allInfo numSinks]]
 
     dict set allInfo ifHaveBeenFastestVTinRange [judge_ifHaveBeenFastVTinRange [dict get $allInfo driverCellType] $forbidenVT]
-    dict set allInfo ifHaveBeenLargestCapacityInRange [judge_ifHaveBeenLargestCapacityInRange [dict get $allInfo driverCellType] $driveCapacityRange]
+    dict set allInfo ifHaveBeenLargestCapacityInRange [judge_ifHaveBeenLargestCapacityInRange [dict get $allInfo driverCellType] $driveCapacityRange ]
 
     dict set allInfo ifNetConnected [judge_ifAllSegmentsConnected [dict get $allInfo wiresPts]] ; # 1: connected 0: not connected
 
@@ -161,42 +163,46 @@ proc zipCellClass {driverCellClass mostFrequentInSinksCellClass numSinks} {
 source ../../../packages/andnot_ofList.package.tcl; # andnot
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_get_VTtype_of_celltype.invs.tcl; # get_VTtype_of_celltype
+source ../lut_build/operateLUT.tcl; # operateLUT
 proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
     error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
   } else {
-    set process [whichProcess_fromStdCellPattern $celltype] 
+    set process [operateLUT -type read -attr {process}] 
     if {$process == "TSMC"} {
       set VTrange {HVT SVT LVT ULVT}
-    } elseif {$process == "HH"} {
+    } elseif {$process == {M31GPSC900NL040P*_40N}} {
       set VTrange {AL9 AR9 AH9}
     }
     if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
-    set nowVT [get_VTtype_of_celltype $celltype]
+    set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
+    if {$nowVT eq "NaN"} {return 1}
     set availableVTrange [andnot $VTrange $forbidenVT]
     if {[lsearch -exact $availableVTrange $nowVT] != 0} { return 0 } else { return 1 }
   }
 }
 source proc_getDriveCapacity_ofCelltype.invs.tcl; # get_driveCapacity_of_celltype
 source ../../../packages/filter_numberList.package.tcl; # filter_numberList
+source ../lut_build/operateLUT.tcl; # operateLUT
 proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {1 12}}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
     error "proc judge_ifHaveBeenLargestCapacityInRange: check your input: celltype($celltype) not valid !!!" 
   } else {
-    set process [whichProcess_fromStdCellPattern $celltype] 
+    set process [operateLUT -type read -attr {process}] 
     if {$process == "TSMC"} {
       set regExp "D(\\d+).*CPD(U?L?H?VT)?"
-      set nowCapacity [get_driveCapacity_of_celltype $celltype $regExp]
+      set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
+      if {$nowCapacity eq "NaN"} {return 1}
       regsub D${nowCapacity}BWP $celltype D*BWP searchCelltypeExp
-    } elseif {$process == "HH"} {
+    } elseif {$process == {M31GPSC900NL040P*_40N}} {
       set regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"
-      set nowCapacity [get_driveCapacity_of_celltype $celltype $regExp]
+      set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
+      if {$nowCapacity eq "NaN"} {return 1}
       regsub [subst {(.*)X$nowCapacity}] $celltype [subst {\\1X*}] searchCelltypeExp
     }
     set availableCelltypeList [dbget head.libCells.name $searchCelltypeExp]
     set availableDriveCapacityList [lmap Acelltype $availableCelltypeList {
-      regexp $regExp $Acelltype wholename AdriveLevel AVTtype
-      if {$AdriveLevel == "05"} {set AdriveLevel 0.5} else { set AdriveLevel } 
+      operateLUT -type read -attr [list celltype $Acelltype capacity]
     }]
     set filteredAvailableDriveCapacityList [filter_numberList $availableDriveCapacityList $driveCapacityRange]
     if {[lindex $filteredAvailableDriveCapacityList end] == $nowCapacity} {
@@ -207,6 +213,7 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
   }
 }
 source ../../../proc_whichProcess_fromStdCellPattern.pt.tcl; # whichProcess_fromStdCellPattern
+# absolute proc
 proc judge_ifCanMapWithRegExp {{pinNameOrCelltype ""}} {
   set testPin [dbget top.insts.instTerms.name $pinNameOrCelltype -e -p]
   set testCellType [dbget head.libCells.name $pinNameOrCelltype -e -p]

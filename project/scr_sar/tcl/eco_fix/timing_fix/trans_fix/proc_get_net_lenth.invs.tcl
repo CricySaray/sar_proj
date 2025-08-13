@@ -17,7 +17,7 @@ proc get_net_length {{net ""}} {
     set net [lindex $net 0]
   }
 	if {$net == "0x0" || [dbget top.nets.name $net -e] == ""} { 
-		return "0x0:1"
+		error "proc get_net_length: check your input: net($net) is not found!!!"
 	} else {
     set wires_split_length [dbget [dbget top.nets.name $net -u -p].wires.length -e]
     if {$wires_split_length == ""} { return 0 } ; # U002

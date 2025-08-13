@@ -9,10 +9,111 @@
 #             1) add switch $ifForceValid: if you turn on it, it will change vt to one which weight is not 0. That is legalize VT
 #             2) if available vt list that is remove weight:0 vt is only now vt type, return now celltype
 #             3) if have no faster VT, return original celltype
+# update    : 2025/08/13 16:40:06 Wednesday
+#             (U001) Adapt the information acquisition method of the lookup table: ../lut_build/operateLUT.tcl and ../lut_build/build_sar_LUT_usingDICT.tcl
+#             you can get vt type from lutDict that is built before you run this proc, it can reduce errors and the time of debugging.
+#             (U002) To be compatible with the original fix_trans.invs.tcl and other scripts that call this proc, this update needs to 
+#             adopt an incremental update method by renaming the proc. The original proc name will remain, and a new proc name will be 
+#             added to achieve the same function. However, the internal information calling method has changed, which is more efficient 
+#             and faster compared to the previous method of obtaining information for the proc.
 # ref       : link url
 # --------------------------
 # TODO: consider mix fluence between speed and weight!!!
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+source ../lut_build/operateLUT.tcl; # operateLUT
+proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {ifForceValid 1}} {
+  # $weight:0 is stand for no using
+  # $speed: the fastest must be in front. like ULVT must be the first
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
+    error "proc strategy_changeVT_withLUT: check your input: celltype($celltype) not found!!!" 
+  } else {
+    # get now VTtype
+    if {$runError || $wholeName == ""} {
+      return "0x0:2"; # check if $regExp pattern is correct 
+    } else {
+      set processType [whichProcess_fromStdCellPattern $celltype]
+      if {$VTtype == ""} {set VTtype "SVT"; puts "notice: blank vt type"} 
+      set weight0VTList [lmap vt_weight [lsort -unique -index 0 [lsearch -all -inline -index 1 -regexp $weight "0"]] {set vt [lindex $vt_weight 0]}]
+      set avaiableVT [lsearch -all -inline -index 1 -regexp $weight "\[1-9\]"]; # remove weight:0 VT
+      # user-defined avaiable VT type
+      set availableVTsorted [lsort -index 1 -integer -decreasing $avaiableVT]
+      set ifInAvailableVTList [lsearch -index 0 $availableVTsorted $VTtype]
+      set availableVTnameList [lmap vt_weight $availableVTsorted {set temp [lindex $vt_weight 0]}]
+
+#puts "-ifInAvailabeVTList $ifInAvailableVTList VTtype $VTtype $celltype -"
+      if {$ifForceValid} {
+        if {[lsearch -inline $weight0VTList $VTtype] != ""} {
+          set speedList_notWeight0 $speed
+          foreach weight0 $weight0VTList {
+            set speedList_notWeight0 [lsearch -exact -inline -all -not $speedList_notWeight0 $weight0]
+          }
+#puts "$celltype -$speedList_notWeight0- "
+          if {$processType == "TSMC"} {
+            set useVT [lindex $speedList_notWeight0 end]
+            if {$useVT == ""} {
+              return "0x0:4"; # don't have faster VT
+            } else {
+              #return $useVT 
+              if {$useVT == "SVT"} {
+                return [regsub "$VTtype" $celltype ""]
+              } elseif {$VTtype == "SVT"} {
+                return [regsub "$" $celltype $useVT] 
+              } else {
+                return [regsub $VTtype $celltype $useVT] 
+              }
+            }
+          } elseif {$processType == "HH"} {
+            return [regsub $VTtype $celltype [lindex $speedList_notWeight0 end]] 
+          }
+        } 
+      } else {
+        return "0x0:3"; # cell type can't be allowed to use, don't change VT type
+      }
+    } else {
+      # get changeable VT type according to provided cell type 
+      set changeableVT [lsearch -exact -index 0 -all -inline -not $availableVTsorted $VTtype]
+      #puts $changeableVT
+      # judge if changeable VT types have faster type than nowVTtype of provided cell type
+      set nowSpeedIndex [lsearch -exact $speed $VTtype]
+      set moreFastVTinSpeed [lreplace $speed $nowSpeedIndex end]
+      set useVT ""
+      foreach vt $changeableVT {
+        if {[lsearch -exact $moreFastVTinSpeed [lindex $vt 0]] > -1} {
+          set useVT "[lindex $vt 0]"
+          break
+        } else {
+          return $celltype ; # if have no faster vt, it will return original celltype
+        }
+      }
+      if {$processType == "TSMC"} {
+        # NOTE: these VT type set now is only for TSMC cell pattern
+        # TSMC cell VT type pattern: (special situation!!!)
+        #   SVT: xxxCPD
+        #   LVT: xxxCPDLVT
+        #   ULVT: xxxCPDULVT
+        if {$useVT == ""} {
+          return "0x0:4"; # don't have faster VT
+        } else {
+          #return $useVT 
+          if {$useVT == "SVT"} {
+            return [regsub "$VTtype" $celltype ""]
+          } elseif {$VTtype == "SVT"} {
+            return [regsub "$" $celltype $useVT] 
+          } else {
+            return [regsub $VTtype $celltype $useVT] 
+          }
+        }
+      } elseif {$processType == "HH"} {
+        # HH40 :
+        # AR9 AL9 AH9
+        return [regsub $VTtype $celltype $useVT] 
+      }
+    }
+  }
+}
+
+
+# U002: This proc has been abandoned and will no longer be updated
 proc strategy_changeVT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {speed {ULVT LVT SVT}} {regExp "D(\\d+).*CPD(U?L?H?VT)?"} {ifForceValid 1}} {
   # $weight:0 is stand for no using
   # $speed: the fastest must be in front. like ULVT must be the first

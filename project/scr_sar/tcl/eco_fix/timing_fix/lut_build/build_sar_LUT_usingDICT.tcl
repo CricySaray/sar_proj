@@ -19,7 +19,7 @@ source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib
 alias sus "subst -nocommands -nobackslashes"
-proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag ""} {promptPrefix "# song"} {lutDictName "lutDict"}} {
+proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag ""} {celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$}} {promptPrefix "# song"} {lutDictName "lutDict"}} {
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
@@ -73,7 +73,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
       set tempsize [lindex [dbget $temptype_ptr.size] 0]
       set ifInNoCare [expr {$tempclass in {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}}]
       # songNOTE: NOTICE: you can't judge if have error using catch cmd monitoring cmd 'regexp'. cuz regexp will not prompt error when it is not match successfully!!!
-      if {!$ifInNoCare} { catch {unset wholname} ; catch {unset capacity} ; catch {unset vt} ; set ifErr [catch {regexp {^.*X(\d+).*(A[HRL]9)$} $temptypename wholname capacity vt} errInfo] }
+      if {!$ifInNoCare} { catch {unset wholname} ; catch {unset capacity} ; catch {unset vt} ; set ifErr [catch {regexp $celltypeMatchExp $temptypename wholname capacity vt} errInfo] }
       if {$ifInNoCare || ![info exists wholname]} {
         set tempcapacity "NaN" 
         set tempvttype "NaN"
@@ -88,11 +88,11 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
         # set tempcapacityExp [regsub [sus {(.*X)${tempcapacity}(.*)}] $temptypename [sus {^\1*\2$}]] ; # sus - subst -nocommands -nobackslashes
         set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]
         set tempvtList [lsort -unique [lmap tmpvt $tempvtcapacityList_raw {
-          regexp {^.*X(\d+).*(A[HRL]9)$} $tmpvt vtwholename vtcapacity vtvt
+          regexp $celltypeMatchExp $tmpvt vtwholename vtcapacity vtvt
           set vtvt
         }]]
         set tempcapacityList [lsort -unique -real -increasing [lmap tmpcapacity $tempvtcapacityList_raw {
-          regexp {^.*X(\d+).*(A[HRL]9)$} $tmpcapacity capwholename capcapacity capvt
+          regexp $celltypeMatchExp $tmpcapacity capwholename capcapacity capvt
           if {$capcapacity == 05} {set capcapacity 0.5}
           set capcapacity
         }]]

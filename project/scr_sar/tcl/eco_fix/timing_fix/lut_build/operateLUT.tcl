@@ -25,13 +25,8 @@ proc operateLUT {args} {
     } else {
       return $result
     }
-  } elseif {$type == "test"} {
-    set ifErr [catch {set result [dict exists $lutDict {*}$attr]} errInfo]
-    if {$ifErr} {
-      return 0
-    } else {
-      return 1
-    }
+  } elseif {$type == "exists"} {
+    return [dict exists $lutDict {*}$attr]
   }
 }
 define_proc_arguments operateLUT \

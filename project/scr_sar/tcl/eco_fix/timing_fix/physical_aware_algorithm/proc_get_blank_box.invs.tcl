@@ -8,6 +8,7 @@
 # return    : 
 # ref       : link url
 # --------------------------
+source ../lut_build/operateLUT.tcl; # operateLUT
 proc get_blank_box {{centerPt {}} {halfOfWidth 12.6} {halfOfHeight 12.6} {debug 0}} {
   if {![string is double [lindex $centerPt 0]] || ![string is double [lindex $centerPt 1]]} {
     error "proc get_blank_box: check your input : centerPt($centerPt) is not real pt!!!"
@@ -23,12 +24,14 @@ proc get_blank_box {{centerPt {}} {halfOfWidth 12.6} {halfOfHeight 12.6} {debug 
     set insts_ptr [dbQuery -areas $searchingBox -objType inst]
     set insts_box [dbget $insts_ptr.box]
     set blankBoxList [dbShape -output hrect $searchingBox ANDNOT $insts_box]
+    set coreRects [operateLUT -type read -attr {core_rects}]
+    set blankBoxListANDcoreRects [dbShape -output hrect $blankBoxList AND $coreRects]
     set blankBoxArea [dbShape -output area $searchingBox ANDNOT $insts_box]
     if {$debug} { puts "blankBoxArea: $blankBoxArea" }
     if {$debug} { puts "blankBoxList: $blankBoxList" }
     set densityOfSearchingBox "[format "%.2f" [expr (1 - ($blankBoxArea / $searchingArea)) * 100]] %"
     if {$debug} { puts "densityOfSearchingBox: $densityOfSearchingBox" }
 
-    return [list $blankBoxList $blankBoxArea $densityOfSearchingBox]
+    return [list $blankBoxListANDcoreRects $blankBoxArea $densityOfSearchingBox]
   }
 }

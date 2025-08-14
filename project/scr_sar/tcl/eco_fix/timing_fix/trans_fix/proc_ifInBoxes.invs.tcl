@@ -5,13 +5,30 @@
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)
 # descrip   : judge if the location pt is on specific area.
+# update    : 2025/08/14 15:58:27 Thursday
+#             (U001) can return exact box/rect
 # ref       : link url
 # --------------------------
+# this proc can return the exact rect from rects!
+proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
+  if {![llength [lindex $boxes 0]]} {
+    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
+    set boxes $fplanBoxes
+  }
+  foreach box $boxes {
+    if {[ifInBox $loc $box]} {
+      return $box 
+    }
+  }
+  return 0
+}
+
 proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
   if {![llength [lindex $boxes 0]]} {
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
+    set boxes $fplanBoxes
   }
-  foreach box $fplanBoxes {
+  foreach box $boxes {
     if {[ifInBox $loc $box]} {
       return 1 
     }

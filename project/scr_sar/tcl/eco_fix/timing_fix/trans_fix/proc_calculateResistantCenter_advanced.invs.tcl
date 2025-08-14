@@ -4,6 +4,10 @@
 # date      : 2025/07/20 14:15:19 Sunday
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
+# descrip   : advanced calculateResistantCenter_fromPoints, it have more function and more reasonable method!!!
+#             Enabling the filtering mode($filterStrategy) can filter out points that are too far from the cluster points, 
+#             preventing extreme points from causing excessive deviation of the cluster center points.
+# input     : $filterStrategy: auto|always|never
 # ref       : link url
 # --------------------------
 proc calculateResistantCenter_fromPoints {pointsList {filterStrategy "auto"} {threshold 3.0} {densityThreshold 0.75} {minPoints 5}} {

@@ -46,6 +46,7 @@ proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""}
     }
     # refDriver and refSink have low priority
     set processType [operateLUT -type read -attr {process}]
+    set availableDriveCapacityIntegerList [operateLUT -type read -attr [list celltype $refType caplist]]
     switch $method {
       "refDriver" {
         set toDriveNum [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $levelNumD $ifGetBigDriveNumInAvaialbeDriveCapacityList 1]

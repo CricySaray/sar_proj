@@ -5,11 +5,14 @@
 # label     : task_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|misc_proc)
 # descrip   : selector of strategies for fix_trans.invs.tcl
-# return    : dict data: $resultDict: cmdList/fixedList/cantChangeList/skippedList/nonConsideredList
+# return    : dict data: $resultDict: cmd_one|more_list/fixed_one|more_list/cantChange_list/skipped_list/nonConsidered_list
 # TODO      : 
 #             U003: judge if the driver cell can change VT and drive capacity, if not, using inserting buffer or add to NOTICEList(need to fix by yourself)
 #             U005: need shorten too long string of pinname using stringstore::*
 #             U006: change strategy according to the sinks capacity
+#             U007: you need split one2one and one2more situation.
+#             U008: need move inst when the size changes too
+#             U009 for change VT or/and capacity of driver celltype when adding repeater
 # FIXED     :
 #             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
@@ -18,6 +21,7 @@
 # --------------------------
 source ../../../packages/stringstore.package.tcl; # stringstore::*
 source ../../../packages/logic_AND_OR.package.tcl; # er
+source ../../../packages/incr_integer_inSelf.package.tcl; # ci / counter
 source ../../../packages/every_any.package.tcl; # every any
 source ./proc_32_solve_quadratic_equation.common.tcl; # solve_quadratic_equation
 source ./proc_print_ecoCommands.invs.tcl; # print_ecoCommand
@@ -25,6 +29,11 @@ source ./proc_cond_meet_any.invs.tcl; # cond_met_any
 source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT_withLUT
 source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity_withLUT
 source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype_withLUT
+source ./proc_formatDecimal.invs.tcl; # fm/formatDecimal
+source ../../../packages/calculate_relative_point_at_path.package.tcl; # calculate_relative_point_at_path
+source ../physical_aware_algorithm/findSpaceToInsertRepeater_using_lutDict.invsGUI.tcl; # findSpaceToInsertRepeater_using_lutDict
+source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint
+source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
@@ -50,8 +59,9 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
     set validViolValue [expr abs($violValue) * 1000]
     # U004 $ifNeedConsiderThisDriverSinksSymbol : this flag tell that you need add this mix of type from driverSymbol to sinksSymbol
     set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 \
+                        ifHaveMovements 0 ifNeedNoticeCase 0 \
                         ifNeedConsiderThisDriverSinksSymbol 0 ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
-    set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list ]
+    set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list movement_cmd_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list needNoticeCase_list]
     foreach lists_item $resultDict_lists { dict set resultDict $lists_item [list ] }
 
     er $debug { puts "ifLoop : $ifLoop  | numSinks : $numSinks" }
@@ -111,20 +121,21 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
         set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if netLen < fixedValue, you can't insert buffer
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if netLen < fixedValue, you can't insert buffer
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
-
+        ### change VT
         if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
           set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
-          if {[operateLUT -type exists -attr [list celltype $toVT]]} {set ifFixedSuccessfully 1} else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failed" $toVT $addedInfoToShow]}
-          if {$ifOne2One} {
-            lappend fixed_one_list [concat $driverSinksSymbol "T" $toVT $addedInfoToShow] 
-          } elseif {$ifSimpleOne2More} {
-            lappend fixed_more_list [concat $driverSinksSymbol "T" $toVT $addedInfoToShow] 
-          }
+          if {[operateLUT -type exists -attr [list celltype $toVT]]} {
+            set ifFixedSuccessfully 1
+            set cmd [print_ecoCommand -type change -celltype $toVT -inst $driverInstname] ; # U008: need move inst when size of toChangeCelltype is different from original size
+            set fixedlist [concat $driverSinksSymbol "T" $toVT $addedInfoToShow]
+            if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
+          } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedVt" $toVT $addedInfoToShow]}
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Fvt" $addedInfoToShow]
         } 
+        ### change Capacity
         if {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
           if {$ifNeedChangeVTWhenChangeCapacity && !$ifHaveBeenFastestVTinRange} {
@@ -132,21 +143,70 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
             if {[operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
           } else { set toVT $driverCellType }
           if {$ifFixButFailed} {
-            lappend fix_but_failed_list [concat $driverSinksSymbol "failed" $toVT $addedInfoToShow]
+            lappend fix_but_failed_list [concat $driverSinksSymbol "failedVtWhenCap" $toVT $addedInfoToShow]
           } else {
             set toCap [strategy_changeDriveCapacity_withLUT $toVT 0 $mapList 0 1] ; # TODO: U006: change strategy according to the sinks capacity
-            if {[operateLUT -type exists -attr [list celltype $toCap]]} {set ifFixedSuccessfully 1} else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failed" $toCap $addedInfoToShow]}
+            if {[operateLUT -type exists -attr [list celltype $toCap]]} {
+              set ifFixedSuccessfully 1
+              set cmd [print_ecoCommand -type change -celltype $toCap -inst $driverInstname] ; # U008
+              set fixedlist [concat $driverSinksSymbol "D" $toCap $addedInfoToShow]
+              if {$ifOne2One} { lappend fixed_one_list $fixedlist  ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
+            } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedCap" $toCap $addedInfoToShow]}
           }
         } elseif {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
         } 
+        ### add repeater (change VT/capacity)
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           #puts "\n$promptInfo : needInsertBufferToFix\n" 
-          if {$ifOne2One} {
-            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $sinksCellType $addMethod 0 $capacityRange 1 [operateLUT -type read -attr [list celltype refbuffer]]]
-          } elseif {$ifSimpleOne2More} {
-
+          if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after
+            set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
+            set ifInClkTree [regexp CLK $driverCellClass]
+            if {$ifInClkTree} { set refCell [operateLUT -type read -attr [list refclkbuffer]] } else { set refCell [operateLUT -type read -attr [list refbuffer]] }
+            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $sinksCellType $addMethod 0 $capacityRange 1 $refCell]
+            if {![operateLUT -type exists -attr [list celltype $toAdd]]} {
+              lappend fix_but_failed_list [concat $driverSinksSymbol "faildAdd" $toAdd $addedInfoToShow] 
+            } else {
+              if {[expr $netLen >= [expr [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] * 2]]} { ; # you can have more space to search when the netLen is long
+                set expandAreaWidthHeight {11 11} ; set divOfForceInsert 0.4 ; set multipleOfExpandSpace 1.5
+              } else {
+                set expandAreaWidthHeight {8 8}   ; set divOfForceInsert 0.6 ; set multipleOfExpandSpace 1.7
+              }
+              if {$ifOne2One} {
+                set toLoc [calculate_relative_point_at_path $driverPinPT $sinksPinPT $wiresPts $relativeLoc]
+              } elseif {$ifSimpleOne2More} {
+                set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
+                set toLoc [calculate_relative_point_at_path $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
+              }
+              set refineLoc [findSpaceToInsertRepeater_using_lutDict -testOrRun "run" -celltype $toAdd -loc $toLoc -expandAreaWidthHeight $expandAreaWidthHeight -divOfForceInsert $divOfForceInsert -multipleOfExpandSpace $multipleOfExpandSpace]
+              lassign $refineLoc refineLocType refineLocPosition refineLocDistance refineLocMovementList
+              set baseAddFlag "A_[fm $relativeLoc]"
+              if {$ifOne2One} { set termsWhenAdd $sinksPin } elseif {$ifSimpleOne2More} { set termsWhenAdd $fartherGroupSinksPin }
+              set cmd [print_ecoCommand -type add -celltype $toAdd -terms $termsWhenAdd -newInstNamePrefix ${newInstNamePrefix}_one2one_[ci one] -loc $refineLocPosition]
+              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsert" { set tmp "F" } "noSpace" { set tmp "N" } ; set tmp}]
+              set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
+              if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
+              if {$refineLocType in {sufficient expandSpace}} {
+                if {$refineLocType == "expandSpace"} {
+                  set move_cmd [lmap inst_moveDirectionDistance $refineLocMovementList {
+                    lassign $inst_moveDirectionDistance temp_instname temp_moveDirectionDistance
+                    lassign $temp_moveDirectionDistance temp_direction temp_distance 
+                    set temp_move_cmd [print_ecoCommand -type move -inst $temp_instname -direction $temp_direction -distance $temp_distance]
+                  }]
+                  set ifHaveMovements 1
+                  lappend movement_cmd_list $move_cmd
+                }
+              } elseif {$refineLocType in {forceInsert}} {
+                set ifNeedNoticeCase 1
+                lappend needNoticeCase_list $fixedlist
+              } elseif {$refineLocType in {noSpace}} {
+                set ifNeedNoticeCase 1
+                lappend needNoticeCase_list $fixedlist
+              }
+            }
+          } else { 
+            # have no this case, cuz it has been filtered when running preCheck: complexMore
           }
         } elseif {!$ifFixedSuccessfully && [expr $netLen < [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} {
 

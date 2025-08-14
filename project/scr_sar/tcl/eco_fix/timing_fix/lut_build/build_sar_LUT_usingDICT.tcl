@@ -24,6 +24,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
   set fo [open $LUT_filename w]
+  puts $fo "unset $lutDictName"
   puts $fo "set $lutDictName \[dict create\]"
   if {$process == ""} {
     puts $fo "$promptERROR: have no process defination!!!" 
@@ -61,8 +62,29 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
     set mainCoreSiteWidth [findMostFrequentElement $siteWidthAllList 50.0 1]
     puts $fo "dict set $lutDictName mainCoreSiteWidth $mainCoreSiteWidth"
   }
+  set siteTypesInDesign [dbget top.fplan.rows.site.class -u -e]
+  if {$siteTypesInDesign == ""} {
+    puts $fo "$promptWARN: have no site type used in design, you need createRow!!!" 
+  } else {
+    set coreRect {0 0 0 0}
+    set rowsBoxesForSiteTypes [lmap tempsitetype $siteTypesInDesign {
+      set tempsitetype_row_ptr [dbget top.fplan.rows.site.class $tempsitetype -p2]
+      set temprows [dbget $tempsitetype_row_ptr.box]
+      lassign [dbget $tempsitetype_row_ptr.site.size -u] temp_sitewidth temp_siteheight
+      set tempjoinedrows "{[join $temprows "} OR {"]}"
+      set tempinitrowRect {0 0 0 0}
+      set tempinitrowRect [dbShape -output hrect $tempinitrowRect OR {*}$tempjoinedrows]
+      set coreRect [dbShape -output hrect $coreRect OR {*}$tempjoinedrows]
+      list $tempsitetype $tempinitrowRect $temp_sitewidth $temp_siteheight
+    }] ; # {{siteTypeName {{x y x1 y1} {x y x1 y1} ...}} { ... }}
+    foreach tempsitetype_rowrect $rowsBoxesForSiteTypes {
+      lassign $tempsitetype_rowrect sitetype rowrect sitewidth siteheight
+      puts $fo "dict set $lutDictName sitetype $sitetype row_rects \{$rowrect\}" 
+      puts $fo "dict set $lutDictName sitetype $sitetype size \{$sitewidth $siteheight\}"
+    }
+    puts $fo "dict set $lutDictName core_rects \{$coreRect\}"
+  }
   set allCellType_ptrList [dbget head.libCells.]
-  set oneOfBufferInLibCells [lindex [dbget [dbget head.libCells {.isBuffer == 1}].name] 0]
   if {$allCellType_ptrList == ""} { 
     puts $fo "$promptERROR : have no celltype in library!!!" 
   } else {
@@ -129,6 +151,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
     puts $fo "  dict set $lutDictName celltype \$celltypeName caplist \$cellcapacityList" ; # AT002
     puts $fo "\}"
   }
+  puts $fo ""
   close $fo
   # puts [join $cantMatchList \n]
 }

@@ -10,6 +10,9 @@
 #             $position {1.1 2.2}
 #             $distance 1.2
 #             $movementList: if $findType is expandSpace, it will return inside list. format: {{instname1 {left 1.4}} {instname2 {right 2.1}} ...}
+# TODO      : (U001) now the stratety is simple, as it can expand space only at one row,
+#                   in the future, need the candidate gap loc for testing and find available space. it can switch next candidate gap loc if this gap loc has no space to expand.
+# TODO      : (U002) can record previous action of movement list, run this expandation considering all previous action of movement!!! IMPORTANT
 # ref       : link url
 # --------------------------
 source ./proc_judge_ifHaveSpaceToInsertBuffer_findNearestPosition.invsGUI.tcl; # judge_ifHaveSpaceToInsertBuffer_findNearestPosition
@@ -19,7 +22,8 @@ source ../../../packages/logic_AND_OR.package.tcl; # er
 source ../../../packages/every_any.package.tcl; # every
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ../../../eco_fix/timing_fix/trans_fix/proc_ifInBoxes.invs.tcl; # ifInBoxes
-proc findSpaceToInsertRepeater {args} {
+source ./proc_attachToGridOfRowSiteLeftBottomPoint.invsGUI.tcl; # attachToGridOfRowSiteLeftBottomPoint
+proc findSpaceToInsertRepeater_using_lutDict {args} {
   set testOrRun             "run"
   set inst                  ""
   set expandAreaWidthHeight {12.6 12.6}
@@ -51,14 +55,14 @@ proc findSpaceToInsertRepeater {args} {
     }
   } elseif {$testOrRun == "run"} {
     if {[every x [concat $expandAreaWidthHeight $loc $divOfForceInsert] { string is double $x }] && [operateLUT -type exists -attr [list celltype $celltype]] && [ifInBoxes $loc]} {
-      set repeaterPt $loc
+      set repeaterPt [attachToGridOfRowSiteLeftBottomPoint $loc] ; # need validize this location to stick on left-bottom corner of row and site 
       lassign [operateLUT -type read -attr [list celltype $celltype size]] repeaterWidth repeaterHeight
     } else {
       error "proc findSpaceToInsertRepeater: now type is run, check your input of loc($loc), celltype($celltype), expandAreaWidthHeight($expandAreaWidthHeight) and divOfForceInsert($divOfForceInsert), have error!!!"
     }
   }
   set blankBoxList [lindex [get_blank_box $repeaterPt $widthOfExpand $heightOfExpand] 0]
-  set blankBoxList_forceInsert [lindex [get_blank_box $repeaterPt [expr $widthOfExpand * $divOfForceInsert] [expr $heightOfExpand * $divOfForceInsert]] 0]
+  set blankBoxList_forceInsert [lindex [get_blank_box $repeaterPt [expr round($widthOfExpand * $divOfForceInsert / $siteWidth) * $siteWidth] [expr round($heightOfExpand * $divOfForceInsert / $rowHeight) * $rowHeight]] 0]
   set ifHaveSufficientSpaceToInsertRepeater [judge_ifHaveSpaceToInsertBuffer_findNearestPosition $repeaterPt [list $repeaterWidth $repeaterHeight] $blankBoxList 1 $blankBoxList_forceInsert $debug]
   er $debug { puts "repeaterWidth: $repeaterWidth | repeaterHeight: $repeaterHeight | repeaterPt : $repeaterPt \n ifHaveSufficientSpaceToInsertRepeater: [lindex $ifHaveSufficientSpaceToInsertRepeater 0] position: [lindex $ifHaveSufficientSpaceToInsertRepeater 1] with distance: [lindex $ifHaveSufficientSpaceToInsertRepeater 2]" }
   lassign $ifHaveSufficientSpaceToInsertRepeater spaceType positionFirstRound distanceFirstRound
@@ -67,11 +71,11 @@ proc findSpaceToInsertRepeater {args} {
     set position $positionFirstRound
     set distance $distanceFirstRound
   } elseif {$spaceType == "forceInsert"} {
-    set baseInsertRectLoc [lindex $ifHaveSufficientSpaceToInsertRepeater 1]
+    set baseInsertRectLoc [attachToGridOfRowSiteLeftBottomPoint [lindex $ifHaveSufficientSpaceToInsertRepeater 1]]
     lassign $baseInsertRectLoc base_x base_y
-    set boxMovingInst [list [expr $base_x - ($widthOfExpand * $multipleOfExpandSpace)] [expr $base_y + 0] [expr $base_x + $repeaterWidth + ($widthOfExpand * $multipleOfExpandSpace)] [expr $base_y + $rowHeight]]
+    set boxMovingInst [list [expr $base_x - round($widthOfExpand * $multipleOfExpandSpace / $siteWidth) * $siteWidth] [expr $base_y + 0] [expr $base_x + $repeaterWidth + round($widthOfExpand * $multipleOfExpandSpace / $rowHeight) * $rowHeight] [expr $base_y + $rowHeight]]
     set mfgGrid [dbget head.mfgGrid]
-    set expandedSpace [expandSpace_byMovingInst $boxMovingInst $baseInsertRectLoc [list $repeaterWidth $repeaterHeight] $mfgGrid $debug $debug]
+    set expandedSpace [expandSpace_byMovingInst $boxMovingInst $baseInsertRectLoc [list $repeaterWidth $repeaterHeight] $mfgGrid $debug $debug] ; # U001
     lassign $expandedSpace ifMovingInstSuccess leftBottomPositionOfCanInsert movingActions
     er $debug { puts "moving result: \n ifMovingInstSuccess: $ifMovingInstSuccess \n leftBottomPositionOfCanInsert: $leftBottomPositionOfCanInsert \n movingActions: [join $movingActions \n]" }
     if {$ifMovingInstSuccess == "yes"} {

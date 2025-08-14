@@ -114,7 +114,18 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       dict set allInfo numFartherGroupSinks [llength $groupPinnameLocations]
       dict set allInfo fartherGroupSinksPin [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 0 }]
     }    
-
+    
+    dict set allInfo mostFrequentInSinksCellType [if {$numOfMostFrequentInSinksCellClass > 1} { set temp_return cantSelect } else {
+      set temp_sameClass_celltype [lmap temp_celltype [dict get $allInfo sinksCellType] {
+        set temp_cellclass [operateLUT -type read -atrr [list celltype $temp_celltype class]] 
+        if {[shortenCellClass $temp_cellclass] eq $mostFrequentInSinksCellClass} {
+          set temp_return [operateLUT -type read -attr [list celltype $temp_celltype capacity]]
+        } else {
+          continue 
+        }
+      }]
+    }]
+    
     dict for {key val} $allInfo  { set $key $val }
     dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop $driverCellClass $driverCellType $driverPin "-$numSinks-" $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
     return $allInfo

@@ -37,8 +37,10 @@ source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
 source ./proc_findFarthestSinkPinAndPt_toDriverPin.invs.tcl; # find_farthest_sinkpoint_to_driver_pin
 source ../../../packages/group_points_by_distribution_and_preferFartherCenterPt.package.tcl; # group_points_by_distribution_and_preferFartherCenterPt
+source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
 source ../lut_build/operateLUT.tcl; # operateLUT
 
+alias sus "subst -nocommands -nobackslashes"
 proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
   if {$pinname == "" || $pinname == "0x0" || [dbget top.insts.instTerms.name $pinname -e] == ""} {
     error "proc [regsub ":" [lindex [info level 0] 0] ""]: check your input: pinname($pinname) is incorrect!!!"
@@ -126,6 +128,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       }]
       set temp_sameClass_celltype_capacity_sorted [lsort -unique -real $temp_sameClass_celltype_capacity]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
+      set temp_result [change]
     }]
     
     dict for {key val} $allInfo  { set $key $val }

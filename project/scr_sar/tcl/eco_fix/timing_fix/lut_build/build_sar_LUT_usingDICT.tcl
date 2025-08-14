@@ -43,6 +43,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
   }
   if {$stdCellFlag == ""} {
     puts $fo "$promptWARN: have no process std cell flag defination!!!" 
+    puts $fo "dict set $lutDictName stdcellflag \"\""
   } else {
     puts $fo "dict set $lutDictName stdcellflag $stdCellFlag" 
   }

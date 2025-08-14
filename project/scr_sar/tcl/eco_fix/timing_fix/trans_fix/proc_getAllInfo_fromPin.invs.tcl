@@ -117,10 +117,10 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       dict set allInfo fartherGroupSinksPin [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 0 }]
     }    
     
-    dict set allInfo mostFrequentInSinksCellType [if {$numOfMostFrequentInSinksCellClass > 1} { set temp_return cantSelect } else {
+    dict set allInfo mostFrequentInSinksCellType [if {[dict get $allInfo numOfMostFrequentInSinksCellClass] > 1} { set temp_return cantSelect } else {
       set temp_sameClass_celltype_capacity [lmap temp_celltype [dict get $allInfo sinksCellType] {
-        set temp_cellclass [operateLUT -type read -atrr [list celltype $temp_celltype class]] 
-        if {[shortenCellClass $temp_cellclass] eq $mostFrequentInSinksCellClass} {
+        set temp_cellclass [operateLUT -type read -attr [list celltype $temp_celltype class]] 
+        if {[shortenCellClass $temp_cellclass] eq [dict get $allInfo mostFrequentInSinksCellClass]} {
           set temp_return [operateLUT -type read -attr [list celltype $temp_celltype capacity]]
         } else {
           continue 

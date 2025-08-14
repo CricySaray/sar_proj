@@ -164,7 +164,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 
             set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
             set ifInClkTree [regexp CLK $driverCellClass]
             if {$ifInClkTree} { set refCell [operateLUT -type read -attr [list refclkbuffer]] } else { set refCell [operateLUT -type read -attr [list refbuffer]] }
-            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $mostFrequentInSinksCellType $addMethod 0 $capacityRange 1 $refCell]
+            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $mostFrequentInSinksCellType $addMethod 0 $capacityRange 0 1 $refCell]
             if {![operateLUT -type exists -attr [list celltype $toAdd]]} {
               lappend fix_but_failed_list [concat $driverSinksSymbol "faildAdd" $toAdd $addedInfoToShow] 
             } else {

@@ -43,7 +43,7 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               [one2more: numFartherGroupSinks/fartherGroupSinksPin]/infoToShow
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow
 alias mux_of_strategies "sliding_rheostat_of_strategies"
 proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 3} {AL9 1} {AH9 0}}} {ifCanChangeVTWhenChangeCapacity 1} {ifCanChangeVTcapacityWhenAddRepeater 1} {debug 0} {promptPrefix "# song"}} {
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
@@ -164,7 +164,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 
             set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
             set ifInClkTree [regexp CLK $driverCellClass]
             if {$ifInClkTree} { set refCell [operateLUT -type read -attr [list refclkbuffer]] } else { set refCell [operateLUT -type read -attr [list refbuffer]] }
-            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $sinksCellType $addMethod 0 $capacityRange 1 $refCell]
+            set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $mostFrequentInSinksCellType $addMethod 0 $capacityRange 1 $refCell]
             if {![operateLUT -type exists -attr [list celltype $toAdd]]} {
               lappend fix_but_failed_list [concat $driverSinksSymbol "faildAdd" $toAdd $addedInfoToShow] 
             } else {

@@ -19,7 +19,7 @@
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               [one2more: numFartherGroupSinks/fartherGroupSinksPin]/infoToShow
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow/
 # return    : dict variable
 # ref       : link url
 # --------------------------
@@ -128,7 +128,8 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       }]
       set temp_sameClass_celltype_capacity_sorted [lsort -unique -real $temp_sameClass_celltype_capacity]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
-      set temp_result [change]
+      set refBuffer [operateLUT -type read -attr {refbuffer}] ; set refBufferCapacity [operateLUT -type read -attr [list celltype $refBuffer capacity]]
+      set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity $temp_mostCapacity]
     }]
     
     dict for {key val} $allInfo  { set $key $val }

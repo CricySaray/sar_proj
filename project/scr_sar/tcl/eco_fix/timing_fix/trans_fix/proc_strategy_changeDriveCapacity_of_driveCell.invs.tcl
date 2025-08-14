@@ -43,7 +43,7 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
       }
       set toDrive $forceSpecifyDriveCapacity
       if {$processType == "M31GPSC900NL040P*_40N" && $driveLevel 0.5} {set driveLevel 05}
-      regsub [sus {^(.*$capacityFlag)$driveLevel($stdCellFlag.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
+      regsub [sus {^(.*$capacityFlag)${driveLevel}($stdCellFlag.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
       if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
         error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it (forceSpecifyDriveCapacity mode)" 
       } else {
@@ -67,8 +67,8 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
         } elseif {$ifInToCapacityList == "" && !$ifAutoSelectBiggerWhenNotMatch} {
           set toCapacityMatched [find_nearestNum_atIntegerList $availableDriveCapacityList $toCapacityMatched 0 1]
         }
-        regsub [sus {^(.*$capacityFlag)$driveLevel($stdCellFlag.*)$}] $celltype [sus {\1$toCapacityMatched\2}] toCelltype
-        if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
+        regsub [sus {^(.*$capacityFlag)${driveLevel}($stdCellFlag.*)$}] $celltype [sus {\1$toCapacityMatched\2}] toCelltype
+        if {![operateLUT -type exists -attr [list celltype $toCelltype]]} {
           error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it (mapList mode)" 
         } else {
           return $toCelltype 
@@ -102,7 +102,7 @@ if {$debug} { puts "- > $minAvailableDriveOnRnage $maxAvailableDriveOnRange" }
       error "proc strategy_changeDriveCapacity_withLUT: error internal of proc, fixed celltype is out of acceptable driveCapacity list($driveRangeRight)"; # toDrive is out of acceptable driveCapacity list ($driveRange)
     }
     if {$processType == "M31GPSC900NL040P*_40N" && $driveLevel 0.5} {set driveLevel 05}
-    regsub [sus {^(.*$capacityFlag)$driveLevel($stdCellFlag.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
+    regsub [sus {^(.*$capacityFlag)${driveLevel}($stdCellFlag.*)$}] $celltype [sus {\1$toDrive\2}] toCelltype
     if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
       error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it (non forceSpecifyDriveCapacity mode)" 
     } else {

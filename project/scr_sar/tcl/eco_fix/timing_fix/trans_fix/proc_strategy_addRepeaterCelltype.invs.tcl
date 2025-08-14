@@ -17,7 +17,7 @@
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # proc: whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList list num big?
 source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
-proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""} {method "refDriver|refSink|auto"} {forceSpecifyDriveCapacibility 4} {driveRange {2 16}} {ifGetBigDriveNumInAvaialbeDriveCapacityList 1} {refType "BUFD4BWP6T16P96CPD"}} {
+proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""} {method "refDriver|refSink|auto"} {forceSpecifyDriveCapacibility 4} {driveRange {2 16}} {ifCheckDriveRangeCorrection 0} {ifGetBigDriveNumInAvaialbeDriveCapacityList 1} {refType "BUFD4BWP6T16P96CPD"}} {
   if {$driverCelltype == "" || $sinkCelltype == "" || ![operateLUT -type exists -attr [list celltype $driverCelltype]] || ![operateLUT -type exists -attr [list celltype $sinkCelltype]]} {
     error "proc strategy_addRepeaterCelltype: check your input : driverCelltype($driverCelltype) or sinkCelltype($sinkCelltype) not found!!!"; # check your input 
   } else {
@@ -29,10 +29,14 @@ proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""}
     set VTtypeS [operateLUT -type read -attr [list celltype $sinkCelltype vt]]
     set availableDriveCapacityIntegerList [operateLUT -type read -attr [list celltype $refType caplist]]
     # check driveRange correction
-    if {[llength $driveRange] == 2 && [every x $driveRange { expr {$x in $availableDriveCapacityIntegerList} }]} {
+    if {$ifCheckDriveRangeCorrection && [expr {![llength $driveRange] == 2 || ![every x $driveRange { expr {$x in $availableDriveCapacityIntegerList} }]}]} {
       error "proc strategy_addRepeaterCelltype: check your var driveRange , have no celltype in std cell library for min or max driveCapacity from driveRange"; # check your $driveRange , have no celltype in std cell library for min or max driveCapacity from driveRange 
     } elseif {[llength $driveRange] == 2} {
       set driveRangeRight [lsort -integer -increasing $driveRange] 
+      lassign driveRangeRight minDrive maxDrive
+      set validMinDrive [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $minDrive 0 1]
+      set validMaxDrive [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $maxDrive 1 1]
+      set driveRangeRight [list $validMinDrive $validMaxDrive]
     }
     # if specify the value of drvie capacibility
     # force mode will ignore $driveRange

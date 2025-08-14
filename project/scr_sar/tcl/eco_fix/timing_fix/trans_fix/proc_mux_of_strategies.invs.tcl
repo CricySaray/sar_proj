@@ -118,8 +118,8 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
         set netLenLineOfchangeCapacityAndInsertBuffer [expr {[dict get $coefficientsABCOfChangeCapacityAndInsertBuffer a]*($validViolValue**2) + [dict get $coefficientsABCOfChangeCapacityAndInsertBuffer b]*$validViolValue + [dict get $coefficientsABCOfChangeCapacityAndInsertBuffer c]}] ; # U002: function bewteen netLen and violValue when one2one 
         set netLenLineOfchangeVTandCapacity [expr {[dict get $coefficientsABCOfChangeVTandCapacity a]*($validViolValue**2) + [dict get $coefficientsABCOfChangeVTandCapacity b]*$validViolValue + [dict get $coefficientsABCOfChangeVTandCapacity c]}] ; # U002: function bewteen netLen and violValue when one2one 
         er $debug { puts "netLen: $netLen   |  netLenLineOfchangeCapacityAndInsertBuffer: $netLenLineOfchangeCapacityAndInsertBuffer" }
-        set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if netLen < fixedValue, you can't insert buffer
-        set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if netLen < fixedValue, you can't insert buffer
+        set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if this var is 1, you can change capacity(and vt) to fix viol AT001
+        set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if this var is 1, you can change vt to fix viol
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
         ### change VT
         if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
@@ -208,7 +208,8 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
           } else { 
             # have no this case, cuz it has been filtered when running preCheck: complexMore
           }
-        } elseif {!$ifFixedSuccessfully && [expr $netLen < [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} {
+        } elseif {!$ifFixedSuccessfully && [expr $netLen < [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # have fastest VT and largest capacity, and it is inside of functionGraph AT001:this var is 1
+          set ifNeedNoticeCase 1
 
         }
       }

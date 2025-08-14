@@ -140,7 +140,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 
           #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
           if {$ifCanChangeVTWhenChangeCapacity && !$ifHaveBeenFastestVTinRange} {
             set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
-            if {[operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
+            if {![operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
           } else { set toVT $driverCellType }
           if {$ifFixButFailed} {
             lappend fix_but_failed_list [concat $driverSinksSymbol "failedVtWhenCap" $toVT $addedInfoToShow]

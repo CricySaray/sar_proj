@@ -54,7 +54,7 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
       set fromCapacityList [lmap fromtemp $mapList { lindex $fromtemp 0 }]
       set toCapacityList [lmap totemp $mapList { lindex $totemp 1 }]
       set ifValidMapList [every x [concat $fromCapacityList $toCapacityList] { expr {$x in $availableDriveCapacityList} }]
-      set ifHaveDuplicateItems [every x $fromCapacityList { expr {[llength [lsearch -all -index 0 $mapList $x]] == 1} }]
+      set ifHaveDuplicateItems [any x $fromCapacityList { expr {[llength [lsearch -all -index 0 $mapList $x]] > 1} }]
       if {!$ifValidMapList && $ifStrictCheckForMapList} {
         error "proc strategy_changeDriveCapacity_withLUT: check your input: mapList($mapList) has invalid item!!! double check it!!!"
       } elseif {$ifHaveDuplicateItems} {

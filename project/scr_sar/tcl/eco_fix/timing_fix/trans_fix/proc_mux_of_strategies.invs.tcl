@@ -175,7 +175,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 
                 set expandAreaWidthHeight {8 8}   ; set divOfForceInsert 0.6 ; set multipleOfExpandSpace 1.7
               }
               if {$ifOne2One} {
-                set toLoc [calculate_relative_point_at_path $driverPinPT $sinksPinPT $wiresPts $relativeLoc]
+                set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $wiresPts $relativeLoc]
               } elseif {$ifSimpleOne2More} {
                 set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
                 set toLoc [calculate_relative_point_at_path $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]

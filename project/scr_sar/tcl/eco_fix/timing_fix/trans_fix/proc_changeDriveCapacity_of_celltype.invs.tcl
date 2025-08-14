@@ -14,7 +14,7 @@ proc changeDriveCapacity_of_celltype {{refType "BUFD4BWP6T16P96CPD"} {originalDr
   set stdCellFlag [operateLUT -type read -attr {stdcellflag}]
   set capacityFlag [operateLUT -type read -attr {capacityflag}]
   regsub [sus {^(.*$capacityFlag)${originalDriveCapacibility}($stdCellFlag.*)$}] $refType [sus {\1$toDriverCapacibility\2}] toCelltype
-  if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
+  if {![operateLUT -type exists -attr [list celltype $toCelltype]]} {
     error "proc changeDriveCapacity_of_celltype: error toCelltype($toCelltype), double check it!!!"
   } else {
     return $toCelltype

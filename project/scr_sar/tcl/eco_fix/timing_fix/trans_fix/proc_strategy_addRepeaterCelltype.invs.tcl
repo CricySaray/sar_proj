@@ -33,7 +33,7 @@ proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""}
       error "proc strategy_addRepeaterCelltype: check your var driveRange , have no celltype in std cell library for min or max driveCapacity from driveRange"; # check your $driveRange , have no celltype in std cell library for min or max driveCapacity from driveRange 
     } elseif {[llength $driveRange] == 2} {
       set driveRangeRight [lsort -integer -increasing $driveRange] 
-      lassign driveRangeRight minDrive maxDrive
+      lassign $driveRangeRight minDrive maxDrive
       set validMinDrive [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $minDrive 0 1]
       set validMaxDrive [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $maxDrive 1 1]
       set driveRangeRight [list $validMinDrive $validMaxDrive]

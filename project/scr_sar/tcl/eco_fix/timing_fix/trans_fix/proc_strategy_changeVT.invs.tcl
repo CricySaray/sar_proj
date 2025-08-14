@@ -24,6 +24,7 @@ source ../lut_build/operateLUT.tcl; # operateLUT
 proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {ifForceValid 1}} {
   # $weight:0 is stand for no using
   # $speed: the fastest must be in front. like ULVT must be the first
+  set speed [operateLUT -type read -attr {vtrange}]
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
     return "0x0:1" 
   } else {

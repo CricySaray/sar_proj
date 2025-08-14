@@ -39,7 +39,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
   if {$vtFastRange == ""} {
     puts $fo "$promptWARN: have no process vt fast range defination!!!"
   } else {
-    puts $fo "dict set $lutDictName vtrange \{$vtFastRange\}" 
+    puts $fo "dict set $lutDictName vtrange \{$vtFastRange\} ; # please write from fastest vt to the most slow vt!!!" 
   }
   if {$stdCellFlag == ""} {
     puts $fo "$promptWARN: have no process std cell flag defination!!!" 

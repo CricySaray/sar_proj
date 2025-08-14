@@ -116,7 +116,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     }    
     
     dict set allInfo mostFrequentInSinksCellType [if {$numOfMostFrequentInSinksCellClass > 1} { set temp_return cantSelect } else {
-      set temp_sameClass_celltype [lmap temp_celltype [dict get $allInfo sinksCellType] {
+      set temp_sameClass_celltype_capacity [lmap temp_celltype [dict get $allInfo sinksCellType] {
         set temp_cellclass [operateLUT -type read -atrr [list celltype $temp_celltype class]] 
         if {[shortenCellClass $temp_cellclass] eq $mostFrequentInSinksCellClass} {
           set temp_return [operateLUT -type read -attr [list celltype $temp_celltype capacity]]
@@ -124,6 +124,8 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
           continue 
         }
       }]
+      set temp_sameClass_celltype_capacity_sorted [lsort -unique -real $temp_sameClass_celltype_capacity]
+      set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
     }]
     
     dict for {key val} $allInfo  { set $key $val }

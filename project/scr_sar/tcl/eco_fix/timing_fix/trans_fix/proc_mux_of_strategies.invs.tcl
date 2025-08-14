@@ -45,7 +45,7 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
 #               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow
 alias mux_of_strategies "sliding_rheostat_of_strategies"
-proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 3} {AL9 1} {AH9 0}}} {ifCanChangeVTWhenChangeCapacity 1} {ifCanChangeVTcapacityWhenAddRepeater 1} {debug 0} {promptPrefix "# song"}} {
+proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 3} {AL9 1} {AH9 0}}} {ifCanChangeVTWhenChangeCapacity 1} {ifCanChangeVTcapacityWhenAddRepeater 1} {newInstNamePrefix "sar_fix_trans_081420"} {debug 0} {promptPrefix "# song"}} {
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
     error "proc mux_of_strategies: check your input, violValue($violValue) is not double number or greater than 0 or violPin($violPin) is not found!!!"
   } else {
@@ -180,12 +180,12 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 
                 set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
                 set toLoc [calculate_relative_point_at_path $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
               }
-              set refineLoc [findSpaceToInsertRepeater_using_lutDict -testOrRun "run" -celltype $toAdd -loc $toLoc -expandAreaWidthHeight $expandAreaWidthHeight -divOfForceInsert $divOfForceInsert -multipleOfExpandSpace $multipleOfExpandSpace]
+              set refineLoc [findSpaceToInsertRepeater_using_lutDict -testOrRun run -celltype $toAdd -loc $toLoc -expandAreaWidthHeight $expandAreaWidthHeight -divOfForceInsert $divOfForceInsert -multipleOfExpandSpace $multipleOfExpandSpace]
               lassign $refineLoc refineLocType refineLocPosition refineLocDistance refineLocMovementList
               set baseAddFlag "A_[fm $relativeLoc]"
               if {$ifOne2One} { set termsWhenAdd $sinksPin } elseif {$ifSimpleOne2More} { set termsWhenAdd $fartherGroupSinksPin }
               set cmd [print_ecoCommand -type add -celltype $toAdd -terms $termsWhenAdd -newInstNamePrefix ${newInstNamePrefix}_one2one_[ci one] -loc $refineLocPosition]
-              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsert" { set tmp "F" } "noSpace" { set tmp "N" } ; set tmp}]
+              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsert" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
               set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
               if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
               if {$refineLocType in {sufficient expandSpace}} {

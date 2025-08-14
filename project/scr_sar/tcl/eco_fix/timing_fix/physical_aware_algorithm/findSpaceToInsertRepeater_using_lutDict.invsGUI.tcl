@@ -44,7 +44,7 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
   set heightOfExpand [expr int([expr $heightOfExpand / $rowHeight]) * $rowHeight]
   if {$testOrRun == "test"} {
     if {$inst == "" || [dbget top.insts.name $inst -e] == "" || ![every x [concat $expandAreaWidthHeight $loc $divOfForceInsert] { string is double $x }]} {
-      error "proc findSpaceToInsertRepeater: now type is test, check your input of -inst($inst): not found!!!"
+      error "proc findSpaceToInsertRepeater_using_lutDict: now type is test, check your input of -inst($inst): not found!!!"
     } else {
       set inst_ptr [dbget top.insts.name $inst -p]
       set repeaterWidth [dbget $inst_ptr.box_sizex]
@@ -58,7 +58,7 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
       set repeaterPt [attachToGridOfRowSiteLeftBottomPoint $loc] ; # need validize this location to stick on left-bottom corner of row and site 
       lassign [operateLUT -type read -attr [list celltype $celltype size]] repeaterWidth repeaterHeight
     } else {
-      error "proc findSpaceToInsertRepeater: now type is run, check your input of loc($loc), celltype($celltype), expandAreaWidthHeight($expandAreaWidthHeight) and divOfForceInsert($divOfForceInsert), have error!!!"
+      error "proc findSpaceToInsertRepeater_using_lutDict: now type is run, check your input of loc($loc), celltype($celltype), expandAreaWidthHeight($expandAreaWidthHeight) and divOfForceInsert($divOfForceInsert), have error!!!"
     }
   }
   set blankBoxList [lindex [get_blank_box $repeaterPt $widthOfExpand $heightOfExpand] 0]
@@ -99,7 +99,7 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
     return [list $findType $position $distance]
   }
 }
-define_proc_arguments findSpaceToInsertRepeater \
+define_proc_arguments findSpaceToInsertRepeater_using_lutDict \
   -info "find space to insert Repeater" \
   -define_args {
     {-testOrRun "if test, you can specify instname using -inst. if run, it will need specify size of need-inserted repeater" oneOfString one_of_string {required value_type {values {test run}}}}

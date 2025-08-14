@@ -22,7 +22,7 @@ source ../../../packages/logic_AND_OR.package.tcl; # er
 source ../../../packages/every_any.package.tcl; # every
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ../../../eco_fix/timing_fix/trans_fix/proc_ifInBoxes.invs.tcl; # ifInBoxes
-source ./proc_attachToGridOfRowSiteLeftBottomPoint.invsGUI.tcl; # attachToGridOfRowSiteLeftBottomPoint
+source ../trans_fix/proc_attachToGridOfRowSiteLeftBottomPoint.invsGUI.tcl; # attachToGridOfRowSiteLeftBottomPoint
 proc findSpaceToInsertRepeater_using_lutDict {args} {
   set testOrRun             "run"
   set inst                  ""

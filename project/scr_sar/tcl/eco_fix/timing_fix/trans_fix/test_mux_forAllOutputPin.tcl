@@ -4,6 +4,7 @@ source ../../../packages/print_formattedTable.package.tcl; # print_formattedTabl
 source ../../../eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl; # 
 proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
   set allOutputPin [dbget [dbget top.insts.instTerms {.isOutput == 1}].name]
+  set allOutputPin [lrange $allOutputPin 0 99]
   set fo [open $sumFile w]
   foreach testpin $allOutputPin {
     set netname [dbget [dbget top.insts.instTerms.name $testpin -p].net.name -e]

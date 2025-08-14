@@ -168,6 +168,7 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
             if {![operateLUT -type exists -attr [list celltype $toAdd]]} {
               lappend fix_but_failed_list [concat $driverSinksSymbol "faildAdd" $toAdd $addedInfoToShow] 
             } else {
+              set ifFixedSuccessfully 1
               if {[expr $netLen >= [expr [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] * 2]]} { ; # you can have more space to search when the netLen is long
                 set expandAreaWidthHeight {11 11} ; set divOfForceInsert 0.4 ; set multipleOfExpandSpace 1.5
               } else {
@@ -209,8 +210,8 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{SVT 
             # have no this case, cuz it has been filtered when running preCheck: complexMore
           }
         } elseif {!$ifFixedSuccessfully && [expr $netLen < [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # have fastest VT and largest capacity, and it is inside of functionGraph AT001:this var is 1
-          set ifNeedNoticeCase 1
-
+          set ifCantChange 1
+          lappend cantChange_list [concat $driverSinksSymbol $addedInfoToShow]
         }
       }
     }

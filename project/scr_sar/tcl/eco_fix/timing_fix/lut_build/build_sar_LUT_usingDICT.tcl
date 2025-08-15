@@ -24,7 +24,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
   set fo [open $LUT_filename w]
-  puts $fo "unset $lutDictName"
+  puts $fo "catch \{unset $lutDictName\}"
   puts $fo "set $lutDictName \[dict create\]"
   if {$process == ""} {
     puts $fo "$promptERROR: have no process defination!!!" 

@@ -10,16 +10,18 @@
 # --------------------------
 source ../lut_build/operateLUT.tcl; # operateLUT
 proc getRect_innerAreaEnclosedByEndcap {{shrinkOff -1}} {
-  # if $shrinkOff == -1, it will use mainCoreRowHeight to shrink coreArea
+  # if $shrinkOff == -1 or < 0, it will use mainCoreRowHeight to shrink coreArea
   set coreRects [operateLUT -type read -attr {core_rects}]
   set mainCoreRowHeight [operateLUT -type read -attr {mainCoreRowHeight}]
   set instsHaveHalo_ptr [dbget top.insts.isHaloBlock 1 -p]
   set allRects [lmap inst_ptr $instsHaveHalo_ptr {
     set temp_hrect [dbShape -output hrect [dbget $inst_ptr.pHaloPoly]] 
-    if {$shrinkOff != -1} { 
-      set temp_hrect [dbShape $temp_hrect SIZE $shrinkOff]
+    if {$shrinkOff != -1 || $shrinkOff >= 0} { 
+      set temp_hrect [dbShape -output hrect $temp_hrect SIZE $shrinkOff]
+    } else {
+      set temp_hrect [dbShape -output hrect $temp_hrect SIZE $mainCoreRowHeight]
     }
   }]
-  set 
-  set 
+  set boundaryInnerRects [dbShape -output hrect $coreRects ANDNOT $allRects]
+  return $boundaryInnerRects
 }

@@ -17,6 +17,7 @@
 # --------------------------
 source ./proc_get_objRect.invs.tcl; # get_objRect
 source ../lut_build/operateLUT.tcl; # operateLUT
+source ../trans_fix/proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
 proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterMovementPrecision 0.005} {debug 0} {verbose 0}} {
   # Parameters:
   #   total_area - Total space area in format {x y x1 y1}

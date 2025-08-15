@@ -8,6 +8,7 @@
 # return    : rects {{1 1 2 2} {2 2 3 3} ...}
 # ref       : link url
 # --------------------------
+source ../lut_build/operateLUT.tcl; # operateLUT
 proc getRect_innerAreaEnclosedByEndcap {} {
-  
+  set coreRects [operateLUT -type read -attr {core_rects}]
 }

@@ -11,5 +11,8 @@
 source ../lut_build/operateLUT.tcl; # operateLUT
 proc getRect_innerAreaEnclosedByEndcap {} {
   set coreRects [operateLUT -type read -attr {core_rects}]
-  set instsHaveHalo [get_db [get_db insts -if {.is_place_halo}] .name]
+  set instsHaveHalo_ptr [dbget top.insts.isHaloBlock 1 -p]
+  set allRects [lmap inst_ptr $instsHaveHalo_ptr {
+    set temp_hrect [dbShape -output hrect [dbget $inst_ptr.pHaloPoly]] 
+  }]
 }

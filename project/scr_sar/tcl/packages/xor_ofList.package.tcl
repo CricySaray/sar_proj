@@ -9,7 +9,7 @@
 # ref       : link url
 # --------------------------
 # Calculate the symmetric difference of two lists
-alias andnot "symmetric_diff"
+alias xor "symmetric_diff"
 proc symmetric_diff {list1 list2} {
   # Remove duplicates first
   set a [unique $list1]

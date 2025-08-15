@@ -126,10 +126,11 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
           continue 
         }
       }]
-      set temp_sameClass_celltype_capacity_sorted [lsort -unique -real $temp_sameClass_celltype_capacity]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
       set refBuffer [operateLUT -type read -attr {refbuffer}] ; set refBufferCapacity [operateLUT -type read -attr [list celltype $refBuffer capacity]]
-      set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity $temp_mostCapacity]
+      if {$temp_mostCapacity ne "NaN"} { set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity $temp_mostCapacity] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
+        if {[operateLUT -type read -attr [list celltype $temp_type capacity]] == "NaN"} { set temp $temp_type } else { continue }
+      }] 0]}
     }]
     
     dict for {key val} $allInfo  { set $key $val }
@@ -187,7 +188,7 @@ proc zipCellClass {driverCellClass mostFrequentInSinksCellClass numSinks} {
   }
 }
 
-source ../../../packages/andnot_ofList.package.tcl; # andnot
+source ../../../packages/xor_ofList.package.tcl; # xor
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_get_VTtype_of_celltype.invs.tcl; # get_VTtype_of_celltype
 source ../lut_build/operateLUT.tcl; # operateLUT
@@ -204,7 +205,7 @@ proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
     if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
     if {$nowVT eq "NaN"} {return 1}
-    set availableVTrange [andnot $VTrange $forbidenVT]
+    set availableVTrange [xor $VTrange $forbidenVT]
     if {[lsearch -exact $availableVTrange $nowVT] != 0} { return 0 } else { return 1 }
   }
 }

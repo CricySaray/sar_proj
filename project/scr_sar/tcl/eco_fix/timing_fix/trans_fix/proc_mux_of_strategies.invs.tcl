@@ -45,7 +45,20 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
 #               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow
 alias mux_of_strategies "sliding_rheostat_of_strategies"
-proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 3} {AL9 1} {AH9 0}}} {ifCanChangeVTWhenChangeCapacity 1} {ifCanChangeVTcapacityWhenAddRepeater 1} {newInstNamePrefix "sar_fix_trans_081420"} {debug 0} {promptPrefix "# song"}} {
+proc sliding_rheostat_of_strategies {args} {
+  set violValue                            0
+  set violPin                              ""
+  set VTweight                             {{AR9 3} {AL9 1} {AH9 0}}
+  set ifCanChangeVTWhenChangeCapacity      1
+  set ifCanChangeVTcapacityWhenAddRepeater 1
+  set newInstNamePrefix                    "sar_fix_trans_081420"
+  set promptPrefix                         "# song"
+  set debug                                0
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
   if {![string is double $violValue] || [expr $violValue > 0] || $violPin == "" || $violPin == "0x0" || [dbget top.insts.instTerms.name $violPin -e] == ""} {
     error "proc mux_of_strategies: check your input, violValue($violValue) is not double number or greater than 0 or violPin($violPin) is not found!!!"
   } else {
@@ -221,3 +234,16 @@ proc sliding_rheostat_of_strategies {{violValue 0} {violPin ""} {VTweight {{AR9 
     return $resultDict
   }
 }
+
+define_proc_arguments sliding_rheostat_of_strategies \
+  -info "selector of strategies" \
+  -define_args {
+    {-violValue "specify the violation value of pin" AFloat float required}
+    {-violPin "specify the violation pin" AString string required}
+    {-VTweight "specify the VT weight for strategy_changeVT_withLUT proc" AList list optional}
+    {-ifCanChangeVTWhenChangeCapacity  "trun on/off switch that allow changing VT when changing capacity" "" boolean optional}
+    {-ifCanChangeVTcapacityWhenAddRepeater "trun on/off switch that allow changing VT|capacity when adding repeater" "" boolean optional}
+    {-newInstNamePrefix "specify the new name for repeater that will be inserted" AString string optional}
+    {-promptPrefix "specify the prefix for every type of prompt" AString string optional}  
+    {-debug "trun on/off debuging mode that will print more info" "" boolean optional}
+  }

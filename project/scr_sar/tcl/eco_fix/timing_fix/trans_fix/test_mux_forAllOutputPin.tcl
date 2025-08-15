@@ -13,7 +13,7 @@ proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
     if {$netLen == 0} {continue}
     set randomViolValue [generate_randomNumber_withNormalDistribution]
     puts "point [incr i]: viol: $randomViolValue | pin: $testpin"
-    set dict_of_sum [mux_of_strategies $randomViolValue $testpin]
+    set dict_of_sum [mux_of_strategies -violValue $randomViolValue -violPin $testpin]
     set temp "randomViolValue: $randomViolValue | [dict get $dict_of_sum]"
     puts $fo $temp
     flush $fo

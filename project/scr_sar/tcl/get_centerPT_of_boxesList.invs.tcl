@@ -4,6 +4,7 @@
 # date      : Wed Jul  2 15:54:08 CST 2025
 # descrip   : get center pt of boxes
 # integrity check : check if box has 4 integer item and if item is floating
+# NOTICE    : 2025/08/15 17:54:16 Friday you can get center pt of rect using db_rect -center {1 1 2 2}
 # ref       : link url
 # --------------------------
 # boxes like : {{1 1 2.2 2.2} {13.1 13.1 90.0 90.0}}

@@ -5,6 +5,9 @@
 # label     : gui_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
 # descrip   : get rects of inner area that is enclosed by boundary cell(endcap cell)
-# return    : rects
+# return    : rects {{1 1 2 2} {2 2 3 3} ...}
 # ref       : link url
 # --------------------------
+proc getRect_innerAreaEnclosedByEndcap {} {
+  
+}

@@ -14,7 +14,7 @@
 #             build LUT using build_sar_LUT_usingDICT at  ../lut_build/build_sar_LUT_usingDICT.tcl
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
 #               driverCellClass/sinksCellClass/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
-#               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/shortenedSimplizedSinksCellClass/
+#               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/simplizedDriverCellClass/shortenedSimplizedSinksCellClass/
 #               uniqueSinksCellClass/uniqueShortenedSinksCellClass/uniqueSimplizedSinksCellClass/uniqueShortenedSimplizedSinksCellClass
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
@@ -31,7 +31,7 @@ source ./proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacity_of_celltyp
 source ./proc_get_VTtype_of_celltype.invs.tcl; # get_VTtype_of_celltype
 source ./proc_getPt_ofObj.invs.tcl; # gpt
 source ./proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement
-source ./proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_fromPoints
+source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
@@ -68,6 +68,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo numSinks [llength [dict get $allInfo sinksPin]]
     dict set allInfo shortenedSinksCellClass [shortenCellClass [dict get $allInfo sinksCellClass]] ; # b/b/s/v/l/f/f
     dict set allInfo simplizedSinksCellClass [simplizeCellClass [dict get $allInfo sinksCellClass]] ; # { buffer buffer sequential buffer logic buffer buffer  }
+    dict set allInfo simplizedDriverCellClass [simplizeCellClass [dict get $allInfo driverCellClass]]
     dict set allInfo shortenedSimplizedSinksCellClass [shortenCellClass [dict get $allInfo simplizedSinksCellClass]] ; # b/b/s/b/l/b/b
     # U002
     dict set allInfo uniqueSinksCellClass [lsort -unique [dict get $allInfo sinksCellClass] ] ; # { buffer sequential inverter logic CLKbuffer }
@@ -78,7 +79,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo mostFrequentInSinksCellClass [findMostFrequentElement [dict get $allInfo simplizedSinksCellClass]]; # { buffer }
     dict set allInfo numOfMostFrequentInSinksCellClass [llength [dict get $allInfo mostFrequentInSinksCellClass]] ; # 1
 
-    dict set allInfo centerPtOfSinksPinPT [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT]]]
+    dict set allInfo centerPtOfSinksPinPT [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT] "auto"]]
     dict set allInfo distanceOfDriver2CenterOfSinksPinPt [format "%.3f" [calculateDistance [dict get $allInfo driverPinPT] [dict get $allInfo centerPtOfSinksPinPT]]]
     if {[dict get $allInfo numSinks] == 1} {
       set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
@@ -114,7 +115,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       lassign $distributionInfo fartherGroup closerGroup 
       lassign $fartherGroup groupPinnameLocations fartherCenterPoint
       dict set allInfo numFartherGroupSinks [llength $groupPinnameLocations]
-      dict set allInfo fartherGroupSinksPin [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 0 }]
+      dict set allInfo fartherGroupSinksPin [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 1 }]
     }    
     
     dict set allInfo mostFrequentInSinksCellType [if {[dict get $allInfo numOfMostFrequentInSinksCellClass] > 1} { set temp_return cantSelect } else {
@@ -128,7 +129,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       }]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
       set refBuffer [operateLUT -type read -attr {refbuffer}] ; set refBufferCapacity [operateLUT -type read -attr [list celltype $refBuffer capacity]]
-      if {$temp_mostCapacity ne "NaN"} { set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity $temp_mostCapacity] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
+      if {$temp_mostCapacity ne "NaN"} { set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity [if {$temp_mostCapacity == 0.5} {set temp_mostCapacity 05} else {set temp_mostCapacity}]] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
         if {[operateLUT -type read -attr [list celltype $temp_type capacity]] == "NaN"} { set temp $temp_type } else { continue }
       }] 0]}
     }]
@@ -228,7 +229,7 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
     }
     set availableDriveCapacityList [operateLUT -type read -attr [list celltype $celltype caplist]]
     set filteredAvailableDriveCapacityList [filter_numberList $availableDriveCapacityList $driveCapacityRange]
-    if {[lindex $filteredAvailableDriveCapacityList end] == $nowCapacity} {
+    if {[lindex $filteredAvailableDriveCapacityList end] <= $nowCapacity} {
       return 1 
     } else {
       return 0 

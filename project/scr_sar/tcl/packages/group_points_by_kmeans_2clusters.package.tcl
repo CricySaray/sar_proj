@@ -8,7 +8,7 @@
 # return    : The return value includes the centroid coordinates of each cluster and the point coordinates contained in each cluster. 
 # ref       : link url
 # --------------------------
-source ../eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_fromPoints
+source ../eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints
 proc group_points_by_kmeans_2clusters {points} {
   # Helper procedure to calculate Euclidean distance between two points
   proc distance {point1 point2} {

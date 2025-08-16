@@ -23,6 +23,7 @@ source ../../../packages/every_any.package.tcl; # every
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ../../../eco_fix/timing_fix/trans_fix/proc_ifInBoxes.invs.tcl; # ifInBoxes
 source ../trans_fix/proc_attachToGridOfRowSiteLeftBottomPoint.invsGUI.tcl; # attachToGridOfRowSiteLeftBottomPoint
+source ./proc_find_closest_point_in_rects.invsGUI.tcl; # find_closest_point_in_rects
 proc findSpaceToInsertRepeater_using_lutDict {args} {
   set testOrRun             "run"
   set inst                  ""
@@ -55,7 +56,9 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
     }
   } elseif {$testOrRun == "run"} {
     if {[every x [concat $expandAreaWidthHeight $loc $divOfForceInsert] { string is double $x }] && [operateLUT -type exists -attr [list celltype $celltype]] && [ifInBoxes $loc]} {
-      set repeaterPt [attachToGridOfRowSiteLeftBottomPoint $loc] ; # need validize this location to stick on left-bottom corner of row and site 
+      set coreRect_innerBoundary [operateLUT -type read -attr {core_inner_boundary_rects}]
+      set validatedLoc [find_closest_point_in_rects $loc $coreRect_innerBoundary $rowHeight]
+      set repeaterPt [attachToGridOfRowSiteLeftBottomPoint $validatedLoc] ; # need validize this location to stick on left-bottom corner of row and site 
       lassign [operateLUT -type read -attr [list celltype $celltype size]] repeaterWidth repeaterHeight
     } else {
       error "proc findSpaceToInsertRepeater_using_lutDict: now type is run, check your input of loc($loc), celltype($celltype), expandAreaWidthHeight($expandAreaWidthHeight) and divOfForceInsert($divOfForceInsert), have error!!!"

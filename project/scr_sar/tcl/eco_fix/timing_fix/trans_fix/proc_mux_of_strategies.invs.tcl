@@ -7,16 +7,19 @@
 # descrip   : selector of strategies for fix_trans.invs.tcl
 # return    : dict data: $resultDict: cmd_one|more_list/fixed_one|more_list/cantChange_list/skipped_list/nonConsidered_list
 # TODO      : 
-#             U003: judge if the driver cell can change VT and drive capacity, if not, using inserting buffer or add to NOTICEList(need to fix by yourself)
-#             U005: need shorten too long string of pinname using stringstore::*
-#             U006: change strategy according to the sinks capacity
+#             U005: need shorten too long string of pinname using stringstore::* -> add this function at fix_trans.invs.tcl
+#             U006: change strategy according to the sinks capacity (advanced function)
 #             U007: you need split one2one and one2more situation.
 #             U008: need move inst when the size changes too
 #             U009 for change VT or/and capacity of driver celltype when adding repeater
 # FIXED     :
 #             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
+#             U003: judge if the driver cell can change VT and drive capacity, if not, using inserting buffer or add to NOTICEList(need to fix by yourself)
 #             U004: add judgement for non-consider driver-sinks symbol
+# NOTICE    : AT002: When setting the condition for determining whether it is the maximum allowable driver(proc judge_ifHaveBeenLargestCapacityInRange at 
+#                   ./proc_getAllInfo_fromPin.invs.tcl), it needs to correspond to the maximum driver in mapList; if it does not correspond, it will most 
+#                   likely report an error inside the proc.
 # ref       : link url
 # --------------------------
 source ../../../packages/stringstore.package.tcl; # stringstore::*
@@ -38,22 +41,24 @@ source ../lut_build/operateLUT.tcl; # operateLUT
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
 #               driverCellClass/sinksCellClass/driverCapacity/sinksCapacity/driverVTtype/sinksVTtype/driverPinPT/
-#               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/shortenedSimplizedSinksCellClass/
+#               sinksPinPT/numSinks/shortenedSinksCellClass/simplizedSinksCellClass/simplizedDriverCellClass/shortenedSimplizedSinksCellClass/
 #               uniqueSinksCellClass/uniqueShortenedSinksCellClass/uniqueSimplizedSinksCellClass/uniqueShortenedSimplizedSinksCellClass
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow/
 alias mux_of_strategies "sliding_rheostat_of_strategies"
 proc sliding_rheostat_of_strategies {args} {
-  set violValue                            0
-  set violPin                              ""
-  set VTweight                             {{AR9 3} {AL9 1} {AH9 0}}
-  set ifCanChangeVTWhenChangeCapacity      1
-  set ifCanChangeVTcapacityWhenAddRepeater 1
-  set newInstNamePrefix                    "sar_fix_trans_081420"
-  set promptPrefix                         "# song"
-  set debug                                0
+  set violValue                                0
+  set violPin                                  ""
+  set VTweight                                 {{AR9 3} {AL9 1} {AH9 0}}
+  set ifInFixLongNetMode                       0
+  set ifCanChangeVTandCapacityInFixLongNetMode 0
+  set ifCanChangeVTWhenChangeCapacity          1
+  set ifCanChangeVTcapacityWhenAddRepeater     1
+  set newInstNamePrefix                        "sar_fix_trans_081420"
+  set promptPrefix                             "# song"
+  set debug                                    0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -85,7 +90,7 @@ proc sliding_rheostat_of_strategies {args} {
       # it will return 1 if any of scripts return true or 1
       set ifDirtyCase [expr !$numSinks || !$netLen || !$ifNetConnected] ; # if 1: have problem
       set ifNeedReRouteNet [expr {$ifLoop in {moderate severe}}] ; # if 1: the net has looped (adapted to one2one and one2more)
-      set ifNotSupportCellClass [any x [list $driverCellClass {*}$simplizedSinksCellClass] { regexp cantMap_ $x }] ; # now not support these cell class
+      set ifNotSupportCellClass [any x [list $simplizedDriverCellClass {*}$simplizedSinksCellClass] { regexp cantMap_ $x }] ; # now not support these cell class
       set ifComplexOne2More [expr !$ifSimpleOne2More] ; # if 1, now can't fix. it need fix by yourself
       set preCheckConds { 
         {expr $ifDirtyCase}
@@ -134,9 +139,9 @@ proc sliding_rheostat_of_strategies {args} {
         set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if this var is 1, you can change capacity(and vt) to fix viol AT001
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if this var is 1, you can change vt to fix viol
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
-        ### change VT
-        if {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
-          #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" 
+        ### change VT {forbidden when Fix Long Net Mode}
+        if {!$ifInFixLongNetMode && $ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
+          er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" }
           set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
           if {[operateLUT -type exists -attr [list celltype $toVT]]} {
             set ifFixedSuccessfully 1
@@ -148,9 +153,9 @@ proc sliding_rheostat_of_strategies {args} {
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Fvt" $addedInfoToShow]
         } 
-        ### change Capacity
-        if {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
-          #puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" 
+        ### change Capacity {forbidden when Fix Long Net Mode}
+        if {!$ifInFixLongNetMode && !$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
+          er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" }
           if {$ifCanChangeVTWhenChangeCapacity && !$ifHaveBeenFastestVTinRange} {
             set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
             if {![operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
@@ -158,7 +163,7 @@ proc sliding_rheostat_of_strategies {args} {
           if {$ifFixButFailed} {
             lappend fix_but_failed_list [concat $driverSinksSymbol "failedVtWhenCap" $toVT $addedInfoToShow]
           } else {
-            set toCap [strategy_changeDriveCapacity_withLUT $toVT 0 $mapList 0 1] ; # TODO: U006: change strategy according to the sinks capacity
+            set toCap [strategy_changeDriveCapacity_withLUT $toVT 0 $mapList 0 1] ; # TODO: U006: change strategy according to the sinks capacity ; AT002
             if {[operateLUT -type exists -attr [list celltype $toCap]]} {
               set ifFixedSuccessfully 1
               set cmd [print_ecoCommand -type change -celltype $toCap -inst $driverInstname] ; # U008
@@ -172,7 +177,7 @@ proc sliding_rheostat_of_strategies {args} {
         } 
         ### add repeater (change VT/capacity)
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
-          #puts "\n$promptInfo : needInsertBufferToFix\n" 
+          er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
           if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after
             set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
             set ifInClkTree [regexp CLK $driverCellClass]
@@ -191,7 +196,7 @@ proc sliding_rheostat_of_strategies {args} {
                 set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $wiresPts $relativeLoc]
               } elseif {$ifSimpleOne2More} {
                 set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
-                set toLoc [calculate_relative_point_at_path $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
+                set toLoc [calculateRelativePoint $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
               }
               set refineLoc [findSpaceToInsertRepeater_using_lutDict -testOrRun run -celltype $toAdd -loc $toLoc -expandAreaWidthHeight $expandAreaWidthHeight -divOfForceInsert $divOfForceInsert -multipleOfExpandSpace $multipleOfExpandSpace]
               lassign $refineLoc refineLocType refineLocPosition refineLocDistance refineLocMovementList
@@ -241,6 +246,8 @@ define_proc_arguments sliding_rheostat_of_strategies \
     {-violValue "specify the violation value of pin" AFloat float required}
     {-violPin "specify the violation pin" AString string required}
     {-VTweight "specify the VT weight for strategy_changeVT_withLUT proc" AList list optional}
+    {-ifInFixLongNetMode "specify go to Fix Long Net Mode. it will always insert repeater however this viol value of path is small" "" boolean optional}
+    {-ifCanChangeVTandCapacityInFixLongNetMode "In Fix Long Net Mode, you can specify this option" "" boolean optional}
     {-ifCanChangeVTWhenChangeCapacity  "trun on/off switch that allow changing VT when changing capacity" "" boolean optional}
     {-ifCanChangeVTcapacityWhenAddRepeater "trun on/off switch that allow changing VT|capacity when adding repeater" "" boolean optional}
     {-newInstNamePrefix "specify the new name for repeater that will be inserted" AString string optional}

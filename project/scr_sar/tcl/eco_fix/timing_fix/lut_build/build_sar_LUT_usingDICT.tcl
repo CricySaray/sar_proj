@@ -11,20 +11,32 @@
 #               layer1 attribute: designName/mainCoreRowHeight/mainCoreSiteWidth/celltype 
 #               layer2 attribute of celltype: [allLibCellTypeNames(like BUFX3AR9/INVX8AL9/...)] 
 #               layer3 attribute of every item of celltype(layer2): class/size (AT001) capacity/vt(AT002)
+# input     : $process: {M31GPSC900NL040P*_40N}|{TSMC_cln12ffc}
 # args      : $process: {M31GPSC900NL040P*_40N}|...
 # ref       : link url
 # --------------------------
 source ../../../packages/print_formattedTable.package.tcl; # print_formattedTable
 source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
-source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib
+source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib | get_driveCapacity_of_celltype_returnCapacityAndVTtype
+source ./proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
 alias sus "subst -nocommands -nobackslashes"
-proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900NL040P*_40N}} {capacityFlag "X"} {vtFastRange {AL9 AR9 AH9}} {stdCellFlag ""} {celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$}} {refBuffer "BUFX3AR9"} {refClkBuffer "CLKBUFX3AR9"} {promptPrefix "# song"} {lutDictName "lutDict"}} {
+proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} {LUT_filename "lutDict.tcl"} {lutDictName "lutDict"}} {
+  if {$process == {M31GPSC900NL040P*_40N}} {
+    set capacityFlag "X" ; set vtFastRange {AL9 AR9 AH9} ; set stdCellFlag "" ; set celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$} ; set VtMatchExp {A[HRL]9} ; set refBuffer "BUFX3AR9" ; set refClkBuffer "CLKBUFX3AR9"
+    set noCareCellClass {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}
+  } elseif {$process == {TSMC_cln12ffc}} {
+    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
+    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
+  } else {
+    error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
+  }
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
   set fo [open $LUT_filename w]
   puts $fo "catch \{unset $lutDictName\}"
+  puts $fo "global $lutDictName"
   puts $fo "set $lutDictName \[dict create\]"
   if {$process == ""} {
     puts $fo "$promptERROR: have no process defination!!!" 
@@ -85,6 +97,14 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
     }
     puts $fo "dict set $lutDictName core_rects \{$coreRect\}"
   }
+  flush $fo
+  puts "# Begin source $LUT_filename, and then continue add some other info\n" ; 
+  set fs [open $LUT_filename r]
+  while {[gets $fs line] > -1} { eval $line }
+  close $fs
+  puts "# End source ."
+  set coreRects_innerBoundary [getRect_innerAreaEnclosedByEndcap ]
+  puts $fo "dict set $lutDictName core_inner_boundary_rects \{$coreRects_innerBoundary\}"
   set allCellType_ptrList [dbget head.libCells.]
   if {$allCellType_ptrList == ""} { 
     puts $fo "$promptERROR : have no celltype in library!!!" 
@@ -94,7 +114,7 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
       set temptypename [dbget $temptype_ptr.name]
       set tempclass [get_class_of_celltype $temptypename $expandedMapList] 
       set tempsize [lindex [dbget $temptype_ptr.size] 0]
-      set ifInNoCare [expr {$tempclass in {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}}]
+      set ifInNoCare [expr {$tempclass in $noCareCellClass}]
       # songNOTE: NOTICE: you can't judge if have error using catch cmd monitoring cmd 'regexp'. cuz regexp will not prompt error when it is not match successfully!!!
       if {!$ifInNoCare} { catch {unset wholname} ; catch {unset capacity} ; catch {unset vt} ; set ifErr [catch {regexp $celltypeMatchExp $temptypename wholname capacity vt} errInfo] }
       if {$ifInNoCare || ![info exists wholname]} {
@@ -104,15 +124,16 @@ proc build_sar_LUT_usingDICT {{LUT_filename "lutDict.tcl"} {process {M31GPSC900N
         set tempcapacityList "NaN"
         if {![info exists wholname]} {lappend cantMatchList [list $temptypename $tempclass]}
       } else {
-        lassign [get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib $temptypename $process] tempcapacity tempvttype
+        lassign [get_driveCapacity_of_celltype_returnCapacityAndVTtype $temptypename $celltypeMatchExp] tempcapacity tempvttype
         if {$tempcapacity == 0.5} {set tempcapacity_2 05} else {set tempcapacity_2 $tempcapacity}
-        set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_2}(.*)${tempvttype}$}] $temptypename [sus {^\1\d+\2A[HRL]9$}]]
+        if {$process == {TSMC_cln12ffc} && $tempvttype == "SVT"} { set vtFromExp "" } else { set vtFromExp $tempvttype }
+        set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_2}($stdCellFlag.*)${vtFromExp}$}] $temptypename [sus {^\1\d+\2$VtMatchExp$}]]
         # set tempvtExp [regsub [sus {(.*)${tempvttype}$}] $temptypename [sus {^\1A\w9$}]]
         # set tempcapacityExp [regsub [sus {(.*X)${tempcapacity}(.*)}] $temptypename [sus {^\1*\2$}]] ; # sus - subst -nocommands -nobackslashes
         set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]
         set tempvtList [lsort -unique [lmap tmpvt $tempvtcapacityList_raw {
           regexp $celltypeMatchExp $tmpvt vtwholename vtcapacity vtvt
-          set vtvt
+          if {$vtvt == "" && $process == {TSMC_cln12ffc}} {set vtvt SVT} else {set vtvt}
         }]]
         set tempcapacityList [lsort -unique -real -increasing [lmap tmpcapacity $tempvtcapacityList_raw {
           regexp $celltypeMatchExp $tmpcapacity capwholename capcapacity capvt

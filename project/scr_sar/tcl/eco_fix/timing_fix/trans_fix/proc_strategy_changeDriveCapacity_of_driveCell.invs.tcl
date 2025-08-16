@@ -23,7 +23,7 @@ source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCe
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList
 source ../lut_build/operateLUT.tcl; # operateLUT
 alias sus "subst -nocommands -nobackslashes"
-proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapacity 4} {mapList {{0.5 2} {1 4} {2 4} {4 8} {8 12}}} {ifStrictCheckForMapList 0} {ifAutoSelectBiggerWhenNotMatch 1} {changeStairs 1} {driveRange {1 12}} {ifClamp 1} {debug 0}} {
+proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapacity 4} {mapList {{0.5 2} {1 4} {2 4} {4 8} {8 12}}} {ifStrictCheckForMapList 0} {ifAutoSelectBiggerWhenNotMatchToCellCapacity 1} {changeStairs 1} {driveRange {1 12}} {ifClamp 1} {debug 0}} {
   # $changeStairs : if it is 1, like : D2 -> D4, D4 -> D8
   #                 if it is 2, like : D1 - D4, D4 -> D16, D2 -> D8
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e ] == ""} {
@@ -61,10 +61,10 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
         error "proc strategy_changeDriveCapacity_withLUT: check your input: mapList($mapList) has duplicate items!!! double check it!!!"
       } else {
         set toCapacityMatched [lindex [lsearch -index 0 -inline $mapList $driveLevel] 1]
-        set ifInToCapacityList [lsearch -inline $toCapacityList $toCapacityMatched]
-        if {$ifInToCapacityList == "" && $ifAutoSelectBiggerWhenNotMatch} {
+        set ifToCapacityInAvailableCapacityList [lsearch -inline $availableDriveCapacityList $toCapacityMatched]
+        if {$ifToCapacityInAvailableCapacityList == "" && $ifAutoSelectBiggerWhenNotMatchToCellCapacity} {
           set toCapacityMatched [find_nearestNum_atIntegerList $availableDriveCapacityList $toCapacityMatched 1 1]
-        } elseif {$ifInToCapacityList == "" && !$ifAutoSelectBiggerWhenNotMatch} {
+        } elseif {$ifToCapacityInAvailableCapacityList == "" && !$ifAutoSelectBiggerWhenNotMatchToCellCapacity} {
           set toCapacityMatched [find_nearestNum_atIntegerList $availableDriveCapacityList $toCapacityMatched 0 1]
         }
         regsub [sus {^(.*$capacityFlag)${driveLevel}($stdCellFlag.*)$}] $celltype [sus {\1$toCapacityMatched\2}] toCelltype

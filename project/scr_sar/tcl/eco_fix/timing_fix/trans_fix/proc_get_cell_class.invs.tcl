@@ -16,6 +16,7 @@
 #             you can generate this expanded list when sourcing this script(like U003), and it need be set global variable inside proc, which is FASTER method!!!
 # ref       : link url
 # --------------------------
+source ../lut_build/operateLUT.tcl; # operateLUT
 proc get_cell_class {{instOrPinOrCelltype ""}} {
   if {$instOrPinOrCelltype == "" || $instOrPinOrCelltype == "0x0" || [expr  {[dbget top.insts.name $instOrPinOrCelltype -e] == "" && [dbget top.insts.instTerms.name $instOrPinOrCelltype -e] == "" && [dbget head.libCells.name $instOrPinOrCelltype -e] == ""}]} {
     return "0x0:1"; # have no instOrPinOrCelltype 
@@ -35,7 +36,12 @@ proc get_cell_class {{instOrPinOrCelltype ""}} {
 # songNOTE: NOTICE: if you open invs db without timing info, you will get incorrect judgement for cell class, you can only get logic and sequential!
 #           ADVANCE: it can test if you open noTiming invs db. if it is, it judge it by other rule
 # prompt : please open invs db with timing info
-proc expandMapList {{customMapList {}}} {
+proc expandMapList {{process {}}} {
+  if {$process == {M31GPSC900NL040P*_40N}} {
+    set customMapList {{filler {{FILLERC*\d+A[HRL]9}}} {ANT {{ANTENNA*}}} {noCare {{BUSHOLD*}}} {IOfiller {{RCLIB_PLFLR\d$}}} {cutCell {{RCLIB_PLFLR5_CUT*}}} {IOpad {{RCLIB_*}}} {tapCell {{TAP*}}} {tieCell {{TIE\d+X\d+A[HLR]9}}}}
+  } elseif {$process == {TSMC_cln12ffc}} {
+    set customMapList {{BoundaryCell {{BOUNDARY_.*}}} {DTCD {{N12_DTCD_[BF]EOL_.*}}} {pad {{PAD\d+PITCH}}} {physical {{PB2B\w+}}} {clamp {{PCLAMP.*}}} {IP {{PLL_.*}}} {esd {{.*LLESD_.*}}} {decap {{decap_.*} {^DCAP\d+\w+.*}}} {ANT {{ANTENNABWP.*}}} {filler {{^FILL\d+BWP.*}}} {noCare {{GFILL.*}}} {tapCell {{^TAPCELLBWP.*}}}}
+  }
   if {[llength $customMapList]} {
     set expandedMapList [lmap item_map $customMapList {
       set item_class [lindex $item_map 0]
@@ -51,8 +57,7 @@ proc expandMapList {{customMapList {}}} {
     return [list ] 
   }
 }
-set customMapList_example {{filler {{FILLERC*\d+A[HRL]9}}} {ANT {{ANTENNA*}}} {noCare {{BUSHOLD*}}} {IOfiller {{RCLIB_PLFLR\d$}}} {cutCell {{RCLIB_PLFLR5_CUT*}}} {IOpad {{RCLIB_*}}} {tapCell {{TAP*}}} {tieCell {{TIE\d+X\d+A[HLR]9}}}} ; # U002
-set expandedMapList [expandMapList $customMapList_example] ; # U003: you need write cmd "global expandedMapList" when the beginning of proc
+set expandedMapList [expandMapList [operateLUT -type read -attr process]] ; # U003: you need write cmd "global expandedMapList" when the beginning of proc
 proc get_class_of_celltype {celltype {customMapList {}} {clkExp "CLK"} {delayCellExp "DEL"}} {
   if {[llength $customMapList]} {
     # customMapList: for example {{physical {TAP0X1AR9 FILLER4AR9}} {IOpad {RCLIB_PLVDDHA}} {IOfiller {RCLIB_PLFLR5 RCLIB_PLFLR1}}}

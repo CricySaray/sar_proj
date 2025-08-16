@@ -10,7 +10,7 @@
 # return    : list: cluster1_centerPT({x y}) + itemsPTinsideCluster({{x1 y1} {x2 y2} ...}) {{{x y} {{x1 y1} {x2 y2} ...}} {{x y} {{x1 y1} {x2 y2} ...}} ...}
 # ref       : link url
 # --------------------------
-source ../eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter.invs.tcl; # calculateResistantCenter_fromPoints
+source ../eco_fix/timing_fix/trans_fix/proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints
 source ./group_points_by_kmeans_2clusters.package.tcl; # group_points_by_kmeans_2clusters
 proc cluster_points {points {threshold 25} {min_pts 3} {max_clusters 3} {verbose 0}} {
   # Error checking for input validity
@@ -121,7 +121,7 @@ proc cluster_points {points {threshold 25} {min_pts 3} {max_clusters 3} {verbose
   rename distance ""
 
   set centerPin_itemPins_List [lmap clusterGroup [dict values $result] {
-    set centerPtOfItems [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints $clusterGroup]]
+    set centerPtOfItems [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints $clusterGroup "auto"]]
     set temp_center_itemPts [list $centerPtOfItems $clusterGroup]
   }]
 

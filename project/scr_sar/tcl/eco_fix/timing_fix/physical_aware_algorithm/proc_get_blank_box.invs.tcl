@@ -16,22 +16,28 @@ proc get_blank_box {{centerPt {}} {halfOfWidth 12.6} {halfOfHeight 12.6} {debug 
     lassign $centerPt x y
     set pointLeftBottom [list [expr $x - $halfOfWidth] [expr $y - $halfOfHeight]]
     set pointRightTop   [list [expr $x + $halfOfWidth] [expr $y + $halfOfHeight]]
-    set searchingBox  [list {*}$pointLeftBottom {*}$pointRightTop]
-    set searchingArea [db_rect -area $searchingBox]
+    set coreRects_innerBoundary [operateLUT -type read -attr {core_inner_boundary_rects}]
+    set searchingBox  [dbShape -output hrect $coreRects_innerBoundary AND [list {*}$pointLeftBottom {*}$pointRightTop]]
+    set searchingArea [set temp_allArea 0; foreach search_box $searchingBox {
+      set search_area [db_rect -area $search_box]
+      set temp_allArea [expr $temp_allArea + $search_area]
+    } ; set temp_allArea]
     if {$debug} { puts "searchingArea: $searchingArea" }
     if {$debug} { puts "searchingBox: $searchingBox" }
     # set densityOfSearchingBox [queryDensityInBox {*}$searchingBox]
-    set insts_ptr [dbQuery -areas $searchingBox -objType inst]
-    set insts_box [dbget $insts_ptr.box]
+    set insts_ptr [set allInstPtr [list] ; foreach temp_rect $searchingBox {
+      set temp_inst_ptr [dbQuery -areas $temp_rect -objType inst]
+      set allInstPtr [concat $allInstPtr $temp_inst_ptr]
+    } ; set allInstPtr]
+    set insts_box [dbget $insts_ptr.box -e]
+    if {$insts_box == ""} {set insts_box {0 0 0 0}}
     set blankBoxList [dbShape -output hrect $searchingBox ANDNOT $insts_box]
-    set coreRects [operateLUT -type read -attr {core_rects}]
-    set blankBoxListANDcoreRects [dbShape -output hrect $blankBoxList AND $coreRects]
     set blankBoxArea [dbShape -output area $searchingBox ANDNOT $insts_box]
     if {$debug} { puts "blankBoxArea: $blankBoxArea" }
     if {$debug} { puts "blankBoxList: $blankBoxList" }
     set densityOfSearchingBox "[format "%.2f" [expr (1 - ($blankBoxArea / $searchingArea)) * 100]] %"
     if {$debug} { puts "densityOfSearchingBox: $densityOfSearchingBox" }
 
-    return [list $blankBoxListANDcoreRects $blankBoxArea $densityOfSearchingBox]
+    return [list $blankBoxList $blankBoxArea $densityOfSearchingBox]
   }
 }

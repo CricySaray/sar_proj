@@ -12,12 +12,12 @@
 #             $result_flag: yes|no
 #             $expandedRegionLoc : {x y}
 #             $move_list : {{instname1 {left 1.4}} {instname2 {right 2.8}} ...}
+# update    : (U002) fix incorrect position returned when have movement to left
 # TODO      : (U001) cantMoveList: [list IP mem physicalCell(endcap welltap[can move small distance]) ...]
 # ref       : link url
 # --------------------------
 source ./proc_get_objRect.invs.tcl; # get_objRect
 source ../lut_build/operateLUT.tcl; # operateLUT
-source ../trans_fix/proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
 proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterMovementPrecision 0.005} {debug 0} {verbose 0}} {
   # Parameters:
   #   total_area - Total space area in format {x y x1 y1}
@@ -38,6 +38,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   # Extract key parameters
   lassign $target_insert_loc insert_x insert_y
   lassign $target_size target_w target_h
+  set coreRects_innerBoundaryArea [operateLUT -type read -attr {core_inner_boundary_rects}]
+  set total_area {*}[dbShape -output hrect $total_area AND $coreRects_innerBoundaryArea]
   lassign $total_area total_x total_y total_x1 total_y1
   
   # Calculate total area dimensions
@@ -956,6 +958,9 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set left_shift 0.0
   
   # Get left shift amount from closest left-moving rectangle (all left-moving rectangles shift equally)
+  set sorted_left [lmap temp_left $sorted_left { ; # U002: remove zero movement instance items
+    if {[expr {[lindex $temp_left 1 1] == 0.0}]} { continue } else { set temp_left }
+  }]
   if {[llength $sorted_left] > 0} {
     # Closest left-moving rectangle is first in sorted_left list (farthest first, take any for shift value)
     set closest_left_inst [lindex $sorted_left 0 0]

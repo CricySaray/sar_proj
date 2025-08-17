@@ -57,7 +57,8 @@ proc expandMapList {{process {}}} {
     return [list ] 
   }
 }
-set expandedMapList [expandMapList [operateLUT -type read -attr process]] ; # U003: you need write cmd "global expandedMapList" when the beginning of proc
+# below need make it as comment, cuz lutDict has not been load 
+# set expandedMapList [expandMapList [operateLUT -type read -attr process]] ; # U003: you need write cmd "global expandedMapList" when the beginning of proc
 proc get_class_of_celltype {celltype {customMapList {}} {clkExp "CLK"} {delayCellExp "DEL"}} {
   if {[llength $customMapList]} {
     # customMapList: for example {{physical {TAP0X1AR9 FILLER4AR9}} {IOpad {RCLIB_PLVDDHA}} {IOfiller {RCLIB_PLFLR5 RCLIB_PLFLR1}}}

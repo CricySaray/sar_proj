@@ -5,6 +5,9 @@
 # label     : db_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|misc_proc)
 # descrip   : build the LUT(look-up table) for some fixed design info in order to reduce complexity and other levels of running time
+# NOTICE    : MUST run this proc at invs db WITH TIMING info
+# update    : 2025/08/17 22:39:02 Sunday
+#             (U001) update method to get core inner boundary rects!!! simple and efficient!!! using proc:findCoreRectsInsideBoundary
 # return    : tcl script to create dict database(it is convenient for searching. it can save permently and source it whenever you need it.)
 #             dict database include:
 #             dictName: $LUT_filename
@@ -19,7 +22,8 @@ source ../../../packages/print_formattedTable.package.tcl; # print_formattedTabl
 source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.invs.tcl; # findMostFrequentElement
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib | get_driveCapacity_of_celltype_returnCapacityAndVTtype
-source ./proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
+# source ./proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
+source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary (used to replace proc:getRect_innerAreaEnclosedByEndcap)
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
@@ -45,7 +49,6 @@ proc build_sar_LUT_usingDICT {args} {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
   }
   set promptINFO [string cat $promptPrefix "INFO"] ; set promptERROR [string cat $promptPrefix "ERROR"] ; set promptWARN [string cat $promptPrefix "WARN"]
-  global expandedMapList
   #puts "expandedMapList: $expandedMapList"
   set fo [open $LUT_filename w]
   set descrip "It functions as a lookup table. This file records some necessary information, all of which are stored as dict-type data and can be easily \
@@ -124,13 +127,19 @@ proc build_sar_LUT_usingDICT {args} {
     puts $fo "dict set $lutDictName core_rects \{$coreRect\}"
   }
   flush $fo
+  set allBoundaryCellRects [dbget [dbget top.insts.name *$boundaryOrEndCapCellName* -p].box]
+  set coreRects_innerBoundary [findCoreRectsInsideBoundary $allBoundaryCellRects] ; # U001
+  if {$coreRects_innerBoundary == ""} {
+    puts $fo "$promptWARN: can't calculate core inner boundary rects (std cell rects) correctly, check whether there are disconnected boundary cells in your fplan."
+  } else {
+    puts $fo "dict set $lutDictName core_inner_boundary_rects \{$coreRects_innerBoundary\}"
+  }
   #puts "# Begin source $LUT_filename, and then continue add some other info\n" ; 
   set fs [open $LUT_filename r]
   while {[gets $fs line] > -1} { eval $line }
   close $fs
   #puts "# End source ."
-  set coreRects_innerBoundary [getRect_innerAreaEnclosedByEndcap $boundaryOrEndCapCellName $shrinkOff]
-  puts $fo "dict set $lutDictName core_inner_boundary_rects \{$coreRects_innerBoundary\}"
+  set expandedMapList [expandMapList [operateLUT -type read -attr process]]
   set allCellType_ptrList [dbget head.libCells.]
   if {$allCellType_ptrList == ""} { 
     puts $fo "$promptERROR : have no celltype in library!!!" 
@@ -205,11 +214,11 @@ proc build_sar_LUT_usingDICT {args} {
 define_proc_arguments build_sar_LUT_usingDICT \
   -info "build LUT using dict in tcl"\
   -define_args {
-    {-process "specify the type of process" oneOfString one_of_string {optional value_type {values {TSMC_cln12ffc {M31GPSC900NL040P*_40N}}}}}
+    {-process "specify the type of process" oneOfString one_of_string {optional value_type {values {TSMC_cln12ffc M31GPSC900NL040P*_40N}}}}
     {-promptPrefix "specify the prefix of Prompt, like ERROR, INFO, WARN." AString string optional}
     {-LUT_filename "specify the lut filename(output filename)" AString string optional}
     {-lutDictName "specify the dict variable name(global var), you will also modify in proc operateLUT" AString string optional}
     {-selectSmallOrMuchRowSiteSizeAsMainCore "specify the item to compare as core main row/site" oneOfString one_of_string {optional value_type {values {small much}}}}
-    {-boundaryOrEndCapCellName "specify the boundary cell name used for input of proc getRect_innerAreaEnclosedByEndcap" AString string optional}
+    {-boundaryOrEndCapCellName "specify the boundary cell name used for input of proc findCoreRectsInsideBoundary" AString string optional}
     {-shrinkOff "specify the value to off when calculate the core_inner_boundary_rects" AFloat float optional}
   }

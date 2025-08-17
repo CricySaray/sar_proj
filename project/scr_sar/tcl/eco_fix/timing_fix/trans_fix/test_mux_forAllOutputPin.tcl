@@ -6,6 +6,7 @@ proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
   set allOutputPin [dbget [dbget top.insts.instTerms {.isOutput == 1}].name]
   set allOutputPin [lrange $allOutputPin 0 9999]
   set fo [open $sumFile w]
+  set i 0
   foreach testpin $allOutputPin {
     set netname [dbget [dbget top.insts.instTerms.name $testpin -p].net.name -e]
     if {$netname == ""} {continue}
@@ -16,8 +17,9 @@ proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
     set dict_of_sum [mux_of_strategies -violValue $randomViolValue -violPin $testpin]
     set temp "randomViolValue: $randomViolValue | [dict get $dict_of_sum]"
     puts $fo $temp
+    incr i
     flush $fo
   }
-  puts "total process [llength $allOutputPin]"
+  puts "total process $i"
   close $fo
 }

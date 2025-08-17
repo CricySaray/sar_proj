@@ -29,7 +29,7 @@ cabbrev co %!column -t -s '\|'
 let g:highlight_groups = [
       \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'er', 'ci', 'every', 'any', 'lextract', 'xor']],
       \ ['Exact', 'Cursor',  ['songNOTE']],
-      \ ['Exact', 'GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE', 'BUG', 'partial', 'IMPORTANT', 'FASTER']],
+      \ ['Exact', 'GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE', 'BUG', 'partial', 'IMPORTANT', 'FASTER', 'DEPRECATED']],
       \ ['Regex', 'GruvboxFg0', ['U\d\{3}', 'ID\d\{4,}', 'AT\d\{3}']],
       \ ]
 " 创建高亮组自动命令

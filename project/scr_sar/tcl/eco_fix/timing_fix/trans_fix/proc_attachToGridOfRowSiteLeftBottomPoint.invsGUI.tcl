@@ -5,12 +5,23 @@
 # label     : gui_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
 # descrip   : Attach the coordinates that are not on the rowsite grid points to the grid points, that is, normalize these coordinates
+# update    : (U001) add new proc for rect
 # return    : {x y}
 # ref       : link url
 # --------------------------
 source ../lut_build/operateLUT.tcl; # operateLUT
+source ../../../packages/every_any.package.tcl; # every
 source ../../../eco_fix/timing_fix/trans_fix/proc_ifInBoxes.invs.tcl; # ifInBoxes
 source ../../../packages/every_any.package.tcl; # every
+proc attachToGridOfRowSiteLeftBottomPoint_forRect {{rect {0 0 0 0}} {filterOutPointNotInBoxes 1}} { ; # U001
+  if {![every x $rect {string is double $x}] || [llength $rect] != 4} {
+    error "proc attachToGridOfRowSiteLeftBottomPoint_forRect: check your input: rect($rect) is invalid!!!"
+  } else {
+    set leftbottom [attachToGridOfRowSiteLeftBottomPoint [lrange $rect 0 1] $filterOutPointNotInBoxes]
+    set righttop [attachToGridOfRowSiteLeftBottomPoint [lrange $rect 2 3] $filterOutPointNotInBoxes]
+    return [concat $leftbottom $righttop]
+  }
+}
 proc attachToGridOfRowSiteLeftBottomPoint {{pointLoc {0 0}} {filterOutPointNotInBoxes 1}} {
   set coreRect [operateLUT -type read -attr {core_rects}]
   if {![every x $pointLoc { string is double $x }] || (![ifInBoxes $pointLoc $coreRect] && !$filterOutPointNotInBoxes)} {

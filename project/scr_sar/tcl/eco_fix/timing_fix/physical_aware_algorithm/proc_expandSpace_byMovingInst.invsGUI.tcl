@@ -14,6 +14,7 @@
 #             $move_list : {{instname1 {left 1.4}} {instname2 {right 2.8}} ...}
 # update    : (U002) fix incorrect position returned when have movement to left
 # TODO      : (U001) cantMoveList: [list IP mem physicalCell(endcap welltap[can move small distance]) ...]
+#             (U003) Solve the problem of entering an infinite loop
 # ref       : link url
 # --------------------------
 source ./proc_get_objRect.invs.tcl; # get_objRect
@@ -642,7 +643,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set idx 1
     }
 
-    while {$remaining_distance > 0} {
+    while {$remaining_distance > 0} { ; # NOTICE: U003 If sufficient space cannot be found, it will enter an infinite loop. Improvements are needed.
       if {$debug} {
         puts "\n----- Movement Step $step -----"
         puts "Remaining distance needed: $remaining_distance"

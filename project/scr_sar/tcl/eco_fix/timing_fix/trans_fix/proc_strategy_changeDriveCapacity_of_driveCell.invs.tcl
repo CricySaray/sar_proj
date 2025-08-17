@@ -61,6 +61,9 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
         error "proc strategy_changeDriveCapacity_withLUT: check your input: mapList($mapList) has duplicate items!!! double check it!!!"
       } else {
         set toCapacityMatched [lindex [lsearch -index 0 -inline $mapList $driveLevel] 1]
+        if {$toCapacityMatched == ""} {
+          error "proc strategy_changeDriveCapacity_withLUT: driveCapacity($driveLevel) not found in your mapList($mapList), please check your mapList!!!"
+        }
         set ifToCapacityInAvailableCapacityList [lsearch -inline $availableDriveCapacityList $toCapacityMatched]
         if {$ifToCapacityInAvailableCapacityList == "" && $ifAutoSelectBiggerWhenNotMatchToCellCapacity} {
           set toCapacityMatched [find_nearestNum_atIntegerList $availableDriveCapacityList $toCapacityMatched 1 1]

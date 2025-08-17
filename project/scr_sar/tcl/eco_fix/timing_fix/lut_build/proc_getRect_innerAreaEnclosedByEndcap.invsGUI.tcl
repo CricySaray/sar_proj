@@ -18,22 +18,28 @@ proc getRect_innerAreaEnclosedByEndcap {{boundaryOrEndCapCellName "ENDCAP"} {shr
   set instsHaveHalo_ptr [dbget top.insts.isHaloBlock 1 -p]
   set allRects [lmap inst_ptr $instsHaveHalo_ptr {
     set temp_hrect [dbShape -output hrect [dbget $inst_ptr.pHaloPoly]] 
+    set temp_hrect [lmap ttemp_hrect $temp_hrect {
+      set Arect_leftBottom [attachToGridOfRowSiteLeftBottomPoint [lrange $ttemp_hrect 0 1]]
+      set Arect_rightTop [attachToGridOfRowSiteLeftBottomPoint [lrange $ttemp_hrect 2 3]]
+      concat $Arect_leftBottom $Arect_rightTop
+    }]
     if {$shrinkOff != -1 || $shrinkOff >= 0} { 
       set temp_hrect [dbShape -output hrect $temp_hrect SIZE $shrinkOff]
     } else {
       set temp_hrect [dbShape -output hrect $temp_hrect SIZE $mainCoreRowHeight]
     }
+    set temp_hrect [lmap ttemp_hrect $temp_hrect {
+      set Arect_leftBottom [attachToGridOfRowSiteLeftBottomPoint [lrange $ttemp_hrect 0 1]]
+      set Arect_rightTop [attachToGridOfRowSiteLeftBottomPoint [lrange $ttemp_hrect 2 3]]
+      list {*}$Arect_leftBottom {*}$Arect_rightTop
+    }]
   }]
   set boundaryInnerRects [dbShape -output hrect $coreRects ANDNOT $allRects]
   set attachedGridBoundaryInnerRects [lmap temp_rect $boundaryInnerRects {
     set leftBottomPoint [lrange $temp_rect 0 1]
     set rightTopPoint [lrange $temp_rect 2 3]
-    if {[ifInBoxes $leftBottomPoint $coreRects]} {
-      set leftBottomPoint [attachToGridOfRowSiteLeftBottomPoint $leftBottomPoint]
-    }
-    if {[ifInBoxes $rightTopPoint $coreRects]} {
-      set rightTopPoint [attachToGridOfRowSiteLeftBottomPoint $rightTopPoint]
-    }
+    set leftBottomPoint [attachToGridOfRowSiteLeftBottomPoint $leftBottomPoint]
+    set rightTopPoint [attachToGridOfRowSiteLeftBottomPoint $rightTopPoint]
     set temp_attached_rect [list {*}$leftBottomPoint {*}$rightTopPoint]
   }]
   set boundaryCells_ptr [dbget top.insts.name *$boundaryOrEndCapCellName* -p]

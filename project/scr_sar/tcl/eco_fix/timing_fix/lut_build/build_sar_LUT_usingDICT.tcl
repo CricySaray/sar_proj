@@ -10,7 +10,7 @@
 #             dictName: $LUT_filename
 #               layer1 attribute: designName/mainCoreRowHeight/mainCoreSiteWidth/celltype 
 #               layer2 attribute of celltype: [allLibCellTypeNames(like BUFX3AR9/INVX8AL9/...)] 
-#               layer3 attribute of every item of celltype(layer2): class/size (AT001) capacity/vt(AT002)
+#               layer3 attribute of every item of celltype(layer2): class/size (AT001) capacity/vt(AT002) caplist/vtlist(AT003)
 # input     : $process: {M31GPSC900NL040P*_40N}|{TSMC_cln12ffc}
 # args      : $process: {M31GPSC900NL040P*_40N}|...
 # ref       : link url
@@ -20,13 +20,26 @@ source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib | get_driveCapacity_of_celltype_returnCapacityAndVTtype
 source ./proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
+source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
-proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} {LUT_filename "lutDict.tcl"} {lutDictName "lutDict"}} {
+proc build_sar_LUT_usingDICT {args} {
+  set process                                {TSMC_cln12ffc} ; # {TSMC_cln12ffc}|{M31GPSC900NL040P*_40N}
+  set promptPrefix                           "# song"
+  set LUT_filename                           "lutDict.tcl"
+  set lutDictName                            "lutDict"
+  set selectSmallOrMuchRowSiteSizeAsMainCore "small" ; # small|much
+  set boundaryOrEndCapCellName               "ENDCAP"
+  set shrinkOff                              "-1"  ; # -1: using mainCoreRowHeight, >=0: will using value of this var
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
   if {$process == {M31GPSC900NL040P*_40N}} {
     set capacityFlag "X" ; set vtFastRange {AL9 AR9 AH9} ; set stdCellFlag "" ; set celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$} ; set VtMatchExp {A[HRL]9} ; set refBuffer "BUFX3AR9" ; set refClkBuffer "CLKBUFX3AR9"
     set noCareCellClass {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}
   } elseif {$process == {TSMC_cln12ffc}} {
-    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
+    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
@@ -35,6 +48,11 @@ proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} 
   global expandedMapList
   #puts "expandedMapList: $expandedMapList"
   set fo [open $LUT_filename w]
+  set descrip "It functions as a lookup table. This file records some necessary information, all of which are stored as dict-type data and can be easily \
+    accessed using the operateLUT proc. If such information were obtained through calculations each time, it would make the proc extremely inefficient."
+  set usage "You can obtain the content here through a unified lookup table function. For example: operateLUT -type read -attr {core_inner_boundary_rects}, \
+    but note that you need to source this file in the invs db beforehand."
+  add_file_header -fileID $fo -descrip $descrip -usage $usage
   puts $fo "catch \{unset $lutDictName\}"
   puts $fo "global $lutDictName"
   puts $fo "set $lutDictName \[dict create\]"
@@ -65,23 +83,31 @@ proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} 
   if {$rowHeightAllList == ""} { 
     puts $fo "$promptERROR : have no row defination!!!" 
   } else { 
-    set mainCoreRowHeight [findMostFrequentElement $rowHeightAllList 50.0 1]
+    if {$selectSmallOrMuchRowSiteSizeAsMainCore == "much"} {
+      set mainCoreRowHeight [findMostFrequentElement $rowHeightAllList 50.0 1]
+    } elseif {$selectSmallOrMuchRowSiteSizeAsMainCore == "small"} {
+      set mainCoreRowHeight [lindex [lsort -real -increasing $rowHeightAllList] 0]
+    }
     puts $fo "dict set $lutDictName mainCoreRowHeight $mainCoreRowHeight" 
   }
   set siteWidthAllList [dbget top.fplan.rows.site.size_x -e]
   if {$siteWidthAllList == ""} { 
     puts $fo "$promptERROR : have no site defination!!!" 
   } else {
-    set mainCoreSiteWidth [findMostFrequentElement $siteWidthAllList 50.0 1]
+    if {$selectSmallOrMuchRowSiteSizeAsMainCore == "much"} {
+      set mainCoreSiteWidth [findMostFrequentElement $siteWidthAllList 50.0 1]
+    } elseif {$selectSmallOrMuchRowSiteSizeAsMainCore == "small"} {
+      set mainCoreSiteWidth [lindex [lsort -real -increasing $siteWidthAllList] 0]
+    }
     puts $fo "dict set $lutDictName mainCoreSiteWidth $mainCoreSiteWidth"
   }
-  set siteTypesInDesign [dbget top.fplan.rows.site.class -u -e]
+  set siteTypesInDesign [dbget top.fplan.rows.site.name -u -e]
   if {$siteTypesInDesign == ""} {
     puts $fo "$promptWARN: have no site type used in design, you need createRow!!!" 
   } else {
     set coreRect {0 0 0 0}
     set rowsBoxesForSiteTypes [lmap tempsitetype $siteTypesInDesign {
-      set tempsitetype_row_ptr [dbget top.fplan.rows.site.class $tempsitetype -p2]
+      set tempsitetype_row_ptr [dbget top.fplan.rows.site.name $tempsitetype -p2]
       set temprows [dbget $tempsitetype_row_ptr.box]
       lassign [dbget $tempsitetype_row_ptr.site.size -u] temp_sitewidth temp_siteheight
       set tempjoinedrows "{[join $temprows "} OR {"]}"
@@ -98,12 +124,12 @@ proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} 
     puts $fo "dict set $lutDictName core_rects \{$coreRect\}"
   }
   flush $fo
-  puts "# Begin source $LUT_filename, and then continue add some other info\n" ; 
+  #puts "# Begin source $LUT_filename, and then continue add some other info\n" ; 
   set fs [open $LUT_filename r]
   while {[gets $fs line] > -1} { eval $line }
   close $fs
-  puts "# End source ."
-  set coreRects_innerBoundary [getRect_innerAreaEnclosedByEndcap ]
+  #puts "# End source ."
+  set coreRects_innerBoundary [getRect_innerAreaEnclosedByEndcap $boundaryOrEndCapCellName $shrinkOff]
   puts $fo "dict set $lutDictName core_inner_boundary_rects \{$coreRects_innerBoundary\}"
   set allCellType_ptrList [dbget head.libCells.]
   if {$allCellType_ptrList == ""} { 
@@ -128,8 +154,6 @@ proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} 
         if {$tempcapacity == 0.5} {set tempcapacity_2 05} else {set tempcapacity_2 $tempcapacity}
         if {$process == {TSMC_cln12ffc} && $tempvttype == "SVT"} { set vtFromExp "" } else { set vtFromExp $tempvttype }
         set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_2}($stdCellFlag.*)${vtFromExp}$}] $temptypename [sus {^\1\d+\2$VtMatchExp$}]]
-        # set tempvtExp [regsub [sus {(.*)${tempvttype}$}] $temptypename [sus {^\1A\w9$}]]
-        # set tempcapacityExp [regsub [sus {(.*X)${tempcapacity}(.*)}] $temptypename [sus {^\1*\2$}]] ; # sus - subst -nocommands -nobackslashes
         set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]
         set tempvtList [lsort -unique [lmap tmpvt $tempvtcapacityList_raw {
           regexp $celltypeMatchExp $tmpvt vtwholename vtcapacity vtvt
@@ -169,11 +193,23 @@ proc build_sar_LUT_usingDICT {{process {TSMC_cln12ffc}} {promptPrefix "# song"} 
     puts $fo "  dict set $lutDictName celltype \$celltypeName size \$cellsize" ; # AT001
     puts $fo "  dict set $lutDictName celltype \$celltypeName vt \$cellvt" ; # AT002
     puts $fo "  dict set $lutDictName celltype \$celltypeName capacity \$cellcapacity" ; # AT002
-    puts $fo "  dict set $lutDictName celltype \$celltypeName vtlist \$cellvtList" ; # AT002
-    puts $fo "  dict set $lutDictName celltype \$celltypeName caplist \$cellcapacityList" ; # AT002
+    puts $fo "  dict set $lutDictName celltype \$celltypeName vtlist \$cellvtList" ; # AT003
+    puts $fo "  dict set $lutDictName celltype \$celltypeName caplist \$cellcapacityList" ; # AT003
     puts $fo "\}"
   }
   puts $fo ""
   close $fo
   # puts [join $cantMatchList \n]
 }
+
+define_proc_arguments build_sar_LUT_usingDICT \
+  -info "build LUT using dict in tcl"\
+  -define_args {
+    {-process "specify the type of process" oneOfString one_of_string {optional value_type {values {TSMC_cln12ffc {M31GPSC900NL040P*_40N}}}}}
+    {-promptPrefix "specify the prefix of Prompt, like ERROR, INFO, WARN." AString string optional}
+    {-LUT_filename "specify the lut filename(output filename)" AString string optional}
+    {-lutDictName "specify the dict variable name(global var), you will also modify in proc operateLUT" AString string optional}
+    {-selectSmallOrMuchRowSiteSizeAsMainCore "specify the item to compare as core main row/site" oneOfString one_of_string {optional value_type {values {small much}}}}
+    {-boundaryOrEndCapCellName "specify the boundary cell name used for input of proc getRect_innerAreaEnclosedByEndcap" AString string optional}
+    {-shrinkOff "specify the value to off when calculate the core_inner_boundary_rects" AFloat float optional}
+  }

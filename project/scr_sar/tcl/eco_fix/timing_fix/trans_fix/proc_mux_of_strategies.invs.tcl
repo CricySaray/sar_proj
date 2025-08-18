@@ -12,6 +12,7 @@
 #             U007: you need split one2one and one2more situation.
 #             U008: need move inst when the size changes too
 #             U009 for change VT or/and capacity of driver celltype when adding repeater
+#             U010: add try command for critical stage such as addRepeater/changeVT/changeCapacity
 # FIXED     :
 #             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
@@ -175,7 +176,7 @@ proc sliding_rheostat_of_strategies {args} {
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
         } 
-        ### add repeater (change VT/capacity)
+        ### add repeater (change VT/capacity) U010
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
           if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after

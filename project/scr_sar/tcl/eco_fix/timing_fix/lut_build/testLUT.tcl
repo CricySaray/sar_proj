@@ -78,15 +78,18 @@ proc testLUT {args} {
       # checkItem 05: ifCelltypeSubKeyValusMeetDataType
       set ifCelltypeSubKeyValusMeetDataType 1
       set celltypeDataTypeCheckMap {{vtlist string} {caplist integer}}
-      dict for {tempCelltypeName tempAttr} $celltypeDict {
+      set i 0
+      dict for {tempCelltypeName tempAttrs} $celltypeDict {
         foreach attr_datatype $celltypeDataTypeCheckMap {
           lassign $attr_datatype tempattr tempdatatype 
-          if {![every x [dict get $tempAttr vtlist] { string is $tempdatatype $x }]} {
-            incr i
-            set comment_$ 
+          incr i
+          set comment_$i
+          if {![every x [dict get $tempAttrs $tempattr] { string is $tempdatatype $x }]} {
+            append comment_$i ",$tempattr"
           }
         }
       }
+      set allComments [info locals comment_*]
     }
   } finally {
     pw $fo [table_col_format_wrap $resultCheckList 3 30 150]

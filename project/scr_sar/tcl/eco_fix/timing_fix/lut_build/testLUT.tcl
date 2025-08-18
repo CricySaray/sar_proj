@@ -41,7 +41,7 @@ proc testLUT {args} {
       set missingFirstKeys [list]
       foreach firstKeys $checkExistsList {
         if {[llength $firstKeys] > 1} { set firstKeys [lindex $firstKeys 0] } 
-        if {[dict exists [sus \${$lutDictName}] $firstKeys]} { continue } else { lappend missingFirstKeys $firstKeys ; set ifHaveAllFirstKeys 0}
+        if {[dict exists [sus \${$lutDictName}] $firstKeys]} { continue } else { lappend missingFirstKeys $firstKeys ; set ifHaveAllFirstKeys 0 }
       }
       if {![llength $missingFirstKeys]} { set missingFirstKeys "have NO missing" }
       lappend resultCheckList [list ifHaveAllFirstKeys [eo $ifHaveAllFirstKeys pass ERROR] $missingFirstKeys]
@@ -66,6 +66,19 @@ proc testLUT {args} {
           }
         }
       }
+      # checkItem 04: ifNotAllSameClass
+      set ifNotAllSameClass 0
+      set celltypeDict [dict get [dict filter [sus \${$lutDictName}] key celltype] celltype]
+      set uniqueClassValue [lsort -unique [dict values $celltypeDict]]
+      if {[llength $uniqueClassValue] == 1} { 
+        lappend resultCheckList [list ifNotAllSameClass ERROR "all cell class are SAME!!!(forbidden), maybe you build lut at invs db without timing info."]
+      } elseif {[llength $uniqueClassValue] > 1} {
+        lappend resultCheckList [list ifNotAllSameClass pass "/"] 
+      }
+      # checkItem 05: ifCelltypeSubKeyValusMeetDataType
+      set ifCelltypeSubKeyValusMeetDataType 1
+      set celltypeDataTypeCheckMap {{vtlist string} {caplist integer}}
+      
     }
   } finally {
     pw $fo [table_col_format_wrap $resultCheckList 3 30 150]

@@ -78,25 +78,28 @@ proc testLUT {args} {
       }
       # checkItem 05: ifCelltypeSubKeyValusMeetDataType
       set ifCelltypeSubKeyValusMeetDataType 1
-      set celltypeDataTypeCheckMap {{vtlist string} {caplist double}}
+      set celltypeDataTypeCheckMap {{vtlist alnum} {caplist double}}
       set i 0
       dict for {tempCelltypeName tempAttrs} $celltypeDict {
         foreach attr_datatype $celltypeDataTypeCheckMap {
           lassign $attr_datatype tempattr tempdatatype 
           incr i
-          set comment_$i "$tempCelltypeName:"
+          set comment_$i ""
           if {![every x [dict get $tempAttrs $tempattr] { string is $tempdatatype $x }]} {
             set ifCelltypeSubKeyValusMeetDataType 0
             append comment_$i "$tempattr,"
           }
         }
-        regsub {,$} [sus \${comment_$i}] "" comment_$i
+        if {[sus \${comment_$i}] != ""} {
+          regsub {,$} [sus \${comment_$i}] "" comment_$i
+          set comment_$i [string cat $tempCelltypeName: [sus \${comment_$i}]]
+        } else { unset comment_$i }
       }
       set allComments [info locals comment_*]
       set validDataTypeList [list ]
       foreach temp_comment $allComments { lappend validDataTypeList [sus \${$temp_comment}] }
       if {![llength $validDataTypeList]} { set validDataTypeList "have NO valid data type" }
-      lappend resultCheckList [list ifCelltypeSubKeyValusMeetDataType [eo $ifCelltypeSubKeyValusMeetDataType pass ERROR $validDataTypeList]]
+      lappend resultCheckList [list ifCelltypeSubKeyValusMeetDataType [eo $ifCelltypeSubKeyValusMeetDataType pass ERROR] $validDataTypeList]
     }
   } finally {
     pw $fo [table_col_format_wrap $resultCheckList 3 30 150]

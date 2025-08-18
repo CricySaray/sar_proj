@@ -11,6 +11,7 @@
 source ../../../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
 source ../../../packages/logic_AND_OR.package.tcl; # eo
 source ../../../packages/table_col_format_wrap.package.tcl; # table_col_format_wrap
+source ../../../packages/every_any.package.tcl; # every
 alias sus "subst -nocommands -nobackslashes"
 proc testLUT {args} {
   set summaryResultCheckinglutDictFilename "sor_checkLUT.list"
@@ -77,7 +78,7 @@ proc testLUT {args} {
       }
       # checkItem 05: ifCelltypeSubKeyValusMeetDataType
       set ifCelltypeSubKeyValusMeetDataType 1
-      set celltypeDataTypeCheckMap {{vtlist string} {caplist integer}}
+      set celltypeDataTypeCheckMap {{vtlist string} {caplist double}}
       set i 0
       dict for {tempCelltypeName tempAttrs} $celltypeDict {
         foreach attr_datatype $celltypeDataTypeCheckMap {
@@ -85,13 +86,17 @@ proc testLUT {args} {
           incr i
           set comment_$i "$tempCelltypeName:"
           if {![every x [dict get $tempAttrs $tempattr] { string is $tempdatatype $x }]} {
+            set ifCelltypeSubKeyValusMeetDataType 0
             append comment_$i "$tempattr,"
           }
         }
         regsub {,$} [sus \${comment_$i}] "" comment_$i
       }
       set allComments [info locals comment_*]
-      
+      set validDataTypeList [list ]
+      foreach temp_comment $allComments { lappend validDataTypeList [sus \${$temp_comment}] }
+      if {![llength $validDataTypeList]} { set validDataTypeList "have NO valid data type" }
+      lappend resultCheckList [list ifCelltypeSubKeyValusMeetDataType [eo $ifCelltypeSubKeyValusMeetDataType pass ERROR $validDataTypeList]]
     }
   } finally {
     pw $fo [table_col_format_wrap $resultCheckList 3 30 150]

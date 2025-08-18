@@ -83,13 +83,15 @@ proc testLUT {args} {
         foreach attr_datatype $celltypeDataTypeCheckMap {
           lassign $attr_datatype tempattr tempdatatype 
           incr i
-          set comment_$i
+          set comment_$i "$tempCelltypeName:"
           if {![every x [dict get $tempAttrs $tempattr] { string is $tempdatatype $x }]} {
-            append comment_$i ",$tempattr"
+            append comment_$i "$tempattr,"
           }
         }
+        regsub {,$} [sus \${comment_$i}] "" comment_$i
       }
       set allComments [info locals comment_*]
+      
     }
   } finally {
     pw $fo [table_col_format_wrap $resultCheckList 3 30 150]

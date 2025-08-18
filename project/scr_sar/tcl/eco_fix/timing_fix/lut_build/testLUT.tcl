@@ -78,7 +78,9 @@ proc testLUT {args} {
       # checkItem 05: ifCelltypeSubKeyValusMeetDataType
       set ifCelltypeSubKeyValusMeetDataType 1
       set celltypeDataTypeCheckMap {{vtlist string} {caplist integer}}
-      
+      dict for {tempCelltypeName tempAttr} $celltypeDict {
+        [dict get $tempAttr vtlist]
+      }
     }
   } finally {
     pw $fo [table_col_format_wrap $resultCheckList 3 30 150]

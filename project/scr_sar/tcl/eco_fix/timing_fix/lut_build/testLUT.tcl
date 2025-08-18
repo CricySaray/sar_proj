@@ -101,8 +101,8 @@ proc testLUT {args} {
       if {![llength $validDataTypeList]} { set validDataTypeList "have NO valid data type" }
       lappend resultCheckList [list ifCelltypeSubKeyValusMeetDataType [eo $ifCelltypeSubKeyValusMeetDataType pass ERROR] $validDataTypeList]
     }
+    pw $fo [table_col_format_wrap $resultCheckList 3 40 150]
   } finally {
-    pw $fo [table_col_format_wrap $resultCheckList 3 30 150]
     close $fo  
   }
 }

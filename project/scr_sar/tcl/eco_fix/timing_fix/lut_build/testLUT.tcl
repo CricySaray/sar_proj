@@ -81,10 +81,10 @@ proc testLUT {args} {
       set celltypeDataTypeCheckMap {{vtlist alnum} {caplist double}}
       set i 0
       dict for {tempCelltypeName tempAttrs} $celltypeDict {
+        incr i
+        set comment_$i ""
         foreach attr_datatype $celltypeDataTypeCheckMap {
           lassign $attr_datatype tempattr tempdatatype 
-          incr i
-          set comment_$i ""
           if {![every x [dict get $tempAttrs $tempattr] { string is $tempdatatype $x }]} {
             set ifCelltypeSubKeyValusMeetDataType 0
             append comment_$i "$tempattr,"

@@ -205,7 +205,7 @@ proc sliding_rheostat_of_strategies {args} {
               set baseAddFlag "A_[fm $relativeLoc]"
               if {$ifOne2One} { set termsWhenAdd $sinksPin } elseif {$ifSimpleOne2More} { set termsWhenAdd $fartherGroupSinksPin }
               set cmd [print_ecoCommand -type add -celltype $toAdd -terms $termsWhenAdd -newInstNamePrefix ${newInstNamePrefix}_one2one_[ci one] -loc $refineLocPosition]
-              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsert" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
+              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsertAfterMove" { set tmp "f" } "forceInsertWithoutMove" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
               set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
               if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
               if {$refineLocType in {sufficient expandSpace}} {

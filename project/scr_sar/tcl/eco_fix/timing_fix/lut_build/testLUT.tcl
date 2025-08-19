@@ -34,9 +34,9 @@ proc testLUT {args} {
     # checkItem 01: ifHavelutDictVar
     set ifHaveLutDictVar [info globals $lutDictName]
     if {$ifHaveLutDictVar == ""} {
-      lappend resultCheckList [list ifHavelutDictVar ERROR "you don't source file to load global variable: $lutDictName"]
+      lappend resultCheckList [list HavelutDictVar ERROR "you don't source file to load global variable: $lutDictName"]
     } else {
-      lappend resultCheckList [list ifHavelutDictVar pass "/"]
+      lappend resultCheckList [list HavelutDictVar pass "/"]
       # checkItem 02: ifHaveAllFirstKeys
       set ifHaveAllFirstKeys 1
       set missingFirstKeys [list]
@@ -45,7 +45,7 @@ proc testLUT {args} {
         if {[dict exists [sus \${$lutDictName}] $firstKeys]} { continue } else { lappend missingFirstKeys $firstKeys ; set ifHaveAllFirstKeys 0 }
       }
       if {![llength $missingFirstKeys]} { set missingFirstKeys "have NO missing" }
-      lappend resultCheckList [list ifHaveAllFirstKeys [eo $ifHaveAllFirstKeys pass ERROR] $missingFirstKeys]
+      lappend resultCheckList [list HaveAllFirstKeys [eo $ifHaveAllFirstKeys pass ERROR] $missingFirstKeys]
       # checkItem 03: ifHaveAllSubKeys
       set ifHaveAllSubKeys 1
       set missingCelltypeSubKeys [list]
@@ -61,9 +61,9 @@ proc testLUT {args} {
               if {$celltypeSubKeys eq $oneCelltypeSubDict} { continue } else { lappend missingCelltypeSubKeys $tempkey ; set ifHaveAllSubKeys 0 }
             }
             if {![llength $missingCelltypeSubKeys]} { set missingCelltypeSubKeys "have NO missing" }
-            lappend resultCheckList [list ifHaveAllSubKeys:$firstKey [eo $ifHaveAllSubKeys pass ERROR] $missingCelltypeSubKeys]
+            lappend resultCheckList [list HaveAllSubKeys:$firstKey [eo $ifHaveAllSubKeys pass ERROR] $missingCelltypeSubKeys]
           } elseif {$firstKey == "celltype" && $firstKey in $missingFirstKeys} { 
-            lappend resultCheckList [list ifHaveAllSubKeys:$firstKey ERROR "the first key '$firstKey' is not exists"] 
+            lappend resultCheckList [list HaveAllSubKeys:$firstKey ERROR "the first key '$firstKey' is not exists"] 
           }
         }
       }
@@ -72,9 +72,9 @@ proc testLUT {args} {
       set celltypeDict [dict get [dict filter [sus \${$lutDictName}] key celltype] celltype]
       set uniqueClassValue [lsort -unique [dict values $celltypeDict]]
       if {[llength $uniqueClassValue] == 1} { 
-        lappend resultCheckList [list ifNotAllSameClass ERROR "all cell class are SAME!!!(forbidden), maybe you build lut at invs db without timing info."]
+        lappend resultCheckList [list NotAllSameClass ERROR "all cell class are SAME!!!(forbidden), maybe you build lut at invs db without timing info."]
       } elseif {[llength $uniqueClassValue] > 1} {
-        lappend resultCheckList [list ifNotAllSameClass pass "/"] 
+        lappend resultCheckList [list NotAllSameClass pass "/"] 
       }
       # checkItem 05: ifCelltypeSubKeyValusMeetDataType
       set ifCelltypeSubKeyValusMeetDataType 1
@@ -99,7 +99,7 @@ proc testLUT {args} {
       set validDataTypeList [list ]
       foreach temp_comment $allComments { lappend validDataTypeList [sus \${$temp_comment}] }
       if {![llength $validDataTypeList]} { set validDataTypeList "have NO valid data type" }
-      lappend resultCheckList [list ifCelltypeSubKeyValusMeetDataType [eo $ifCelltypeSubKeyValusMeetDataType pass ERROR] $validDataTypeList]
+      lappend resultCheckList [list CelltypeSubKeyValusMeetDataType [eo $ifCelltypeSubKeyValusMeetDataType pass ERROR] $validDataTypeList]
     }
     pw $fo [table_col_format_wrap $resultCheckList 3 40 150]
   } finally {

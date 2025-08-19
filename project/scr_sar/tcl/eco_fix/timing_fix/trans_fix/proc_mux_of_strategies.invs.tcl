@@ -13,6 +13,11 @@
 #             U008: need move inst when the size changes too
 #             U009 for change VT or/and capacity of driver celltype when adding repeater
 #             U010: add try command for critical stage such as addRepeater/changeVT/changeCapacity
+#             U011: In the case of one2more, by calculating the geometric area formed by the driver end and all sink ends, 
+#                   the coordinate area where repeaters can be placed is determined. This provides more sufficient spatial positions 
+#                   to choose from, reducing overlap issues caused by being unable to find positions for repeaters due to overly 
+#                   strict position constraints.
+#                   This method requires using algorithms to calculate the area where repeaters can be placed.
 # FIXED     :
 #             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more

@@ -337,6 +337,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       if {$debug} {
         puts "Partial movement possible: $total_possible (needs $original_delta)"
       }
+    } else {
+      set valid 0 
     }
   } elseif {$pos eq "right"} {
     # Right gap: can only move left rectangles (non-left-boundary)
@@ -366,7 +368,9 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set delta $total_possible ;# Adjust delta to actual possible movement
       if {$debug} {
         puts "Partial movement possible: $total_possible (needs $original_delta)"
-      }
+      } 
+    } else {
+      set valid 0 
     }
   } elseif {$pos eq "between"} {
     # Middle gap: left rectangles move left + right rectangles move right (non-boundary only)
@@ -415,12 +419,21 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       if {$debug} {
         puts "Partial movement possible: $total_possible (needs $original_delta)"
       }
+    } else {
+      set valid 0 
     }
   }
-  if {!$valid} {
-    if {$debug} {puts "No valid movement possible for required expansion (delta=$delta)"}
-    return [list $result_flag $free_region $move_list]
-  }
+	# 修改后
+	if {!$valid} {
+		if {$debug} {puts "No valid movement possible for required expansion (delta=$delta)"}
+		# 仅当完全无法移动时才返回空列表
+		if {[expr {$total_possible <= 0}]} {
+			return [list $result_flag $free_region $move_list]
+		}
+		# 即使总距离不足仍继续执行，尝试部分移动
+		set force_insert 1
+		set delta $total_possible
+	}
 
   # --------------------------
   # New grouping logic for contiguous blocks

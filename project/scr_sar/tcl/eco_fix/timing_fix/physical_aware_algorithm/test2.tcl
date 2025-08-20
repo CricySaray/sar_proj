@@ -441,56 +441,77 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set left_groups [list]
   set right_groups [list]
 
-	# Helper procedure to create contiguous rectangle groups
-	proc create_contiguous_groups {rects sorted_rects} {
-		if {[llength $rects] == 0} {
-			return [list]
-		}
-		set groups [list]
-		# Start group with the first rectangle
-		set current_group [list [lindex $rects 0 0]]
-		set prev_inst [lindex $rects 0 0]
-		
-		# Find index of previous instance in sorted_rects
-		set prev_idx [lsearch -index 0 $sorted_rects $prev_inst]
-		# Get previous rectangle's x1 coordinate (bottom-right x)
-		lassign [lindex $sorted_rects $prev_idx 1] prev_x prev_y prev_x1 prev_y1
+  # Helper procedure to create contiguous rectangle groups with direction awareness
+  # Parameters:
+  #   rects - List of rectangles to process
+  #   sorted_rects - Globally sorted list of rectangles
+  #   direction - "left" or "right" to determine comparison logic
+  proc create_contiguous_groups {rects sorted_rects direction} {
+    if {[llength $rects] == 0} {
+      return [list]
+    }
+    set groups [list]
+    
+    # Initialize with first rectangle in processing order
+    set current_group [list [lindex $rects 0 0]]
+    set prev_inst [lindex $rects 0 0]
+    
+    # Find index of previous instance in sorted_rects
+    set prev_idx [lsearch -index 0 $sorted_rects $prev_inst]
+    lassign [lindex $sorted_rects $prev_idx 1] prev_x prev_y prev_x1 prev_y1
 
-		for {set i 1} {$i < [llength $rects]} {incr i} {
-			set curr_inst [lindex $rects $i 0]
-			set curr_idx [lsearch -index 0 $sorted_rects $curr_inst]
-			# Get current rectangle's x coordinate (bottom-left x)
-			lassign [lindex $sorted_rects $curr_idx 1] curr_x curr_y curr_x1 curr_y1
-			
-			# Key check: determine if previous rectangle's x1 equals current rectangle's x
-			# i.e., previous rectangle's bottom-right x equals current rectangle's bottom-left x
-			if {$prev_x1 == $curr_x} {
-				# Contiguous, add to current group
-				lappend current_group $curr_inst
-			} else {
-				# Not contiguous, start new group
-				lappend groups $current_group
-				set current_group [list $curr_inst]
-			}
-			# Update previous rectangle info to current rectangle
-			set prev_inst $curr_inst
-			set prev_idx $curr_idx
-			lassign [lindex $sorted_rects $prev_idx 1] prev_x prev_y prev_x1 prev_y1
-		}
-		# Add the last group
-		lappend groups $current_group
-		return $groups
-	}
+    # Process remaining rectangles based on direction
+    for {set i 1} {$i < [llength $rects]} {incr i} {
+      set curr_inst [lindex $rects $i 0]
+      set curr_idx [lsearch -index 0 $sorted_rects $curr_inst]
+      lassign [lindex $sorted_rects $curr_idx 1] curr_x curr_y curr_x1 curr_y1
+      
+      # Different comparison logic based on direction
+      set is_contiguous 0
+      if {$direction eq "right"} {
+        # Right side grouping: check if previous right touches current left
+        # (prev's bottom-right x == current's bottom-left x)
+        if {$prev_x1 == $curr_x} {
+          set is_contiguous 1
+        }
+      } else {
+        # Left side grouping: check if previous left touches current right
+        # (prev's bottom-left x == current's bottom-right x)
+        if {$prev_x == $curr_x1} {
+          set is_contiguous 1
+        }
+      }
+      
+      if {$is_contiguous} {
+        # Contiguous, add to current group
+        lappend current_group $curr_inst
+      } else {
+        # Not contiguous, start new group
+        lappend groups $current_group
+        set current_group [list $curr_inst]
+      }
+      
+      # Update previous rectangle info to current rectangle
+      set prev_inst $curr_inst
+      set prev_idx $curr_idx
+      lassign [lindex $sorted_rects $prev_idx 1] prev_x prev_y prev_x1 prev_y1
+    }
+    
+    # Add the last group
+    lappend groups $current_group
+    return $groups
+  }
+
 			
 
   # Create groups based on gap position
   if {$pos eq "between"} {
     # Left groups (move left)
     set left_rects $move_left_list
-    set left_groups [create_contiguous_groups $left_rects $sorted_rects]
+    set left_groups [create_contiguous_groups $left_rects $sorted_rects "left"]
     # Right groups (move right)
     set right_rects $move_right_list
-    set right_groups [create_contiguous_groups $right_rects $sorted_rects]
+    set right_groups [create_contiguous_groups $right_rects $sorted_rects "right"]
 
     if {$debug} {
       puts "\n===== Contiguous Block Groups ====="
@@ -507,7 +528,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   } elseif {$pos eq "left"} {
     # Only right groups (move right)
     set right_rects $move_right_list
-    set right_groups [create_contiguous_groups $right_rects $sorted_rects]
+    set right_groups [create_contiguous_groups $right_rects $sorted_rects "left"]
 
     if {$debug} {
       puts "\n===== Contiguous Block Groups ====="
@@ -520,7 +541,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   } elseif {$pos eq "right"} {
     # Only left groups (move left)
     set left_rects $move_left_list
-    set left_groups [create_contiguous_groups $left_rects $sorted_rects]
+    set left_groups [create_contiguous_groups $left_rects $sorted_rects "right"]
 
     if {$debug} {
       puts "\n===== Contiguous Block Groups ====="

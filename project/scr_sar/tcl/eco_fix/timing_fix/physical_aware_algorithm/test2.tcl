@@ -633,8 +633,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
           lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
           
           # Calculate positions after movement
-          set curr_x1_moved [expr {$curr_x1 - [dict get $total_moves $curr_rightmost]}]
-          set next_x_moved [expr {$next_x - [dict get $total_moves $next_leftmost]}]
+          set curr_x1_moved [expr {$curr_x1 - [expr {[dict exists $total_moves $curr_rightmost] ? [dict get $total_moves $curr_rightmost] : 0.0}]}]
+          set next_x_moved [expr {$next_x - [expr {[dict exists $total_moves $next_leftmost] ? [dict get $total_moves $next_leftmost] : 0.0}]}]
           
           if {$curr_x1_moved >= $next_x_moved} {
             # Merge groups
@@ -686,8 +686,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
           lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
           
           # Calculate positions after movement
-          set curr_x1_moved [expr {$curr_x1 + [dict get $total_moves $curr_rightmost]}]
-          set next_x_moved [expr {$next_x + [dict get $total_moves $next_leftmost]}]
+          set curr_x1_moved [expr {$curr_x1 - [expr {[dict exists $total_moves $curr_rightmost] ? [dict get $total_moves $curr_rightmost] : 0.0}]}]
+          set next_x_moved [expr {$next_x - [expr {[dict exists $total_moves $next_leftmost] ? [dict get $total_moves $next_leftmost] : 0.0}]}]
           
           if {$curr_x1_moved >= $next_x_moved} {
             # Merge groups
@@ -746,8 +746,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
         
         # Calculate positions after movement
-        set curr_x1_moved [expr {$curr_x1 + [dict get $total_moves $curr_rightmost]}]
-        set next_x_moved [expr {$next_x + [dict get $total_moves $next_leftmost]}]
+        set curr_x1_moved [expr {$curr_x1 - [expr {[dict exists $total_moves $curr_rightmost] ? [dict get $total_moves $curr_rightmost] : 0.0}]}]
+        set next_x_moved [expr {$next_x - [expr {[dict exists $total_moves $next_leftmost] ? [dict get $total_moves $next_leftmost] : 0.0}]}]
         
         if {$curr_x1_moved >= $next_x_moved} {
           # Merge groups
@@ -805,8 +805,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
         
         # Calculate positions after movement
-        set curr_x1_moved [expr {$curr_x1 - [dict get $total_moves $curr_rightmost]}]
-        set next_x_moved [expr {$next_x - [dict get $total_moves $next_leftmost]}]
+        set curr_x1_moved [expr {$curr_x1 - [expr {[dict exists $total_moves $curr_rightmost] ? [dict get $total_moves $curr_rightmost] : 0.0}]}]
+        set next_x_moved [expr {$next_x - [expr {[dict exists $total_moves $next_leftmost] ? [dict get $total_moves $next_leftmost] : 0.0}]}]
         
         if {$curr_x1_moved >= $next_x_moved} {
           # Merge groups

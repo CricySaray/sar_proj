@@ -20,7 +20,9 @@
 # update    : 2025/08/19 17:39:57 Tuesday
 #             (U003) Solve the problem of entering an infinite loop
 #             (U004) add forceInsert result flag for partial space expansion
-# update    : 2025/08/20 Optimize movement logic with contiguous block grouping
+# update    : 2025/08/20 21:11:03 Wednesday
+#             (U005) Optimize movement logic with contiguous block grouping
+#             (U006) Optimize checking overlap in finally
 # TODO      : (U001) cantMoveList: [list IP mem physicalCell(endcap welltap[can move small distance]) ...]
 # ref       : link url
 # --------------------------
@@ -554,7 +556,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   }
 
   # --------------------------
-  # Modified movement logic using contiguous groups
+  # Modified movement logic using contiguous groups U005
   # --------------------------
   set total_moves [dict create]
   set remaining_distance $delta
@@ -928,8 +930,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     puts "==========================================================="
   }
 
-# --------------------------
-  # Post-movement overlap check
+  # --------------------------
+  # Post-movement overlap check U006
   # --------------------------
   if {$debug} {puts "\n===== Starting Post-Movement Overlap Check ====="}
   

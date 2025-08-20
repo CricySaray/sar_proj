@@ -927,76 +927,83 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     puts "==========================================================="
   }
-  # --------------------------
+
+# --------------------------
   # Post-movement overlap check
   # --------------------------
   if {$debug} {puts "\n===== Starting Post-Movement Overlap Check ====="}
-  # Create list of moved rectangles with updated coordinates
-  set moved_rects [list]
-  foreach rect $target_row_rects {
-    lassign $rect instname coords is_left is_right width
+  
+  # Create a sorted list of original rectangles (left to right)
+  set sorted_final_rects [lsort -command {
+    apply {{a b} {
+      set x1 [lindex $a 1]
+      set x2 [lindex $b 1]
+      if {$x1 < $x2} {return -1}
+      if {$x1 > $x2} {return 1}
+      return 0
+    }}
+  } [lmap rect $target_row_rects {
+    lassign $rect instname coords
     lassign $coords x y x1 y1
-    # Check if this rectangle was moved
-    set moved 0
-    foreach move $move_list {
-      lassign $move m_inst m_data
-      lassign $m_data m_dir m_dist
-      if {$m_inst eq $instname} {
-        # Update coordinates based on movement
-        if {$m_dir eq "right"} {
-          set new_x [expr {$x + $m_dist}]
-          set new_x1 [expr {$x1 + $m_dist}]
-        } else {
-          set new_x [expr {$x - $m_dist}]
-          set new_x1 [expr {$x1 - $m_dist}]
-        }
-        lappend moved_rects [list $instname [list $new_x $y $new_x1 $y1]]
-        if {$debug} {
-          puts "Moved $instname: original ($x, $x1) → new ($new_x, $new_x1)"
-        }
-        set moved 1
-        break
+    list $instname $x $y $x1 $y1  ;# Store as {instname x y x1 y1}
+  }]]
+  
+  # Update positions based on move_list
+  foreach move $move_list {
+    lassign $move inst data
+    lassign $data dir dist
+    
+    # Find the rectangle in our sorted list
+    set idx [lsearch -index 0 $sorted_final_rects $inst]
+    if {$idx != -1} {
+      lassign [lindex $sorted_final_rects $idx] instname x y x1 y1
+      
+      # Calculate new position based on direction
+      if {$dir eq "right"} {
+        set new_x [expr {$x + $dist}]
+        set new_x1 [expr {$x1 + $dist}]
+      } else {
+        set new_x [expr {$x - $dist}]
+        set new_x1 [expr {$x1 - $dist}]
       }
-    }
-    # Add original coordinates if not moved
-    if {!$moved} {
-      lappend moved_rects [list $instname $coords]
+      
+      # Update the rectangle in the list
+      lset sorted_final_rects $idx [list $instname $new_x $y $new_x1 $y1]
+      
       if {$debug} {
-        puts "Unmoved $instname: ($x, $x1)"
+        puts "Updated $instname: ($x, $x1) → ($new_x, $new_x1)"
       }
     }
   }
-  # Check for overlaps in moved rectangles
+  
+  # Sort again after all updates to ensure left-to-right order
+  set sorted_final_rects [lsort -real -index 1 $sorted_final_rects]
+  
+  # Check for overlaps in sequential order
   set post_overlap 0
-  set moved_count [llength $moved_rects]
-  set moved_indices [list]
-  for {set i 0} {$i < $moved_count} {incr i} {
-    lappend moved_indices $i
-  }
-  foreach i $moved_indices {
-    set r1 [lindex $moved_rects $i 1]
-    lassign $r1 x1 y1 x1_1 y1_1
-    set inst1 [lindex $moved_rects $i 0]
-    foreach j [lrange $moved_indices [expr {$i + 1}] end] {
-      set r2 [lindex $moved_rects $j 1]
-      lassign $r2 x2 y2 x2_1 y2_1
-      set inst2 [lindex $moved_rects $j 0]
-      if {!($x1_1 <= $x2 || $x2_1 <= $x1)} {
-        if {$debug} {
-          puts "OVERLAP DETECTED: $inst1 ($x1, $x1_1) and $inst2 ($x2, $x2_1)"
-        }
-        set post_overlap 1
-        break
+  set rect_count [llength $sorted_final_rects]
+  
+  for {set i 0} {$i < [expr {$rect_count - 1}]} {incr i} {
+    lassign [lindex $sorted_final_rects $i] inst1 x1 y1 x1_1 y1_1
+    lassign [lindex $sorted_final_rects [expr {$i + 1}]] inst2 x2 y2 x2_1 y2_1
+    
+    if {$x1_1 > $x2} {
+      if {$debug} {
+        puts "OVERLAP DETECTED: $inst1 ($x1, $x1_1) and $inst2 ($x2, $x2_1)"
       }
+      set post_overlap 1
+      break
     }
-    if {$post_overlap} break
   }
+  
   if {$post_overlap} {
     if {$debug} {puts "===== Post-Movement Check Failed: Overlaps Detected ====="}
     return [list "no" [list] [list]]
   } else {
     if {$debug} {puts "===== Post-Movement Check Passed: No Overlaps ====="}
   }
+    
+
   # Calculate free region position, adjusting for left movements
   set target_gap_bl [lindex $target_gap end]
   lassign $target_gap_bl original_gap_x original_gap_y

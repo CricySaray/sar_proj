@@ -17,8 +17,7 @@
 # --------------------------
 source ./proc_judge_ifHaveSpaceToInsertBuffer_findNearestPosition.invsGUI.tcl; # judge_ifHaveSpaceToInsertBuffer_findNearestPosition
 source ./proc_get_blank_box.invs.tcl; # get_blank_box
-#source ./proc_expandSpace_byMovingInst.invsGUI.tcl; # expandSpace_byMovingInst
-source ./test2.tcl; # expandSpace_byMovingInst
+source ./proc_expandSpace_byMovingInst.invsGUI.tcl; # expandSpace_byMovingInst
 source ../../../packages/logic_AND_OR.package.tcl; # er
 source ../../../packages/every_any.package.tcl; # every
 source ../lut_build/operateLUT.tcl; # operateLUT

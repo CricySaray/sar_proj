@@ -441,39 +441,47 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set left_groups [list]
   set right_groups [list]
 
-  # Helper procedure to create contiguous groups
-  proc create_contiguous_groups {rects sorted_rects} {
-    if {[llength $rects] == 0} {
-      return [list]
-    }
-    set groups [list]
-    set current_group [list [lindex $rects 0 0]]
-    set prev_inst [lindex $rects 0 0]
-    # Find index of previous instance in sorted_rects
-    set prev_idx [lsearch -index 0 $sorted_rects $prev_inst]
-    lassign [lindex $sorted_rects $prev_idx 1] _ _ prev_x1 _
+	# Helper procedure to create contiguous rectangle groups
+	proc create_contiguous_groups {rects sorted_rects} {
+		if {[llength $rects] == 0} {
+			return [list]
+		}
+		set groups [list]
+		# Start group with the first rectangle
+		set current_group [list [lindex $rects 0 0]]
+		set prev_inst [lindex $rects 0 0]
+		
+		# Find index of previous instance in sorted_rects
+		set prev_idx [lsearch -index 0 $sorted_rects $prev_inst]
+		# Get previous rectangle's x1 coordinate (bottom-right x)
+		lassign [lindex $sorted_rects $prev_idx 1] prev_x prev_y prev_x1 prev_y1
 
-    for {set i 1} {$i < [llength $rects]} {incr i} {
-      set curr_inst [lindex $rects $i 0]
-      set curr_idx [lsearch -index 0 $sorted_rects $curr_inst]
-      lassign [lindex $sorted_rects $curr_idx 1] curr_x _ _ _
-      
-      if {$curr_x == $prev_x1} {
-        # Contiguous, add to current group
-        lappend current_group $curr_inst
-      } else {
-        # Not contiguous, start new group
-        lappend groups $current_group
-        set current_group [list $curr_inst]
-      }
-      # Update previous values
-      set prev_inst $curr_inst
-      set prev_idx $curr_idx
-      lassign [lindex $sorted_rects $prev_idx 1] _ _ prev_x1 _
-    }
-    lappend groups $current_group
-    return $groups
-  }
+		for {set i 1} {$i < [llength $rects]} {incr i} {
+			set curr_inst [lindex $rects $i 0]
+			set curr_idx [lsearch -index 0 $sorted_rects $curr_inst]
+			# Get current rectangle's x coordinate (bottom-left x)
+			lassign [lindex $sorted_rects $curr_idx 1] curr_x curr_y curr_x1 curr_y1
+			
+			# Key check: determine if previous rectangle's x1 equals current rectangle's x
+			# i.e., previous rectangle's bottom-right x equals current rectangle's bottom-left x
+			if {$prev_x1 == $curr_x} {
+				# Contiguous, add to current group
+				lappend current_group $curr_inst
+			} else {
+				# Not contiguous, start new group
+				lappend groups $current_group
+				set current_group [list $curr_inst]
+			}
+			# Update previous rectangle info to current rectangle
+			set prev_inst $curr_inst
+			set prev_idx $curr_idx
+			lassign [lindex $sorted_rects $prev_idx 1] prev_x prev_y prev_x1 prev_y1
+		}
+		# Add the last group
+		lappend groups $current_group
+		return $groups
+	}
+			
 
   # Create groups based on gap position
   if {$pos eq "between"} {

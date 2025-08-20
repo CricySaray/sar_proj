@@ -596,7 +596,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         # Left side: closest group is first in list (sorted by proximity)
         set group [lindex $left_groups 0]
         # Get max possible move for this group (limited by leftmost instance)
-        set leftmost_inst [lindex $group 0]
+        set leftmost_inst [lindex $group end]
         lassign [dict get $max_movements $leftmost_inst] max_left _
         set used [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
         set max_move [expr {$max_left - $used}]
@@ -791,7 +791,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       # Only move left groups
       set group [lindex $left_groups 0]
       # Get max possible move for this group (limited by leftmost instance)
-      set leftmost_inst [lindex $group 0]
+      set leftmost_inst [lindex $group end]
       lassign [dict get $max_movements $leftmost_inst] max_left _
       set used [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
       set max_move [expr {$max_left - $used}]

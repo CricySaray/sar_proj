@@ -620,31 +620,39 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         }
 
         set remaining_distance [expr {$remaining_distance - $actual_move}]
-        # Check if group can be merged with next group (if any)
+
+        # Check if groups can be merged (left movement specific logic)
         if {[llength $left_groups] > 1} {
           set next_group [lindex $left_groups 1]
-          # Check if current group's rightmost touches next group's leftmost
-          set curr_rightmost [lindex $group end]
+          # Current group is closer to gap, located to the right of next group
+          set curr_rightmost [lindex $group end]  ;# Rightmost rect of current group
+          set next_leftmost [lindex $next_group 0] ;# Leftmost rect of next group
+          
+          # Get original coordinates
           set curr_idx [lsearch -index 0 $sorted_rects $curr_rightmost]
-          lassign [lindex $sorted_rects $curr_idx 1] _ _ curr_x1 _
-          
-          set next_leftmost [lindex $next_group 0]
+          lassign [lindex $sorted_rects $curr_idx 1] curr_x _ _ _  ;# Left x of current rightmost
           set next_idx [lsearch -index 0 $sorted_rects $next_leftmost]
-          lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
+          lassign [lindex $sorted_rects $next_idx 1] _ _ next_x1 _ ;# Right x of next leftmost
           
-          # Calculate positions after movement
-          set curr_x1_moved [expr {$curr_x1 - [expr {[dict exists $total_moves $curr_rightmost] ? [dict get $total_moves $curr_rightmost] : 0.0}]}]
-          set next_x_moved [expr {$next_x - [expr {[dict exists $total_moves $next_leftmost] ? [dict get $total_moves $next_leftmost] : 0.0}]}]
+          # Safe get movement distances
+          set curr_move [expr {[dict exists $total_moves $curr_rightmost] ? [dict get $total_moves $curr_rightmost] : 0.0}]
+          set next_move [expr {[dict exists $total_moves $next_leftmost] ? [dict get $total_moves $next_leftmost] : 0.0}]
           
-          if {$curr_x1_moved >= $next_x_moved} {
-            # Merge groups
-            set merged [concat $group $next_group]
+          # Calculate positions after movement: left-moving reduces x coordinates
+          set curr_x_moved [expr {$curr_x - $curr_move}]       ;# Current rightmost's left x after move
+          set next_x1_moved [expr {$next_x1 - $next_move}]     ;# Next leftmost's right x after move
+          
+          # Merge only if positions are exactly contiguous
+          if {$curr_x_moved == $next_x1_moved} {
+            # Left movement: next group (farther from gap) goes to the left of current group
+            set merged [concat $next_group $group]
             set left_groups [lreplace $left_groups 0 1 $merged]
             if {$debug} {
-              puts "  Merged left groups into: [join $merged ", "]"
+              puts "  Merged left groups (next → current): [join $merged ", "]"
             }
           }
         }
+
       } elseif {$move_side eq "right" && [llength $right_groups] > 0} {
         # Right side: closest group is first in list (sorted by proximity)
         set group [lindex $right_groups 0]

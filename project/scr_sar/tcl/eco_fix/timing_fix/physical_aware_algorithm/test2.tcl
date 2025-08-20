@@ -5,8 +5,8 @@
 # label     : math_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
 # descrip   : This procedure expands a specified gap by moving rectangles to create required free space, considering group-based 
-# 						movement for contiguous blocks. It generates a movement list ordered by distance from the gap (farthest first) with 
-# 						all moves on one side grouped together before the other.
+#             movement for contiguous blocks. It generates a movement list ordered by distance from the gap (farthest first) with 
+#             all moves on one side grouped together before the other.
 # return    : [list $result_flag $expandedRegionLoc $move_list]
 #             consist of:
 #             $result_flag: yes|no|forceInsert
@@ -20,6 +20,7 @@
 # update    : 2025/08/19 17:39:57 Tuesday
 #             (U003) Solve the problem of entering an infinite loop
 #             (U004) add forceInsert result flag for partial space expansion
+# update    : 2025/08/20 Optimize movement logic with contiguous block grouping
 # TODO      : (U001) cantMoveList: [list IP mem physicalCell(endcap welltap[can move small distance]) ...]
 # ref       : link url
 # --------------------------
@@ -325,7 +326,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     # Sort right rectangles by proximity to gap (ascending x = closer)
     set move_right_list [lsort -real -index 2 $move_right_list]
-    # Valid if total movable distance â‰¥ delta or there's partial movement possible
+    # Valid if total movable distance ≥ delta or there's partial movement possible
     set total_possible $total_right_possible
     if {$total_possible >= $delta} { ; # U003
       set valid 1
@@ -355,7 +356,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     # Sort left rectangles by proximity to gap (descending x1 = closer)
     set move_left_list [lsort -decreasing -real -index 2 $move_left_list]
-    # Valid if total movable distance â‰¥ delta or there's partial movement possible
+    # Valid if total movable distance ≥ delta or there's partial movement possible
     set total_possible $total_left_possible
     if {$total_possible >= $delta} {
       set valid 1
@@ -403,7 +404,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     # Sort right rectangles by proximity to gap (ascending x = closer)
     set move_right_list [lsort -real -index 2 $move_right_list]
-    # Valid if total movable distance â‰¥ delta or there's partial movement possible
+    # Valid if total movable distance ≥ delta or there's partial movement possible
     set total_possible [expr {$total_left_possible + $total_right_possible}]
     if {$total_possible >= $delta} {
       set valid 1
@@ -420,375 +421,370 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     if {$debug} {puts "No valid movement possible for required expansion (delta=$delta)"}
     return [list $result_flag $free_region $move_list]
   }
-  # Generate movement list with alternating proximity-based strategy
-  # Track total movement for each instance using dict
-  set total_moves [dict create]
-  if {$pos eq "between"} {
-    if {$debug} {puts "\n===== Starting Between-Gap Alternating Movement ====="}
-    # Between gap: alternate between sides with most available movement
-    set remaining_distance $delta
-    set left_group [list]  ;# current left group (instnames)
-    set right_group [list] ;# current right group (instnames)
-    set left_idx 0         ;# index for next left rectangle to add to group
-    set right_idx 0        ;# index for next right rectangle to add to group
-    set step 1
-    # Initialize with closest rectangles to gap
-    if {[llength $move_left_list] > 0} {
-      set left_inst [lindex $move_left_list 0 0]
-      lappend left_group $left_inst
-      if {$debug} {puts "Initial left group: $left_inst"}
-      set left_idx 1
+
+  # --------------------------
+  # New grouping logic for contiguous blocks
+  # --------------------------
+  set left_groups [list]
+  set right_groups [list]
+
+  # Helper procedure to create contiguous groups
+  proc create_contiguous_groups {rects sorted_rects} {
+    if {[llength $rects] == 0} {
+      return [list]
     }
-    if {[llength $move_right_list] > 0} {
-      set right_inst [lindex $move_right_list 0 0]
-      lappend right_group $right_inst
-      if {$debug} {puts "Initial right group: $right_inst"}
-      set right_idx 1
-    }
-    # Modified loop condition to prevent infinite loop
-    while {$remaining_distance > 0} {
-      # Check if there's any possible movement left
-      set has_possible_move 0
-      if {[llength $left_group] > 0} {
-        set leftmost_inst [lindex $left_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        if {($max_left - $used_move) > 0} {
-          set has_possible_move 1
-        }
-      }
-      if {[llength $right_group] > 0} {
-        set rightmost_inst [lindex $right_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        if {($max_right - $used_move) > 0} {
-          set has_possible_move 1
-        }
-      }
-      # If no possible movement, break loop to prevent infinite loop
-      if {!$has_possible_move && $left_idx >= [llength $move_left_list] && $right_idx >= [llength $move_right_list]} {
-        if {$debug} {puts "No more possible movement, breaking loop"}
-        break
-      }
-      if {$debug} {
-        puts "\n----- Movement Step $step -----"
-        puts "Remaining distance needed: $remaining_distance"
-        puts "Current left group: $left_group"
-        puts "Current right group: $right_group"
-      }
-      # Calculate group-level available movement (treating group as a single unit)
-      set left_available 0.0
-      if {[llength $left_group] > 0} {
-        # For left group (moving left), max distance is determined by leftmost rectangle
-        set leftmost_inst [lindex $left_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        set left_available [expr {$max_left - $used_move}]
-      }
-      set right_available 0.0
-      if {[llength $right_group] > 0} {
-        # For right group (moving right), max distance is determined by rightmost rectangle
-        set rightmost_inst [lindex $right_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        set right_available [expr {$max_right - $used_move}]
-      }
-      if {$debug} {
-        puts "Left group available movement (based on leftmost): $left_available"
-        puts "Right group available movement (based on rightmost): $right_available"
-      }
-      # Determine movement direction using explicit flag
-      set direction ""
-      if {$left_available > 0 && $right_available > 0} {
-        # Both sides available - choose one with more available movement
-        if {$left_available >= $right_available} {
-          set direction "left"
-        } else {
-          set direction "right"
-        }
-      } elseif {$left_available > 0} {
-        # Only left available
-        set direction "left"
-      } elseif {$right_available > 0} {
-        # Only right available
-        set direction "right"
+    set groups [list]
+    set current_group [list [lindex $rects 0 0]]
+    set prev_inst [lindex $rects 0 0]
+    # Find index of previous instance in sorted_rects
+    set prev_idx [lsearch -index 0 $sorted_rects $prev_inst]
+    lassign [lindex $sorted_rects $prev_idx 1] _ _ prev_x1 _
+
+    for {set i 1} {$i < [llength $rects]} {incr i} {
+      set curr_inst [lindex $rects $i 0]
+      set curr_idx [lsearch -index 0 $sorted_rects $curr_inst]
+      lassign [lindex $sorted_rects $curr_idx 1] curr_x _ _ _
+      
+      if {$curr_x == $prev_x1} {
+        # Contiguous, add to current group
+        lappend current_group $curr_inst
       } else {
-        # No immediate movement available - try to expand groups
-        if {$debug} {puts "No immediate movement available, attempting to expand groups"}
-        # Try to expand left group first if possible
-        if {$left_idx < [llength $move_left_list]} {
-          set next_left [lindex $move_left_list $left_idx 0]
-          lappend left_group $next_left
-          if {$debug} {puts "Expanded left group with $next_left (now: $left_group)"}
-          incr left_idx
-          # Recalculate left available movement with new group
-          set leftmost_inst [lindex $left_group 0]
-          lassign [dict get $max_movements $leftmost_inst] max_left _
-          set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-          set left_available [expr {$max_left - $used_move}]
-          set direction "left"
-        # If left group can't expand, try right group
-        } elseif {$right_idx < [llength $move_right_list]} {
-          set next_right [lindex $move_right_list $right_idx 0]
-          lappend right_group $next_right
-          if {$debug} {puts "Expanded right group with $next_right (now: $right_group)"}
-          incr right_idx
-          # Recalculate right available movement with new group
-          set rightmost_inst [lindex $right_group end]
-          lassign [dict get $max_movements $rightmost_inst] _ max_right
-          set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-          set right_available [expr {$max_right - $used_move}]
-          set direction "right"
-        } else {
-          # No more groups to expand, break loop
-          if {$debug} {puts "No more groups to expand, breaking loop"}
-          break
-        }
+        # Not contiguous, start new group
+        lappend groups $current_group
+        set current_group [list $curr_inst]
       }
-      if {$debug} {puts "Selected movement direction: $direction"}
-      if {$direction eq "left"} {
-        # Calculate how much we can move this group
-        set move_distance [expr {min($left_available, $remaining_distance)}]
-        # Move all rectangles in left group by this distance
-        foreach inst $left_group {
-          set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-          set new_move [expr {$current_move + $move_distance}]
-          dict set total_moves $inst $new_move
-          if {$debug} {puts "Updated $inst left move: $new_move (total)"}
-        }
-        # Update remaining distance
-        set remaining_distance [expr {$remaining_distance - $move_distance}]
-        if {$debug} {
-          puts "Moved left group by $move_distance"
-          puts "Remaining distance after move: $remaining_distance"
-        }
-        # Check if left group has reached maximum movement (based on leftmost)
-        set leftmost_inst [lindex $left_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set current_move [dict get $total_moves $leftmost_inst]
-        set group_maxed [expr {$current_move >= $max_left ? 1 : 0}]
-        # If group is maxed out and we still need more distance, add next rectangle to group
-        if {$group_maxed && $remaining_distance > 0 && $left_idx < [llength $move_left_list]} {
-          set next_left [lindex $move_left_list $left_idx 0]
-          lappend left_group $next_left
-          if {$debug} {puts "Added $next_left to left group (now group: $left_group)"}
-          incr left_idx
-        }
-      } else {
-        # Calculate how much we can move this group
-        set move_distance [expr {min($right_available, $remaining_distance)}]
-        # Move all rectangles in right group by this distance
-        foreach inst $right_group {
-          set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-          set new_move [expr {$current_move + $move_distance}]
-          dict set total_moves $inst $new_move
-          if {$debug} {puts "Updated $inst right move: $new_move (total)"}
-        }
-        # Update remaining distance
-        set remaining_distance [expr {$remaining_distance - $move_distance}]
-        if {$debug} {
-          puts "Moved right group by $move_distance"
-          puts "Remaining distance after move: $remaining_distance"
-        }
-        # Check if right group has reached maximum movement (based on rightmost)
-        set rightmost_inst [lindex $right_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set current_move [dict get $total_moves $rightmost_inst]
-        set group_maxed [expr {$current_move >= $max_right ? 1 : 0}]
-        # If group is maxed out and we still need more distance, add next rectangle to group
-        if {$group_maxed && $remaining_distance > 0 && $right_idx < [llength $move_right_list]} {
-          set next_right [lindex $move_right_list $right_idx 0]
-          lappend right_group $next_right
-          if {$debug} {puts "Added $next_right to right group (now group: $right_group)"}
-          incr right_idx
-        }
-      }
-      incr step
+      # Update previous values
+      set prev_inst $curr_inst
+      set prev_idx $curr_idx
+      lassign [lindex $sorted_rects $prev_idx 1] _ _ prev_x1 _
     }
-    if {$debug} {puts "===== Completed Between-Gap Alternating Movement ====="}
-  } elseif {$pos eq "left"} {
-    if {$debug} {puts "\n===== Starting Left-Gap Sequential Movement ====="}
-    # Left gap: move right, starting with closest rectangle
-    set remaining_distance $delta
-    set current_group [list] ;# {instnames}
-    set idx 0
-    set step 1
-    # Initialize with closest rectangle to gap
-    if {[llength $move_right_list] > 0} {
-      set first_inst [lindex $move_right_list 0 0]
-      lappend current_group $first_inst
-      if {$debug} {puts "Initial right group: $first_inst"}
-      set idx 1
-    }
-    # Modified loop condition to prevent infinite loop
-    while {$remaining_distance > 0} {
-      # Check if there's any possible movement left
-      set has_possible_move 0
-      if {[llength $current_group] > 0} {
-        set rightmost_inst [lindex $current_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        if {($max_right - $used_move) > 0} {
-          set has_possible_move 1
-        }
-      }
-      # If no possible movement and no more groups to expand, break loop
-      if {!$has_possible_move && $idx >= [llength $move_right_list]} {
-        if {$debug} {puts "No more possible movement, breaking loop"}
-        break
-      }
-      if {$debug} {
-        puts "\n----- Movement Step $step -----"
-        puts "Remaining distance needed: $remaining_distance"
-        puts "Current right group: $current_group"
-      }
-      # Calculate group-level available movement (based on rightmost rectangle)
-      set group_available 0.0
-      if {[llength $current_group] > 0} {
-        set rightmost_inst [lindex $current_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        set group_available [expr {$max_right - $used_move}]
-      }
-      if {$debug} {puts "Group available movement (based on rightmost): $group_available"}
-      # If no available movement, try to expand the group
-      if {$group_available <= 0 && $idx < [llength $move_right_list]} {
-        set next_inst [lindex $move_right_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Expanded group with $next_inst (now: $current_group)"}
-        incr idx
-        # Recalculate available movement with new group
-        set rightmost_inst [lindex $current_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        set group_available [expr {$max_right - $used_move}]
-      } elseif {$group_available <= 0} {
-        # No more movement possible
-        if {$debug} {puts "No more movement possible, breaking loop"}
-        break
-      }
-      # Calculate how much we can move this group
-      set move_distance [expr {min($group_available, $remaining_distance)}]
-      # Move all rectangles in group by this distance
-      foreach inst $current_group {
-        set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-        set new_move [expr {$current_move + $move_distance}]
-        dict set total_moves $inst $new_move
-        if {$debug} {puts "Updated $inst move: $new_move (total)"}
-      }
-      # Update remaining distance
-      set remaining_distance [expr {$remaining_distance - $move_distance}]
-      if {$debug} {
-        puts "Moved group by $move_distance"
-        puts "Remaining distance after move: $remaining_distance"
-      }
-      # Check if group has reached maximum movement (based on rightmost)
-      set rightmost_inst [lindex $current_group end]
-      lassign [dict get $max_movements $rightmost_inst] _ max_right
-      set current_move [dict get $total_moves $rightmost_inst]
-      set group_maxed [expr {$current_move >= $max_right ? 1 : 0}]
-      # If group is maxed out and we still need more distance, add next rectangle to group
-      if {$group_maxed && $remaining_distance > 0 && $idx < [llength $move_right_list]} {
-        set next_inst [lindex $move_right_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Added $next_inst to group (now group: $current_group)"}
-        incr idx
-      }
-      incr step
-    }
-    if {$debug} {puts "===== Completed Left-Gap Sequential Movement ====="}
-  } elseif {$pos eq "right"} {
-    if {$debug} {puts "\n===== Starting Right-Gap Sequential Movement ====="}
-    # Right gap: move left, starting with closest rectangle
-    set remaining_distance $delta
-    set current_group [list] ;# {instnames}
-    set idx 0
-    set step 1
-    # Initialize with closest rectangle to gap
-    if {[llength $move_left_list] > 0} {
-      set first_inst [lindex $move_left_list 0 0]
-      lappend current_group $first_inst
-      if {$debug} {puts "Initial left group: $first_inst"}
-      set idx 1
-    }
-    # Modified loop condition to prevent infinite loop
-    while {$remaining_distance > 0} {
-      # Check if there's any possible movement left
-      set has_possible_move 0
-      if {[llength $current_group] > 0} {
-        set leftmost_inst [lindex $current_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        if {($max_left - $used_move) > 0} {
-          set has_possible_move 1
-        }
-      }
-      # If no possible movement and no more groups to expand, break loop
-      if {!$has_possible_move && $idx >= [llength $move_left_list]} {
-        if {$debug} {puts "No more possible movement, breaking loop"}
-        break
-      }
-      if {$debug} {
-        puts "\n----- Movement Step $step -----"
-        puts "Remaining distance needed: $remaining_distance"
-        puts "Current left group: $current_group"
-      }
-      # Calculate group-level available movement (based on leftmost rectangle)
-      set group_available 0.0
-      if {[llength $current_group] > 0} {
-        set leftmost_inst [lindex $current_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        set group_available [expr {$max_left - $used_move}]
-      }
-      if {$debug} {puts "Group available movement (based on leftmost): $group_available"}
-      # If no available movement, try to expand the group
-      if {$group_available <= 0 && $idx < [llength $move_left_list]} {
-        set next_inst [lindex $move_left_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Expanded group with $next_inst (now: $current_group)"}
-        incr idx
-        # Recalculate available movement with new group
-        set leftmost_inst [lindex $current_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        set group_available [expr {$max_left - $used_move}]
-      } elseif {$group_available <= 0} {
-        # No more movement possible
-        if {$debug} {puts "No more movement possible, breaking loop"}
-        break
-      }
-      # Calculate how much we can move this group
-      set move_distance [expr {min($group_available, $remaining_distance)}]
-      # Move all rectangles in group by this distance
-      foreach inst $current_group {
-        set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-        set new_move [expr {$current_move + $move_distance}]
-        dict set total_moves $inst $new_move
-        if {$debug} {puts "Updated $inst move: $new_move (total)"}
-      }
-      # Update remaining distance
-      set remaining_distance [expr {$remaining_distance - $move_distance}]
-      if {$debug} {
-        puts "Moved group by $move_distance"
-        puts "Remaining distance after move: $remaining_distance"
-      }
-      # Check if group has reached maximum movement (based on leftmost)
-      set leftmost_inst [lindex $current_group 0]
-      lassign [dict get $max_movements $leftmost_inst] max_left _
-      set current_move [dict get $total_moves $leftmost_inst]
-      set group_maxed [expr {$current_move >= $max_left ? 1 : 0}]
-      # If group is maxed out and we still need more distance, add next rectangle to group
-      if {$group_maxed && $remaining_distance > 0 && $idx < [llength $move_left_list]} {
-        set next_inst [lindex $move_left_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Added $next_inst to group (now group: $current_group)"}
-        incr idx
-      }
-      incr step
-    }
-    if {$debug} {puts "===== Completed Right-Gap Sequential Movement ====="}
+    lappend groups $current_group
+    return $groups
   }
+
+  # Create groups based on gap position
+  if {$pos eq "between"} {
+    # Left groups (move left)
+    set left_rects $move_left_list
+    set left_groups [create_contiguous_groups $left_rects $sorted_rects]
+    # Right groups (move right)
+    set right_rects $move_right_list
+    set right_groups [create_contiguous_groups $right_rects $sorted_rects]
+
+    if {$debug} {
+      puts "\n===== Contiguous Block Groups ====="
+      puts "Left side groups ([llength $left_groups] total):"
+      for {set i 0} {$i < [llength $left_groups]} {incr i} {
+        puts "  Group $i: [join [lindex $left_groups $i] ", "]"
+      }
+      puts "Right side groups ([llength $right_groups] total):"
+      for {set i 0} {$i < [llength $right_groups]} {incr i} {
+        puts "  Group $i: [join [lindex $right_groups $i] ", "]"
+      }
+      puts "===================================="
+    }
+  } elseif {$pos eq "left"} {
+    # Only right groups (move right)
+    set right_rects $move_right_list
+    set right_groups [create_contiguous_groups $right_rects $sorted_rects]
+
+    if {$debug} {
+      puts "\n===== Contiguous Block Groups ====="
+      puts "Right side groups ([llength $right_groups] total):"
+      for {set i 0} {$i < [llength $right_groups]} {incr i} {
+        puts "  Group $i: [join [lindex $right_groups $i] ", "]"
+      }
+      puts "===================================="
+    }
+  } elseif {$pos eq "right"} {
+    # Only left groups (move left)
+    set left_rects $move_left_list
+    set left_groups [create_contiguous_groups $left_rects $sorted_rects]
+
+    if {$debug} {
+      puts "\n===== Contiguous Block Groups ====="
+      puts "Left side groups ([llength $left_groups] total):"
+      for {set i 0} {$i < [llength $left_groups]} {incr i} {
+        puts "  Group $i: [join [lindex $left_groups $i] ", "]"
+      }
+      puts "===================================="
+    }
+  }
+
+  # --------------------------
+  # Modified movement logic using contiguous groups
+  # --------------------------
+  set total_moves [dict create]
+  set remaining_distance $delta
+
+  if {$pos eq "between"} {
+    if {$debug} {puts "\n===== Starting Between-Gap Group Movement ====="}
+    set step 1
+    while {$remaining_distance > 0 && ([llength $left_groups] > 0 || [llength $right_groups] > 0)} {
+      # Calculate total possible movement for each side
+      set left_total 0.0
+      foreach group $left_groups {
+        foreach inst $group {
+          lassign [dict get $max_movements $inst] max_left _
+          set used [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+          append left_total [expr {$max_left - $used}]
+        }
+      }
+      set right_total 0.0
+      foreach group $right_groups {
+        foreach inst $group {
+          lassign [dict get $max_movements $inst] _ max_right
+          set used [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+          append right_total [expr {$max_right - $used}]
+        }
+      }
+
+      # Determine which side to move
+      set move_side ""
+      if {$left_total <= 0 && $right_total <= 0} {
+        break
+      } elseif {$left_total >= $right_total} {
+        set move_side "left"
+      } else {
+        set move_side "right"
+      }
+
+      # Move closest group to gap on selected side
+      if {$move_side eq "left" && [llength $left_groups] > 0} {
+        # Left side: closest group is first in list (sorted by proximity)
+        set group [lindex $left_groups 0]
+        # Get max possible move for this group (limited by leftmost instance)
+        set leftmost_inst [lindex $group 0]
+        lassign [dict get $max_movements $leftmost_inst] max_left _
+        set used [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
+        set max_move [expr {$max_left - $used}]
+        set actual_move [expr {min($max_move, $remaining_distance)}]
+
+        if {$actual_move <= 0} {
+          # Remove group if no movement possible
+          set left_groups [lrange $left_groups 1 end]
+          continue
+        }
+
+        # Apply movement to all instances in group
+        foreach inst $group {
+          set curr [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+          dict set total_moves $inst [expr {$curr + $actual_move}]
+        }
+
+        if {$debug} {
+          puts "Step $step: Moved left group [join $group ", "] by $actual_move"
+          puts "  Remaining distance: [expr {$remaining_distance - $actual_move}]"
+        }
+
+        set remaining_distance [expr {$remaining_distance - $actual_move}]
+        # Check if group can be merged with next group (if any)
+        if {[llength $left_groups] > 1} {
+          set next_group [lindex $left_groups 1]
+          # Check if current group's rightmost touches next group's leftmost
+          set curr_rightmost [lindex $group end]
+          set curr_idx [lsearch -index 0 $sorted_rects $curr_rightmost]
+          lassign [lindex $sorted_rects $curr_idx 1] _ _ curr_x1 _
+          
+          set next_leftmost [lindex $next_group 0]
+          set next_idx [lsearch -index 0 $sorted_rects $next_leftmost]
+          lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
+          
+          # Calculate positions after movement
+          set curr_x1_moved [expr {$curr_x1 - [dict get $total_moves $curr_rightmost]}]
+          set next_x_moved [expr {$next_x - [dict get $total_moves $next_leftmost]}]
+          
+          if {$curr_x1_moved >= $next_x_moved} {
+            # Merge groups
+            set merged [concat $group $next_group]
+            set left_groups [lreplace $left_groups 0 1 $merged]
+            if {$debug} {
+              puts "  Merged left groups into: [join $merged ", "]"
+            }
+          }
+        }
+      } elseif {$move_side eq "right" && [llength $right_groups] > 0} {
+        # Right side: closest group is first in list (sorted by proximity)
+        set group [lindex $right_groups 0]
+        # Get max possible move for this group (limited by rightmost instance)
+        set rightmost_inst [lindex $group end]
+        lassign [dict get $max_movements $rightmost_inst] _ max_right
+        set used [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
+        set max_move [expr {$max_right - $used}]
+        set actual_move [expr {min($max_move, $remaining_distance)}]
+
+        if {$actual_move <= 0} {
+          # Remove group if no movement possible
+          set right_groups [lrange $right_groups 1 end]
+          continue
+        }
+
+        # Apply movement to all instances in group
+        foreach inst $group {
+          set curr [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+          dict set total_moves $inst [expr {$curr + $actual_move}]
+        }
+
+        if {$debug} {
+          puts "Step $step: Moved right group [join $group ", "] by $actual_move"
+          puts "  Remaining distance: [expr {$remaining_distance - $actual_move}]"
+        }
+
+        set remaining_distance [expr {$remaining_distance - $actual_move}]
+        # Check if group can be merged with next group (if any)
+        if {[llength $right_groups] > 1} {
+          set next_group [lindex $right_groups 1]
+          # Check if current group's rightmost touches next group's leftmost
+          set curr_rightmost [lindex $group end]
+          set curr_idx [lsearch -index 0 $sorted_rects $curr_rightmost]
+          lassign [lindex $sorted_rects $curr_idx 1] _ _ curr_x1 _
+          
+          set next_leftmost [lindex $next_group 0]
+          set next_idx [lsearch -index 0 $sorted_rects $next_leftmost]
+          lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
+          
+          # Calculate positions after movement
+          set curr_x1_moved [expr {$curr_x1 + [dict get $total_moves $curr_rightmost]}]
+          set next_x_moved [expr {$next_x + [dict get $total_moves $next_leftmost]}]
+          
+          if {$curr_x1_moved >= $next_x_moved} {
+            # Merge groups
+            set merged [concat $group $next_group]
+            set right_groups [lreplace $right_groups 0 1 $merged]
+            if {$debug} {
+              puts "  Merged right groups into: [join $merged ", "]"
+            }
+          }
+        }
+      }
+      incr step
+    }
+    if {$debug} {puts "===== Completed Between-Gap Group Movement ====="}
+  } elseif {$pos eq "left"} {
+    if {$debug} {puts "\n===== Starting Left-Gap Group Movement ====="}
+    set step 1
+    while {$remaining_distance > 0 && [llength $right_groups] > 0} {
+      # Only move right groups
+      set group [lindex $right_groups 0]
+      # Get max possible move for this group (limited by rightmost instance)
+      set rightmost_inst [lindex $group end]
+      lassign [dict get $max_movements $rightmost_inst] _ max_right
+      set used [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
+      set max_move [expr {$max_right - $used}]
+      set actual_move [expr {min($max_move, $remaining_distance)}]
+
+      if {$actual_move <= 0} {
+        # Remove group if no movement possible
+        set right_groups [lrange $right_groups 1 end]
+        continue
+      }
+
+      # Apply movement to all instances in group
+      foreach inst $group {
+        set curr [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+        dict set total_moves $inst [expr {$curr + $actual_move}]
+      }
+
+      if {$debug} {
+        puts "Step $step: Moved right group [join $group ", "] by $actual_move"
+        puts "  Remaining distance: [expr {$remaining_distance - $actual_move}]"
+      }
+
+      set remaining_distance [expr {$remaining_distance - $actual_move}]
+      # Check if group can be merged with next group (if any)
+      if {[llength $right_groups] > 1} {
+        set next_group [lindex $right_groups 1]
+        # Check if current group's rightmost touches next group's leftmost
+        set curr_rightmost [lindex $group end]
+        set curr_idx [lsearch -index 0 $sorted_rects $curr_rightmost]
+        lassign [lindex $sorted_rects $curr_idx 1] _ _ curr_x1 _
+        
+        set next_leftmost [lindex $next_group 0]
+        set next_idx [lsearch -index 0 $sorted_rects $next_leftmost]
+        lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
+        
+        # Calculate positions after movement
+        set curr_x1_moved [expr {$curr_x1 + [dict get $total_moves $curr_rightmost]}]
+        set next_x_moved [expr {$next_x + [dict get $total_moves $next_leftmost]}]
+        
+        if {$curr_x1_moved >= $next_x_moved} {
+          # Merge groups
+          set merged [concat $group $next_group]
+          set right_groups [lreplace $right_groups 0 1 $merged]
+          if {$debug} {
+            puts "  Merged right groups into: [join $merged ", "]"
+          }
+        }
+      }
+      incr step
+    }
+    if {$debug} {puts "===== Completed Left-Gap Group Movement ====="}
+  } elseif {$pos eq "right"} {
+    if {$debug} {puts "\n===== Starting Right-Gap Group Movement ====="}
+    set step 1
+    while {$remaining_distance > 0 && [llength $left_groups] > 0} {
+      # Only move left groups
+      set group [lindex $left_groups 0]
+      # Get max possible move for this group (limited by leftmost instance)
+      set leftmost_inst [lindex $group 0]
+      lassign [dict get $max_movements $leftmost_inst] max_left _
+      set used [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
+      set max_move [expr {$max_left - $used}]
+      set actual_move [expr {min($max_move, $remaining_distance)}]
+
+      if {$actual_move <= 0} {
+        # Remove group if no movement possible
+        set left_groups [lrange $left_groups 1 end]
+        continue
+      }
+
+      # Apply movement to all instances in group
+      foreach inst $group {
+        set curr [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+        dict set total_moves $inst [expr {$curr + $actual_move}]
+      }
+
+      if {$debug} {
+        puts "Step $step: Moved left group [join $group ", "] by $actual_move"
+        puts "  Remaining distance: [expr {$remaining_distance - $actual_move}]"
+      }
+
+      set remaining_distance [expr {$remaining_distance - $actual_move}]
+      # Check if group can be merged with next group (if any)
+      if {[llength $left_groups] > 1} {
+        set next_group [lindex $left_groups 1]
+        # Check if current group's rightmost touches next group's leftmost
+        set curr_rightmost [lindex $group end]
+        set curr_idx [lsearch -index 0 $sorted_rects $curr_rightmost]
+        lassign [lindex $sorted_rects $curr_idx 1] _ _ curr_x1 _
+        
+        set next_leftmost [lindex $next_group 0]
+        set next_idx [lsearch -index 0 $sorted_rects $next_leftmost]
+        lassign [lindex $sorted_rects $next_idx 1] next_x _ _ _
+        
+        # Calculate positions after movement
+        set curr_x1_moved [expr {$curr_x1 - [dict get $total_moves $curr_rightmost]}]
+        set next_x_moved [expr {$next_x - [dict get $total_moves $next_leftmost]}]
+        
+        if {$curr_x1_moved >= $next_x_moved} {
+          # Merge groups
+          set merged [concat $group $next_group]
+          set left_groups [lreplace $left_groups 0 1 $merged]
+          if {$debug} {
+            puts "  Merged left groups into: [join $merged ", "]"
+          }
+        }
+      }
+      incr step
+    }
+    if {$debug} {puts "===== Completed Right-Gap Group Movement ====="}
+  }
+
+  # Check if we couldn't achieve full distance
+  if {$remaining_distance > 0 && [dict size $total_moves] > 0} {
+    set force_insert 1
+  }
+
   # Format move_list with cumulative directions and distances
   # First separate movements by side
   set left_moves [list]
@@ -884,7 +880,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         }
         lappend moved_rects [list $instname [list $new_x $y $new_x1 $y1]]
         if {$debug} {
-          puts "Moved $instname: original ($x, $x1) â†’ new ($new_x, $new_x1)"
+          puts "Moved $instname: original ($x, $x1) → new ($new_x, $new_x1)"
         }
         set moved 1
         break

@@ -10,17 +10,13 @@
 # return    : [list $result_flag $expandedRegionLoc $move_list]
 #             consist of:
 #             $result_flag: yes|no|forceInsert
-#                           yes: The existing movable space meets the requirements of the needed space and performs the movement operation.
-#                           no : The existing movable space is zero and does not perform any movement operation.
-#                           forceInsert: The existing movable space is not zero, but it does not meet the requirements of the needed space. 
-#                                       It can only move all movable rectangles as much as possible to achieve the effect of freeing up the maximum space.
 #             $expandedRegionLoc : {x y}
 #             $move_list : {{instname1 {left 1.4}} {instname2 {right 2.8}} ...}
 # update    : (U002) fix incorrect position returned when have movement to left
-# update    : 2025/08/19 17:39:57 Tuesday
-#             (U003) Solve the problem of entering an infinite loop
 #             (U004) add forceInsert result flag for partial space expansion
+#             (U005) fix variable name error (right_move_list -> move_right_list)
 # TODO      : (U001) cantMoveList: [list IP mem physicalCell(endcap welltap[can move small distance]) ...]
+#             (U003) Solve the problem of entering an infinite loop
 # ref       : link url
 # --------------------------
 source ./proc_get_objRect.invs.tcl; # get_objRect
@@ -33,6 +29,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   #   filterMovementPrecision - usually is manufacturing grid [dbget head.mfgGrid]
   #   debug - Debug switch (0=off, 1=on), default 0
   #   verbose - Verbose output switch (0=off, 1=on), default 0
+  
   # Get minimum movement unit from lookup dictionary
   set minWidth [operateLUT -type read -attr {mainCoreSiteWidth}]
   # Initialize return values
@@ -47,6 +44,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set coreRects_innerBoundaryArea [operateLUT -type read -attr {core_inner_boundary_rects}]
   set total_area {*}[dbShape -output hrect $total_area AND $coreRects_innerBoundaryArea]
   lassign $total_area total_x total_y total_x1 total_y1
+  
   # Calculate total area dimensions
   set total_width [expr {$total_x1 - $total_x}]
   set total_height [expr {$total_y1 - $total_y}]
@@ -57,6 +55,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     [list "target width" $target_w] \
     [list "target height" $target_h] \
   ]
+  
   # Check all critical dimensions are multiples of minWidth
   foreach dim $critical_dimensions {
     lassign $dim name value
@@ -90,6 +89,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     lassign $coords r_x r_y r_x1 r_y1
     set rect_width [expr {$r_x1 - $r_x}]
     set rect_height [expr {$r_y1 - $r_y}]
+    
     if {fmod($rect_width, $minWidth) != 0} {
       error "Rectangle $instname width ($rect_width) is not a multiple of minimum width ($minWidth)"
     }
@@ -109,6 +109,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     lassign $gap g_x g_y g_x1 g_y1
     set gap_width [expr {$g_x1 - $g_x}]
     set gap_height [expr {$g_y1 - $g_y}]
+    
     if {fmod($gap_width, $minWidth) != 0} {
       error "Gap width ($gap_width) at ($g_x, $g_y) is not a multiple of minimum width ($minWidth)"
     }
@@ -120,6 +121,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set first_rect [lindex $obj_rects 0 1]
   lassign $first_rect x y x1 y1
   set row_height [expr {$y1 - $y}]
+  
   # Verify target height matches row height using expr difference
   if {[expr $target_h - $row_height]} {
     if {$debug} {
@@ -130,23 +132,28 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   # Determine target row based on insert location
   set target_row_y $insert_y
   set target_row_y1 [expr {$insert_y + $row_height}]
+  
   # Filter rectangles in target row and identify boundary rectangles
   set target_row_rects [list]
   foreach rect $obj_rects {
     lassign $rect instname coords
     lassign $coords r_x r_y r_x1 r_y1
+    
     # Check if rectangle is in target row (same y range)
     if {$r_y <= $target_row_y && $r_y1 >= $target_row_y1} {
       # Check left boundary condition
       set is_left_boundary [expr {($r_x == $total_x) || ($r_x < $total_x && $r_x1 > $total_x) ? 1 : 0}]
       # Check right boundary condition
       set is_right_boundary [expr {($r_x1 == $total_x1) || ($r_x < $total_x1 && $r_x1 > $total_x1) ? 1 : 0}]
+      
       if {$verbose && ($is_left_boundary || $is_right_boundary)} {
         puts "Boundary rectangle $instname - left: $is_left_boundary, right: $is_right_boundary (cannot move)"
       }
+      
       lappend target_row_rects [list $instname $coords $is_left_boundary $is_right_boundary [expr {$r_x1 - $r_x}]]
     }
   }
+  
   if {[llength $target_row_rects] == 0} {
     if {$debug} {puts "No rectangles found in target row"}
     return [list $result_flag $free_region $move_list]
@@ -158,12 +165,15 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   for {set i 0} {$i < $rect_count} {incr i} {
     lappend rect_indices $i
   }
+  
   foreach i $rect_indices {
     set r1 [lindex $target_row_rects $i 1]
     lassign $r1 x1 y1 x1_1 y1_1
+    
     foreach j [lrange $rect_indices [expr {$i + 1}] end] {
       set r2 [lindex $target_row_rects $j 1]
       lassign $r2 x2 y2 x2_1 y2_1
+      
       if {!($x1_1 <= $x2 || $x2_1 <= $x1)} {
         if {$debug} {
           puts "Original overlapping rectangles: [lindex $target_row_rects $i 0] and [lindex $target_row_rects $j 0]"
@@ -174,6 +184,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     if {$overlap_found} break
   }
+  
   if {$overlap_found} {
     error "Overlapping rectangles detected in original target row"
   }
@@ -196,11 +207,13 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   # Calculate all gaps with their bottom-left coordinates
   set gaps [list]
   set n [llength $sorted_rects]
+  
   # Leftmost gap
   set first_rect_x [lindex $sorted_rects 0 1 0]
   set left_gap_bl [list $total_x $target_row_y]
   set left_gap_width [expr {$first_rect_x - $total_x}]
   lappend gaps [list 0 $left_gap_width "left" 0 $left_gap_bl]
+  
   # Middle gaps
   for {set i 0} {$i < [expr {$n - 1}]} {incr i} {
     set rect [lindex $sorted_rects $i]
@@ -211,6 +224,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     set gap_bl [list $curr_rect_x1 $target_row_y]
     lappend gaps [list [expr {$i + 1}] $gap_width "between" [expr {$i + 1}] $gap_bl]
   }
+  
   # Rightmost gap
   set last_rect_x1 [lindex $sorted_rects end 1 2]
   set right_gap_bl [list $last_rect_x1 $target_row_y]
@@ -246,10 +260,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set right_count [expr {$n - $left_count}]
   set original_delta [expr {$target_w - $gap_width}]
   set delta $original_delta
+  
   # Verify delta is multiple of minWidth
   if {fmod($delta, $minWidth) != 0} {
     error "Required expansion ($delta) is not a multiple of minimum width ($minWidth)"
   }
+  
   if {$delta <= 0} {
     if {$debug} {puts "Target gap is already sufficient (no movement needed)"}
     set result_flag "yes"
@@ -273,11 +289,13 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set total_right_possible 0.0 ;# total right movable distance
   # Precompute maximum possible moves for each rectangle based on adjacent gaps
   set max_movements [dict create]
+  
   # Calculate max left and right moves for each rectangle
   for {set i 0} {$i < [llength $sorted_rects]} {incr i} {
     set rect [lindex $sorted_rects $i]
     lassign $rect instname coords is_left is_right width
     lassign $coords r_x r_y r_x1 r_y1
+    
     # Calculate maximum left move: limited by left neighbor or left boundary
     if {$i == 0} {
       # First rectangle - left move limited by total area left boundary
@@ -289,6 +307,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set left_limit $prev_x1
     }
     set max_left_move [expr {$r_x - $left_limit}]
+    
     # Calculate maximum right move: limited by right neighbor or right boundary
     if {$i == [expr {[llength $sorted_rects] - 1}]} {
       # Last rectangle - right move limited by total area right boundary
@@ -300,12 +319,15 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set right_limit $next_x
     }
     set max_right_move [expr {$right_limit - $r_x1}]
+    
     # Store in dictionary
     dict set max_movements $instname [list $max_left_move $max_right_move]
+    
     if {$debug} {
       puts "Calculated max moves for $instname: left=$max_left_move, right=$max_right_move"
     }
   }
+  
   # Calculate total possible movement
   if {$pos eq "left"} {
     # Left gap: can only move right rectangles (non-right-boundary)
@@ -314,9 +336,11 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set coords [lindex $rect 1]
       lassign $coords r_x r_y r_x1 r_y1
       set is_right_boundary [lindex $rect 3]
+      
       # Get precomputed max right move, but cannot exceed delta needed
       lassign [dict get $max_movements $instname] max_left max_right
       set max_move [expr {$is_right_boundary ? 0.0 : min($max_right, $delta)}]
+      
       lappend move_right_list [list $instname $max_move $r_x] ;# store original x for proximity
       set total_right_possible [expr {$total_right_possible + $max_move}]
       if {$debug && $max_move > 0} {
@@ -327,7 +351,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     set move_right_list [lsort -real -index 2 $move_right_list]
     # Valid if total movable distance â‰¥ delta or there's partial movement possible
     set total_possible $total_right_possible
-    if {$total_possible >= $delta} { ; # U003
+    if {$total_possible >= $delta} {
       set valid 1
     } elseif {$total_possible > 0} {
       set valid 1
@@ -344,9 +368,11 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set coords [lindex $rect 1]
       lassign $coords r_x r_y r_x1 r_y1
       set is_left_boundary [lindex $rect 2]
+      
       # Get precomputed max left move, but cannot exceed delta needed
       lassign [dict get $max_movements $instname] max_left max_right
       set max_move [expr {$is_left_boundary ? 0.0 : min($max_left, $delta)}]
+      
       lappend move_left_list [list $instname $max_move $r_x1] ;# store original x1 for proximity
       set total_left_possible [expr {$total_left_possible + $max_move}]
       if {$debug && $max_move > 0} {
@@ -375,9 +401,11 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       set coords [lindex $rect 1]
       lassign $coords r_x r_y r_x1 r_y1
       set is_left_boundary [lindex $rect 2]
+      
       # Get precomputed max left move, but cannot exceed delta needed
       lassign [dict get $max_movements $instname] max_left max_right
       set max_move [expr {$is_left_boundary ? 0.0 : min($max_left, $delta)}]
+      
       lappend move_left_list [list $instname $max_move $r_x1] ;# x1 for proximity
       set total_left_possible [expr {$total_left_possible + $max_move}]
       if {$debug && $max_move > 0} {
@@ -386,15 +414,18 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     # Sort left rectangles by proximity to gap (descending x1 = closer)
     set move_left_list [lsort -decreasing -real -index 2 $move_left_list]
+    
     # Calculate right movable rectangles and total distance (store x for proximity)
     foreach rect [lrange $sorted_rects $left_count end] {
       set instname [lindex $rect 0]
       set coords [lindex $rect 1]
       lassign $coords r_x r_y r_x1 r_y1
       set is_right_boundary [lindex $rect 3]
+      
       # Get precomputed max right move, but cannot exceed delta needed
       lassign [dict get $max_movements $instname] max_left max_right
       set max_move [expr {$is_right_boundary ? 0.0 : min($max_right, $delta)}]
+      
       lappend move_right_list [list $instname $max_move $r_x] ;# x for proximity
       set total_right_possible [expr {$total_right_possible + $max_move}]
       if {$debug && $max_move > 0} {
@@ -403,6 +434,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     # Sort right rectangles by proximity to gap (ascending x = closer)
     set move_right_list [lsort -real -index 2 $move_right_list]
+    
     # Valid if total movable distance â‰¥ delta or there's partial movement possible
     set total_possible [expr {$total_left_possible + $total_right_possible}]
     if {$total_possible >= $delta} {
@@ -416,383 +448,508 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       }
     }
   }
+  
   if {!$valid} {
     if {$debug} {puts "No valid movement possible for required expansion (delta=$delta)"}
     return [list $result_flag $free_region $move_list]
   }
-  # Generate movement list with alternating proximity-based strategy
+
+# Generate movement list with alternating proximity-based strategy
   # Track total movement for each instance using dict
   set total_moves [dict create]
-  if {$pos eq "between"} {
-    if {$debug} {puts "\n===== Starting Between-Gap Alternating Movement ====="}
-    # Between gap: alternate between sides with most available movement
-    set remaining_distance $delta
-    set left_group [list]  ;# current left group (instnames)
-    set right_group [list] ;# current right group (instnames)
-    set left_idx 0         ;# index for next left rectangle to add to group
-    set right_idx 0        ;# index for next right rectangle to add to group
-    set step 1
-    # Initialize with closest rectangles to gap
-    if {[llength $move_left_list] > 0} {
-      set left_inst [lindex $move_left_list 0 0]
-      lappend left_group $left_inst
-      if {$debug} {puts "Initial left group: $left_inst"}
-      set left_idx 1
+  # Initialize force_insert flag (ensure compatibility with later code)
+  set force_insert 0
+  
+  # --------------------------
+  # Bundle-based movement logic
+  # --------------------------
+  
+  if {$debug} {
+    puts "\n===== Starting Bundle Initialization ====="
+    puts "Total rectangles to process: [llength $sorted_rects]"
+  }
+  
+  # Create bundles of adjacent rectangles
+  set bundles [list]
+  if {[llength $sorted_rects] == 0} {
+    if {$debug} {puts "No rectangles available for bundling"}
+  } else {
+    set current_bundle [list [lindex $sorted_rects 0 0]]
+    if {$debug} {
+      puts "Initial bundle created with: [lindex $sorted_rects 0 0]"
     }
-    if {[llength $move_right_list] > 0} {
-      set right_inst [lindex $move_right_list 0 0]
-      lappend right_group $right_inst
-      if {$debug} {puts "Initial right group: $right_inst"}
-      set right_idx 1
+    
+    # Iterate through sorted rectangles to create bundles
+    for {set i 1} {$i < [llength $sorted_rects]} {incr i} {
+      set prev_rect [lindex $sorted_rects [expr {$i - 1}]]
+      set curr_rect [lindex $sorted_rects $i]
+      set prev_x1 [lindex $prev_rect 1 2]
+      set curr_x [lindex $curr_rect 1 0]
+      set prev_inst [lindex $prev_rect 0]
+      set curr_inst [lindex $curr_rect 0]
+      
+      # Check if current rectangle is adjacent to previous
+      set gap [expr {abs($curr_x - $prev_x1)}]
+      if {$debug} {
+        puts "Checking adjacency: $prev_inst (x1=$prev_x1) and $curr_inst (x=$curr_x) - gap=$gap"
+      }
+      
+      if {$gap < $filterMovementPrecision} {
+        lappend current_bundle $curr_inst
+        if {$debug} {
+          puts "Added $curr_inst to current bundle. Bundle now: $current_bundle"
+        }
+      } else {
+        lappend bundles $current_bundle
+        if {$debug} {
+          puts "Created new bundle: $current_bundle (gap too large: $gap)"
+        }
+        set current_bundle [list $curr_inst]
+      }
     }
-    # Modified loop condition to prevent infinite loop
-    while {$remaining_distance > 0} {
-      # Check if there's any possible movement left
-      set has_possible_move 0
-      if {[llength $left_group] > 0} {
-        set leftmost_inst [lindex $left_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        if {($max_left - $used_move) > 0} {
-          set has_possible_move 1
-        }
+    lappend bundles $current_bundle
+    if {$debug} {
+      puts "Final bundle added: $current_bundle"
+      puts "Total bundles created: [llength $bundles]"
+      for {set i 0} {$i < [llength $bundles]} {incr i} {
+        puts "  Bundle $i: [lindex $bundles $i]"
       }
-      if {[llength $right_group] > 0} {
-        set rightmost_inst [lindex $right_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        if {($max_right - $used_move) > 0} {
-          set has_possible_move 1
-        }
+    }
+  }
+  
+  # Identify left and right bundles relative to target gap
+  set left_bundles [list]
+  set right_bundles [list]
+  set target_reached 0
+  set gap_x [lindex $gap_bl 0]  ;# Get gap x coordinate from gap bottom-left
+  
+  if {$debug} {
+    puts "\n===== Classifying Bundles Relative to Gap ====="
+    puts "Target gap position: x=$gap_x"
+  }
+  
+  foreach rect $sorted_rects {
+    set instname [lindex $rect 0]
+    set rect_x [lindex $rect 1 0]
+    set rect_x1 [lindex $rect 1 2]
+    
+    # Find which bundles are left/right of the target gap
+    if {!$target_reached && $rect_x1 > $gap_x} {
+      if {$debug} {
+        puts "Crossed target gap: $instname (x1=$rect_x1) exceeds gap x=$gap_x"
       }
-      # If no possible movement, break loop to prevent infinite loop
-      if {!$has_possible_move && $left_idx >= [llength $move_left_list] && $right_idx >= [llength $move_right_list]} {
-        if {$debug} {puts "No more possible movement, breaking loop"}
+      set target_reached 1
+    }
+    
+    foreach bundle $bundles {
+      if {[lsearch $bundle $instname] != -1} {
+        if (!$target_reached) {
+          lappend left_bundles $bundle
+          if {$debug} {
+            puts "Added bundle $bundle to left_bundles (contains $instname)"
+          }
+        } else {
+          lappend right_bundles $bundle
+          if {$debug} {
+            puts "Added bundle $bundle to right_bundles (contains $instname)"
+          }
+        }
         break
       }
-      if {$debug} {
-        puts "\n----- Movement Step $step -----"
-        puts "Remaining distance needed: $remaining_distance"
-        puts "Current left group: $left_group"
-        puts "Current right group: $right_group"
-      }
-      # Calculate group-level available movement (treating group as a single unit)
-      set left_available 0.0
-      if {[llength $left_group] > 0} {
-        # For left group (moving left), max distance is determined by leftmost rectangle
-        set leftmost_inst [lindex $left_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        set left_available [expr {$max_left - $used_move}]
-      }
-      set right_available 0.0
-      if {[llength $right_group] > 0} {
-        # For right group (moving right), max distance is determined by rightmost rectangle
-        set rightmost_inst [lindex $right_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        set right_available [expr {$max_right - $used_move}]
-      }
-      if {$debug} {
-        puts "Left group available movement (based on leftmost): $left_available"
-        puts "Right group available movement (based on rightmost): $right_available"
-      }
-      # Determine movement direction using explicit flag
-      set direction ""
-      if {$left_available > 0 && $right_available > 0} {
-        # Both sides available - choose one with more available movement
-        if {$left_available >= $right_available} {
-          set direction "left"
-        } else {
-          set direction "right"
-        }
-      } elseif {$left_available > 0} {
-        # Only left available
-        set direction "left"
-      } elseif {$right_available > 0} {
-        # Only right available
-        set direction "right"
+    }
+  }
+  
+  # Reverse right bundles to process closest first
+  set right_bundles [lreverse $right_bundles]
+  if {$debug} {
+    puts "\nRight bundles reversed for proximity processing:"
+    for {set i 0} {$i < [llength $right_bundles]} {incr i} {
+      puts "  Right bundle $i: [lindex $right_bundles $i]"
+    }
+    puts "Left bundles (closest last):"
+    for {set i 0} {$i < [llength $left_bundles]} {incr i} {
+      puts "  Left bundle $i: [lindex $left_bundles $i]"
+    }
+  }
+  
+  # Calculate maximum possible movement for each bundle
+  proc get_bundle_max_move {bundle dir sorted_rects max_movements} {
+    set max_move 0.0
+    foreach inst $bundle {
+      lassign [dict get $max_movements $inst] max_left max_right
+      if {$dir eq "left"} {
+        set inst_max $max_left
       } else {
-        # No immediate movement available - try to expand groups
-        if {$debug} {puts "No immediate movement available, attempting to expand groups"}
-        # Try to expand left group first if possible
-        if {$left_idx < [llength $move_left_list]} {
-          set next_left [lindex $move_left_list $left_idx 0]
-          lappend left_group $next_left
-          if {$debug} {puts "Expanded left group with $next_left (now: $left_group)"}
-          incr left_idx
-          # Recalculate left available movement with new group
-          set leftmost_inst [lindex $left_group 0]
-          lassign [dict get $max_movements $leftmost_inst] max_left _
-          set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-          set left_available [expr {$max_left - $used_move}]
-          set direction "left"
-        # If left group can't expand, try right group
-        } elseif {$right_idx < [llength $move_right_list]} {
-          set next_right [lindex $move_right_list $right_idx 0]
-          lappend right_group $next_right
-          if {$debug} {puts "Expanded right group with $next_right (now: $right_group)"}
-          incr right_idx
-          # Recalculate right available movement with new group
-          set rightmost_inst [lindex $right_group end]
-          lassign [dict get $max_movements $rightmost_inst] _ max_right
-          set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-          set right_available [expr {$max_right - $used_move}]
-          set direction "right"
-        } else {
-          # No more groups to expand, break loop
-          if {$debug} {puts "No more groups to expand, breaking loop"}
+        set inst_max $max_right
+      }
+      if {$max_move == 0.0 || $inst_max < $max_move} {
+        set max_move $inst_max
+      }
+    }
+    return $max_move
+  }
+  
+  # Calculate total possible movement for left and right sides
+  set total_left_possible 0.0
+  foreach bundle $left_bundles {
+    set bundle_max [get_bundle_max_move $bundle "left" $sorted_rects $max_movements]
+    set total_left_possible [expr {$total_left_possible + $bundle_max}]
+    if {$debug} {
+      puts "Left bundle $bundle max move: $bundle_max (cumulative: $total_left_possible)"
+    }
+  }
+  
+  set total_right_possible 0.0
+  foreach bundle $right_bundles {
+    set bundle_max [get_bundle_max_move $bundle "right" $sorted_rects $max_movements]
+    set total_right_possible [expr {$total_right_possible + $bundle_max}]
+    if {$debug} {
+      puts "Right bundle $bundle max move: $bundle_max (cumulative: $total_right_possible)"
+    }
+  }
+  
+  # Update valid flag and force_insert based on calculations
+  set valid 0
+  if {$total_left_possible + $total_right_possible >= $delta} {
+    set valid 1
+    if {$debug} {
+      puts "\nTotal possible movement ($[expr {$total_left_possible + $total_right_possible}]) >= required ($delta) - valid movement"
+    }
+  } elseif {$total_left_possible + $total_right_possible > 0} {
+    set valid 1
+    set force_insert 1
+    set delta [expr {$total_left_possible + $total_right_possible}]
+    if {$debug} {
+      puts "\nPartial movement possible: $delta (needs $original_delta) - setting force_insert=1"
+    }
+  } else {
+    if {$debug} {
+      puts "\nNo possible movement available (total=0) - invalid"
+    }
+  }
+  
+  if {!$valid} {
+    if {$debug} {puts "No valid movement possible for required expansion (delta=$delta)"}
+    return [list $result_flag $free_region $move_list]
+  }
+  
+  # Initialize remaining distance and movement tracking
+  set remaining_distance $delta
+  set move_direction ""
+  set iteration 0
+  
+  # Determine initial movement direction based on which side has more possible movement
+  if {$total_left_possible > $total_right_possible && [llength $left_bundles] > 0} {
+    set move_direction "left"
+    if {$debug} {
+      puts "\nChoosing initial direction: left (more possible movement: $total_left_possible > $total_right_possible)"
+    }
+  } else {
+    set move_direction "right"
+    if {$debug} {
+      puts "\nChoosing initial direction: right (more possible movement: $total_right_possible >= $total_left_possible)"
+    }
+  }
+  
+  if {$debug} {
+    puts "\n===== Starting Bundle-Based Movement ====="
+    puts "Initial left bundles: [llength $left_bundles]"
+    puts "Initial right bundles: [llength $right_bundles]"
+    puts "Total possible movement: left=$total_left_possible, right=$total_right_possible"
+    puts "Target movement: $delta"
+    puts "Initial movement direction: $move_direction"
+  }
+  
+  # Main movement loop
+  while {$remaining_distance > 0} {
+    incr iteration
+    if {$debug} {
+      puts "\n===== Movement Iteration $iteration ====="
+      puts "Remaining distance: $remaining_distance"
+      puts "Current direction: $move_direction"
+      puts "Left bundles remaining: [llength $left_bundles]"
+      puts "Right bundles remaining: [llength $right_bundles]"
+    }
+    
+    if {$move_direction eq "right" && [llength $right_bundles] > 0} {
+      # Move right bundles (closest to gap first)
+      set current_bundle [lindex $right_bundles 0]
+      set max_move [get_bundle_max_move $current_bundle "right" $sorted_rects $max_movements]
+      set actual_move [expr {min($max_move, $remaining_distance)}]
+      
+      if {$debug} {
+        puts "\nProcessing right bundle: $current_bundle"
+        puts "Max possible move for bundle: $max_move"
+        puts "Actual move (capped by remaining distance): $actual_move"
+      }
+      
+      # Apply movement to all instances in bundle
+      foreach inst $current_bundle {
+        set current_total [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+        dict set total_moves $inst [expr {$current_total + $actual_move}]
+        if {$debug} {
+          puts "  Updated $inst: total movement = [dict get $total_moves $inst]"
+        }
+      }
+      
+      # Update remaining distance
+      set remaining_distance [expr {$remaining_distance - $actual_move}]
+      if {$debug} {
+        puts "Remaining distance after move: $remaining_distance"
+      }
+      
+      # Check if we've moved enough
+      if {$remaining_distance <= 0} {
+        if {$debug} {puts "Movement complete - reached target distance"}
+        break
+      }
+      
+      # Remove processed bundle from list
+      set original_right_bundles $right_bundles
+      set right_bundles [lrange $right_bundles 1 end]
+      if {$debug} {
+        puts "Removed processed bundle from right_bundles. New right_bundles: $right_bundles"
+      }
+      
+      # If bundle list is empty, check if we can continue
+      if {[llength $right_bundles] == 0} {
+        if {$debug} {puts "No more right bundles to process"}
+        # Check if we have left bundles to move
+        if {[llength $left_bundles] == 0} {
+          if {$debug} {puts "No more bundles available - exiting loop"}
           break
         }
-      }
-      if {$debug} {puts "Selected movement direction: $direction"}
-      if {$direction eq "left"} {
-        # Calculate how much we can move this group
-        set move_distance [expr {min($left_available, $remaining_distance)}]
-        # Move all rectangles in left group by this distance
-        foreach inst $left_group {
-          set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-          set new_move [expr {$current_move + $move_distance}]
-          dict set total_moves $inst $new_move
-          if {$debug} {puts "Updated $inst left move: $new_move (total)"}
-        }
-        # Update remaining distance
-        set remaining_distance [expr {$remaining_distance - $move_distance}]
+      } else {
+        # Check if we should merge with next bundle
+        set next_bundle [lindex $right_bundles 0]
         if {$debug} {
-          puts "Moved left group by $move_distance"
-          puts "Remaining distance after move: $remaining_distance"
+          puts "Checking adjacency with next right bundle: $next_bundle"
         }
-        # Check if left group has reached maximum movement (based on leftmost)
-        set leftmost_inst [lindex $left_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set current_move [dict get $total_moves $leftmost_inst]
-        set group_maxed [expr {$current_move >= $max_left ? 1 : 0}]
-        # If group is maxed out and we still need more distance, add next rectangle to group
-        if {$group_maxed && $remaining_distance > 0 && $left_idx < [llength $move_left_list]} {
-          set next_left [lindex $move_left_list $left_idx 0]
-          lappend left_group $next_left
-          if {$debug} {puts "Added $next_left to left group (now group: $left_group)"}
-          incr left_idx
+        
+        # Find rightmost instance of current bundle and leftmost of next bundle
+        set current_rightmost ""
+        set current_rightmost_x1 -inf
+        foreach inst $current_bundle {
+          foreach rect $sorted_rects {
+            if {[lindex $rect 0] eq $inst} {
+              set x1 [lindex $rect 1 2]
+              set moved [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+              set x1 [expr {$x1 + $moved}]
+              if {$x1 > $current_rightmost_x1} {
+                set current_rightmost $inst
+                set current_rightmost_x1 $x1
+              }
+              break
+            }
+          }
+        }
+        
+        set next_leftmost ""
+        set next_leftmost_x inf
+        foreach inst $next_bundle {
+          foreach rect $sorted_rects {
+            if {[lindex $rect 0] eq $inst} {
+              set x [lindex $rect 1 0]
+              set moved [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+              set x [expr {$x + $moved}]
+              if {$x < $next_leftmost_x} {
+                set next_leftmost $inst
+                set next_leftmost_x $x
+              }
+              break
+            }
+          }
+        }
+        
+        # Check if bundles are now adjacent
+        set gap_between [expr {abs($current_rightmost_x1 - $next_leftmost_x)}]
+        if {$debug} {
+          puts "  Current rightmost: $current_rightmost at x1=$current_rightmost_x1"
+          puts "  Next leftmost: $next_leftmost at x=$next_leftmost_x"
+          puts "  Gap between bundles: $gap_between"
+        }
+        
+        if {$gap_between < $filterMovementPrecision} {
+          if {$debug} {puts "  Bundles are adjacent - merging"}
+          set merged_bundle [concat $current_bundle $next_bundle]
+          set right_bundles [lreplace $right_bundles 0 0 $merged_bundle]
+          if {$debug} {
+            puts "  Merged bundle: $merged_bundle"
+            puts "  Updated right_bundles: $right_bundles"
+          }
+        }
+      }
+      
+      # Switch direction to left for next iteration
+      set move_direction "left"
+      if {$debug} {puts "Switched direction to: $move_direction"}
+      
+    } elseif {$move_direction eq "left" && [llength $left_bundles] > 0} {
+      # Move left bundles (closest to gap first)
+      set current_bundle [lindex $left_bundles end]
+      set max_move [get_bundle_max_move $current_bundle "left" $sorted_rects $max_movements]
+      set actual_move [expr {min($max_move, $remaining_distance)}]
+      
+      if {$debug} {
+        puts "\nProcessing left bundle: $current_bundle"
+        puts "Max possible move for bundle: $max_move"
+        puts "Actual move (capped by remaining distance): $actual_move"
+      }
+      
+      # Apply movement to all instances in bundle
+      foreach inst $current_bundle {
+        set current_total [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+        dict set total_moves $inst [expr {$current_total + $actual_move}]
+        if {$debug} {
+          puts "  Updated $inst: total movement = [dict get $total_moves $inst]"
+        }
+      }
+      
+      # Update remaining distance
+      set remaining_distance [expr {$remaining_distance - $actual_move}]
+      if {$debug} {
+        puts "Remaining distance after move: $remaining_distance"
+      }
+      
+      # Check if we've moved enough
+      if {$remaining_distance <= 0} {
+        if {$debug} {puts "Movement complete - reached target distance"}
+        break
+      }
+      
+      # Remove processed bundle from list
+      set left_bundles [lrange $left_bundles 0 end-1]
+      if {$debug} {
+        puts "Removed processed bundle from left_bundles. New left_bundles: $left_bundles"
+      }
+      
+      # If bundle list is empty, check if we can continue
+      if {[llength $left_bundles] == 0} {
+        if {$debug} {puts "No more left bundles to process"}
+        # Check if we have right bundles to move
+        if {[llength $right_bundles] == 0} {
+          if {$debug} {puts "No more bundles available - exiting loop"}
+          break
         }
       } else {
-        # Calculate how much we can move this group
-        set move_distance [expr {min($right_available, $remaining_distance)}]
-        # Move all rectangles in right group by this distance
-        foreach inst $right_group {
-          set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-          set new_move [expr {$current_move + $move_distance}]
-          dict set total_moves $inst $new_move
-          if {$debug} {puts "Updated $inst right move: $new_move (total)"}
-        }
-        # Update remaining distance
-        set remaining_distance [expr {$remaining_distance - $move_distance}]
+        # Check if we should merge with previous bundle
+        set prev_bundle [lindex $left_bundles end]
         if {$debug} {
-          puts "Moved right group by $move_distance"
-          puts "Remaining distance after move: $remaining_distance"
+          puts "Checking adjacency with previous left bundle: $prev_bundle"
         }
-        # Check if right group has reached maximum movement (based on rightmost)
-        set rightmost_inst [lindex $right_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set current_move [dict get $total_moves $rightmost_inst]
-        set group_maxed [expr {$current_move >= $max_right ? 1 : 0}]
-        # If group is maxed out and we still need more distance, add next rectangle to group
-        if {$group_maxed && $remaining_distance > 0 && $right_idx < [llength $move_right_list]} {
-          set next_right [lindex $move_right_list $right_idx 0]
-          lappend right_group $next_right
-          if {$debug} {puts "Added $next_right to right group (now group: $right_group)"}
-          incr right_idx
+        
+        # Find leftmost instance of current bundle and rightmost of previous bundle
+        set current_leftmost ""
+        set current_leftmost_x inf
+        foreach inst $current_bundle {
+          foreach rect $sorted_rects {
+            if {[lindex $rect 0] eq $inst} {
+              set x [lindex $rect 1 0]
+              set moved [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+              set x [expr {$x - $moved}]
+              if {$x < $current_leftmost_x} {
+                set current_leftmost $inst
+                set current_leftmost_x $x
+              }
+              break
+            }
+          }
         }
-      }
-      incr step
-    }
-    if {$debug} {puts "===== Completed Between-Gap Alternating Movement ====="}
-  } elseif {$pos eq "left"} {
-    if {$debug} {puts "\n===== Starting Left-Gap Sequential Movement ====="}
-    # Left gap: move right, starting with closest rectangle
-    set remaining_distance $delta
-    set current_group [list] ;# {instnames}
-    set idx 0
-    set step 1
-    # Initialize with closest rectangle to gap
-    if {[llength $move_right_list] > 0} {
-      set first_inst [lindex $move_right_list 0 0]
-      lappend current_group $first_inst
-      if {$debug} {puts "Initial right group: $first_inst"}
-      set idx 1
-    }
-    # Modified loop condition to prevent infinite loop
-    while {$remaining_distance > 0} {
-      # Check if there's any possible movement left
-      set has_possible_move 0
-      if {[llength $current_group] > 0} {
-        set rightmost_inst [lindex $current_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        if {($max_right - $used_move) > 0} {
-          set has_possible_move 1
+        
+        set prev_rightmost ""
+        set prev_rightmost_x1 -inf
+        foreach inst $prev_bundle {
+          foreach rect $sorted_rects {
+            if {[lindex $rect 0] eq $inst} {
+              set x1 [lindex $rect 1 2]
+              set moved [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
+              set x1 [expr {$x1 - $moved}]
+              if {$x1 > $prev_rightmost_x1} {
+                set prev_rightmost $inst
+                set prev_rightmost_x1 $x1
+              }
+              break
+            }
+          }
         }
-      }
-      # If no possible movement and no more groups to expand, break loop
-      if {!$has_possible_move && $idx >= [llength $move_right_list]} {
-        if {$debug} {puts "No more possible movement, breaking loop"}
-        break
-      }
-      if {$debug} {
-        puts "\n----- Movement Step $step -----"
-        puts "Remaining distance needed: $remaining_distance"
-        puts "Current right group: $current_group"
-      }
-      # Calculate group-level available movement (based on rightmost rectangle)
-      set group_available 0.0
-      if {[llength $current_group] > 0} {
-        set rightmost_inst [lindex $current_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        set group_available [expr {$max_right - $used_move}]
-      }
-      if {$debug} {puts "Group available movement (based on rightmost): $group_available"}
-      # If no available movement, try to expand the group
-      if {$group_available <= 0 && $idx < [llength $move_right_list]} {
-        set next_inst [lindex $move_right_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Expanded group with $next_inst (now: $current_group)"}
-        incr idx
-        # Recalculate available movement with new group
-        set rightmost_inst [lindex $current_group end]
-        lassign [dict get $max_movements $rightmost_inst] _ max_right
-        set used_move [expr {[dict exists $total_moves $rightmost_inst] ? [dict get $total_moves $rightmost_inst] : 0.0}]
-        set group_available [expr {$max_right - $used_move}]
-      } elseif {$group_available <= 0} {
-        # No more movement possible
-        if {$debug} {puts "No more movement possible, breaking loop"}
-        break
-      }
-      # Calculate how much we can move this group
-      set move_distance [expr {min($group_available, $remaining_distance)}]
-      # Move all rectangles in group by this distance
-      foreach inst $current_group {
-        set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-        set new_move [expr {$current_move + $move_distance}]
-        dict set total_moves $inst $new_move
-        if {$debug} {puts "Updated $inst move: $new_move (total)"}
-      }
-      # Update remaining distance
-      set remaining_distance [expr {$remaining_distance - $move_distance}]
-      if {$debug} {
-        puts "Moved group by $move_distance"
-        puts "Remaining distance after move: $remaining_distance"
-      }
-      # Check if group has reached maximum movement (based on rightmost)
-      set rightmost_inst [lindex $current_group end]
-      lassign [dict get $max_movements $rightmost_inst] _ max_right
-      set current_move [dict get $total_moves $rightmost_inst]
-      set group_maxed [expr {$current_move >= $max_right ? 1 : 0}]
-      # If group is maxed out and we still need more distance, add next rectangle to group
-      if {$group_maxed && $remaining_distance > 0 && $idx < [llength $move_right_list]} {
-        set next_inst [lindex $move_right_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Added $next_inst to group (now group: $current_group)"}
-        incr idx
-      }
-      incr step
-    }
-    if {$debug} {puts "===== Completed Left-Gap Sequential Movement ====="}
-  } elseif {$pos eq "right"} {
-    if {$debug} {puts "\n===== Starting Right-Gap Sequential Movement ====="}
-    # Right gap: move left, starting with closest rectangle
-    set remaining_distance $delta
-    set current_group [list] ;# {instnames}
-    set idx 0
-    set step 1
-    # Initialize with closest rectangle to gap
-    if {[llength $move_left_list] > 0} {
-      set first_inst [lindex $move_left_list 0 0]
-      lappend current_group $first_inst
-      if {$debug} {puts "Initial left group: $first_inst"}
-      set idx 1
-    }
-    # Modified loop condition to prevent infinite loop
-    while {$remaining_distance > 0} {
-      # Check if there's any possible movement left
-      set has_possible_move 0
-      if {[llength $current_group] > 0} {
-        set leftmost_inst [lindex $current_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        if {($max_left - $used_move) > 0} {
-          set has_possible_move 1
+        
+        # Check if bundles are now adjacent
+        set gap_between [expr {abs($prev_rightmost_x1 - $current_leftmost_x)}]
+        if {$debug} {
+          puts "  Previous rightmost: $prev_rightmost at x1=$prev_rightmost_x1"
+          puts "  Current leftmost: $current_leftmost at x=$current_leftmost_x"
+          puts "  Gap between bundles: $gap_between"
+        }
+        
+        if {$gap_between < $filterMovementPrecision} {
+          if {$debug} {puts "  Bundles are adjacent - merging"}
+          set merged_bundle [concat $prev_bundle $current_bundle]
+          set left_bundles [lreplace $left_bundles end end $merged_bundle]
+          if {$debug} {
+            puts "  Merged bundle: $merged_bundle"
+            puts "  Updated left_bundles: $left_bundles"
+          }
         }
       }
-      # If no possible movement and no more groups to expand, break loop
-      if {!$has_possible_move && $idx >= [llength $move_left_list]} {
-        if {$debug} {puts "No more possible movement, breaking loop"}
-        break
+      
+      # Switch direction to right for next iteration
+      set move_direction "right"
+      if {$debug} {puts "Switched direction to: $move_direction"}
+      
+    } else {
+      # No more bundles to move in current direction
+      if {$debug} {
+        puts "\nNo more bundles to move in $move_direction direction"
+        puts "Left bundles remaining: [llength $left_bundles]"
+        puts "Right bundles remaining: [llength $right_bundles]"
+      }
+      
+      # Switch direction
+      if {$move_direction eq "right"} {
+        set move_direction "left"
+      } else {
+        set move_direction "right"
       }
       if {$debug} {
-        puts "\n----- Movement Step $step -----"
-        puts "Remaining distance needed: $remaining_distance"
-        puts "Current left group: $current_group"
+        puts "Switched direction to: $move_direction"
       }
-      # Calculate group-level available movement (based on leftmost rectangle)
-      set group_available 0.0
-      if {[llength $current_group] > 0} {
-        set leftmost_inst [lindex $current_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        set group_available [expr {$max_left - $used_move}]
-      }
-      if {$debug} {puts "Group available movement (based on leftmost): $group_available"}
-      # If no available movement, try to expand the group
-      if {$group_available <= 0 && $idx < [llength $move_left_list]} {
-        set next_inst [lindex $move_left_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Expanded group with $next_inst (now: $current_group)"}
-        incr idx
-        # Recalculate available movement with new group
-        set leftmost_inst [lindex $current_group 0]
-        lassign [dict get $max_movements $leftmost_inst] max_left _
-        set used_move [expr {[dict exists $total_moves $leftmost_inst] ? [dict get $total_moves $leftmost_inst] : 0.0}]
-        set group_available [expr {$max_left - $used_move}]
-      } elseif {$group_available <= 0} {
-        # No more movement possible
-        if {$debug} {puts "No more movement possible, breaking loop"}
+      
+      # If no bundles available in either direction, break
+      if {([llength $left_bundles] == 0 && $move_direction eq "left") || 
+          ([llength $right_bundles] == 0 && $move_direction eq "right")} {
+        if {$debug} {puts "No bundles available in any direction - exiting loop"}
+        # Set force_insert if we couldn't reach target distance
+        if {$remaining_distance > 0} {
+          set force_insert 1
+          if {$debug} {
+            puts "Could not reach target distance. Remaining: $remaining_distance - setting force_insert=1"
+          }
+        }
         break
       }
-      # Calculate how much we can move this group
-      set move_distance [expr {min($group_available, $remaining_distance)}]
-      # Move all rectangles in group by this distance
-      foreach inst $current_group {
-        set current_move [expr {[dict exists $total_moves $inst] ? [dict get $total_moves $inst] : 0.0}]
-        set new_move [expr {$current_move + $move_distance}]
-        dict set total_moves $inst $new_move
-        if {$debug} {puts "Updated $inst move: $new_move (total)"}
-      }
-      # Update remaining distance
-      set remaining_distance [expr {$remaining_distance - $move_distance}]
-      if {$debug} {
-        puts "Moved group by $move_distance"
-        puts "Remaining distance after move: $remaining_distance"
-      }
-      # Check if group has reached maximum movement (based on leftmost)
-      set leftmost_inst [lindex $current_group 0]
-      lassign [dict get $max_movements $leftmost_inst] max_left _
-      set current_move [dict get $total_moves $leftmost_inst]
-      set group_maxed [expr {$current_move >= $max_left ? 1 : 0}]
-      # If group is maxed out and we still need more distance, add next rectangle to group
-      if {$group_maxed && $remaining_distance > 0 && $idx < [llength $move_left_list]} {
-        set next_inst [lindex $move_left_list $idx 0]
-        lappend current_group $next_inst
-        if {$debug} {puts "Added $next_inst to group (now group: $current_group)"}
-        incr idx
-      }
-      incr step
     }
-    if {$debug} {puts "===== Completed Right-Gap Sequential Movement ====="}
   }
+  
+  # Final debug information
+  if {$debug} {
+    puts "\n===== Completed Bundle-Based Movement ====="
+    puts "Total iterations: $iteration"
+    puts "Final remaining distance: $remaining_distance"
+    puts "force_insert flag: $force_insert"
+    puts "Total moves recorded:"
+    dict for {inst distance} $total_moves {
+      puts "  $inst: $distance"
+    }
+  }
+
+
+
+
   # Format move_list with cumulative directions and distances
   # First separate movements by side
   set left_moves [list]
   set right_moves [list]
+  
   # Get gap position and coordinates for distance calculation
   lassign $target_gap idx gap_width gap_pos left_count gap_bl
   lassign $gap_bl gap_x gap_y
@@ -806,6 +963,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         break
       }
     }
+    
     # Find original coordinates to calculate distance from gap
     set orig_x 0
     set orig_x1 0
@@ -817,14 +975,15 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         break
       }
     }
+    
     # Calculate distance from gap based on direction
     if {$dir eq "left"} {
       # Distance for left-moving rectangles is gap_x - original x1
-      set distance [format "%.3f" [expr {$gap_x - $orig_x1}]]
+      set distance [expr {$gap_x - $orig_x1}]
       lappend left_moves [list $inst [list $dir [dict get $total_moves $inst]] $distance]
     } else {
       # Distance for right-moving rectangles is original x - gap_x (minus gap width)
-      set distance [format "%.3f" [expr {$orig_x - ($gap_x + $gap_width)}]]
+      set distance [expr {$orig_x - ($gap_x + $gap_width)}]
       lappend right_moves [list $inst [list $dir [dict get $total_moves $inst]] $distance]
     }
   }
@@ -863,16 +1022,19 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   # Post-movement overlap check
   # --------------------------
   if {$debug} {puts "\n===== Starting Post-Movement Overlap Check ====="}
+  
   # Create list of moved rectangles with updated coordinates
   set moved_rects [list]
   foreach rect $target_row_rects {
     lassign $rect instname coords is_left is_right width
     lassign $coords x y x1 y1
+    
     # Check if this rectangle was moved
     set moved 0
     foreach move $move_list {
       lassign $move m_inst m_data
       lassign $m_data m_dir m_dist
+      
       if {$m_inst eq $instname} {
         # Update coordinates based on movement
         if {$m_dir eq "right"} {
@@ -890,6 +1052,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
         break
       }
     }
+    
     # Add original coordinates if not moved
     if {!$moved} {
       lappend moved_rects [list $instname $coords]
@@ -905,14 +1068,17 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   for {set i 0} {$i < $moved_count} {incr i} {
     lappend moved_indices $i
   }
+  
   foreach i $moved_indices {
     set r1 [lindex $moved_rects $i 1]
     lassign $r1 x1 y1 x1_1 y1_1
     set inst1 [lindex $moved_rects $i 0]
+    
     foreach j [lrange $moved_indices [expr {$i + 1}] end] {
       set r2 [lindex $moved_rects $j 1]
       lassign $r2 x2 y2 x2_1 y2_1
       set inst2 [lindex $moved_rects $j 0]
+      
       if {!($x1_1 <= $x2 || $x2_1 <= $x1)} {
         if {$debug} {
           puts "OVERLAP DETECTED: $inst1 ($x1, $x1_1) and $inst2 ($x2, $x2_1)"
@@ -923,6 +1089,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     }
     if {$post_overlap} break
   }
+  
   if {$post_overlap} {
     if {$debug} {puts "===== Post-Movement Check Failed: Overlaps Detected ====="}
     return [list "no" [list] [list]]
@@ -933,6 +1100,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   set target_gap_bl [lindex $target_gap end]
   lassign $target_gap_bl original_gap_x original_gap_y
   set left_shift 0.0
+  
   # Get left shift amount from closest left-moving rectangle (all left-moving rectangles shift equally)
   set sorted_left [lmap temp_left $sorted_left { ; # U002: remove zero movement instance items
     if {[expr {[lindex $temp_left 1 1] == 0.0}]} { continue } else { set temp_left }
@@ -949,15 +1117,18 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       }
     }
   }
+  
   # Calculate new free region position
   set new_gap_x [expr {$original_gap_x - $left_shift}]
   set free_region [list $new_gap_x $original_gap_y]
+  
   # Determine result flag based on force_insert
-  if {$force_insert} { ; # U004
+  if {$force_insert} {
     set result_flag "forceInsert"
   } else {
     set result_flag "yes"
   }
+  
   if {$debug} {
     puts "\nFinal Result: [expr {$force_insert ? "Force Insert" : "Success"}]"
     puts "Original gap position: $target_insert_loc"
@@ -968,3 +1139,4 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   # Return results
   return [list $result_flag $free_region $move_list]
 }
+

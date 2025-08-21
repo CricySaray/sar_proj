@@ -77,6 +77,8 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
     set baseInsertRectLoc [attachToGridOfRowSiteLeftBottomPoint [lindex $ifHaveSufficientSpaceToInsertRepeater 1]]
     lassign $baseInsertRectLoc base_x base_y
     set boxMovingInst [list [expr $base_x - round($widthOfExpand * $multipleOfExpandSpace / $siteWidth) * $siteWidth] [expr $base_y + 0] [expr $base_x + $repeaterWidth + round($widthOfExpand * $multipleOfExpandSpace / $rowHeight) * $rowHeight] [expr $base_y + $rowHeight]]
+    set coreRects [operateLUT -type read -attr {core_inner_boundary_rects}]
+    set boxMovingInst [dbShape -output hrect $boxMovingInst AND $coreRects]
     set mfgGrid [dbget head.mfgGrid]
     set expandedSpace [expandSpace_byMovingInst $boxMovingInst $baseInsertRectLoc [list $repeaterWidth $repeaterHeight] $mfgGrid $debug $debug] ; # U001
     lassign $expandedSpace ifMovingInstSuccess leftBottomPositionOfCanInsert movingActions
@@ -86,8 +88,12 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
       set position $leftBottomPositionOfCanInsert
       set distance $distanceFirstRound
       set movementList $movingActions
+    } elseif {$ifMovingInstSuccess == "forceInsert"} {
+      set findType "forceInsertAfterMove"
+      set position $positionFirstRound 
+      set distance $distanceFirstRound
     } elseif {$ifMovingInstSuccess == "no"} {
-      set findType "forceInsert"
+      set findType "forceInsertWithoutMove"
       set position $positionFirstRound 
       set distance $distanceFirstRound
     }

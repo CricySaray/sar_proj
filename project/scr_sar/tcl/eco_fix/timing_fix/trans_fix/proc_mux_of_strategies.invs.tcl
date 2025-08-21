@@ -12,6 +12,12 @@
 #             U007: you need split one2one and one2more situation.
 #             U008: need move inst when the size changes too
 #             U009 for change VT or/and capacity of driver celltype when adding repeater
+#             U010: add try command for critical stage such as addRepeater/changeVT/changeCapacity
+#             U011: In the case of one2more, by calculating the geometric area formed by the driver end and all sink ends, 
+#                   the coordinate area where repeaters can be placed is determined. This provides more sufficient spatial positions 
+#                   to choose from, reducing overlap issues caused by being unable to find positions for repeaters due to overly 
+#                   strict position constraints.
+#                   This method requires using algorithms to calculate the area where repeaters can be placed.
 # FIXED     :
 #             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
@@ -175,7 +181,7 @@ proc sliding_rheostat_of_strategies {args} {
           set ifSkipped 1
           lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
         } 
-        ### add repeater (change VT/capacity)
+        ### add repeater (change VT/capacity) U010
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
           if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after
@@ -204,7 +210,7 @@ proc sliding_rheostat_of_strategies {args} {
               set baseAddFlag "A_[fm $relativeLoc]"
               if {$ifOne2One} { set termsWhenAdd $sinksPin } elseif {$ifSimpleOne2More} { set termsWhenAdd $fartherGroupSinksPin }
               set cmd [print_ecoCommand -type add -celltype $toAdd -terms $termsWhenAdd -newInstNamePrefix ${newInstNamePrefix}_one2one_[ci one] -loc $refineLocPosition]
-              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsert" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
+              set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsertAfterMove" { set tmp "f" } "forceInsertWithoutMove" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
               set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
               if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
               if {$refineLocType in {sufficient expandSpace}} {

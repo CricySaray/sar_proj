@@ -92,6 +92,7 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
       set findType "forceInsertAfterMove"
       set position $positionFirstRound 
       set distance $distanceFirstRound
+      set movementList $movingActions
     } elseif {$ifMovingInstSuccess == "no"} {
       set findType "forceInsertWithoutMove"
       set position $positionFirstRound 
@@ -102,7 +103,7 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
     set position $repeaterPt 
     set distance 0
   }
-  if {$findType == "expandSpace"} {
+  if {$findType in {expandSpace forceInsertAfterMove}} {
     return [list $findType $position $distance $movementList]
   } else {
     return [list $findType $position $distance]

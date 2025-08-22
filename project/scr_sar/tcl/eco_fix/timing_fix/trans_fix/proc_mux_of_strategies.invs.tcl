@@ -39,6 +39,7 @@ source ./proc_strategy_changeVT.invs.tcl; # strategy_changeVT_withLUT
 source ./proc_strategy_changeDriveCapacity_of_driveCell.invs.tcl; # strategy_changeDriveCapacity_withLUT
 source ./proc_strategy_addRepeaterCelltype.invs.tcl; # strategy_addRepeaterCelltype_withLUT
 source ./proc_formatDecimal.invs.tcl; # fm/formatDecimal
+source ./proc_fit_path.invsGUI.tcl; # fit_path
 source ../../../packages/calculate_relative_point_at_path.package.tcl; # calculate_relative_point_at_path
 source ../physical_aware_algorithm/findSpaceToInsertRepeater_using_lutDict.invsGUI.tcl; # findSpaceToInsertRepeater_using_lutDict
 source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint
@@ -199,7 +200,8 @@ proc sliding_rheostat_of_strategies {args} {
                 set expandAreaWidthHeight {8 8}   ; set divOfForceInsert 0.6 ; set multipleOfExpandSpace 1.7
               }
               if {$ifOne2One} {
-                set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $wiresPts $relativeLoc]
+                set fited_wiresPts [fit_path $driverPinPT {*}$sinksPinPT $wiresPts]
+                set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $fited_wiresPts $relativeLoc]
               } elseif {$ifSimpleOne2More} {
                 set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
                 set toLoc [calculateRelativePoint $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
@@ -213,16 +215,14 @@ proc sliding_rheostat_of_strategies {args} {
               set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsertAfterMove" { set tmp "f" } "forceInsertWithoutMove" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
               set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
               if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
-              if {$refineLocType in {sufficient expandSpace}} {
-                if {$refineLocType == "expandSpace"} {
-                  set move_cmd [lmap inst_moveDirectionDistance $refineLocMovementList {
-                    lassign $inst_moveDirectionDistance temp_instname temp_moveDirectionDistance
-                    lassign $temp_moveDirectionDistance temp_direction temp_distance 
-                    set temp_move_cmd [print_ecoCommand -type move -inst $temp_instname -direction $temp_direction -distance $temp_distance]
-                  }]
-                  set ifHaveMovements 1
-                  lappend movement_cmd_list $move_cmd
-                }
+              if {$refineLocType in {expandSpace forceInsertAfterMove}} {
+                set move_cmd [lmap inst_moveDirectionDistance $refineLocMovementList {
+                  lassign $inst_moveDirectionDistance temp_instname temp_moveDirectionDistance
+                  lassign $temp_moveDirectionDistance temp_direction temp_distance 
+                  set temp_move_cmd [print_ecoCommand -type move -inst $temp_instname -direction $temp_direction -distance $temp_distance]
+                }]
+                set ifHaveMovements 1
+                lappend movement_cmd_list $move_cmd
               } elseif {$refineLocType in {forceInsert}} {
                 set ifNeedNoticeCase 1
                 lappend needNoticeCase_list $fixedlist

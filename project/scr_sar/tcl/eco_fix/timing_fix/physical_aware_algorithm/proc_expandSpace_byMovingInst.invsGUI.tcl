@@ -100,12 +100,12 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
       error "Rectangle $instname height ($rect_height) is not a multiple of minimum width ($minWidth)"
     }
   }
-  # Extract rectangle coordinates (insts_box) for dbShape command
-  set insts_box [lmap rect $obj_rects {lindex $rect 1}]
-  if {$verbose} {puts "Extracted rectangle boxes: $insts_box"}
+  # Extract rectangle coordinates (instsBox) for dbShape command
+  set instsBox [lmap rect $obj_rects {lindex $rect 1}]
+  if {$verbose} {puts "Extracted rectangle boxes: $instsBox"}
   # Calculate existing free space using dbShape
   set searchingBox $total_area
-  set freeSpaceRect [dbShape -output hrect $searchingBox ANDNOT $insts_box]
+  set freeSpaceRect [dbShape -output hrect $searchingBox ANDNOT $instsBox]
   if {$debug} {puts "Calculated free space rectangles: $freeSpaceRect"}
   # Check gap dimensions are multiples of minWidth
   foreach gap $freeSpaceRect {
@@ -139,7 +139,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     lassign $rect instname coords
     lassign $coords r_x r_y r_x1 r_y1
     # Check if rectangle is in target row (same y range)
-    if {$r_y <= $target_row_y && $r_y1 >= $target_row_y1} {
+    if {[expr double($r_y) <= double($target_row_y) && double($r_y1) >= double($target_row_y1)]} {
       # Check left boundary condition
       set is_left_boundary [expr {($r_x == $total_x) || ($r_x < $total_x && $r_x1 > $total_x) ? 1 : 0}]
       # Check right boundary condition

@@ -38,8 +38,8 @@ proc attachToGridOfRowSiteLeftBottomPoint {{pointLoc {0 0}} {filterOutPointNotIn
         set rectInRects [ifInBoxes_returnRect $pointLoc $temp_rowrect]
         if {$rectInRects != 0 && [llength $rectInRects] == 4} {
           lassign $rectInRects hitRect_x hitRect_y hitRect_x1 hitRect_y1
-          set multi_x [expr floor(($point_x - $hitRect_x) / $temp_sizex)]
-          set multi_y [expr floor(($point_y - $hitRect_y) / $temp_sizey)]
+          set multi_x [expr floor([expr {($point_x - $hitRect_x) / $temp_sizex}])]
+          set multi_y [expr floor([expr {($point_y - $hitRect_y) / $temp_sizey}])] ; # NOTICE: expr floor(($point_y -$hitRect_y) / $temp_sizey) is incorrect.
           set attached_x [expr $hitRect_x + ($multi_x * $temp_sizex)]
           set attached_y [expr $hitRect_y + ($multi_y * $temp_sizey)]
           return [list $attached_x $attached_y]

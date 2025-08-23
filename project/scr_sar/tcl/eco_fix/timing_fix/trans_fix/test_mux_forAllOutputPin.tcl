@@ -17,7 +17,6 @@ proc test_all_output_pin {{sumFile "testPinOutput.list"}} {
     set dict_of_sum [mux_of_strategies -violValue $randomViolValue -violPin $testpin]
     set temp "randomViolValue: $randomViolValue | [dict get $dict_of_sum]"
     puts $fo $temp
-    incr i
     flush $fo
   }
   puts "total process $i"

@@ -9,6 +9,7 @@
 !ref_from_others/
 !ref_from_others/**
 all_*
+wn_*
 *.swp
 *.swo
 *.swn

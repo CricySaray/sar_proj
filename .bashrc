@@ -3,6 +3,8 @@
 alias cr='cd ~/project/backend/run'
 alias ct='cd ~/project/test_temp/'
 
+alias vwn='vim ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
+alias wn='perl ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias va='vim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
 alias ca='tclsh ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
 alias fd='fdfind -Ist f'

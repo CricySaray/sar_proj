@@ -46,7 +46,7 @@ use File::Basename;
 
 # Default values for options
 my $namespace = 'song';
-my $export = 1;
+my $export = 0;
 my $prefix = 'proc_sar_';
 my $suffix = '';
 my $modify_aliases = 1;

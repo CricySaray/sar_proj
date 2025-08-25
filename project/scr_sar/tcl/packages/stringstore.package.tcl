@@ -22,7 +22,7 @@ namespace eval stringstore {
   variable chars "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   # Initialize the package
-  proc init {max_length} {
+  proc ss_init {max_length} {
     variable store_str
     variable store_id
     variable next_id
@@ -41,7 +41,7 @@ namespace eval stringstore {
     return 1
   }
   # Helper function: Generate ID that conforms to the new rules
-  proc generate_id {num} {
+  proc ss_generate_id {num} {
     variable chars
     
     # Calculate the index of the last character (0-35 corresponds to 0-9, A-Z)
@@ -57,7 +57,7 @@ namespace eval stringstore {
   }
 
   # Process a string - main functionality
-  proc process {str} {
+  proc ss_process {str} {
     variable store_str
     variable store_id
     variable next_id
@@ -97,7 +97,7 @@ namespace eval stringstore {
   }
 
   # Get ID for a stored string
-  proc get_id {str} {
+  proc ss_get_id {str} {
     variable store_str
     variable max_len
     
@@ -116,7 +116,7 @@ namespace eval stringstore {
   }
 
   # modify ID format validation in the get_string procedure
-  proc get_string {id} {
+  proc ss_get_string {id} {
     variable store_id
     variable max_len
     
@@ -140,7 +140,7 @@ namespace eval stringstore {
   }
 
   # Clear all stored data
-  proc clear {} {
+  proc ss_clear {} {
     variable store_str
     variable store_id
     variable next_id
@@ -152,19 +152,19 @@ namespace eval stringstore {
   }
 
   # Get current storage size
-  proc size {} {
+  proc ss_size {} {
     variable store_str
     return [array size store_str]
   }
 
   # Get maximum allowed length
-  proc get_max_length {} {
+  proc ss_get_max_length {} {
     variable max_len
     return $max_len
   }
 
   # Set new maximum allowed length
-  proc set_max_length {new_max} {
+  proc ss_set_max_length {new_max} {
     variable max_len
     
     if {![string is integer -strict $new_max] || $new_max <= 0} {
@@ -176,7 +176,7 @@ namespace eval stringstore {
   }
 
   # New: Get all stored content
-  proc get_all {} {
+  proc ss_get_all {} {
     variable store_id
     variable max_len
     
@@ -197,48 +197,51 @@ namespace eval stringstore {
 }
 package provide stringstore 1.1
 
-# Create namespace alias "ss" for "stringstore"
-namespace eval ss {
-  namespace import ::stringstore::*
-}
+if {0} { ; # this will run error when wrap it using namespace
+  # Create namespace alias "ss" for "stringstore"
+  namespace eval ss {
+    namespace import stringstore::*
+  }
 
-# Create global procedures with "ss_" prefix for even simpler access
-proc ss_init {max_length} {
-  return [stringstore::init $max_length]
-}
+  # Create global procedures with "ss_" prefix for even simpler access
+  proc ss_init {max_length} {
+    return [stringstore::init $max_length]
+  }
 
-proc ss_process {str} {
-  return [stringstore::process $str]
-}
+  proc ss_process {str} {
+    return [stringstore::process $str]
+  }
 
-proc ss_get_id {str} {
-  return [stringstore::get_id $str]
-}
+  proc ss_get_id {str} {
+    return [stringstore::get_id $str]
+  }
 
-proc ss_get_string {id} {
-  return [stringstore::get_string $id]
-}
+  proc ss_get_string {id} {
+    return [stringstore::get_string $id]
+  }
 
-proc ss_clear {} {
-  return [stringstore::clear]
-}
+  proc ss_clear {} {
+    return [stringstore::clear]
+  }
 
-proc ss_size {} {
-  return [stringstore::size]
-}
+  proc ss_size {} {
+    return [stringstore::size]
+  }
 
-proc ss_get_max_length {} {
-  return [stringstore::get_max_length]
-}
+  proc ss_get_max_length {} {
+    return [stringstore::get_max_length]
+  }
 
-proc ss_set_max_length {new_max} {
-  return [stringstore::set_max_length $new_max]
-}
-# Add corresponding function for global proc
-proc ss_get_all {} {
-  return [stringstore::get_all]
-}
+  proc ss_set_max_length {new_max} {
+    return [stringstore::set_max_length $new_max]
+  }
+  # Add corresponding function for global proc
+  proc ss_get_all {} {
+    return [stringstore::get_all]
+  }
 
+    
+}
 
 
 if {0} {
@@ -246,40 +249,40 @@ if {0} {
   package require stringstore
 
   # 三种初始化方式（效果完全相同）
-  stringstore::init 10   ;# 原始方式
-  #ss::init 10            ;# 短命名空间方式
+  stringstore::ss_init 10   ;# 原始方式
+  #ss_init 10            ;# 短命名空间方式
   ss_init 10             ;# 全局过程方式
 
   # 处理字符串的三种方式
-  puts [stringstore::process "short"]       ;# 输出: short
-  puts [ss::process "this is long"]         ;# 输出: S00001
+  puts [stringstore::ss_process "short"]       ;# 输出: short
+  puts [ss_process "this is long"]         ;# 输出: S00001
   puts [ss_process "this is long too"]      ;# 输出: S00002
-  puts [ss::process "sjdlfksjldfjsld jsldf jsdlf "]
-  puts [ss::process "sjdlfksjldfjsld sldf jsdlf "]
-  puts [ss::process "sdlfksjldfjsld sldf jsdlf "]
-  puts [ss::process "sjlfksjldfjsldjsldf jsdlf "]
-  puts [ss::process "sjlfksjldfjsl jsldf jsdlf "]
-  puts [ss::process "sjlfksjldfjsd jsldf jsdlf "]
-  puts [ss::process "sjlfksjldfjld jsldf jsdlf "]
-  puts [ss::process "sjlfksjldfsld jsldf jsdlf "]
-  puts [ss::process "sjlfksjldjsld jsldf jsdlf "]
-  puts [ss::process "sjlfksjlfjsld jsldf jsdlf "]
-  puts [ss::process "sjlfksjdfjsld jsldf jsdlf "]
-  puts [ss::process "sjdlfkldfjsld jsldf jsdlf "]
+  puts [ss_process "sjdlfksjldfjsld jsldf jsdlf "]
+  puts [ss_process "sjdlfksjldfjsld sldf jsdlf "]
+  puts [ss_process "sdlfksjldfjsld sldf jsdlf "]
+  puts [ss_process "sjlfksjldfjsldjsldf jsdlf "]
+  puts [ss_process "sjlfksjldfjsl jsldf jsdlf "]
+  puts [ss_process "sjlfksjldfjsd jsldf jsdlf "]
+  puts [ss_process "sjlfksjldfjld jsldf jsdlf "]
+  puts [ss_process "sjlfksjldfsld jsldf jsdlf "]
+  puts [ss_process "sjlfksjldjsld jsldf jsdlf "]
+  puts [ss_process "sjlfksjlfjsld jsldf jsdlf "]
+  puts [ss_process "sjlfksjdfjsld jsldf jsdlf "]
+  puts [ss_process "sjdlfkldfjsld jsldf jsdlf "]
 
 puts "porint ----------"
 
   # 获取ID的三种方式
-  puts [stringstore::get_id "this is long"] ;# 输出: S00001
-  puts [ss::get_id "this is long too"]      ;# 输出: S00002
+  puts [stringstore::ss_get_id "this is long"] ;# 输出: S00001
+  puts [ss_get_id "this is long too"]      ;# 输出: S00002
   puts [ss_get_id "unknown"]                ;# 输出: （空字符串）
 
-puts "[ss::get_string "S0000C"]"
+puts "[ss_get_string "S0000C"]"
 
   # 获取原始字符串的三种方式
 puts "----------------------"
-  puts [stringstore::get_string "S00001"]   ;# 输出: this is long
-  puts [ss::get_string "S00002"]            ;# 输出: this is long too
+  puts [stringstore::ss_get_string "S00001"]   ;# 输出: this is long
+  puts [ss_get_string "S00002"]            ;# 输出: this is long too
   puts "S99999 : [ss_get_string "S99999"]"             ;# 输出: （无输出）
 
   # 其他操作示例
@@ -288,5 +291,5 @@ puts "----------------------"
   puts "存储的字符串数量: [ss_size]"        ;# 输出: 存储的字符串数量: 2
 
   ss_clear
-  puts "清空后数量: [ss::size]"             ;# 输出: 清空后数量: 0
+  puts "清空后数量: [ss_size]"             ;# 输出: 清空后数量: 0
 }

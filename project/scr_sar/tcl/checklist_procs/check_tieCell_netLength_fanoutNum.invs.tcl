@@ -13,13 +13,13 @@ source ../packages/print_formattedTable_D2withCategory.package.tcl; # print_form
 source ../packages/print_formattedTable.package.tcl; # print_formattedTable
 source ../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
 source ../packages/categorize_overlapping_sets.package.tcl; # categorize_overlapping_sets
-source ../packages/stringstore.package.tcl; # stringstore/ss::init/process/get_id/get_string/clear/size/get_max_length/set_max_length/get_all
+source ../packages/stringstore.package.tcl; # stringstore::ss_init/ss_process/ss_get_id/ss_get_string/ss_clear/ss_size/ss_get_max_length/ss_set_max_length/ss_get_all
 source ../packages/count_categories.package.tcl; # count_categories
 source ../packages/sort_nested_list.package.tcl; # sort_nested_list
 proc checkTieNetLengthFanout {{maxNetLength 20} {maxFanout 5} {sumFile "sor_tieLongnet_maxfanout.list"}} {
   set tieInsts_ptr [dbget top.insts.cell.name *TIE* -p2]
   set tiePins [dbget $tieInsts_ptr.instTerms.cellTerm.name -u]
-  ss::init 100
+  ss_init 100
   set netLength_numFanout_tiePinName_netName [lmap tie_ptr $tieInsts_ptr {
     set tieName [dbget $tie_ptr.name]
     set tiePin_ptr [dbget $tie_ptr.instTerms.]
@@ -27,7 +27,7 @@ proc checkTieNetLengthFanout {{maxNetLength 20} {maxFanout 5} {sumFile "sor_tieL
     set netName [dbget $tiePin_ptr.net.name]
     set netLength [get_net_length $netName] 
     set numFanout [dbget $tiePin_ptr.net.numInputTerms]
-    set tempList [list $netLength $numFanout [ss::process $tiePinName] [ss::process $netName]]
+    set tempList [list $netLength $numFanout [ss_process $tiePinName] [ss_process $netName]]
   }]
   foreach nntn $netLength_numFanout_tiePinName_netName {
     if {[lindex $nntn 0] > $maxNetLength} { lappend violMaxNetLength $nntn }
@@ -45,7 +45,7 @@ proc checkTieNetLengthFanout {{maxNetLength 20} {maxFanout 5} {sumFile "sor_tieL
   puts $fo [print_formattedTable_D2withCategory $sortedClassifiedCates]
   puts $fo ""
   puts $fo "shortened long-string:"
-  puts $fo [print_formattedTable [ss::get_all]]
+  puts $fo [print_formattedTable [ss_get_all]]
   pw $fo ""
   pw $fo "------------------------"
   pw $fo "STATISTICS OF CATEGORIES:"

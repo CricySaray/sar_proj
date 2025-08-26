@@ -1,3 +1,14 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/08/26 18:25:15 Tuesday
+# label     : gui_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
+# descrip   : This proc finds the shortest path in a tree structure of horizontal and vertical segments, accounting for small offsets of start and 
+#							end points from the segments, and ensures consecutive segments in the path are properly connected with the end of one being the start of the next.
+# return    : 
+# ref       : link url
+# --------------------------
 proc find_shortest_path_with_offset {start end segments} {
   # Validate input format
   if {[llength $start] != 2 || [llength $end] != 2} {
@@ -112,7 +123,49 @@ proc find_shortest_path_with_offset {start end segments} {
   }
   
   # Reverse path to get from start to end
-  return [lreverse $path]
+  set path [lreverse $path]
+  
+  # Ensure all segments are properly connected in sequence
+  set path_length [llength $path]
+  if {$path_length > 0} {
+    # Ensure first segment starts with start_closest
+    set first_seg [lindex $path 0]
+    if {[lindex $first_seg 0] ne $start_closest} {
+      set path [lreplace $path 0 0 [list [lindex $first_seg 1] [lindex $first_seg 0]]]
+    }
+    
+    # Check each consecutive segment pair
+    for {set i 1} {$i < $path_length} {incr i} {
+      set prev_seg [lindex $path [expr {$i - 1}]]
+      set curr_seg [lindex $path $i]
+      
+      # Get previous segment's end point
+      set prev_end [lindex $prev_seg 1]
+      
+      # Get current segment's start and end points
+      set curr_start [lindex $curr_seg 0]
+      set curr_end [lindex $curr_seg 1]
+      
+      # Check if current segment needs to be reversed
+      if {$curr_start ne $prev_end} {
+        # Verify that reversing will fix the connection
+        if {$curr_end eq $prev_end} {
+          set reversed_seg [list $curr_end $curr_start]
+          set path [lreplace $path $i $i $reversed_seg]
+        } else {
+          error "Segment connection error: Previous end ($prev_end) doesn't match current start ($curr_start) or end ($curr_end)"
+        }
+      }
+    }
+    
+    # Ensure last segment ends with end_closest
+    set last_seg [lindex $path end]
+    if {[lindex $last_seg 1] ne $end_closest} {
+      set path [lreplace $path end end [list [lindex $last_seg 1] [lindex $last_seg 0]]]
+    }
+  }
+  
+  return $path
 }
 
 proc distance_between_points {p1 p2} {
@@ -153,9 +206,7 @@ proc closest_point_on_segment {point segment} {
         return [list $c $d]
       }
     }
-  }
-  # Vertical line (x is constant)
-  else {
+  } else {
     # Check if point's projection is on the segment
     if {$p == $a} {
       set y_clamped [expr {max(min($q, max($b, $d)), min($b, $d))}]

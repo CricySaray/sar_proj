@@ -155,7 +155,8 @@ proc sliding_rheostat_of_strategies {args} {
             set ifFixedSuccessfully 1
             set cmd [print_ecoCommand -type change -celltype $toVT -inst $driverInstname] ; # U008: need move inst when size of toChangeCelltype is different from original size
             set fixedlist [concat $driverSinksSymbol "T" $toVT $addedInfoToShow]
-            if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
+            if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
+              lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow] }
           } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedVt" $toVT $addedInfoToShow]}
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
           set ifSkipped 1
@@ -207,6 +208,7 @@ proc sliding_rheostat_of_strategies {args} {
               } elseif {$ifSimpleOne2More} {
                 set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
                 set toLoc [calculateRelativePoint $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
+                set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]
               }
 
               set refineLoc [findSpaceToInsertRepeater_using_lutDict -testOrRun run -celltype $toAdd -loc $toLoc -expandAreaWidthHeight $expandAreaWidthHeight -divOfForceInsert $divOfForceInsert -multipleOfExpandSpace $multipleOfExpandSpace]
@@ -216,7 +218,8 @@ proc sliding_rheostat_of_strategies {args} {
               set cmd [print_ecoCommand -type add -celltype $toAdd -terms $termsWhenAdd -newInstNamePrefix ${newInstNamePrefix}_one2one_[ci one] -loc $refineLocPosition]
               set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsertAfterMove" { set tmp "f" } "forceInsertWithoutMove" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
               set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
-              if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
+              if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
+                lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow] }
               if {$refineLocType in {expandSpace forceInsertAfterMove}} {
                 set move_cmd [lmap inst_moveDirectionDistance $refineLocMovementList {
                   lassign $inst_moveDirectionDistance temp_instname temp_moveDirectionDistance

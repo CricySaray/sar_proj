@@ -6,7 +6,7 @@
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
 # descrip   : This proc finds the shortest path in a tree structure of horizontal and vertical segments, accounting for small offsets of start and 
 #							end points from the segments, and ensures consecutive segments in the path are properly connected with the end of one being the start of the next.
-# return    : 
+# return    : list {{{x y} {x1 y1}} {{x y} {x1 y1}} ...}
 # ref       : link url
 # --------------------------
 proc find_shortest_path_with_offset {start end segments} {

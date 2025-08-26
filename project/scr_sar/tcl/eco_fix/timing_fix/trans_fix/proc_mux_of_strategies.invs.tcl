@@ -44,6 +44,7 @@ source ../../../packages/calculate_relative_point_at_path.package.tcl; # calcula
 source ../physical_aware_algorithm/findSpaceToInsertRepeater_using_lutDict.invsGUI.tcl; # findSpaceToInsertRepeater_using_lutDict
 source ./proc_calculateRelativePoint.invs.tcl; # calculateRelativePoint
 source ./proc_calculateResistantCenter_advanced.invs.tcl; # calculateResistantCenter_fromPoints
+source ./proc_gen_info_of_one2more_case.invs.tcl; # gen_info_of_one2more_case
 source ../lut_build/operateLUT.tcl; # operateLUT
 source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 # mini descrip: driverPin/sinksPin/netName/netLen/wiresPts/driverInstname/sinksInstname/driverCellType/sinksCellType/
@@ -86,7 +87,7 @@ proc sliding_rheostat_of_strategies {args} {
     set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 \
                         ifHaveMovements 0 ifNeedNoticeCase 0 \
                         ifNeedConsiderThisDriverSinksSymbol 0 ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
-    set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list movement_cmd_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list needNoticeCase_list]
+    set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list detailInfoOfMore_list movement_cmd_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list nonConsidered_list cantChange_list dirtyCase_list needNoticeCase_list]
     foreach lists_item $resultDict_lists { dict set resultDict $lists_item [list ] }
 
     er $debug { puts "ifLoop : $ifLoop  | numSinks : $numSinks" }

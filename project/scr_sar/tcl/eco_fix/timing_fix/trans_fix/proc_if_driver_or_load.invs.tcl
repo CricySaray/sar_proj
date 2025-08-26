@@ -9,7 +9,8 @@
 # --------------------------
 proc if_driver_or_load {{pin ""}} {
   if {$pin == "" || $pin == "0x0" || [dbget top.insts.instTerms.name $pin -e] == ""} {
-    return "0x0:1"
+    #error "proc if_driver_or_load: check your input: pin($pin) not found in invs db!!!"
+    return "0x0"
   } else {
     if {[dbget [dbget top.insts.instTerms.name $pin -p].isOutput] == 1} {
       return 1 

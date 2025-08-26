@@ -1,4 +1,4 @@
-proc find_shortest_path {start end segments} {
+proc find_shortest_path_with_offset {start end segments} {
   # Validate input format
   if {[llength $start] != 2 || [llength $end] != 2} {
     error "Start and end points must be coordinate pairs"
@@ -112,19 +112,7 @@ proc find_shortest_path {start end segments} {
   }
   
   # Reverse path to get from start to end
-  set path [lreverse $path]
-  
-  # If start point is not directly on the first segment, add connection
-  if {[distance_between_points $start $start_closest] > 1e-9} {
-    set path [linsert $path 0 [list $start $start_closest]]
-  }
-  
-  # If end point is not directly on the last segment, add connection
-  if {[distance_between_points $end $end_closest] > 1e-9} {
-    lappend path [list $end_closest $end]
-  }
-  
-  return $path
+  return [lreverse $path]
 }
 
 proc distance_between_points {p1 p2} {
@@ -150,7 +138,7 @@ proc closest_point_on_segment {point segment} {
   
   # Horizontal line (y is constant)
   if {$b == $d} {
-    # Check if point's y is on the segment's y
+    # Check if point's projection is on the segment
     if {$q == $b} {
       set x_clamped [expr {max(min($p, max($a, $c)), min($a, $c))}]
       return [list $x_clamped $b]
@@ -168,7 +156,7 @@ proc closest_point_on_segment {point segment} {
   }
   # Vertical line (x is constant)
   else {
-    # Check if point's x is on the segment's x
+    # Check if point's projection is on the segment
     if {$p == $a} {
       set y_clamped [expr {max(min($q, max($b, $d)), min($b, $d))}]
       return [list $a $y_clamped]
@@ -213,7 +201,7 @@ proc split_segment {segment point} {
   set p1 [lindex $segment 0]
   set p2 [lindex $segment 1]
   
-  # Return two new segments
+  # Return two new segments that maintain horizontal/vertical property
   return [list [list $p1 $point] [list $point $p2]]
 }
 

@@ -13,11 +13,11 @@
 proc calculate_path_length_usingWirePts {path} {
   # Check if input is a valid list
   if {![llength $path]} {
-    error "Invalid path: Empty input provided"
+    error "proc calculate_path_length_usingWirePts: Invalid path: Empty input provided"
   }
   
   if {![string is list -strict $path]} {
-    error "Invalid path: Input is not a valid list"
+    error "proc calculate_path_length_usingWirePts: Invalid path: Input is not a valid list"
   }
   
   set total_length 0.0
@@ -26,7 +26,7 @@ proc calculate_path_length_usingWirePts {path} {
   foreach seg $path {
     # Check segment is a valid list with two points
     if {[llength $seg] != 2} {
-      error "Invalid segment format: Segment must contain exactly two points - $seg"
+      error "proc calculate_path_length_usingWirePts: Invalid segment format: Segment must contain exactly two points - $seg"
     }
     
     # Extract the two points of the segment
@@ -35,18 +35,18 @@ proc calculate_path_length_usingWirePts {path} {
     
     # Validate first point format
     if {[llength $p1] != 2} {
-      error "Invalid point format: First point must be a coordinate pair - $p1"
+      error "proc calculate_path_length_usingWirePts: Invalid point format: First point must be a coordinate pair - $p1"
     }
     if {![string is double -strict [lindex $p1 0]] || ![string is double -strict [lindex $p1 1]]} {
-      error "Invalid coordinates: First point contains non-numeric values - $p1"
+      error "proc calculate_path_length_usingWirePts: Invalid coordinates: First point contains non-numeric values - $p1"
     }
     
     # Validate second point format
     if {[llength $p2] != 2} {
-      error "Invalid point format: Second point must be a coordinate pair - $p2"
+      error "proc calculate_path_length_usingWirePts: Invalid point format: Second point must be a coordinate pair - $p2"
     }
     if {![string is double -strict [lindex $p2 0]] || ![string is double -strict [lindex $p2 1]]} {
-      error "Invalid coordinates: Second point contains non-numeric values - $p2"
+      error "proc calculate_path_length_usingWirePts: Invalid coordinates: Second point contains non-numeric values - $p2"
     }
     
     # Extract coordinates
@@ -57,7 +57,7 @@ proc calculate_path_length_usingWirePts {path} {
     
     # Check if segment is horizontal or vertical (as required by original problem)
     if {$x1 != $x2 && $y1 != $y2} {
-      error "Invalid segment: Segment is not horizontal or vertical - $seg"
+      error "proc calculate_path_length_usingWirePts: Invalid segment: Segment is not horizontal or vertical - $seg"
     }
     
     # Calculate segment length (horizontal: x difference, vertical: y difference)

@@ -8,6 +8,8 @@
 !backend/**
 !ref_from_others/
 !ref_from_others/**
+!reportsScriptsScrapedInfo/
+!reportsScriptsScrapedInfo/**
 all_*
 wn_*
 *.swp

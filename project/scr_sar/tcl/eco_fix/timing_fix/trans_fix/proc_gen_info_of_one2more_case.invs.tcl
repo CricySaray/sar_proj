@@ -1,3 +1,4 @@
+source ./proc_find_shortest_path_with_offset.invs.tcl; # find_shortest_path_with_offset
 source ./proc_get_net_lenth.invs.tcl; # get_net_length
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
 proc gen_info_of_one2more_case {{violValue 0} allInfoToShow allSinksPin} {

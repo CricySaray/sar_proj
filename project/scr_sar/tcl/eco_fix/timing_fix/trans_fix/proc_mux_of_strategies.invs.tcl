@@ -176,7 +176,8 @@ proc sliding_rheostat_of_strategies {args} {
               set ifFixedSuccessfully 1
               set cmd [print_ecoCommand -type change -celltype $toCap -inst $driverInstname] ; # U008
               set fixedlist [concat $driverSinksSymbol "D" $toCap $addedInfoToShow]
-              if {$ifOne2One} { lappend fixed_one_list $fixedlist  ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd }
+              if {$ifOne2One} { lappend fixed_one_list $fixedlist  ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
+                lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]}
             } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedCap" $toCap $addedInfoToShow]}
           }
         } elseif {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 

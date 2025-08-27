@@ -57,6 +57,8 @@ source ./proc_reverseListRange.invs.tcl; # reverseListRange - return reversed li
 source ./proc_formatDecimal.invs.tcl; # formatDecimal/fm - return string converted from number
 source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop - return number
 
+source ./proc_mux_of_strategies.invs.tcl; # mux_of_strategies
+
 # The principle of minimum information
 proc fix_trans {args} {
   # default value for all var
@@ -81,6 +83,7 @@ proc fix_trans {args} {
   set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
   set suffixFilename                           "" ; # for example : eco4
+  set promptPrefix                             "# song"
   set debug                                    0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
@@ -188,7 +191,29 @@ proc fix_trans {args} {
     lappend cmdList "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
     lappend cmdList " "
 
-    foreach case [concat ]
+    foreach case $violValue_driverPin_LIST {
+      lassign $case violValue driverPin
+      lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode -ifCanChangeVTWhenChangeCapacity -ifCanChangeVTcapacityWhenAddRepeater] resultDict allInfo
+      
+      proc onlyReadTrace {var_name index operation} { error "proc onlyReadTrace in proc: fix_trans: variable($var_name) is read-only, you can't write it!!!" }
+      trace add variable allInfo write onlyReadTrace 
+      trace add variable resultDict write onlyReadTrace
+      dict for {infovar infovalue} [concat $resultDict $allInfo] { set $infovar $infovalue ; trace add variable $infovar write onlyReadTrace}
+      if {!$ifPassPreCheck} {
+        if {$ifDirtyCase} { lappend dirtyCase_List $dirtyCase_list ; set precheckFlag_01 "D" } ; # dirty
+        if {$ifNeedReRouteNet} { lappend fixed_reRoute_List $fixed_reRoute_list ; set precheckFlag_02 "R" } ; #reRoute
+        if {$ifNotSupportCellClass} { lappend nonConsidered_List $nonConsidered_list ; set precheckFlag_03 "S" } ; # classNotSupport
+        if {$ifComplexOne2More} { lappend nonConsidered_List $nonConsidered_list ; set precheckFlag_04 "X" } ; # complexMore
+      } else {
+        if {$ifOne2One} {
+           
+        }
+      }
+
+      dict for {infovar infovalue} [concat $resultDict $allInfo] { unset $infovar ; trace remove variable $infovar write onlyReadTrace }
+      trace remove variable allInfo write onlyReadTrace 
+      trace remove variable resultDict write onlyReadTrace
+    }
     
 
     # print to window
@@ -411,6 +436,7 @@ define_proc_arguments fix_trans \
     {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list required}
     {-suffixFilename "specify suffix of result filename" AString string optional}
+    {-promptPrefix "specify the prefix of prompt" AString string optional}
     {-debug "debug mode" "" boolean optional}
   }
 # needn't to set options as below:

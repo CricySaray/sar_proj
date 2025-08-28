@@ -85,7 +85,7 @@ namespace eval stringstore {
     }
     
     # Generate new ID
-    set id [generate_id $next_id]
+    set id [ss_generate_id $next_id]
     
     # Store the string with its ID
     set store_str($str) $id
@@ -196,10 +196,12 @@ namespace eval stringstore {
   }
 }
 package provide stringstore 1.1
+namespace import stringstore::*
 
 if {1} {
   # 加载包
   package require stringstore
+  namespace import stringstore::*
 
   # 三种初始化方式（效果完全相同）
   stringstore::ss_init 10   ;# 原始方式

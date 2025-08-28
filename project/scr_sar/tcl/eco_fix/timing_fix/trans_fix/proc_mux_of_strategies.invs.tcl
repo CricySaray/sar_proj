@@ -119,7 +119,7 @@ proc sliding_rheostat_of_strategies {args} {
         if {$ifComplexOne2More} { set precheckFlag_04 "X" } ; # compleXMore
 
         set precheckFlag [string cat {*}[lmap flag [info locals precheckFlag_*] { subst \${$flag} }]]
-        lappend notPassPreCheck_list [concat $driverSinksSymbol $precheckFlag $addedInfoToShow]
+        set notPassPreCheck_list [concat $driverSinksSymbol $precheckFlag $addedInfoToShow]
       } elseif {$ifPassPreCheck} {
         er $debug { puts "Congratulations!!! pass precheck" }
         # ---------------------------------------------- 

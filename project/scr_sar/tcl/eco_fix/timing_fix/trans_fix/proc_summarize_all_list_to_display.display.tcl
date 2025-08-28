@@ -61,6 +61,7 @@ proc summarize_all_list_to_display {args} {
             {*}$preCmd [join [list [lrepeat 25 "-"] "### HAVE NO [regsub ":" [eo $ifHaveTitle "$tempListName CONTENTS" $titleName] ""] !!!" ] \n]
           }
         }
+        {*}$preCmd ""
         {*}$preCmd [print_formattedTable [stringstore::ss_get_all]]
         stringstore::ss_clear
         close $fi

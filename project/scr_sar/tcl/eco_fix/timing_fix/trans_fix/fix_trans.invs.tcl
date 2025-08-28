@@ -51,6 +51,7 @@ proc fix_trans {args} {
   set canChangeDriveCapacity                   1
   set canChangeVTandDriveCapacity              1
   set canAddRepeater                           1
+  set maxWidthForString                        80
   set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
   set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
@@ -187,13 +188,14 @@ proc fix_trans {args} {
     set titleOfListMap {{{# COMMANDS OF FIXED CASES:} cmd_List} {{## reRoute COMMANDS:} cmd_reRoute_List} {{FIXED CASES LIST:} fixed_List} {{NOT PASS PRECHECK LIST:} notPassPreCheck_List} {{FIX BUT FAILED LIST:} fix_but_failed_List} {{SKIPPED LIST:} skipped_List} {{CAN'T CHANGE LIST:} cantChange_List} {{NEED NOTICE CASE LIST:} needNoticeCase_List} {{DETAIL INFO OF ONE2MORE CASES:} detailInfoOfMore_List}}
     set filesIncludeListMap [subst {{$cmdFile {cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
     foreach ListVar $ListVarCollection { dict set ListVarDict $ListVar [subst \${$ListVar}] }
-    set needDumpWindowList {cmd_List fixed_List notPassPreCheckPrompts fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
+    set needDumpWindowList {cmd_List fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needLimitStringWidth {fixed_List notPassPreCheckPrompts fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set notNeedCountSum {cmd_List cmd_reRoute_List}
     set notNeedFormatTableList {cmd_List cmd_reRoute_List}
     set onlyCountTotalNumList {detailInfoOfMore_List}
+    set maxWidthForString $maxWidthForString
     
-    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList
+    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -maxWidthForString $maxWidthForString
   }
 }
 define_proc_arguments fix_trans \
@@ -206,6 +208,7 @@ define_proc_arguments fix_trans \
     {-canChangeDriveCapacity "if it use strategy of changing drive capacity" "" boolean optional}
     {-canChangeVTandDriveCapacity "if it use strategy of changing VT and drive capacity" "" boolean optional}
     {-canAddRepeater "if it use strategy of adding repeater" "" boolean optional}
+    {-maxWidthForString "specify the max width of every string of list" AInteger int optional}
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
     {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list required}

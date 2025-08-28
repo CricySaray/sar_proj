@@ -20,6 +20,7 @@ proc summarize_all_list_to_display {args} {
   set filesIncludeListMap     {}
   set needDumpWindowList      {}
   set needLimitStringWidth    {}
+  set maxWidthForString       80
   set notNeedCountSumList     {}
   set notNeedFormatTableList  {}
   set onlyCountTotalNumList   {}
@@ -35,6 +36,7 @@ proc summarize_all_list_to_display {args} {
   } else {
     dict with listsDict {
       foreach tempFileLists $filesIncludeListMap {
+        stringstore::ss_init 80
         set fileName [lindex $tempFileLists 0]
         set fi [open $fileName w]
         foreach tempListName [lindex $tempFileLists 1] {
@@ -58,6 +60,7 @@ proc summarize_all_list_to_display {args} {
             {*}$preCmd [join [list [lrepeat 25 "-"] "### HAVE NO [regsub ":" [eo $ifHaveTitle "$tempListName CONTENTS" $titleName] ""] !!!" ] \n]
           }
         }
+        stringstore::ss_clear
         close $fi
       }
     }
@@ -72,6 +75,7 @@ define_proc_arguments summarize_all_list_to_display \
     {-filesIncludeListMap "specify the map from files to List" AList list required}
     {-needDumpWindowList "specify the list to dump window" AList list optional}
     {-needLimitStringWidth "specify the list that nned limit String width" AList list optional}
+    {-maxWidthForString "specify the max width for every string of list" AInteger int optional}
     {-notNeedCountSumList "specify the list that is not need count summary" AList list optional}
     {-notNeedFormatTableList "specify the list that is not need format to table" AList list optional}
     {-onlyCountTotalNumList "specify the list that is only count total num" AList list optional}

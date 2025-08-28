@@ -188,6 +188,7 @@ proc fix_trans {args} {
     set filesIncludeListMap [subst {{$cmdFile {cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
     foreach ListVar $ListVarCollection { dict set ListVarDict $ListVar [subst \${$ListVar}] }
     set needDumpWindowList {cmd_List fixed_List notPassPreCheckPrompts fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
+    set needLimitStringWidth {fixed_List notPassPreCheckPrompts fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set notNeedCountSum {cmd_List cmd_reRoute_List}
     set notNeedFormatTableList {cmd_List cmd_reRoute_List}
     set onlyCountTotalNumList {detailInfoOfMore_List}

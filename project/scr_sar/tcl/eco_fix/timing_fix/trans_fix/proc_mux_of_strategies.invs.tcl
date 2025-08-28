@@ -54,7 +54,7 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow/
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPinPt/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow/
 alias mux_of_strategies "sliding_rheostat_of_strategies"
 proc sliding_rheostat_of_strategies {args} {
   set violValue                                0
@@ -204,7 +204,7 @@ proc sliding_rheostat_of_strategies {args} {
                 set fited_wiresPts [fit_path $driverPinPT {*}$sinksPinPT $wiresPts]
                 set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $fited_wiresPts $relativeLoc]
               } elseif {$ifSimpleOne2More} {
-                set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPin "auto"] 
+                set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPinPt "auto"] 
                 set toLoc [calculateRelativePoint $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
                 set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]
               }

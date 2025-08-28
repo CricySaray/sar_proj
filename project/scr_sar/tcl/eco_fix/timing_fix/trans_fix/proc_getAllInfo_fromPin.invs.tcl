@@ -115,6 +115,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       lassign $distributionInfo fartherGroup closerGroup 
       lassign $fartherGroup groupPinnameLocations fartherCenterPoint
       dict set allInfo numFartherGroupSinks [llength $groupPinnameLocations]
+      dict set allInfo fartherGroupSinksPinPt [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 1 }]
       dict set allInfo fartherGroupSinksPin [lmap temp_pinname_location $groupPinnameLocations { lindex $temp_pinname_location 0 }]
     }    
     

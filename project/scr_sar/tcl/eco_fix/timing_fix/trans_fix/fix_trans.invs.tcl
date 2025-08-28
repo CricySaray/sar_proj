@@ -106,7 +106,7 @@ proc fix_trans {args} {
     if {$debug} { puts [join $violValue_driverPin_LIST \n] }
     # ----------------------
     # info collections
-    set allInfoPrompts [list violVal netLen ruleLen ifLoop -subSinks- driverClass driverType driverPin -numSinks- sinksClass sinkType sinkPin]
+    set allInfoPrompts [list violVal netLen ruleLen ifLoop -sub- class driverType driverPin -num- class sinkType sinkPin]
     ## not pass precheck info
     set notPassPreCheckPrompts {
       "# not pass precheck symbols"
@@ -143,7 +143,7 @@ proc fix_trans {args} {
     }
     set simpleDisplayList [list notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List]
     foreach templist $simpleDisplayList { set $templist [list [list Symbol Type {*}$allInfoPrompts]] }
-    set detailInfoOfMore_List [list [list violValue perSinkLen netLen ruleLen ifLoop driverClass driverType driverPin -numSinks- sinksClass sinkType sinkPin]]
+    set detailInfoOfMore_List [list [list violValue perSinkLen netLen ruleLen ifLoop driverClass driverType driverPin -numSinks- class sinkType sinkPin]]
     # ------
     # init LIST
     set cmd_reRoute_List [list ] ; set fix_but_failed_List [list ]

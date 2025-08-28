@@ -13,6 +13,7 @@
 # --------------------------
 # String storage and management package with simplified access
 namespace eval stringstore {
+  namespace export ss_init ss_process ss_get_id ss_get_string ss_clear ss_size ss_get_max_length ss_set_max_length ss_get_all
   # Private variables
   variable store_str  ;# Maps strings to their IDs
   variable store_id   ;# Maps IDs to their strings
@@ -193,7 +194,6 @@ namespace eval stringstore {
     
     return [lsort -index 0 -increasing $result]
   }
-  namespace export ss_init ss_process ss_get_id ss_get_string ss_clear ss_size ss_get_max_length ss_set_max_length ss_get_all
 }
 package provide stringstore 1.1
 

@@ -20,7 +20,7 @@ proc summarize_all_list_to_display {args} {
   set needDumpWindowList      {}
   set notNeedCountSumList     {}
   set notNeedFormatTableList  {}
-  set onlyCoutTotalNumList       {}
+  set onlyCountTotalNumList   {}
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -36,7 +36,7 @@ proc summarize_all_list_to_display {args} {
         set fileName [lindex $tempFileLists 0]
         set fi [open $fileName w]
         foreach tempListName [lindex $tempFileLists 1] {
-          set ifOnlyCountTotalNum [expr {$tempListName in $onlyCoutTotalNumList}]
+          set ifOnlyCountTotalNum [expr {$tempListName in $onlyCountTotalNumList}]
           set ifDumpWindow [expr {$tempListName in $needDumpWindowList}]
           set ifNeedFormatTable [expr {$tempListName ni $notNeedFormatTableList}]
           if {[lsearch -index 1 $titleOfListMap $tempListName] != -1} { 
@@ -70,4 +70,5 @@ define_proc_arguments summarize_all_list_to_display \
     {-needDumpWindowList "specify the list to dump window" AList list optional}
     {-notNeedCountSumList "specify the list that is not need count summary" AList list optional}
     {-notNeedFormatTableList "specify the list that is not need format to table" AList list optional}
+    {-onlyCountTotalNumList "specify the list that is only count total num" AList list optional}
   }

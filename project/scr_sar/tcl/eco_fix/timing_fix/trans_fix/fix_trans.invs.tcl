@@ -190,6 +190,7 @@ proc fix_trans {args} {
     set needDumpWindowList {cmd_List fixed_List notPassPreCheckPrompts fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set notNeedCountSum {cmd_List cmd_reRoute_List}
     set notNeedFormatTableList {cmd_List cmd_reRoute_List}
+    set onlyCountTotalNumList {detailInfoOfMore_List}
     
     summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList
   }

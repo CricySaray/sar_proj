@@ -18,6 +18,7 @@ proc summarize_all_list_to_display {args} {
   set titleOfListMap          {}
   set filesIncludeListMap     {}
   set needDumpWindowList      {}
+  set needLimitStringWidth    {}
   set notNeedCountSumList     {}
   set notNeedFormatTableList  {}
   set onlyCountTotalNumList   {}
@@ -36,9 +37,10 @@ proc summarize_all_list_to_display {args} {
         set fileName [lindex $tempFileLists 0]
         set fi [open $fileName w]
         foreach tempListName [lindex $tempFileLists 1] {
-          set ifOnlyCountTotalNum [expr {$tempListName in $onlyCountTotalNumList}]
           set ifDumpWindow [expr {$tempListName in $needDumpWindowList}]
+          set ifNeedLimitStringWidth [expr {$tempListName in $needLimitStringWidth}]
           set ifNeedFormatTable [expr {$tempListName ni $notNeedFormatTableList}]
+          set ifOnlyCountTotalNum [expr {$tempListName in $onlyCountTotalNumList}]
           if {[lsearch -index 1 $titleOfListMap $tempListName] != -1} { 
             set ifHaveTitle 1 ; set titleName [lindex [lsearch -index 1 -inline $titleOfListMap $tempListName] 0]; set titleSegments [list [lrepeat 25 "-"] $titleName ""] } else { 
               set ifHaveTitle 0 ; set titleSegments [list [lrepeat 25 "-"] " list name: [lindex [lsearch -index 1 $titleOfListMap $tempListName] 1]" ""] }
@@ -68,6 +70,7 @@ define_proc_arguments summarize_all_list_to_display \
     {-titleOfListMap "specify title for every list" AList list required}
     {-filesIncludeListMap "specify the map from files to List" AList list required}
     {-needDumpWindowList "specify the list to dump window" AList list optional}
+    {-needLimitStringWidth "specify the list that nned limit String width" AList list optional}
     {-notNeedCountSumList "specify the list that is not need count summary" AList list optional}
     {-notNeedFormatTableList "specify the list that is not need format to table" AList list optional}
     {-onlyCountTotalNumList "specify the list that is only count total num" AList list optional}

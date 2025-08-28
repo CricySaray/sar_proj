@@ -36,7 +36,7 @@ proc summarize_all_list_to_display {args} {
   } else {
     dict with listsDict {
       foreach tempFileLists $filesIncludeListMap {
-        stringstore::ss_init 80
+        stringstore::ss_init $maxWidthForString
         set fileName [lindex $tempFileLists 0]
         set fi [open $fileName w]
         foreach tempListName [lindex $tempFileLists 1] {
@@ -50,6 +50,7 @@ proc summarize_all_list_to_display {args} {
           set preCmd [list [eo $ifDumpWindow pw puts] $fi]
           if {[llength [subst \${$tempListName}]] > 1} {
             {*}$preCmd [join $titleSegments \n]
+            if {$ifNeedLimitStringWidth} { set $tempListName [lmap tempContentList [subst \${$tempListName}] { lmap tempItem $tempContentList { stringstore::ss_process $tempItem } }] }
             {*}$preCmd [if {$ifNeedFormatTable} { print_formattedTable [subst \${$tempListName}] } else { join [subst \${$tempListName}] \n } ]
             if {$tempListName ni $notNeedCountSumList} {
               set allCountList [count_items_advance [lrange [subst \${$tempListName}] 1 end] 1 {type num}]

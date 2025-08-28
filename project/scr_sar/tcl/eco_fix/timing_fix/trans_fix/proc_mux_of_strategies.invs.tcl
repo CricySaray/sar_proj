@@ -88,7 +88,7 @@ proc sliding_rheostat_of_strategies {args} {
                         ifHaveMovements 0 ifNeedNoticeCase 0 \
                         ifNeedConsiderThisDriverSinksSymbol 0 ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
     set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list detailInfoOfMore_list movement_cmd_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list \
-                              nonConsidered_list cantChange_list dirtyCase_list needNoticeCase_list]
+                              notPassPreCheck_list cantChange_list needNoticeCase_list]
     foreach lists_item $resultDict_lists { dict set resultDict $lists_item [list ] }
 
     er $debug { puts "ifLoop : $ifLoop  | numSinks : $numSinks" }
@@ -109,20 +109,17 @@ proc sliding_rheostat_of_strategies {args} {
       }
       set ifPassPreCheck [expr ![cond_met_any {*}$preCheckConds]]
       if {!$ifPassPreCheck} { ; # NOTICE: include nonConsider and dirtyCase list
-        if {$ifDirtyCase} {
-          lappend dirtyCase_list [concat $driverSinksSymbol "dirty" $addedInfoToShow]
-        }
+        if {$ifDirtyCase} { set precheckFlag_01 "D" } ; # dirty
         if {$ifNeedReRouteNet} {
           set ifFixedSuccessfully 1
-          lappend fixed_reRoute_list [concat $driverSinksSymbol "reRoute" $addedInfoToShow]
-          lappend cmd_reRoute_list [print_ecoCommand -type delNet -terms $driverPin]
+          set precheckFlag_02 "R" ; # reRoute
+          set cmd_reRoute_list [print_ecoCommand -type delNet -terms $driverPin]
         }
-        if {$ifNotSupportCellClass} {
-          lappend nonConsidered_list [concat $driverSinksSymbol "classNotSupport" $addedInfoToShow]
-        }
-        if {$ifComplexOne2More} {
-          lappend nonConsideredList [concat $driverSinksSymbol "complexMore" $addedInfoToShow]
-        }
+        if {$ifNotSupportCellClass} { set precheckFlag_03 "S" } ; # classNotSupport
+        if {$ifComplexOne2More} { set precheckFlag_04 "X" } ; # compleXMore
+
+        set precheckFlag [string cat {*}[lmap flag [info locals precheckFlag_*] { subst \${$flag} }]]
+        lappend notPassPreCheck_list [concat $driverSinksSymbol $precheckFlag $addedInfoToShow]
       } elseif {$ifPassPreCheck} {
         er $debug { puts "Congratulations!!! pass precheck" }
         # ---------------------------------------------- 
@@ -151,23 +148,22 @@ proc sliding_rheostat_of_strategies {args} {
         ### change VT {forbidden when Fix Long Net Mode}
         if {!$ifInFixLongNetMode && $ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" }
-          set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
+          set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 1]
           if {[operateLUT -type exists -attr [list celltype $toVT]]} {
             set ifFixedSuccessfully 1
             set cmd [print_ecoCommand -type change -celltype $toVT -inst $driverInstname] ; # U008: need move inst when size of toChangeCelltype is different from original size
             set fixedlist [concat $driverSinksSymbol "T" $toVT $addedInfoToShow]
-            if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
-              lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow] }
+            if {$ifOne2One} { set fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
+              set fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow] }
           } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedVt" $toVT $addedInfoToShow]}
         } elseif {$ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && $ifHaveBeenFastestVTinRange} {
-          set ifSkipped 1
-          lappend skipped_list [concat $driverSinksSymbol "Fvt" $addedInfoToShow]
+          set ifSkipped 1 ; set skippedFlag_01 "Fvt"
         } 
         ### change Capacity {forbidden when Fix Long Net Mode}
         if {!$ifInFixLongNetMode && !$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" }
           if {$ifCanChangeVTWhenChangeCapacity && !$ifHaveBeenFastestVTinRange} {
-            set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 0]
+            set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 1]
             if {![operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
           } else { set toVT $driverCellType }
           if {$ifFixButFailed} {
@@ -178,14 +174,15 @@ proc sliding_rheostat_of_strategies {args} {
               set ifFixedSuccessfully 1
               set cmd [print_ecoCommand -type change -celltype $toCap -inst $driverInstname] ; # U008
               set fixedlist [concat $driverSinksSymbol "D" $toCap $addedInfoToShow]
-              if {$ifOne2One} { lappend fixed_one_list $fixedlist  ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
-                lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]}
+              if {$ifOne2One} { set fixed_one_list $fixedlist  ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
+                set fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]}
             } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedCap" $toCap $addedInfoToShow]}
           }
         } elseif {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
-          set ifSkipped 1
-          lappend skipped_list [concat $driverSinksSymbol "Lcap" $addedInfoToShow]
+          set ifSkipped 1 ; set skippedFlag_02 "Lcap"
         } 
+        set skippedFlag [join [lmap flag [info locals skippedFlag_*] { subst {\${$flag}} }] "/"]
+        lappend skipped_list [concat $driverSinksSymbol $skippedFlag $addedInfoToShow]
         ### add repeater (change VT/capacity) U010
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
@@ -219,8 +216,8 @@ proc sliding_rheostat_of_strategies {args} {
               set cmd [print_ecoCommand -type add -celltype $toAdd -terms $termsWhenAdd -newInstNamePrefix ${newInstNamePrefix}_one2one_[ci one] -loc $refineLocPosition]
               set addTypeFlag [switch $refineLocType { "sufficient" { set tmp "S" } "expandSpace" { set tmp "E" } "forceInsertAfterMove" { set tmp "f" } "forceInsertWithoutMove" { set tmp "F" } "noSpace" { set tmp "N" } } ; set tmp]
               set fixedlist [concat $driverSinksSymbol [string cat $suffixAddFlag $baseAddFlag $addTypeFlag] $toAdd $addedInfoToShow]
-              if {$ifOne2One} { lappend fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
-                lappend fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow] }
+              if {$ifOne2One} { set fixed_one_list $fixedlist ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
+                set fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow] }
               if {$refineLocType in {expandSpace forceInsertAfterMove}} {
                 set move_cmd [lmap inst_moveDirectionDistance $refineLocMovementList {
                   lassign $inst_moveDirectionDistance temp_instname temp_moveDirectionDistance
@@ -229,10 +226,7 @@ proc sliding_rheostat_of_strategies {args} {
                 }]
                 set ifHaveMovements 1
                 lappend movement_cmd_list $move_cmd
-              } elseif {$refineLocType in {forceInsert}} {
-                set ifNeedNoticeCase 1
-                lappend needNoticeCase_list $fixedlist
-              } elseif {$refineLocType in {noSpace}} {
+              } elseif {$refineLocType in {forceInsert noSpace}} {
                 set ifNeedNoticeCase 1
                 lappend needNoticeCase_list $fixedlist
               }

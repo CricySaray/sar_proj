@@ -135,7 +135,8 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     }]
     
     dict for {key val} $allInfo  { set $key $val }
-    dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop $driverCellClass $driverCellType $driverPin "-$numSinks-" $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
+    if {!$ifOne2One} { set subSinks [dict get $allInfo numFartherGroupSinks] } else { set subSinks 1 }
+    dict set allInfo infoToShow [list $netLen $ruleLen $ifLoop "-$subSinks-" $driverCellClass $driverCellType $driverPin "-$numSinks-" $sinksCellClassForShow $farthestSinkCellType $sinkPinFarthestToDriverPin]
     return $allInfo
   }
 }

@@ -74,33 +74,35 @@ proc count_items_advance {nested_list {position 0} {header {type num}} {debug 0}
   }
 
   debug_msg "Counting completed. Found [array size counters] unique items" $debug
+  lappend result "total [llength $nested_list]"
   return $result
 }
 
-# Example usage
-if {[info exists argv0] && ($argv0 eq [info script])} {
-  # Sample nested list
-  set sample_list {
-    {ft song an rui}
-    {ft song s an}
-    {fa son sjd jjs}
-    {fa jskf ajsdfl jasd}
-    {ft third example}
-    {unknown type}
+if {0} {
+  # Example usage
+  if {[info exists argv0] && ($argv0 eq [info script])} {
+    # Sample nested list
+    set sample_list {
+      {ft song an rui}
+      {ft song s an}
+      {fa son sjd jjs}
+      {fa jskf ajsdfl jasd}
+      {ft third example}
+      {unknown type}
+    }
+
+    # Demonstrate basic usage
+    puts "Basic example - count first elements:"
+    set result [count_nested_items $sample_list]
+    puts $result
+
+    # Demonstrate with debug enabled
+    puts "\nWith debug information:"
+    set result [count_nested_items $sample_list 0 {type count} 1]
+    
+    # Demonstrate counting different position
+    puts "\nCount elements at position 1:"
+    set result [count_nested_items $sample_list 1 {second_item count}]
+    puts $result
   }
-
-  # Demonstrate basic usage
-  puts "Basic example - count first elements:"
-  set result [count_nested_items $sample_list]
-  puts $result
-
-  # Demonstrate with debug enabled
-  puts "\nWith debug information:"
-  set result [count_nested_items $sample_list 0 {type count} 1]
-  
-  # Demonstrate counting different position
-  puts "\nCount elements at position 1:"
-  set result [count_nested_items $sample_list 1 {second_item count}]
-  puts $result
 }
-

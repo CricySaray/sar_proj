@@ -1,3 +1,13 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/08/28 10:29:27 Thursday
+# label     : atomic_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
+# descrip   : Obtain all sink information in the one2more scenario to facilitate display and information query.
+# return    : list {{one2more case} {one2more case} ...}
+# ref       : link url
+# --------------------------
 source ./proc_find_shortest_path_with_offset.invs.tcl; # find_shortest_path_with_offset
 source ./proc_calculate_path_length_usingWirePts.invs.tcl; # calculate_path_length_usingWirePts
 source ./proc_calculateDistance_betweenTwoPoint.invs.tcl; # calculateDistance
@@ -21,7 +31,7 @@ proc gen_info_of_one2more_case {{violValue 0} driverPin allSinksPin wirePts allI
       }
       set sinkpin_celltype  [dbget [dbget top.insts.instTerms.name $sinkpin -p2].cell.name]
       set sinkpin_cellclass [operateLUT -type read -attr [list celltype $sinkpin_celltype class]]
-      if {$i == 1} { lappend detailInfoOfMoreCase [list $violValue $sinkpin_netLen {*}[lrange $allInfoToShow 0 end-3] $sinkpin_cellclass $sinkpin_celltype $sinkpin] } else {
+      if {$i == 1} { lappend detailInfoOfMoreCase [list $violValue $sinkpin_netLen {*}[lreplace [lrange $allInfoToShow 0 end-3] 3 3] $sinkpin_cellclass $sinkpin_celltype $sinkpin] } else {
         lappend detailInfoOfMoreCase [list $violValue $sinkpin_netLen "/" "/" "/" "/" "/" "/" "/" $sinkpin_cellclass $sinkpin_celltype $sinkpin] 
       }
     }

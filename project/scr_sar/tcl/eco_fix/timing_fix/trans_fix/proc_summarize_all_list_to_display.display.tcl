@@ -13,6 +13,7 @@ source ../../../packages/every_any.package.tcl; # any
 source ../../../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
 source ../../../packages/print_formattedTable.package.tcl; # print_formattedTable
 source ../../../packages/count_items_advance.package.tcl; # count_items_advance
+source ../../../packages/stringstore.package.tcl; # stringstore::* ss_init/ss_process/ss_get_id/ss_get_string/ss_clear/ss_size/ss_get_max_length/ss_set_max_length/ss_get_all
 proc summarize_all_list_to_display {args} {
   set listsDict               {}
   set titleOfListMap          {}

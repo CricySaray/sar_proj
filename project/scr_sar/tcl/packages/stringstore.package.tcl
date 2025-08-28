@@ -8,7 +8,7 @@
 #             string-ID mappings, and support operations like querying, retrieval, and data clearing.
 # action procs : stringstore:: (init/process/get_id/get_string/clear/size/get_max_length/set_max_length/get_all)
 # return    : /
-# mini descip: stringstore/ss::init/process/get_id/get_string/clear/size/get_max_length/set_max_length/get_all
+# mini descip: stringstore::* ss_init/ss_process/ss_get_id/ss_get_string/ss_clear/ss_size/ss_get_max_length/ss_set_max_length/ss_get_all
 # ref       : link url
 # --------------------------
 # String storage and management package with simplified access
@@ -196,53 +196,6 @@ namespace eval stringstore {
   namespace export *
 }
 package provide stringstore 1.1
-
-if {0} { ; # this will run error when wrap it using namespace
-  # Create namespace alias "ss" for "stringstore"
-  namespace eval ss {
-    namespace import stringstore::*
-  }
-
-  # Create global procedures with "ss_" prefix for even simpler access
-  proc ss_init {max_length} {
-    return [stringstore::init $max_length]
-  }
-
-  proc ss_process {str} {
-    return [stringstore::process $str]
-  }
-
-  proc ss_get_id {str} {
-    return [stringstore::get_id $str]
-  }
-
-  proc ss_get_string {id} {
-    return [stringstore::get_string $id]
-  }
-
-  proc ss_clear {} {
-    return [stringstore::clear]
-  }
-
-  proc ss_size {} {
-    return [stringstore::size]
-  }
-
-  proc ss_get_max_length {} {
-    return [stringstore::get_max_length]
-  }
-
-  proc ss_set_max_length {new_max} {
-    return [stringstore::set_max_length $new_max]
-  }
-  # Add corresponding function for global proc
-  proc ss_get_all {} {
-    return [stringstore::get_all]
-  }
-
-    
-}
-
 
 if {0} {
   # 加载包

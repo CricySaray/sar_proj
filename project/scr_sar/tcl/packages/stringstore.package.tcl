@@ -193,18 +193,18 @@ namespace eval stringstore {
     
     return [lsort -index 0 -increasing $result]
   }
-  namespace export *
+  namespace export ss_init ss_process ss_get_id ss_get_string ss_clear ss_size ss_get_max_length ss_set_max_length ss_get_all
 }
 package provide stringstore 1.1
 
-if {0} {
+if {1} {
   # 加载包
   package require stringstore
 
   # 三种初始化方式（效果完全相同）
   stringstore::ss_init 10   ;# 原始方式
   #ss_init 10            ;# 短命名空间方式
-  ss_init 10             ;# 全局过程方式
+  stringstore::ss_init 10             ;# 全局过程方式
 
   # 处理字符串的三种方式
   puts [stringstore::ss_process "short"]       ;# 输出: short

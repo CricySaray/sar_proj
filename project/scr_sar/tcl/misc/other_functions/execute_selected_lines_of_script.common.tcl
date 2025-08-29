@@ -7,6 +7,9 @@
 # descrip   : This proc parses various line specifications (including mixed lines and ranges) and executes the corresponding lines in a 
 #             specified TCL script. It includes robust error handling and provides feedback on executed and unexecuted lines with 
 #             configurable output options.
+# update    : 2025/08/29 20:00:49 Friday
+#             Added execution handling for single but multi-line commands, while also enhancing the functionality of program execution 
+#             error judgment and error information capture.
 # return    : 
 # ref       : link url
 # --------------------------

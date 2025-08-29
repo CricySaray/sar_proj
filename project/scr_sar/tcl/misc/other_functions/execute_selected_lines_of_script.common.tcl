@@ -174,7 +174,7 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
     puts ""
     puts $printInfoWhenSuccess
     puts "---------------------------------------------"
-    puts "\nSuccessfully executed all specified commands."
+    puts "Successfully executed all specified commands."
     puts "Executed line numbers: [format_line_ranges $executed_lines]"
     
     if {$show_executed} {

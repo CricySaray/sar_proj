@@ -76,9 +76,16 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
   }
   
   # Prepare content for temporary file with ONLY original lines
+  # Create map from temp file line numbers to original line numbers
   set temp_content ""
-  foreach line_num $unique_lines {
-    append temp_content [lindex $script_lines [expr {$line_num - 1}]] "\n"
+  set temp_line_map [dict create]
+  set temp_line_num 1
+  
+  foreach original_line_num $unique_lines {
+    set line_content [lindex $script_lines [expr {$original_line_num - 1}]]
+    append temp_content "$line_content\n"
+    dict set temp_line_map $temp_line_num $original_line_num
+    incr temp_line_num
   }
   
   # Write to temporary file
@@ -86,64 +93,71 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
   puts $f $temp_content
   close $f
   
-  # Create command map: maps command index to original line numbers
-  set command_map [create_command_map $unique_lines $script_lines]
-  set total_commands [llength $command_map]
-  
   if {$debug} {
-    puts "Debug: Total commands to execute: $total_commands"
-    foreach cmd_idx [lsort -integer [dict keys $command_map]] {
-      puts "Debug: Command $cmd_idx maps to lines: [dict get $command_map $cmd_idx]"
+    puts "Debug: Temporary file line mapping:"
+    dict for {temp_line orig_line} $temp_line_map {
+      puts "Debug: Temp line $temp_line -> Original line $orig_line"
     }
   }
   
-  # Execute commands and track progress
+  # Execute using source -v with error redirection to errorInfo and track errors
   set error_occurred 0
-  set error_info [dict create line_num 0 message "" content "" original_lines ""]
-  set executed_commands [list]
+  set error_info [dict create \
+    temp_line_num 0 \
+    original_line_num 0 \
+    full_error "" \
+    error_details "" \
+    line_content "" \
+  ]
+  set executed_lines [list]
   
   try {
-    set cmd_file [open $temp_name r]
-    set cmd_idx 0
+    # Use source -v with error redirection to errorInfo as specified
+    set result [catch {uplevel #0 [list source -v $temp_name > &errorInfo]} err]
     
-    while {![eof $cmd_file]} {
-      set cmd [read_command $cmd_file]
-      if {$cmd eq ""} break
+    if {$result != 0} {
+      set error_occurred 1
+      # Get full error information from global errorInfo
+      #uplevel #0 [list set local_errorInfo $errorInfo]
+      upvar #0 errorInfo local_errorInfo
+      dict set error_info full_error $local_errorInfo
       
-      # Record command index before execution attempt
-      set current_cmd_idx $cmd_idx
+      # Parse errorInfo to find (file "filename" line X) pattern
+      set temp_name_quoted [string map {"\\" "\\\\" "\"" "\\\""} $temp_name]
+      set pattern "\\(file \"$temp_name_quoted\" line (\\d+)\\)"
       
-      # Attempt to execute the command
-      if {[catch {
-        uplevel #0 $cmd
-      } err]} {
-        # Error occurred during execution
-        set error_occurred 1
-        dict set error_info message $err
-        dict set error_info content $cmd
-        
-        # Map to original line numbers
-        if {[dict exists $command_map $current_cmd_idx]} {
-          set original_line_nums [dict get $command_map $current_cmd_idx]
-          dict set error_info original_lines $original_line_nums
-          dict set error_info line_num [lindex $original_line_nums 0]
+      if {[regexp -line -indices $pattern $local_errorInfo match_pos line_pos]} {
+        # Extract line number from the match
+        set line_num_str [string range $local_errorInfo [lindex $line_pos 0] [lindex $line_pos 1]]
+        if {[string is integer -strict $line_num_str]} {
+          dict set error_info temp_line_num $line_num_str
+          
+          # Map to original line number
+          if {[dict exists $temp_line_map $line_num_str]} {
+            set original_line [dict get $temp_line_map $line_num_str]
+            dict set error_info original_line_num $original_line
+            dict set error_info line_content [lindex $script_lines [expr {$original_line - 1}]]
+          }
+          
+          # Extract error details (all lines above the matching line)
+          set match_start [lindex $match_pos 0]
+          set error_details [string range $local_errorInfo 0 [expr {$match_start - 1}]]
+          dict set error_info error_details [string trim $error_details]
         }
-        break
+      } else {
+        # Couldn't find exact pattern, use the original error message
+        dict set error_info error_details $err
       }
-      
-      # If no error, record successful execution
-      lappend executed_commands $current_cmd_idx
-      incr cmd_idx
+    } else {
+      # No error - all lines were executed
+      set executed_lines $unique_lines
     }
-    close $cmd_file
-    
   } on error {msg} {
-    # This catches errors in the execution framework itself, not in the script commands
     set error_occurred 1
-    dict set error_info message "Framework error: $msg"
+    dict set error_info error_details "Framework error: $msg"
   } finally {
-    # Clean up temporary file only if it's not a custom one
-    if {$delete_tempfile && [file exists $temp_name]} {
+    # Clean up temporary file only if no error and not custom
+    if {$delete_tempfile && !$error_occurred && [file exists $temp_name]} {
       file delete -force $temp_name
       if {$debug} {
         puts "Debug: Default temporary file deleted: $temp_name"
@@ -153,15 +167,8 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
     }
   }
   
-  # Handle success case - only show success messages when no errors occurred
+  # Handle success case
   if {!$error_occurred} {
-    # Collect all executed line numbers
-    set executed_lines [list]
-    foreach cmd_idx $executed_commands {
-      lappend executed_lines {*}[dict get $command_map $cmd_idx]
-    }
-    set executed_lines [lsort -integer -unique $executed_lines]
-    
     puts "\nSuccessfully executed all specified commands."
     puts "Executed line numbers: [format_line_ranges $executed_lines]"
     
@@ -179,33 +186,50 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
     return $executed_lines
   }
   
-  # Handle error case - only show error messages when errors occurred
-  set line_num [dict get $error_info line_num]
-  set msg [dict get $error_info message]
-  set content [dict get $error_info content]
-  set original_lines [dict get $error_info original_lines]
+  # Handle error case
+  set temp_line [dict get $error_info temp_line_num]
+  set original_line [dict get $error_info original_line_num]
+  set error_details [dict get $error_info error_details]
+  set line_content [dict get $error_info line_content]
   
-  puts "\nError occurred in command starting at line $line_num:"
-  if {[llength $original_lines] > 1} {
-    puts "This command spans lines: [join $original_lines ", "]"
+  puts "\nError occurred:"
+  puts "------------------------------"
+  puts "$error_details"
+  puts "------------------------------"
+  
+  if {$original_line != 0} {
+    puts "\nError location in original file:"
+    puts "Line $original_line: $line_content"
+  } elseif {$temp_line != 0} {
+    puts "\nError location in temporary file:"
+    puts "Line $temp_line in file: $temp_name"
   }
-  puts "Command content: $content"
-  puts "Error message: $msg"
   
   # Calculate remaining lines
-  set executed_line_set [list]
-  if {[llength $executed_commands] > 0} {
-    foreach cmd_idx $executed_commands {
-      lappend executed_line_set {*}[dict get $command_map $cmd_idx]
+  if {$temp_line > 0 && [dict exists $temp_line_map $temp_line]} {
+    set failed_original_line [dict get $temp_line_map $temp_line]
+    set failed_index [lsearch -integer $unique_lines $failed_original_line]
+    
+    if {$failed_index != -1} {
+      set remaining_lines [lrange $unique_lines [expr {$failed_index + 0}] end]
+    } else {
+      set remaining_lines [list]
     }
-    set executed_line_set [lsort -integer -unique $executed_line_set]
+  } else {
+    # If we can't determine the exact failed line, assume none were executed
+    set remaining_lines $unique_lines
   }
   
-  set remaining_lines [list]
-  foreach line $unique_lines {
-    if {$line ni $executed_line_set} {
-      lappend remaining_lines $line
+  # Calculate executed lines
+  set executed_lines [list]
+  if {[llength $remaining_lines] > 0 && [llength $unique_lines] > 0} {
+    set last_remaining [lindex $remaining_lines 0]
+    set executed_index [expr {[lsearch -integer $unique_lines $last_remaining] - 1}]
+    if {$executed_index >= 0} {
+      set executed_lines [lrange $unique_lines 0 $executed_index]
     }
+  } elseif {[llength $unique_lines] > 0 && [llength $remaining_lines] == 0} {
+    set executed_lines $unique_lines
   }
   
   set num_remaining [llength $remaining_lines]
@@ -224,11 +248,11 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
     puts "\nNo remaining lines to execute after the error."
   }
   
-  if {$use_custom_tempfile} {
-    puts "\nCustom temporary file preserved for inspection: $temp_name"
+  if {$use_custom_tempfile || $error_occurred} {
+    puts "\nTemporary file preserved for inspection: $temp_name"
   }
   
-  error "Execution aborted at or near line $line_num"
+  error "Execution aborted at original line $original_line"
 }
 
 proc parse_line_spec {line_spec debug} {
@@ -339,132 +363,4 @@ proc format_line_ranges {lines} {
   
   return [join $ranges ", "]
 }
-
-proc create_command_map {line_numbers script_lines} {
-  # Creates a map from command index to original line numbers
-  set command_map [dict create]
-  set cmd_idx 0
-  set current_cmd_lines [list]
-  set in_quote 0
-  set quote_char ""
-  set brace_level 0
-  set bracket_level 0
-  set paren_level 0
-  
-  foreach line_num $line_numbers {
-    set line_content [lindex $script_lines [expr {$line_num - 1}]]
-    set line_len [string length $line_content]
-    set pos 0
     
-    while {$pos < $line_len} {
-      set char [string index $line_content $pos]
-      
-      # Handle quotes
-      if {!$in_quote && ($char eq "\"" || $char eq "'")} {
-        set in_quote 1
-        set quote_char $char
-        incr pos
-        continue
-      } elseif {$in_quote && $char eq $quote_char} {
-        set in_quote 0
-        incr pos
-        continue
-      }
-      
-      # Skip characters inside quotes
-      if {$in_quote} {
-        incr pos
-        continue
-      }
-      
-      # Handle braces, brackets and parentheses
-      switch $char {
-        "{" { incr brace_level }
-        "}" { if {$brace_level > 0} { incr brace_level -1 } }
-        "[" { incr bracket_level }
-        "]" { if {$bracket_level > 0} { incr bracket_level -1 } }
-        "(" { incr paren_level }
-        ")" { if {$paren_level > 0} { incr paren_level -1 } }
-      }
-      
-      incr pos
-    }
-    
-    # Add current line to command lines
-    lappend current_cmd_lines $line_num
-    
-    # Check if we've reached the end of a command
-    if {$brace_level == 0 && $bracket_level == 0 && $paren_level == 0 && !$in_quote} {
-      dict set command_map $cmd_idx $current_cmd_lines
-      incr cmd_idx
-      set current_cmd_lines [list]
-    }
-  }
-  
-  # Add any remaining lines as a command
-  if {[llength $current_cmd_lines] > 0} {
-    dict set command_map $cmd_idx $current_cmd_lines
-  }
-  
-  return $command_map
-}
-
-proc read_command {file_handle} {
-  # Reads a complete TCL command from a file handle
-  set cmd ""
-  set in_quote 0
-  set quote_char ""
-  set brace_level 0
-  set bracket_level 0
-  set paren_level 0
-  
-  while {![eof $file_handle]} {
-    if {[gets $file_handle line] < 0} break
-    
-    append cmd $line "\n"
-    set line_len [string length $line]
-    set pos 0
-    
-    while {$pos < $line_len} {
-      set char [string index $line $pos]
-      
-      # Handle quotes
-      if {!$in_quote && ($char eq "\"" || $char eq "'")} {
-        set in_quote 1
-        set quote_char $char
-        incr pos
-        continue
-      } elseif {$in_quote && $char eq $quote_char} {
-        set in_quote 0
-        incr pos
-        continue
-      }
-      
-      # Skip characters inside quotes
-      if {$in_quote} {
-        incr pos
-        continue
-      }
-      
-      # Handle braces, brackets and parentheses
-      switch $char {
-        "{" { incr brace_level }
-        "}" { if {$brace_level > 0} { incr brace_level -1 } }
-        "[" { incr bracket_level }
-        "]" { if {$bracket_level > 0} { incr bracket_level -1 } }
-        "(" { incr paren_level }
-        ")" { if {$paren_level > 0} { incr paren_level -1 } }
-      }
-      
-      incr pos
-    }
-    
-    # Check if we've reached the end of a command
-    if {$brace_level == 0 && $bracket_level == 0 && $paren_level == 0 && !$in_quote} {
-      break
-    }
-  }
-  
-  return [string trimright $cmd "\n"]
-}
-

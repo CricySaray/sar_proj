@@ -115,11 +115,12 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
     # Use source -v with error redirection to errorInfo as specified
     set result [catch {uplevel #0 [list source $temp_name > &errorInfo]} err]
     
+    # Get full error information from global errorInfo
+    #uplevel #0 [list set local_errorInfo $errorInfo]
+    upvar #0 errorInfo local_errorInfo
+
     if {$result != 0} {
       set error_occurred 1
-      # Get full error information from global errorInfo
-      #uplevel #0 [list set local_errorInfo $errorInfo]
-      upvar #0 errorInfo local_errorInfo
       dict set error_info full_error $local_errorInfo
       
       # Parse errorInfo to find (file "filename" line X) pattern
@@ -150,6 +151,7 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
       }
     } else {
       # No error - all lines were executed
+      set printInfoWhenSuccess $local_errorInfo
       set executed_lines $unique_lines
     }
   } on error {msg} {
@@ -169,6 +171,9 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
   
   # Handle success case
   if {!$error_occurred} {
+    puts ""
+    puts $printInfoWhenSuccess
+    puts "---------------------------------------------"
     puts "\nSuccessfully executed all specified commands."
     puts "Executed line numbers: [format_line_ranges $executed_lines]"
     

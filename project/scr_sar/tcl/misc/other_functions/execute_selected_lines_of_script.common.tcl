@@ -113,7 +113,7 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
   
   try {
     # Use source -v with error redirection to errorInfo as specified
-    set result [catch {uplevel #0 [list source -v $temp_name > &errorInfo]} err]
+    set result [catch {uplevel #0 [list source $temp_name > &errorInfo]} err]
     
     if {$result != 0} {
       set error_occurred 1

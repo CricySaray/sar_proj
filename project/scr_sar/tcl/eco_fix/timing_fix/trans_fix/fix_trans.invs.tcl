@@ -186,16 +186,20 @@ proc fix_trans {args} {
     set ListVarCollection [info locals *_List] ; # try to test
     set ListVarDict [dict create]
     set titleOfListMap {{{# COMMANDS OF FIXED CASES:} cmd_List} {{## reRoute COMMANDS:} cmd_reRoute_List} {{FIXED CASES LIST:} fixed_List} {{NOT PASS PRECHECK LIST:} notPassPreCheck_List} {{FIX BUT FAILED LIST:} fix_but_failed_List} {{SKIPPED LIST:} skipped_List} {{CAN'T CHANGE LIST:} cantChange_List} {{NEED NOTICE CASE LIST:} needNoticeCase_List} {{DETAIL INFO OF ONE2MORE CASES:} detailInfoOfMore_List}}
-    set filesIncludeListMap [subst {{$cmdFile {cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
+    set filesIncludeListMap [subst {{$cmdFile {fixedPrompts cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixedPrompts fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
     foreach ListVar $ListVarCollection { dict set ListVarDict $ListVar [subst \${$ListVar}] }
     set needDumpWindowList {cmd_List fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needLimitStringWidth {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
-    set notNeedCountSum {cmd_List cmd_reRoute_List}
+    set needInsertSequenceNumberColumn {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
+    set notNeedCountSum {fixedPrompts cmd_List cmd_reRoute_List}
     set notNeedFormatTableList {cmd_List cmd_reRoute_List}
-    set onlyCountTotalNumList {detailInfoOfMore_List}
+    set notNeedTitleHeader {fixedPrompts}
+    set columnToCountSumMapList {{2 {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}}}
+    set onlyCountTotalNumList {detailInfoOfMore_List fixedPrompts}
+    set defaultColumnToCountSum 2
     set maxWidthForString $maxWidthForString
     
-    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -maxWidthForString $maxWidthForString -onlyCountTotalNumList $onlyCountTotalNumList
+    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -notNeedTitleHeader $notNeedTitleHeader -maxWidthForString $maxWidthForString -columnToCountSumMapList $columnToCountSumMapList -onlyCountTotalNumList $onlyCountTotalNumList -defaultColumnToCountSum $defaultColumnToCountSum
   }
 }
 define_proc_arguments fix_trans \

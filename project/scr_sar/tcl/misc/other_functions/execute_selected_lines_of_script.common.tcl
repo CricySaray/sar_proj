@@ -10,6 +10,8 @@
 # update    : 2025/08/29 20:00:49 Friday
 #             Added execution handling for single but multi-line commands, while also enhancing the functionality of program execution 
 #             error judgment and error information capture.
+# update    : 2025/08/30 16:26:18 Saturday
+#             (U001) change method print the info of processing, as it can print out the execution information displayed during the operation in real time.
 # return    : 
 # ref       : link url
 # --------------------------
@@ -116,7 +118,7 @@ proc execute_selected_lines_of_script {script_file line_spec {temp_file ""} {deb
   
   try {
     # Use source -v with error redirection to errorInfo as specified
-    set result [catch {uplevel #0 [list source $temp_name > &errorInfo]} err]
+    set result [catch {uplevel #0 [list redirect errorInfo "source $temp_name" -variable -tee]} err] ; # U001
     
     # Get full error information from global errorInfo
     #uplevel #0 [list set local_errorInfo $errorInfo]

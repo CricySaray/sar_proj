@@ -13,6 +13,8 @@
 # descrip   : create physical pin for many inst(IP/mem/IOpad...)
 #             specific inst and layer
 #             have some switchs for control action of proc
+# update    : 2025/08/30 19:42:04 Saturday
+#             (U001) change return "0x0:1" to error cmd
 # ref       : link url
 # --------------------------
 proc add_physicalPin_for_inst {args} {
@@ -48,11 +50,11 @@ proc add_physicalPin_for_inst {args} {
   set promptERROR "songERROR:"
   set promptWARN "songWARN:"
   if {$inst == "" || $inst == "0x0" || [dbget top.insts.name $inst -e] == "" || $layer == "" || $layer == "0x0" || [dbget head.layers.name $layer -e] == ""} {
-    return "0x0:1"; # check your input: inst and layer
+    error "proc add_physicalPin_for_inst: check your input: inst($inst) or layer($layer) is not found!!!"; # check your input: inst and layer
   } else {
     foreach item $off {
       if {[string is double $item] == 0} {
-        return "0x0:2"; # off item is not a digit
+        error "proc add_physicalPin_for_inst: check your input: off($off) value is not a digit number!!!"; # off item is not a digit
       } 
     }
     if {[llength $terms] == 0} {
@@ -61,7 +63,7 @@ proc add_physicalPin_for_inst {args} {
       if {$typeToAddPhysicalPin == "signal" || $typeToAddPhysicalPin == "all"} { ; # add signal term physicalPin
         set signal_term_ptr [dbget $inst_ptr.instTerms.cellTerm.pins.allShapes.layer.name $layer -p5 -e]
         if {$signal_term_ptr == "" && !$ignoreNoSignalOrNoPgTerms} {
-          return "0x0:3"; # specific layer of inst has no signal terms 
+           "proc add_physicalPin_for_inst: check this inst($inst) on layer($layer) has no signal terms!!!"; # specific layer of inst has no signal terms 
         } elseif {$signal_term_ptr != ""} {
           puts "##### -------------------------------"
           puts "##### Begin adding physicals for inst: $inst"
@@ -79,7 +81,7 @@ if {$debug} {puts "signal term names \n$signal_term_names"}
           set name_rect_area_biggerThanAreaThreshold_D3List_signalTerms [modify_boxes_and_get_area_toD3List $name_rect_D2List_signalTerms $off $AreaThreshold $compareOriginBoxArea $debug]
 if {$debug} {puts "signal term name_rect_area \n$name_rect_area_biggerThanAreaThreshold_D3List_signalTerms"}
           if {[llength $name_rect_area_biggerThanAreaThreshold_D3List_signalTerms] == 0} {
-            return "0x0:4"; # have no signal term which of area is bigger than $AreaThreshold
+            puts "proc add_physicalPin_for_inst: check your signal term: have no signal tems which of area is bigger than AreaThreshold($AreaThreshold)"; # have no signal term which of area is bigger than $AreaThreshold
           }
           # pick out terms which is connect to net
           #
@@ -94,20 +96,6 @@ if {$debug} {puts "signal term name_rect_area \n$name_rect_area_biggerThanAreaTh
             foreach name_rect_area $name_rect_area_woNet_D3List {
               puts "noNetTerm: [lindex $name_rect_area 0] located: [lindex $name_rect_area 1]"
             }
-            #if {$ifReportNoNetPin} {
-            #  foreach name_rect_area $name_rect_area_woNet_D3List {
-            #    regexp {.*\/(.*)} [lindex $name_rect_area 0] wholename termName
-            #    set cmd_signalTerms_woNet "createPhysicalPin $wholename -layer $layer -rect [lindex $name_rect_area 1]"
-            #    puts "# --- signal term physicalPin (without net) : (area: [lindex $name_rect_area 2]) $cmd_signalTerms_woNet "
-            #    if {$testOrRun == "run"} {
-            #      set runErr [catch {eval $cmd_signalTerms_woNet} errorInfo]
-            #      if {$runErr} {
-            #        puts "$promptERROR $cmd_signalTerms_woNet"
-            #        return "0x0:5"; # error occurs when run cmd_signalTerms_woNet
-            #      }
-            #    }
-            #  }
-            #}
           }
           foreach name_rect_area_net $name_rect_area_net_D4List {
             set cmd_signalTerms_wiNet "createPhysicalPin [lindex $name_rect_area_net 0] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
@@ -116,7 +104,7 @@ if {$debug} {puts "signal term name_rect_area \n$name_rect_area_biggerThanAreaTh
               set runErr [catch {eval $cmd_signalTerms_wiNet} errorInfo]
               if {$runErr} {
                 puts "$promptERROR $cmd_signalTerms_wiNet"
-                return "0x0:6"; # error occurs when run cmd_signalTerms_wiNet
+                error "proc add_physicalPin_for_inst: check your cmd for signal terms with net : $cmd_signalTerms_wiNet"; # error occurs when run cmd_signalTerms_wiNet
               }
             }
           }
@@ -128,7 +116,7 @@ if {$debug} {puts "signal term name_rect_area \n$name_rect_area_biggerThanAreaTh
       if {$typeToAddPhysicalPin == "pg" || $typeToAddPhysicalPin == "all"} { ; # add pg term physicalPin
         set pg_term_ptr [dbget $inst_ptr.pgInstTerms.term.pins.allShapes.layer.name $layer -p5 -e]
         if {$pg_term_ptr == "" && !$ignoreNoSignalOrNoPgTerms} {
-          return "0x0:7"; # have no pg term in specific layer
+          error "proc add_physicalPin_for_inst: check your input: inst($inst) have no pg term on specify layer($layer)!!!"; # have no pg term in specific layer
         } elseif {$pg_term_ptr != ""} {
           set pg_terms_names [lsort -unique [dbget $pg_term_ptr.name]]
 if {$debug} {puts "pg term names \n$pg_terms_names"}
@@ -143,7 +131,7 @@ if {$debug} {puts "pg term name_rect :\n$name_rect_D2List_pgTerms"}
           set name_rect_area_biggerThanAreaThreshold_D3List_pgTerms [modify_boxes_and_get_area_toD3List $name_rect_D2List_pgTerms $off $AreaThreshold $compareOriginBoxArea $debug]
 if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThreshold_D3List_pgTerms"}
           if {[llength $name_rect_area_biggerThanAreaThreshold_D3List_pgTerms] == 0} {
-            return "0x0:8"; # have no pg term which of area is bigger than $AreaThreshold
+            puts "proc add_physicalPin_for_inst: check your pg term: have no signal tems which of area is bigger than AreaThreshold($AreaThreshold)"; # have no pg term which of area is bigger than $AreaThreshold
           }
           # pick out terms which is connect to net
           set name_rect_area_net_D4List_pg [list ]
@@ -157,21 +145,7 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
             foreach name_rect_area $name_rect_area_woNet_D3List_pg {
               puts "noNetTerm: [lindex $name_rect_area 0] located: [lindex $name_rect_area 1]"
             }
-            #if {$ifReportNoNetPin } {
-            #  foreach name_rect_area $name_rect_area_woNet_D3List_pg {
-            #    regexp {.*\/(.*)} [lindex $name_rect_area 0] wholename termName
-            #    set cmd_pgTerms_woNet "createPhysicalPin $wholename -layer $layer -rect [lindex $name_rect_area 1]"
-            #    puts "# ------- pg term physicalPin (without net) : (area: [lindex $name_rect_area 2]) $cmd_pgTerms_woNet "
-            #    if {$testOrRun == "run"} {
-            #      set runErr [catch {eval $cmd_pgTerms_woNet} errorInfo]
-            #      if {$runErr} {
-            #        puts "$promptERROR $cmd_pgTerms_woNet"
-            #        return "0x0:9"; # error occurs when run cmd_pgTerms_woNet
-            #      }
-            #    }
-            #  }
-            #}
-            return "0x0:9"; # have pg term whis is not connect net. please globalConnectNet
+            error "proc add_physicalPin_for_inst: check your pg terms([lindex $name_rect_area_woNet_D3List_pg 0])"; # have pg term whis is not connect net. please globalConnectNet
           }
           foreach name_rect_area_net $name_rect_area_net_D4List_pg {
             set cmd_pgTerms_wiNet "createPhysicalPin $inst/[lindex $name_rect_area_net 0] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
@@ -180,7 +154,7 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
               set runErr [catch {eval $cmd_pgTerms_wiNet} errorInfo]
               if {$runErr} {
                 puts "$promptERROR $cmd_pgTerms_wiNet"
-                return "0x0:10"; # error occurs when run cmd_pgTerms_wiNet
+                error "proc add_physicalPin_for_inst: check your cmd for pg terms with net: $cmd_pgTerms_wiNet"; # error occurs when run cmd_pgTerms_wiNet
               }
             }
           }
@@ -189,7 +163,7 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
           puts "$promptWARN no pg terms specified inst($inst) and layer($layer), but it is ignored!!!" 
         }
       } else {
-        return "0x0:11"; # $typeToAddPhysicalPin have value that is not support 
+        error "proc add_physicalPin_for_inst: check your input: type($typeToAddPhysicalPin) to add physical pin is not valid!!! (signal|pg|all)"; # $typeToAddPhysicalPin have value that is not support 
       }
     } else { ; #specified terms by user
       

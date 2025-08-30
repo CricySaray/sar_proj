@@ -52,7 +52,7 @@ proc summarize_all_list_to_display {args} {
           set ifNeedInsertSequenceNumberColumn [expr {$tempListName in $needInsertSequenceNumberColumn}]
           set ifOnlyCountTotalNum [expr {$tempListName in $onlyCountTotalNumList}]
           set ifSpecifiedColumnToCountSum [expr {$tempListName in [lsort -unique [join [lmap tempColumnList $columnToCountSumMapList { lindex $tempColumnList 1 }]]]}]
-          set columnToCountSum [eo $ifSpecifiedColumnToCountSum [lindex [lsearch -inline -index 1] 0]]
+          set columnToCountSum [eo $ifSpecifiedColumnToCountSum [foreach tempColumnList $columnToCountSumMapList { if {[expr {$tempListName in [lindex $tempColumnList 1]}]} { set temp [lindex $tempContentList 0] ; break  } else {continue}  } ; set temp] $defaultColumnToCountSum]
           if {[lsearch -index 1 $titleOfListMap $tempListName] != -1} { 
             set ifHaveTitle 1 ; set titleName [lindex [lsearch -index 1 -inline $titleOfListMap $tempListName] 0]; set titleSegments [list [lrepeat 25 "-"] $titleName ""] } else { 
               set ifHaveTitle 0 ; set titleSegments [list [lrepeat 25 "-"] " list name: [lindex [lsearch -index 1 $titleOfListMap $tempListName] 1]" ""] }
@@ -62,7 +62,7 @@ proc summarize_all_list_to_display {args} {
             if {$ifNeedLimitStringWidth} { set $tempListName [lmap tempContentList [subst \${$tempListName}] { lmap tempItem $tempContentList { stringstore::ss_process $tempItem } }] }
             {*}$preCmd [if {$ifNeedFormatTable} { print_formattedTable [subst \${$tempListName}] } else { join [subst \${$tempListName}] \n } ]
             if {$tempListName ni $notNeedCountSumList} {
-              set allCountList [count_items_advance [lrange [subst \${$tempListName}] 1 end] $defaultColumnToCountSum {type num}]
+              set allCountList [count_items_advance [lrange [subst \${$tempListName}] 1 end] $columnToCountSum {type num}]
               set countList [eo $ifOnlyCountTotalNum [lindex $allCountList end] $allCountList]
               {*}$preCmd [print_formattedTable $countList]
             }

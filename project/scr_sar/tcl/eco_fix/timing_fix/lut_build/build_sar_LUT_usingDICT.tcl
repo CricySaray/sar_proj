@@ -27,7 +27,7 @@ source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBound
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
-  set process                                {TSMC_cln12ffc} ; # {TSMC_cln12ffc}|{M31GPSC900NL040P*_40N}
+  set process                                {TSMC_cln40lp} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_cln40lp
   set promptPrefix                           "# song"
   set LUT_filename                           "lutDict.tcl"
   set lutDictName                            "lutDict"
@@ -39,11 +39,15 @@ proc build_sar_LUT_usingDICT {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  if {$process == {M31GPSC900NL040P*_40N}} {
+  if {$process in {M31GPSC900NL040P*_40N}} {
     set capacityFlag "X" ; set vtFastRange {AL9 AR9 AH9} ; set stdCellFlag "" ; set celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$} ; set VtMatchExp {A[HRL]9} ; set refBuffer "BUFX3AR9" ; set refClkBuffer "CLKBUFX3AR9"
     set noCareCellClass {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}
-  } elseif {$process == {TSMC_cln12ffc}} {
+  } elseif {$process in {TSMC_cln12ffc}} {
     set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
+    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
+  } elseif {$process in {TSMC_cln40lp}} {
+    set capacityFlag "D" ; set vtFastRange {LVT RVT} ; set stdCellFlag "" ; set celltypeMatchExp {^[^_]*_X(\d+P?\d?)[ABEMF]?_A\dT([RL])40$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUF_X1M_A9TL40" ; set refClkBuffer "BUF_X1B_A9TL40"
+    
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"

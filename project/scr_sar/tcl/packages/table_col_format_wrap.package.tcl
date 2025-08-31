@@ -8,9 +8,9 @@
 #             max_first_width and the nth column (combining original nth and subsequent columns) wrapped to max_rest_width. It 
 #             adds grid lines and handles line breaks to keep content readable without overlapping.
 # inputArgs : inputData           : tabular data inputData, can be a nested list, file path, or raw string  
-#             colNumFinal               : target number of columns (non-negative integer), 0 means auto-calculate max columns  
-#             max_rest_width  : max width for the nth column (non-negative integer), 0 means no restriction  
-#             max_first_width : max width for the first colNumFinal-1 columns (non-negative integer), 0 means no restriction
+#             colNumFinal         : target number of columns (non-negative integer), 0 means auto-calculate max columns  
+#             max_rest_width      : max width for the nth column (non-negative integer), 0 means no restriction  
+#             max_first_width     : max width for the first colNumFinal-1 columns (non-negative integer), 0 means no restriction
 # return    : list that has been tabled
 # ref       : link url
 # --------------------------

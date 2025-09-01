@@ -12,14 +12,15 @@
 # --------------------------
 alias sus "subst -nocommands -nobackslashes"
 proc add_file_header {args} {
-set fileID         ""
-set proc_name      [lindex [info level 1] 0]
-set author         "sar song"
-set date 			     "auto"
-set descrip        "None"
-set usage          "None"
-set line_width     150
-set splitLineWidth 36
+  set fileID         ""
+  set proc_name      [lindex [info level 1] 0]
+  set author         "sar song"
+  set date 			     "auto"
+  set descrip        "None"
+  set usage          "None"
+  set line_width     150
+  set splitLineWidth 36
+  set tee            0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -78,6 +79,9 @@ set splitLineWidth 36
   }
   # Write top separator with optimal visual length
   puts $fileID "# [string repeat "-" $splitLineWidth]"
+  if {$tee} {
+    puts "# [string repeat "-" $splitLineWidth]"
+  }
   
 # Process all fields using foreach loop
   foreach field $fields {
@@ -88,24 +92,42 @@ set splitLineWidth 36
     if {$wrap_needed} {
       # Handle fields that need text wrapping
       puts -nonewline $fileID "# $indent$label :"
+      if {$tee} {
+        puts -nonewline "# $indent$label :"
+      }
       set wrap_width [expr {$line_width - $max_label_length - 2}]
       set wrapped_text [wrap_text $value $wrap_width]
       set text_indent [string repeat " " [expr {$max_label_length + 2}]]
       set firstLine 0
       foreach line $wrapped_text {
         incr firstLine
-        if {$firstLine == 1} {puts $fileID " $line"} else {
+        if {$firstLine == 1} {
+          puts $fileID " $line"
+          if {$tee} {
+            puts " $line"
+          }
+        } else {
           puts $fileID "# $text_indent$line"
+          if {$tee} {
+            puts "# $text_indent$line"
+          }
         }
       }
     } else {
       # Handle fields with single-line values
       puts $fileID "# $indent$label : $value"
+      if {$tee} {
+        puts "# $indent$label : $value"
+      }
     }
   }
   # Write bottom separator
   puts $fileID "# [string repeat "-" $splitLineWidth]"
   puts $fileID ""
+  if {$tee} {
+    puts "# [string repeat "-" $splitLineWidth]"
+    puts ""
+  }
   
   # Clean up the helper proc
   rename wrap_text ""
@@ -122,5 +144,6 @@ define_proc_arguments add_file_header \
     {-usage "specify the usage of file" AString string optional}
     {-line_width "specify the max width of every line" AInt int optional}
     {-splitLineWidth "specify the fixed width of split line" AInt int optional}
+    {-tee "1: will print on window and to file; 0: only print to file" "" boolean optional}
   }
 

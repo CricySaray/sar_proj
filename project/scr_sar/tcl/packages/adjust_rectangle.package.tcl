@@ -13,7 +13,7 @@
 proc adjust_rectangle {rect offset} {
   # Check if rectangle has valid format
   if {[llength $rect] != 4} {
-    error "Invalid rectangle format. Expected {x y x1 y1}"
+    error "proc adjust_rectangle: Invalid rectangle format. Expected {x y x1 y1}"
   }
   
   # Extract original coordinates
@@ -30,7 +30,7 @@ proc adjust_rectangle {rect offset} {
     # List of four values: top, bottom, left, right
     lassign $offset top bottom left right
   } else {
-    error "Invalid offset format. Expected single value or 4-element list"
+    error "proc adjust_rectangle: Invalid offset format. Expected single value or 4-element list"
   }
   
   # Calculate new coordinates

@@ -11,10 +11,10 @@
 proc adjust_to_multiple_of_num {numToProcessBeMultiple baseNum_toBeMultiple {strategy "round"}} {
   # Check if parameters are valid numbers
   if {![string is double $numToProcessBeMultiple]} {
-    error "First parameter must be an integer or float, got: $numToProcessBeMultiple"
+    error "proc adjust_to_multiple_of_num: First parameter must be an integer or float, got: $numToProcessBeMultiple"
   }
   if {![string is double $baseNum_toBeMultiple]} {
-    error "Second parameter must be an integer or float, got: $baseNum_toBeMultiple"
+    error "proc adjust_to_multiple_of_num: Second parameter must be an integer or float, got: $baseNum_toBeMultiple"
   }
   
   # Convert to numeric type
@@ -23,13 +23,13 @@ proc adjust_to_multiple_of_num {numToProcessBeMultiple baseNum_toBeMultiple {str
   
   # Check if baseNum_toBeMultiple is zero
   if {$baseNum_toBeMultiple == 0} {
-    error "Second parameter (baseNum_toBeMultiple) cannot be zero"
+    error "proc adjust_to_multiple_of_num: Second parameter (baseNum_toBeMultiple) cannot be zero"
   }
   
   # Check if strategy is valid
   set valid_strategies {roundUp roundDown round}
   if {$strategy ni $valid_strategies} {
-    error "Third parameter must be one of: [join $valid_strategies {, }]"
+    error "proc adjust_to_multiple_of_num: Third parameter must be one of: [join $valid_strategies {, }]"
   }
   
   # Calculate the multiple

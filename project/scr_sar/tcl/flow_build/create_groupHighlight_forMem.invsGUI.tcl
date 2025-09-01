@@ -1,3 +1,15 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/09/01 18:07:22 Monday
+# label     : flow_proc
+#   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
+# descrip   : processes a file by grouping content lines using either "blankLine" (via regex-matched separator lines) or "firstColumn" (by first column values) 
+#             methods, transforms valid content lines with provided options and a format string while preserving comment lines and empty lines, and outputs 
+#             the result to a specified or auto-generated file.
+# return    : 
+# ref       : link url
+# --------------------------
 proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}} {format "highlight -index <value> <target>"} {output_file ""} {regex ""} {debug 0}} {
   # Internal procedure for debug messages
   proc debug_msg {msg debug_flag} {
@@ -113,6 +125,7 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
     # Grouping by blankLine with refined comment handling
     set current_group [list]
     set group_index 0
+    set original_groups [list]  ;# Temporary storage for groups
     
     while {[gets $in_channel line] != -1} {
       incr line_count
@@ -132,7 +145,7 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
         
         # Only create new group if current group has content
         if {[llength $current_group] > 0} {
-          lappend groups $current_group
+          lappend original_groups $current_group
           debug_msg "Created group $group_index with [llength $current_group] lines" $debug
           incr group_index
           set current_group [list]
@@ -169,12 +182,15 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
     
     # Add final group if it has content
     if {[llength $current_group] > 0} {
-      lappend groups $current_group
+      lappend original_groups $current_group
       debug_msg "Created final group $group_index with [llength $current_group] lines" $debug
     }
     
-    # Fix: Generate 0-based index list properly without dict create
-    set groups [lrange [::tcl::mathfunc::range 0 [expr {[llength $groups]-1}]] 0 end]
+    # Generate 0-based index list using simple loop (replaces range command)
+    set groups [list]
+    for {set i 0} {$i < [llength $original_groups]} {incr i} {
+      lappend groups $i
+    }
   }
   
   if {[catch {close $in_channel} close_err]} {

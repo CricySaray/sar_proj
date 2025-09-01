@@ -7,7 +7,29 @@
 # descrip   : processes a file by grouping content lines using either "blankLine" (via regex-matched separator lines) or "firstColumn" (by first column values) 
 #             methods, transforms valid content lines with provided options and a format string while preserving comment lines and empty lines, and outputs 
 #             the result to a specified or auto-generated file.
-# return    : 
+# usage     : 
+# 					Purpose: Processes a file by grouping content lines, transforms them using a format string,
+# 					         and saves results to an output file while preserving comments and empty lines.
+# 					Parameters (in order):
+# 					  input_file     - (required) Path to input file (must exist and be readable)
+# 					  groupMethod    - (optional) Grouping method: "blankLine" (default) or "firstColumn"
+# 					  options        - (required) List of values to replace <value> in format (at least as many as groups)
+# 					  format         - (required) Transformation string with <value> (from options) and <target> (from content)
+# 					  output_file    - (optional) Path for output; defaults to "processedGoruped_<input_file>"
+# 					  regex          - (optional) Regex for "blankLine" separators (full-line match); default: ^\s*$ (empty lines)
+# 					  debug          - (optional) 1 to enable debug messages, 0 (default) for silent mode
+# 					Group Method Details:
+# 					  "firstColumn":
+# 					    - Content lines need exactly 2 columns (after trimming spaces/tabs)
+# 					    - Groups by values in the first column
+# 					  "blankLine":
+# 					    - Content lines need exactly 1 column (after trimming spaces/tabs)
+# 					    - Groups by lines matching 'regex' (separators, preserved in output)
+# 					Notes:
+# 					  - Comment lines (start with #, optional leading spaces) and empty lines are preserved
+# 					  - Format string must contain both <value> and <target>
+# 					  - Extra items in 'options' are ignored; too few cause an error
+# return    : outputfile
 # ref       : link url
 # --------------------------
 proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}} {format "highlight -index <value> <target>"} {output_file ""} {regex ""} {debug 0}} {

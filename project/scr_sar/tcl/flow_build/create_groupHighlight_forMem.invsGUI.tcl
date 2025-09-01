@@ -74,7 +74,7 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
   }
 
   if {$groupMethod eq "firstColumn"} {
-    # Grouping by first column values (original logic)
+    # Grouping by first column values
     set group_ids [dict create]
     
     while {[gets $in_channel line] != -1} {
@@ -92,7 +92,9 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
         continue
       }
       
-      set columns [split $line]
+      # Trim whitespace from both ends before checking columns
+      set cleaned_line [string trim $line "\t "]
+      set columns [split $cleaned_line]
       set column_count [llength $columns]
       if {$column_count != 2} {
         close $in_channel
@@ -117,7 +119,8 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
       debug_msg "Line $line_count analysis (blankLine): '$line'" $debug
 
       # Check if line matches the group separator regex (highest priority)
-      set is_separator [regexp -nocase -fullmatch $regex $line]
+      # Use ^...$ to simulate full line match without -fullmatch option
+      set is_separator [regexp -nocase -- "^${regex}$" $line]
       
       # Check if line is a comment (but may still be a separator)
       set trimmed_line [string trimleft $line]
@@ -150,7 +153,9 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
       }
       
       # Validate line has exactly 1 column for blankLine grouping
-      set columns [split $line]
+      # Trim whitespace from both ends before checking columns
+      set cleaned_line [string trim $line "\t "]
+      set columns [split $cleaned_line]
       set column_count [llength $columns]
       if {$column_count != 1} {
         close $in_channel
@@ -168,8 +173,8 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
       debug_msg "Created final group $group_index with [llength $current_group] lines" $debug
     }
     
-    # Convert groups to 0-based index identifiers
-    set groups [lrange [dict keys [dict create {*}[lrepeat [llength $groups] 1]]] 0 end]
+    # Fix: Generate 0-based index list properly without dict create
+    set groups [lrange [::tcl::mathfunc::range 0 [expr {[llength $groups]-1}]] 0 end]
   }
   
   if {[catch {close $in_channel} close_err]} {
@@ -225,7 +230,7 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
     # Common checks for all lines
     set trimmed_line [string trimleft $line]
     set is_comment [expr {[string index $trimmed_line 0] eq "#" ? 1 : 0}]
-    set is_separator [expr {$groupMethod eq "blankLine" ? [regexp -nocase -fullmatch $regex $line] : 0}]
+    set is_separator [expr {$groupMethod eq "blankLine" ? [regexp -nocase -- "^${regex}$" $line] : 0}]
 
     # Handle comment lines (always output as-is)
     if {$is_comment} {
@@ -265,13 +270,14 @@ proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 
 
     # Process content lines based on grouping method
     if {$groupMethod eq "firstColumn"} {
-      set columns [split $line]
+      set cleaned_line [string trim $line "\t "]
+      set columns [split $cleaned_line]
       set group_id [lindex $columns 0]
       set target_value [lindex $columns 1]
     } else {
       # blankLine method content processing
       set group_id $current_group_index
-      set target_value [string trim $line]
+      set target_value [string trim $line "\t "]
     }
     
     # Get option for this group

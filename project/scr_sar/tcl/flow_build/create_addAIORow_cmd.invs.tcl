@@ -22,12 +22,12 @@ proc create_addAIORow_cmd {{dieArea_rect {0 0 10 10}} {IO_site_name ""} {numOrRo
       switch $direction { H { set tempdirection -H } V { set tempdirection -V }}
       set orientOfSite [lindex $orientOfEveryEdgeInClockWiseOrder_fromTop $i]
       incr i
-      set temp_cmd "addAIORow -noSnap -site $IO_site_name -orient $orientOfSite $tempdirection -num $numOfSite -loc $leftBottomPoint"
+      set temp_cmd [list addAIORow -noSnap -site $IO_site_name -orient $orientOfSite $tempdirection -num $numOfSite -loc {*}$leftBottomPoint]
     }]
     return [join $cmds_of_addAIORow \n]
   }
 }
-
+### NOTICE: you can run cmds using: set cmds "{[join [split [create_addAIORow_cmd {x y x1 y1} io_site_name] \n] "} {"]}" ; foreach cmd $cmds { puts $cmd ; eval $cmd }
 
 #!/bin/tclsh
 # --------------------------
@@ -43,7 +43,7 @@ proc create_addAIORow_cmd {{dieArea_rect {0 0 10 10}} {IO_site_name ""} {numOrRo
 #             {x y} : the left-bottom point of every row of specified edge
 #             $numOfSite : the num of every row of specified edge
 #             $direction : the direction of every row of specified edge
-# related   : ./create_addAreaIORow_cmd.invs.tcl : create_addAreaIORow_cmd
+# related   : ./create_addAIORow_cmd.invs.tcl : create_addAIORow_cmd
 # ref       : link url
 # --------------------------
 proc get_addAreaIORow_info {rectangle site_size rows_per_side {debug 0}} {

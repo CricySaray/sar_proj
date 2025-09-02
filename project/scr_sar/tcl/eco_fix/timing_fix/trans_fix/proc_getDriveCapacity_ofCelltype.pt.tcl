@@ -24,14 +24,12 @@ proc get_driveCapacity_of_celltype {{celltype ""} {regExp ".*X(\\d+).*(A\[HRL\]\
 }
 proc get_driveCapacity_of_celltype_returnCapacityAndVTtype {{celltype ""} {regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"}} {
   if {$celltype == "" || $celltype == "0x0" || ![sizeof_collection [get_lib_cells -q "*/$celltype"]]} { 
-    return "0x0:1"; # check your input 
+    error "proc get_driveCapacity_of_celltype_returnCapacityAndVTtype: check your input : celltype($celltype) not found!!!"; # check your input 
   } else {
     regexp $regExp $celltype wholename driveLevel VTtype 
     if {![info exists wholename]} { 
       error "proc get_driveCapacity_of_celltype_returnCapacityAndVTtype: celltype($celltype) can't be matched by regExp($regExp)"
     }
-    if {$driveLevel == "05"} {set driveLevel 0.5}
-    if {$VTtype == ""} {set VTtype "SVT"}
     return [list $driveLevel $VTtype]
   }
 }

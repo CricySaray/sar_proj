@@ -37,10 +37,12 @@ proc get_cell_class {{instOrPinOrCelltype ""}} {
 #           ADVANCE: it can test if you open noTiming invs db. if it is, it judge it by other rule
 # prompt : please open invs db with timing info
 proc expandMapList {{process {}}} {
-  if {$process == {M31GPSC900NL040P*_40N}} {
+  if {$process in {M31GPSC900NL040P*_40N}} {
     set customMapList {{filler {{FILLERC*\d+A[HRL]9}}} {ANT {{ANTENNA*}}} {noCare {{BUSHOLD*}}} {IOfiller {{RCLIB_PLFLR\d$}}} {cutCell {{RCLIB_PLFLR5_CUT*}}} {IOpad {{RCLIB_*}}} {tapCell {{TAP*}}} {tieCell {{TIE\d+X\d+A[HLR]9}}}}
-  } elseif {$process == {TSMC_cln12ffc}} {
+  } elseif {$process in {TSMC_cln12ffc}} {
     set customMapList {{BoundaryCell {{BOUNDARY_.*}}} {DTCD {{N12_DTCD_[BF]EOL_.*}}} {pad {{PAD\d+PITCH}}} {physical {{PB2B\w+}}} {clamp {{PCLAMP.*}}} {IP {{PLL_.*}}} {esd {{.*LLESD_.*}}} {decap {{decap_.*} {^DCAP\d+\w+.*}}} {ANT {{ANTENNABWP.*}}} {filler {{^FILL\d+BWP.*}}} {noCare {{GFILL.*}}} {tapCell {{^TAPCELLBWP.*}}}}
+  } elseif {$process in {TSMC_cln40lp}} {
+    set customMapList {} 
   }
   if {[llength $customMapList]} {
     set expandedMapList [lmap item_map $customMapList {

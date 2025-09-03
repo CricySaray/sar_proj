@@ -7,9 +7,7 @@
 # descrip   : selector of strategies for fix_trans.invs.tcl
 # return    : dict data: $resultDict: cmd_one|more_list/fixed_one|more_list/cantChange_list/skipped_list/nonConsidered_list
 # TODO      : 
-#             U005: need shorten too long string of pinname using stringstore::* -> add this function at fix_trans.invs.tcl
 #             U006: change strategy according to the sinks capacity (advanced function)
-#             U007: you need split one2one and one2more situation.
 #             U008: need move inst when the size changes too
 #             U009 for change VT or/and capacity of driver celltype when adding repeater
 #             U010: add try command for critical stage such as addRepeater/changeVT/changeCapacity
@@ -23,6 +21,8 @@
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
 #             U003: judge if the driver cell can change VT and drive capacity, if not, using inserting buffer or add to NOTICEList(need to fix by yourself)
 #             U004: add judgement for non-consider driver-sinks symbol
+#             U005: need shorten too long string of pinname using stringstore::* -> add this function at fix_trans.invs.tcl
+#             U007: you need split one2one and one2more situation.
 # NOTICE    : AT002: When setting the condition for determining whether it is the maximum allowable driver(proc judge_ifHaveBeenLargestCapacityInRange at 
 #                   ./proc_getAllInfo_fromPin.invs.tcl), it needs to correspond to the maximum driver in mapList; if it does not correspond, it will most 
 #                   likely report an error inside the proc.

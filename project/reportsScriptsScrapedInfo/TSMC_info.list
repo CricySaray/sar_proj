@@ -1,0 +1,100 @@
+1. LIBRARY INFORMATION
+Library Name    : TCBN40LPBWP
+Library Version : 200A
+Library Type    : STANDARD CELL
+Technology      : CLN40LP: 40nm CMOS LOGIC Low Power ; # NOTICE
+Feature         : TSMC 40 NM CMOS LOGIC LOW POWER (AL_RDL SALICIDE CU_ELK 1.1/2.5V), core cell library, standard Vt, 9-track, tapless cell layout structure, support multi-Vdd, raw gate density = 2000 Kgate/mm², direct shrink from 45nm with shrink fator = 0.9
+Design Rule     : T-N45-CL-DR-001 2.0
+Spice model     : T-N40-CL-SP-004 1.1_2
+DRC command file: T-N45-CL-DR-001-C1 2.0b
+LVS command file: T-N40-CL-LS-001-C1 1.3c
+T-N40-CL-LS-001-E1 1.2a
+LPE command file: T-N40-CL-SP-004-B1 1.1a
+
+3. DESIGN KIT VERSION DEPENDENCY TABLE
+The following table shows the valid combinations of design-kit versions
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| Library     |                    Front-End                          |                         Back-End                           			|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| Version     | rln | ccs | doc | ecsm | mdt | nldm | sgs | vit | vlg | apf | apt | cdk | ctc | gds | lpe | pdb | sef | spi | vcn | vts |
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 200a        | 200a| 200a| 200a| 200a | 120a| 200a | -   | 200a| 200a| 200a| 200a| 120b| 200a| 120a| 120a| 110a| 120c| 120a| 120b| 110c|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 120c        | 120c| 120b| 120b| 120b | 120a| 120b | -   | 120a| 120a| 120c| 120c| 120b| 120b| 120a| 120a| 110a| 120c| 120a| 120b| 110c|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 120b        | 120b| 120b| 120b| 120b | 120a| 120b | -   | 120a| 120a| 120b| 120b| 120b| 120b| 120a| 120a| 110a| 120a| 120a| 120b| 110c|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 120a        | 120a| 120b| 120b| 120b | 120a| 120b | -   | 120a| 120a| 120a| 120a| 110a| 120a| 120a| 120a| 110a| 120a| 120a| 120a| 110c|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 110c        | 110c| 110a| 110a| 110a | 110a| 110a | -   | 110a| 110b| 110b| 110b| 110a| 110b| 110a| 110a| 110a| 110c| 110a| 110b| 110c|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 110b        | 110b| 110b| 110b| 110b | 110a| 110b | -   | 110a| 110b| 110b| 110b| 110a| 110b| 110a| 110a| 110a| 110a| 110a| 110b| 110c|
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 110a        | 110a| 110a| 110a| -    | 110a| 110a | 110a| 110a| 110a| 110a| 110a| 110a| 110a| 110a| 110a| 110a| 110a| 110a| 110a| -   |
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+| 100a        | 100a| -   | 100a| -    | 100a| 100a | 100a| 100a| 100a| 100a| 100a| -   | 100a| 100a| 100a| 100a| 100a| 100a| -   | -   |
++-------------+-----+-----+-----+------+-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+ccs: Composite current source model
+doc: Documents (datasheets)
+ecsm: Effective current source model
+mdt: Mentor DFT (Fastscan and DFT advisor) kits
+nldm: Non-linear delay model
+rln: Release note
+sgs: Signal Storm ECSM view
+vit: Vital (VHDL) model
+vlg: Verilog model
+cdk: Cell-base Design Kit for PDK design environment
+sef: Silicon Ensemble/SOC Encounter LEF (phantom) view
+apf: Apollo/Astro FRAM (phantom) view
+apt: Apollo/Astro FRAM and CELL (layout) view
+ctc: Celtic cdb view
+gds: GDSII layout view
+lpe: Layout parasitic extracted spice netlist
+pdb: Physical compiler view
+spi: Spice/LVS netlist
+vcn: Magma Volcano view
+vts: VoltageStorm pgv view
+
+
+4. CHARACTERIZATION CONDITIONS
+
+I. Base characterization corners
+
++---------+-----------+----------------+---------+
+| Corner  |Voltage(V) |Temperature (°C)| Process |
++---------+-----------+----------------+---------+
+| BC      | 1.21      | 0              | FF      |
++---------+-----------+----------------+---------+
+| BC0D99  | 0.99      | 0              | FF      |
++---------+-----------+----------------+---------+
+| LT      | 1.21      | -40            | FF      |
++---------+-----------+----------------+---------+
+| LT0D99  | 0.99      | -40            | FF      |
++---------+-----------+----------------+---------+
+| ML      | 1.21      | 125            | FF      |
++---------+-----------+----------------+---------+
+| ML0D99  | 0.99      | 125            | FF      |
++---------+-----------+----------------+---------+
+| MLG     | 1.21      | 125            | FFG     |
++---------+-----------+----------------+---------+
+| TC      | 1.1       | 25             | TT      |
++---------+-----------+----------------+---------+
+| TC0D9   | 0.9       | 25             | TT      |
++---------+-----------+----------------+---------+
+| WC      | 0.99      | 125            | SS      |
++---------+-----------+----------------+---------+
+| WC0D81  | 0.81      | 125            | SS      |
++---------+-----------+----------------+---------+
+| WCL     | 0.99      | -40            | SS      |
++---------+-----------+----------------+---------+
+| WCL0D81 | 0.81      | -40            | SS      |
++---------+-----------+----------------+---------+
+| WCZ     | 0.99      | 0              | SS      |
++---------+-----------+----------------+---------+
+| WCZ0D81 | 0.81      | 0              | SS      |
++---------+-----------+----------------+---------+
+
+(a) The Lib/IP is designed to operate within offered PVT ranges. If customer design is within PVT ranges but beyond listed PVT corners, Lib/IP re-characterization is MUST. Please contact TSMC for it.
+
+II. Multi-Vdd characterization corners (ignored)

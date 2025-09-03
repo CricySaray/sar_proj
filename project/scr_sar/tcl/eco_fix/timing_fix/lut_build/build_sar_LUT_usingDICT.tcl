@@ -9,7 +9,7 @@
 # update    : 2025/08/17 22:39:02 Sunday
 #             (U001) update method to get core inner boundary rects!!! simple and efficient!!! using proc:findCoreRectsInsideBoundary
 # update    : 2025/09/02 09:39:54 Tuesday
-#             (U002) Perform adaptation for the TSMC_cln40lp process
+#             (U002) Perform adaptation for the TSMC_arm_cln40lp process
 # return    : tcl script to create dict database(it is convenient for searching. it can save permently and source it whenever you need it.)
 #             dict database include:
 #             dictName: $LUT_filename
@@ -29,7 +29,7 @@ source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBound
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
-  set process                                   {TSMC_cln40lp} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_cln40lp
+  set process                                   {TSMC_arm_cln40lp} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp
   set promptPrefix                              "# song"
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"
@@ -55,7 +55,7 @@ proc build_sar_LUT_usingDICT {args} {
     set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
     set VT_mapList {{{} SVT} {LVT LVT} {ULVT UVLT} {HVT HVT}} ; set ifNeedMapVTlist 1
-  } elseif {$process in {TSMC_cln40lp}} { ; # U002
+  } elseif {$process in {TSMC_arm_cln40lp}} { ; # U002
     set capacityFlag "X" ; set vtFastRange {LVT RVT} ; set stdCellFlag "" ; set celltypeMatchExp {^[^_]*_X(\d+P?\d?)[ABEMF]?_A\dT([RL])40$} ; set refBuffer "BUF_X1M_A9TL40" ; set refClkBuffer "BUF_X1B_A9TL40"
     set special_StdCellVtMatchExp_from {^([^_]*_X)<cap>([ABEMF])_(A\dT)<vt>40$} ; set special_StdCellVtMatchExp_to {\1\d+P?\d?\2_\3[RL]40$}
     set VT_mapList {{R RVT} {L LVT}} ; set ifNeedMapVTlist 1 ; # AT101

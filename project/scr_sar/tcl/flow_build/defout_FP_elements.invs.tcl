@@ -19,6 +19,8 @@ proc defout_FP_elements {args} {
   set types             {term rblkg pblkg endcap welltap block pad padSpacer cornerBottomRight}
   set netNamesList      {DVSS DVDD_ONO DVDD_AON}
   set objectTypeForNets {Wire Via} ; # Wire|Via
+  set endcapPrefix      "ENDCAP"
+  set welltapPrefix      "WELLTAP"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -33,32 +35,32 @@ proc defout_FP_elements {args} {
       }
     }
   }
-  if {[lsearch -exact $types "term"] > -1} {
+  if {[lsearch -exact $types "term"] > -1 && [dbget top.terms. -e] != ""} {
     select_obj [dbget top.terms.]
     set types [lsearch -not -all -inline $types "term"]
   }
-  if {[lsearch -exact $types "rblkg"] > -1} {
+  if {[lsearch -exact $types "rblkg"] > -1 && [dbget top.fplan.rblkgs. -e] != ""} {
     select_obj [dbget top.fplan.rblkgs.]
     set types [lsearch -not -all -inline $types "rblkg"]
   }
-  if {[lsearch -exact $types "pblkg"] > -1} {
+  if {[lsearch -exact $types "pblkg"] > -1 && [dbget top.fplan.pblkgs. -e] != ""} {
     select_obj [dbget top.fplan.pblkgs.]
     set types [lsearch -not -all -inline $types "pblkg"]
   }
-  if {[lsearch -exact $types "endcap"] > -1} {
-    select_obj [dbget top.insts.name */ENDCAP* -p]
-    select_obj [dbget top.insts.name ENDCAP* -p]
+  if {[lsearch -exact $types "endcap"] > -1 && [dbget top.insts.name */${endcapPrefix}* -e] != ""} {
+    select_obj [dbget top.insts.name */${endcapPrefix}* -p]
+    select_obj [dbget top.insts.name ${endcapPrefix}* -p]
     set types [lsearch -not -all -inline $types "endcap"]
   }
-  if {[lsearch -exact $types "welltap"] > -1} {
-    select_obj [dbget top.insts.name WELLTAP* -p]
+  if {[lsearch -exact $types "welltap"] > -1 && [dbget top.insts.name ${welltapPrefix}* -e] != ""} {
+    select_obj [dbget top.insts.name ${welltapPrefix}* -p]
     set types [lsearch -not -all -inline $types "welltap"]
   }
   foreach type $types {
     if {[dbget top.insts.cell.subClass $type -e -u] != ""} {
       select_obj [dbget top.insts.cell.subClass $type -p2]
     } else {
-      return "can't find cell.subClass: $type , please check input \$types"
+      puts "proc defout_FP_elements: can't find cell.subClass: $type , please check input \$types"
     }
   }
   if {$testOrRun == "run"} {
@@ -82,4 +84,6 @@ define_proc_arguments defout_FP_elements \
     {-types "specify the types of insts" AList list optional}
     {-netNamesList "specify the list of net name" AList list optional}
     {-objectTypeForNets "specify the type for nets" AList list optional}
+    {-endcapPrefix "specify the prefix of endcap" AString string optional}
+    {-welltapPrefix "specify the prefix of welltap" AString string optional}
   }

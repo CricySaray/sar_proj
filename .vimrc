@@ -61,8 +61,6 @@ endfunction
 
 
 """ ABBR CONFIG -----------------------------------------------------------------
-iabbrev hw Hello World
-iabbrev SS ######################################<esc>oi# author     : sar <esc>oi# descrip    : this is blahblah ... <esc>oi######################################<esc>oi
 iabbrev ec ecoChangeCell
 iabbrev ea ecoAddRepeater
 iabbrev ed ecoDeleteRepeater
@@ -86,7 +84,7 @@ cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
 " insert head of proc for tcl or perl, can change DATE to time now
 function! InsertProcessHead()
   " 读取文件的前9行到当前位置
-  execute 'r! sed -n ''1,10p'' ~/project/scr_sar/ref_content/head_of_proc.txt'
+  execute 'r! sed -n ''1,11p'' ~/project/scr_sar/ref_content/head_of_proc.txt'
   " 获取当前行号（即新插入内容的第一行）
   let end_line = line('.')
   " 计算结束行号（当前行 + 9）
@@ -235,6 +233,192 @@ let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', 
 
 """ VIMSCRIPT & FUNCTIONS -------------------------------------------------------
 
+
+" ---------------------------
+" Process current buffer: remove duplicates by specified columns, keep larger/smaller values, then sort
+" Parameters (all column numbers are 1-based as input):
+" [1] Retention rule ('keep_larger' or 'keep_smaller')
+" [2] keep_only_specified_columns (optional: 0=keep all columns, 1=keep only 2 columns, default=0)
+" [3] Name column number (positive integer, 1-based) - default 1
+" [4] Value column number (positive integer, 1-based) - default 2
+" Compatible with Vim 7.4
+function! SortUniqueByColumn(...) abort
+  let arg_count = a:0
+  if arg_count < 1
+    echoerr "Error: Missing retention rule parameter"
+    return 0
+  endif
+
+  " Extract parameters with defaults (preserving 1-based input)
+  let keep_option = a:1
+  let keep_only_cols = (arg_count >= 2) ? a:2 : 0
+  let name_col_1based = (arg_count >= 3) ? a:3 : 1  " User input: 1-based name column
+  let value_col_1based = (arg_count >= 4) ? a:4 : 2  " User input: 1-based value column
+
+  " Validate retention rule
+  if keep_option !=# 'keep_larger' && keep_option !=# 'keep_smaller'
+    echoerr "Error: First argument must be 'keep_larger' or 'keep_smaller'"
+    return 0
+  endif
+
+  " Validate column retention flag
+  if keep_only_cols !~# '^[01]$'
+    echoerr "Error: Second argument must be 0 (keep all columns) or 1 (keep only 2 columns)"
+    return 0
+  endif
+  let keep_only_cols = str2nr(keep_only_cols)
+
+  " Validate column numbers are positive integers (1-based)
+  if name_col_1based !~# '^\d\+$' || value_col_1based !~# '^\d\+$'
+    echoerr "Error: Column numbers must be positive integers (1-based)"
+    return 0
+  endif
+
+  " Convert to numbers and validate range (still 1-based)
+  let name_col_1based = str2nr(name_col_1based)
+  let value_col_1based = str2nr(value_col_1based)
+  
+  if name_col_1based < 1 || value_col_1based < 1
+    echoerr "Error: Column numbers must be greater than 0 (1-based)"
+    return 0
+  endif
+  
+  if name_col_1based == value_col_1based
+    echoerr "Error: Name column and value column cannot be the same"
+    return 0
+  endif
+
+  " Critical conversion: 1-based input to 0-based index for internal operations
+  let name_col_idx = name_col_1based - 1
+  let value_col_idx = value_col_1based - 1
+
+  " Check for empty buffer
+  if line('$') == 0
+    echoerr "Error: Buffer is empty"
+    return 0
+  endif
+
+  let s:data = {}  " Stores {name: {value: number, original_line: string, columns: list}}
+  let errors = []  " Tracks processing issues
+
+  " Process each line in buffer
+  for lnum in range(1, line('$'))
+    let original_line = getline(lnum)
+    let trimmed = substitute(substitute(original_line, '^\s*', '', ''), '\s*$', '', '')
+    
+    " Skip empty lines
+    if trimmed ==# ''
+      call add(errors, "Warning: Empty line at line " . lnum)
+      continue
+    endif
+
+    " Split line into columns (handles multiple spaces)
+    let columns = split(trimmed, '\s\+')
+    let col_count = len(columns)
+
+    " Validate sufficient columns (uses 1-based for user feedback)
+    if col_count < name_col_1based || col_count < value_col_1based
+      call add(errors, "Error: Line " . lnum . " has only " . col_count . " columns. Needs at least " 
+        \ . max([name_col_1based, value_col_1based]) . " columns (name column: " 
+        \ . name_col_1based . ", value column: " . value_col_1based . ")")
+      continue
+    endif
+
+    " Extract values using 0-based indices for internal processing
+    let name = columns[name_col_idx]
+    let value_str = columns[value_col_idx]
+
+    " Validate numeric format in value column
+    if value_str !~# '^[+-]\?\d\+\(\.\d\+\)\?$'
+      call add(errors, "Error: Invalid number format in value column (line " . lnum 
+        \ . ", column " . value_col_1based . "): " . value_str)
+      continue
+    endif
+    let value = str2float(value_str)
+
+    " Update data with best value based on retention rule
+    if !has_key(s:data, name) || 
+          \ (keep_option ==# 'keep_larger' && value > s:data[name].value) ||
+          \ (keep_option ==# 'keep_smaller' && value < s:data[name].value)
+      let s:data[name] = { 
+        \ 'value': value, 
+        \ 'original_line': original_line, 
+        \ 'columns': columns 
+        \ }
+    endif
+  endfor
+
+  " Handle collected errors
+  if !empty(errors)
+    echo "Processing issues:"
+    for err in errors
+      echo "  " . err
+    endfor
+    let user_choice = input("Continue with valid data? (y/n): ")
+    if user_choice !=# 'y' && user_choice !=# 'Y'
+      echo "Operation cancelled"
+      return 0
+    endif
+  endif
+
+  " Check for valid data
+  if empty(s:data)
+    echoerr "Error: No valid data to process"
+    return 0
+  endif
+
+  " Sorting function (Vim 7.4 compatible)
+  function! CompareValues(a, b)
+    let diff_val = s:data[a:a].value - s:data[a:b].value
+    if diff_val > 0
+      return 1
+    elseif diff_val < 0
+      return -1
+    else
+      return 0
+    endif
+  endfunction
+
+  let sorted_names = sort(keys(s:data), 'CompareValues')
+
+  " Generate output content
+  let new_content = []
+  for name in sorted_names
+    let item = s:data[name]
+    if keep_only_cols == 1
+      " Keep only specified columns (using 0-based indices)
+      call add(new_content, item.columns[name_col_idx] . ' ' . string(item.value))
+    else
+      " Preserve original format with updated value
+      let old_value = escape(item.columns[value_col_idx], '\.[]*')
+      let new_line = substitute(item.original_line, '\V' . old_value, string(item.value), '')
+      call add(new_content, new_line)
+    endif
+  endfor
+
+  " Update buffer with results
+  silent %d _
+  call setline(1, new_content)
+
+  " Display operation summary
+  echo "Completed: " . len(s:data) . " unique entries"
+  echo "Retention rule: " . (keep_option ==# 'keep_larger' ? 'keep larger values' : 'keep smaller values')
+  echo "Columns used: name=" . name_col_1based . ", value=" . value_col_1based
+  echo "Output format: " . (keep_only_cols ? 'Only specified columns' : 'All columns (original formatting)')
+  
+  " Clean up script-scoped variable
+  unlet s:data
+  return 1
+endfunction
+
+" Command definitions
+" Usage examples:
+" :SortKeepLarger               - Defaults: keep larger, all columns, name=1, value=2
+" :SortKeepLarger (1)             - Keep larger, only 2 columns, name=1, value=2
+" :SortKeepLarger (0) 3 5         - Keep larger, all columns, name=3, value=5
+" :SortKeepSmaller [0/1] [name_col] [value_col] - Same logic for smaller values
+command! -nargs=* SortKeepLarger call SortUniqueByColumn('keep_larger', 0, <f-args>)
+command! -nargs=* SortKeepSmaller call SortUniqueByColumn('keep_smaller', 0, <f-args>)
 
 " ---------------------------
 " switch paste mode and show status of paste

@@ -2,7 +2,7 @@
 # --------------------------
 # author    : sar song
 # date      : 2025/08/18 15:32:48 Monday
-# label     : table_proc
+# label     : display_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
 # descrip   : This proc formats tabular data from lists, files, or strings into colNumFinal columns, with the first colNumFinal-1 columns wrapped to 
 #             max_first_width and the nth column (combining original nth and subsequent columns) wrapped to max_rest_width. It 

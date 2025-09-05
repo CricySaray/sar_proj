@@ -29,13 +29,13 @@ source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBound
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
-  set process                                   {TSMC_arm_cln40lp} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp
+  set process                                   {TSMC_tcbn40lpbwp} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp
   set promptPrefix                              "# song"
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"
   set selectSmallOrMuchRowSiteSizeAsMainCore    "small" ; # small|much
   set boundaryOrEndCapCellName                  "ENDCAP"
-  set removeStdCellExp                          {^[^_]*BWP$} ; # can remove std cell names that want not to exists at lutDict
+  set removeStdCellExp                          {} ; # can remove std cell names that want not to exists at lutDict
   set removeRegionOfSiteNameExp_from_coreRect   {IOSITE_.*} ; # site name Exp that need be removed when calculating coreRect
   set shrinkOff                                 "-1"  ; # -1: using mainCoreRowHeight, >=0: will using value of this var
   set debug                                     0
@@ -51,8 +51,9 @@ proc build_sar_LUT_usingDICT {args} {
   if {$process in {M31GPSC900NL040P*_40N}} {
     set capacityFlag "X" ; set vtFastRange {AL9 AR9 AH9} ; set stdCellFlag "" ; set celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$} ; set VtMatchExp {A[HRL]9} ; set refBuffer "BUFX3AR9" ; set refClkBuffer "CLKBUFX3AR9"
     set noCareCellClass {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}
+    set driveCapacity_specialMapList {{05 0.5}} ; set ifNeedSpecialDriveCapacityMap 1
   } elseif {$process in {TSMC_cln12ffc}} {
-    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?LVT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
+    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
     set VT_mapList {{{} SVT} {LVT LVT} {ULVT UVLT} {HVT HVT}} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_arm_cln40lp}} { ; # U002
@@ -61,6 +62,10 @@ proc build_sar_LUT_usingDICT {args} {
     set VT_mapList {{R RVT} {L LVT}} ; set ifNeedMapVTlist 1 ; # AT101
     set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
+  } elseif {$process in {TSMC_tcbn40lpbwp}} {
+    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
+    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
+    set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set ifNeedMapVTlist 1
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
   }
@@ -190,27 +195,25 @@ proc build_sar_LUT_usingDICT {args} {
         if {![info exists wholname]} {lappend cantMatchList [list $temptypename $tempclass]}
       } else {
         lassign [get_driveCapacity_of_celltype_returnCapacityAndVTtype $temptypename $celltypeMatchExp] tempcapacity_raw tempvttype_raw
-        if {$ifDriveCapacityConvert_from_P_to_point} { set tempcapacity [regsub P $tempcapacity_raw .] } else { set tempcapacity $tempcapacity_raw } ; # AT101
+        if {[info exists ifDriveCapacityConvert_from_P_to_point] && $ifDriveCapacityConvert_from_P_to_point} { set tempcapacity [regsub P $tempcapacity_raw .] } else { set tempcapacity $tempcapacity_raw } ; # AT101
         if {$ifNeedMapVTlist} { set tempvttype [lindex [lsearch -inline -index 0 $VT_mapList $tempvttype_raw] 1] } else { set tempvttype $tempvttype_raw } ; # AT102
-        if {$tempcapacity_raw == 05 && $process in {M31GPSC900NL040P*_40N}} {set tempcapacity 0.5}
-        if {$process in {TSMC_cln12ffc} && $tempvttype_raw == "SVT"} { set vtFromExp "" } else { set vtFromExp $tempvttype_raw }
+        if {[info exists driveCapacity_specialMapList] && [lsearch -index 0 $driveCapacity_specialMapList $tempcapacity_raw] != -1 && $ifNeedSpecialDriveCapacityMap} {set tempcapacity [lindex [lsearch -inline -index 0 $driveCapacity_specialMapList $tempcapacity_raw] 1]}
         if {![info exists VtMatchExp] && [info exists special_StdCellVtMatchExp_from] && [info exists special_StdCellVtMatchExp_to]} {
           set tempvtcapacityExp [regsub [string map [list <cap> $tempcapacity_raw <vt> $tempvttype_raw] $special_StdCellVtMatchExp_from] $temptypename $special_StdCellVtMatchExp_to] ; # U002
-        } elseif {[info exists VtMatchExp] && ![info exists special_StdCellVtMatchExp_from] && [info exists special_StdCellVtMatchExp_to]} {
-          set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_raw}($stdCellFlag.*)${vtFromExp}$}] $temptypename [sus {^\1\d+\2$VtMatchExp$}]]
+        } elseif {[info exists VtMatchExp] && ![info exists special_StdCellVtMatchExp_from] && ![info exists special_StdCellVtMatchExp_to]} {
+          set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_raw}($stdCellFlag.*)${tempvttype_raw}$}] $temptypename [sus {^\1\d+\2$VtMatchExp$}]]
         } else {
           error "proc build_sar_LUT_usingDICT: check your vtMatchExp and special_StdCellVtMatchExp(from and to) which these don't exists currently." 
         }
         set tempvtcapacityList_raw [dbget -regexp head.libCells.name $tempvtcapacityExp]
         set tempvtList [lsort -unique [lmap tmpvt $tempvtcapacityList_raw {
           regexp $celltypeMatchExp $tmpvt vtwholename vtcapacity vtvt
-          if {$vtvt == "" && $process == {TSMC_cln12ffc}} {set vtvt SVT} else {set vtvt}
-          if {$ifNeedMapVTlist} { set vtvt [lindex [lsearch -inline -index 0 $VT_mapList $vtvt] 1] }
+          if {$ifNeedMapVTlist} { set vtvt [lindex [lsearch -inline -index 0 $VT_mapList $vtvt] 1] } else { set vtvt }
         }]]
         set tempcapacityList [lsort -unique -real -increasing [lmap tmpcapacity $tempvtcapacityList_raw {
           regexp $celltypeMatchExp $tmpcapacity capwholename capcapacity capvt
-          if {$capcapacity == 05 && $process in {M31GPSC900NL040P*_40N}} {set capcapacity 0.5}
-          if {$ifDriveCapacityConvert_from_P_to_point} { set capcapacity [regsub P $capcapacity .] }
+          if {[info exists driveCapacity_specialMapList] && [lsearch -index 0 $driveCapacity_specialMapList $tempcapacity_raw] != -1 && $ifNeedSpecialDriveCapacityMap} {set tempcapacity [lindex [lsearch -inline -index 0 $driveCapacity_specialMapList $tempcapacity_raw] 1]}
+          if {[info exists ifDriveCapacityConvert_from_P_to_point] && $ifDriveCapacityConvert_from_P_to_point} { set capcapacity [regsub P $capcapacity .] }
           set capcapacity
         }]]
       }
@@ -263,6 +266,7 @@ define_proc_arguments build_sar_LUT_usingDICT \
     {-selectSmallOrMuchRowSiteSizeAsMainCore "specify the item to compare as core main row/site" oneOfString one_of_string {optional value_type {values {small much}}}}
     {-boundaryOrEndCapCellName "specify the boundary cell name used for input of proc findCoreRectsInsideBoundary" AString string optional}
     {-removeStdCellExp "can remove std cell names that want not to exists at lutDict" AString string optional}
+    {-removeRegionOfSiteNameExp_from_coreRect "specify the region of site name expression from core_rects" AString string optional}
     {-shrinkOff "specify the value to off when calculate the core_inner_boundary_rects" AFloat float optional}
     {-debug "debug mode" "" boolean optional}
   }

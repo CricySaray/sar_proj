@@ -43,6 +43,8 @@ proc expandMapList {{process {}}} {
     set customMapList {{BoundaryCell {{BOUNDARY_.*}}} {DTCD {{N12_DTCD_[BF]EOL_.*}}} {pad {{PAD\d+PITCH}}} {physical {{PB2B\w+}}} {clamp {{PCLAMP.*}}} {IP {{PLL_.*}}} {esd {{.*LLESD_.*}}} {decap {{decap_.*} {^DCAP\d+\w+.*}}} {ANT {{ANTENNABWP.*}}} {filler {{^FILL\d+BWP.*}}} {noCare {{GFILL.*}}} {tapCell {{^TAPCELLBWP.*}}}}
   } elseif {$process in {TSMC_cln40lp}} {
     set customMapList {} 
+  } elseif {$process in {TSMC_tcbn40lpbwp}} {
+    set customMapList {} 
   }
   if {[llength $customMapList]} {
     set expandedMapList [lmap item_map $customMapList {

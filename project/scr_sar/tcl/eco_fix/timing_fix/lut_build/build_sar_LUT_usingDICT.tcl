@@ -64,7 +64,7 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
   } elseif {$process in {TSMC_tcbn40lpbwp}} {
     set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
-    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
+    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set ifNeedMapVTlist 1
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"

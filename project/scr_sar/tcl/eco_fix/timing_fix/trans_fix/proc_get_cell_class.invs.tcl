@@ -44,7 +44,7 @@ proc expandMapList {{process {}}} {
   } elseif {$process in {TSMC_cln40lp}} {
     set customMapList {} 
   } elseif {$process in {TSMC_tcbn40lpbwp}} {
-    set customMapList {{ANT {{ANTENNA*}}} {noCare {{BHD*}}} {decap {{^G?DCAP*}}} {filler {{FILL*}}}} 
+    set customMapList {{ANT {{ANTENNA*}}} {noCare {{BHD*}}} {decap {{^G?DCAP*}}} {filler {{^G?FILL*}}} {IOfiller {{PFILL*}}} {cutCell {{^PBRK*}}} {padCell {{*_DR$}}} {ISOcell {^ISO*}}} 
   }
   if {[llength $customMapList]} {
     set expandedMapList [lmap item_map $customMapList {

@@ -10,7 +10,7 @@
 # --------------------------
 source ../packages/adjust_rectangle.package.tcl; # adjust_rectangle
 source ../packages/adjust_to_multiple_of_num.package.tcl; # adjust_to_multiple_of_num
-proc createFloorplanCmd {{memAndIPsubClass block} {IOinstSubClassName padAreaIO} {coreAreaSiteName "sc9mc_cln40lp"} {coreDensity 0.55} {coreAspectRatio 1} {specifyWidthOrHeight {die height 2285.54}} {adjustPolicy "roundUp"} {adjustForDieOfMultiple 1.00}} {
+proc genCmd_floorplan {{memAndIPsubClass block} {IOinstSubClassName padAreaIO} {coreAreaSiteName "sc9mc_cln40lp"} {coreDensity 0.55} {coreAspectRatio 1} {specifyWidthOrHeight {die height 2285.54}} {adjustPolicy "roundUp"} {adjustForDieOfMultiple 1.00}} {
   set allIPmemInst [dbget [dbget -regexp top.insts.cell.subClass $memAndIPsubClass -p2].name]
   set padHeight [lindex {*}[dbget [dbget top.insts.cell.subClass $IOinstSubClassName -p].size -u] 1]
   set coreToDieDistance [expr $padHeight + 27]

@@ -32,7 +32,7 @@
 # return    : outputfile
 # ref       : link url
 # --------------------------
-proc process_grouped_file {input_file {groupMethod "blankLine"} {options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}} {format "highlight -index <value> <target>"} {output_file ""} {regex ""} {debug 0}} {
+proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine"} {options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}} {format "highlight -index <value> <target>"} {output_file ""} {regex ""} {debug 0}} {
   # NOTICE: $options: these numbers are index of highlight
   # Internal procedure for debug messages
   proc debug_msg {msg debug_flag} {

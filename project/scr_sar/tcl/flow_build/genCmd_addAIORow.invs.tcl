@@ -10,7 +10,7 @@
 # return    : cmds of addAIORow
 # ref       : link url
 # --------------------------
-proc create_addAIORow_cmd {{dieArea_rect {0 0 10 10}} {IO_site_name ""} {numOrRowEveryEdge {1 1 1 1}} {orientOfEveryEdgeInClockWiseOrder_fromTop {MX MY90 MY MX90}}} {
+proc genCmd_addAIORow {{dieArea_rect {0 0 10 10}} {IO_site_name ""} {numOrRowEveryEdge {1 1 1 1}} {orientOfEveryEdgeInClockWiseOrder_fromTop {MX MY90 MY MX90}}} {
   if {$IO_site_name == "" || [dbget [dbget head.sites.name $IO_site_name -p].size -e] == ""} {
     error "proc create_addAIORow_cmd: check your input: IO_site_name($IO_site_name) not found!!!"
   } else {

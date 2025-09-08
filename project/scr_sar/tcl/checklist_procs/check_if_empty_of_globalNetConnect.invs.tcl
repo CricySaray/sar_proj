@@ -10,7 +10,7 @@
 # ref       : link url
 # --------------------------
 proc check_if_empty_of_globalNetConnect {} {
-  if {} {
+  if {0} {
    
   } else {
     set all_cellSubClass [dbget top.insts.cell.subClass -u -e]
@@ -49,7 +49,7 @@ proc check_if_empty_of_globalNetConnect {} {
           }
         }
       } 
-      puts "result"
+      puts [dict get $emptyGlobalNetConnect_List]
     }
   }
 }

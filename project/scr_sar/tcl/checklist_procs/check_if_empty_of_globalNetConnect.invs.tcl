@@ -13,7 +13,6 @@ proc check_if_empty_of_globalNetConnect {} {
   if {} {
    
   } else {
-    set all_insts_ptr [dbget top.insts. -e] 
     set all_cellSubClass [dbget top.insts.cell.subClass -u -e]
     if {$all_cellSubClass == ""} {
       error "proc check_if_empty_of_globalNetConnect: check your design([dbget top.name]) is not found any insts!!!"
@@ -31,10 +30,12 @@ proc check_if_empty_of_globalNetConnect {} {
   puts $all_subclassOfAllInsts
         foreach temp_subclass $all_subclassOfAllInsts {
           puts "# - scanning subClass: $temp_subclass ..."
-          set inst_allSignalPins_ptr [dbget $subclass.instTerms.]
-          if {$inst_allSignalPins_ptr != ""} {
-            foreach inst_signalPin_ptr $inst_allSignalPins_ptr {
-               
+          set all_insts_of_this_subclass_ptr [dbget top.insts.cell.subClass $temp_subclass -p2]
+          foreach inst_of_this_subclass_ptr $all_insts_of_this_subclass_ptr {
+            set signalPins_ofInst [dbget $inst_of_this_subclass_ptr.instTerms.]
+            foreach signalpin $signalPins_ofInst {
+              set signal_net [dbget $signalpin.net.name -e] 
+              if {}
             }
           }
         }

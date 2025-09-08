@@ -49,6 +49,7 @@ proc check_if_empty_of_globalNetConnect {} {
           }
         }
       } 
+      puts "result"
     }
   }
 }

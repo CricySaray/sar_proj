@@ -23,9 +23,9 @@ proc genCmd_addIoInstance {args} {
   set cmdList [list ]
   foreach temp_result $results {
     lassign $temp_result celltype instname refInst direction
-    if {$direction == clockwise} {
+    if {$direction == "clockwise"} {
       lappend cmdList "addIoInstance -cell $celltype -inst $instname -refInst $refInst"
-    } elseif {$direction == counter_clockwise} {
+    } elseif {$direction == "counter_clockwise"} {
       lappend cmdList "addIoInstance -ccw -cell $celltype -inst $instname -refInst $refInst"
     }
   }

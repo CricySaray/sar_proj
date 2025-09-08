@@ -1,7 +1,7 @@
 # ----------------------
 
 # ----------------------
-source ~/project/scr_sar/tcl/to_eco_command_from_selected_obj_in_gui.invs.tcl
+source ~/project/scr_sar/tcl/misc/gui_actions/to_eco_command_from_selected_obj_in_gui.invs.tcl
 alias te "to_eco_command_from_selected_obj_in_gui"
 alias li "dbget head.libCells.name"
 alias df "deleteFiller -perfix "
@@ -25,7 +25,6 @@ alias setprefer "setPreference CmdLogMode 1"
 #get the path of this innovus log
 alias vlog "viewLog"
 
-alias dg "dbget"
 alias len "llength"
 alias gs "dbget selected.name"
 alias gb "dbget selected.box"
@@ -33,8 +32,8 @@ alias glog "getLogFileName -fullPath"
 alias gcmd "getCmdLogFileName"
 alias si "selectInst"
 alias sic "selectInstByCellName"
-alias rp "refinePlace"
-alias er "ecoRoute"
+#alias rp "refinePlace"
+#alias er "ecoRoute"
 alias cp "checkPlace"
 alias gp "get_property"
 alias rd "redirect"
@@ -115,9 +114,9 @@ proc selectInstOfSelectedPin_invsGUI {{removeInst ""}} {
   }
 }
 
-proc autosoft {} {
+proc autosoft {{channelSpace 15}} {
 	setFinishFPlanMode -activeObj {core macro fence hardBlkg softBlkg partialBlkg routingBlkg} -drcRegionObj {macro macroHalo hardBlkg minGap coreSpacing} -direction xy -override false
-	finishFloorplan -fillPlaceBlockage soft 40
+	finishFloorplan -fillPlaceBlockage soft $channelSpace
 }
 
 proc list_fanout_load_pins {pin} {

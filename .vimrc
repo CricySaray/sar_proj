@@ -27,7 +27,7 @@ cabbrev co %!column -t -s '\|'
 " - 直接匹配: ['Exact', 高亮组, [关键词1, 关键词2, ...]]
 " - 正则匹配: ['Regex', 高亮组, [正则表达式1, 正则表达式2, ...]]
 let g:highlight_groups = [
-      \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'er', 'ci', 'every', 'any', 'lextract', 'xor']],
+      \ ['Exact', 'Special', ['pw', 're', 'la', 'lo', 'al', 'ol', 'eo', 'er', 'ci', 'every', 'any', 'lextract', 'xor', 'pe']],
       \ ['Exact', 'Cursor',  ['songNOTE']],
       \ ['Exact', 'GruvboxFg0', ['TODO', 'FIXED', 'NOTICE', 'ADVANCE', 'BUG', 'partial', 'IMPORTANT', 'FASTER', 'DEPRECATED']],
       \ ['Regex', 'GruvboxFg0', ['U\d\{3}', 'ID\d\{4,}', 'AT\d\{3}']],
@@ -81,6 +81,7 @@ cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
+cabbrev dp r ~/project/scr_sar/ref_content/define_proc_arguments.txt
 " insert head of proc for tcl or perl, can change DATE to time now
 function! InsertProcessHead()
   " 读取文件的前9行到当前位置

@@ -16,9 +16,17 @@ foreach namespace $all_namespaces {
   puts $fo "### namespace : $namespace"
   foreach cmd $namespace_cmds {
     puts $fo "# ------------------------"
-    puts $fo "# proc: $cmd body"
+    puts $fo "# cmd: $cmd body"
     puts $fo [info body $cmd]
     puts $fo "# "
+    set procs [info proc ${cmd}::*]
+    if {$procs != ""} {
+      foreach temp_proc $procs {
+        puts $fo "# - proc: $temp_proc body:" 
+        puts $fo [info body $temp_proc]
+        puts $fo "# "
+      }
+    }
   }
 }
 close $fo

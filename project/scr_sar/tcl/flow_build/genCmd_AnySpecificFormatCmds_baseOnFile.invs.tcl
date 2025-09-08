@@ -30,6 +30,9 @@
 # 					  - Format string must contain both <value> and <target>
 # 					  - Extra items in 'options' are ignored; too few cause an error
 # return    : outputfile
+#
+# examples  : 1) genCmd_AnySpecificFormatCmds_baseOnFile input_file blankLine {{3.5 3.5 3.5 3.5} {10 10 10 10}} "addHaloToBlock <value> <target>" output_file
+#             2) genCmd_AnySpecificFormatCmds_baseOnFile input_file blankLine {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20} "highlight -index <value> <target>" output_file
 # ref       : link url
 # --------------------------
 proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine"} {options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}} {format "highlight -index <value> <target>"} {output_file ""} {regex ""} {debug 0}} {

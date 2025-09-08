@@ -47,7 +47,7 @@ proc defout_FP_elements {args} {
     select_obj [dbget top.fplan.pblkgs.]
     set types [lsearch -not -all -inline $types "pblkg"]
   }
-  if {[lsearch -exact $types "endcap"] > -1 && [dbget top.insts.name */${endcapPrefix}* -e] != ""} {
+  if {[lsearch -exact $types "endcap"] > -1 && [expr {[dbget top.insts.name */${endcapPrefix}* -e] != "" || [dbget top.insts.name ${endcapPrefix}* -e] != ""}]} {
     select_obj [dbget top.insts.name */${endcapPrefix}* -p]
     select_obj [dbget top.insts.name ${endcapPrefix}* -p]
     set types [lsearch -not -all -inline $types "endcap"]

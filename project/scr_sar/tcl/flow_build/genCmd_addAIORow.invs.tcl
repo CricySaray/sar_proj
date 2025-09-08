@@ -24,7 +24,7 @@ proc genCmd_addAIORow {{dieArea_rect {0 0 10 10}} {IO_site_name ""} {numOrRowEve
       incr i
       set temp_cmd [list addAIORow -noSnap -site $IO_site_name -orient $orientOfSite $tempdirection -num $numOfSite -loc {*}$leftBottomPoint]
     }]
-    return [join $cmds_of_addAIORow \n]
+    return $cmds_of_addAIORow
   }
 }
 ### NOTICE: you can run cmds using: set cmds "{[join [split [create_addAIORow_cmd {x y x1 y1} io_site_name] \n] "} {"]}" ; foreach cmd $cmds { puts $cmd ; eval $cmd }

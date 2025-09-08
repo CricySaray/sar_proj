@@ -31,18 +31,17 @@ proc check_if_empty_of_globalNetConnect {} {
         } $all_subclassOfAllInsts]
   puts $all_subclassOfAllInsts
         foreach temp_subclass $all_subclassOfAllInsts {
-          dict set $emptyGlobalNetConnect_List $temp_subclass [list ]
-          dict set $haveGlobalNetConnect_List $temp_subclass [list]
+          dict set emptyGlobalNetConnect_List $temp_subclass [list ]
+          dict set haveGlobalNetConnect_List $temp_subclass [list]
           puts "# - scanning subClass: $temp_subclass ..."
           set all_insts_of_this_subclass_ptr [dbget top.insts.cell.subClass $temp_subclass -p2]
           foreach inst_of_this_subclass_ptr $all_insts_of_this_subclass_ptr {
             set signalPins_ofInst [dbget $inst_of_this_subclass_ptr.instTerms.]
             foreach signalpin $signalPins_ofInst {
               set signal_net [dbget $signalpin.net.name -e] 
-              if {$signal_net == ""} {
-                dict lappend $emptyGlobalNetConnect_List $temp_subclass [list [dbget $inst_of_this_subclass_ptr.name] [dbget $signalpin.name]]
-              }
+              dict lappend [if {$signal_net == ""} {set temp emptyGlobalNetConnect_List} else {set temp haveGlobalNetConnect_List}] $temp_subclass [list [dbget $inst_of_this_subclass_ptr.name] [dbget $signalpin.name]]
             }
+            set pgPins_ofInst [dbget $inst_of_this_subclass_ptr.pgInstTerms.]
           }
         }
       } 

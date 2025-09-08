@@ -15,14 +15,23 @@ proc check_if_empty_of_globalNetConnect {} {
   } else {
     set all_insts_ptr [dbget top.insts. -e] 
     set all_cellSubClass [dbget top.insts.cell.subClass -u -e]
-    if {$all_insts_ptr == ""} {
+    if {$all_cellSubClass == ""} {
       error "proc check_if_empty_of_globalNetConnect: check your design([dbget top.name]) is not found any insts!!!"
     } else {
-      foreach inst_ptr $all_insts_ptr {
-        set inst_allSignalPins_ptr [dbget $inst_ptr.instTerms.]
-        if {$inst_allSignalPins_ptr != ""} {
-          foreach inst_signalPin_ptr $inst_allSignalPins_ptr {
-             
+      foreach subclass $all_cellSubClass {
+        set all_insts_of_specified_subclass [dbget top.insts.cell.subClass $subclass -p2]
+        set all_insts_of_specified_subclass [lsort -command {
+          apply {{a b} {
+            set a_len [llength [dbget top.insts.cell.subClass $a -p2]]
+            set b_len [llength [dbget top.insts.cell.subClass $b -p2]]
+          }} 
+        } $all_insts_of_specified_subclass]
+        foreach inst_of_specified_subclass $all_insts_of_specified_subclass {
+          set inst_allSignalPins_ptr [dbget $subclass.instTerms.]
+          if {$inst_allSignalPins_ptr != ""} {
+            foreach inst_signalPin_ptr $inst_allSignalPins_ptr {
+               
+            }
           }
         }
       } 

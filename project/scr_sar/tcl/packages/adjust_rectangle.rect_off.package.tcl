@@ -10,6 +10,13 @@
 # return    : rect list {x y x1 y1}
 # ref       : link url
 # --------------------------
+proc adjust_boxes {rects offset} {
+  if {![llength $rects]} {
+    error "proc adjust_boxes: check your input: rects($rects) is empty!!!"
+  } else {
+    return [lmap rect $rects { adjust_rectangle $rect $offset }]
+  }
+}
 proc adjust_rectangle {rect offset} {
   # Check if rectangle has valid format
   if {[llength $rect] != 4} {

@@ -12,11 +12,12 @@
 #             (U001) improve small options
 # ref       : link url
 # --------------------------
+source ../packages/every_any.package.tcl; # any
 proc defout_FP_elements {args} {
   set testOrRun         "test"
   set path              "./"
   set suffix            ""
-  set types             {term rblkg pblkg endcap welltap block pad padSpacer cornerBottomRight}
+  set types             {pd term rblkg pblkg endcap welltap block pad padSpacer cornerBottomRight}
   set netNamesList      {DVSS DVDD_ONO DVDD_AON}
   set objectTypeForNets {Wire Via} ; # Wire|Via
   set endcapPrefix      "ENDCAP"
@@ -35,26 +36,31 @@ proc defout_FP_elements {args} {
       }
     }
   }
-  if {[lsearch -exact $types "term"] > -1 && [dbget top.terms. -e] != ""} {
+  if {[lsearch -regexp $types {^pds?|power[dD]omains?$}] > -1} {
+    select_obj [dbget top.pds.] 
+    set types [lsearch -not -regexp -all -inline $types {^pds?|power[dD]omains?$}]
+  }
+  if {[lsearch -regexp $types {^terms?$}] > -1 && [dbget top.terms. -e] != ""} {
     select_obj [dbget top.terms.]
-    set types [lsearch -not -all -inline $types "term"]
+    set types [lsearch -not -regexp -all -inline $types {^terms?$}]
   }
-  if {[lsearch -exact $types "rblkg"] > -1 && [dbget top.fplan.rblkgs. -e] != ""} {
+  if {[lsearch -regexp $types {^rblkgs?$}] > -1 && [dbget top.fplan.rblkgs. -e] != ""} {
     select_obj [dbget top.fplan.rblkgs.]
-    set types [lsearch -not -all -inline $types "rblkg"]
+    set types [lsearch -not -regexp -all -inline $types {^rblkgs?$}]
   }
-  if {[lsearch -exact $types "pblkg"] > -1 && [dbget top.fplan.pblkgs. -e] != ""} {
+  if {[lsearch -regexp $types {^pblkgs?$}] > -1 && [dbget top.fplan.pblkgs. -e] != ""} {
     select_obj [dbget top.fplan.pblkgs.]
-    set types [lsearch -not -all -inline $types "pblkg"]
+    set types [lsearch -not -regexp -all -inline $types {^pblkgs?$}]
   }
-  if {[lsearch -exact $types "endcap"] > -1 && [expr {[dbget top.insts.name */${endcapPrefix}* -e] != "" || [dbget top.insts.name ${endcapPrefix}* -e] != ""}]} {
+  if {[lsearch -regexp $types {^endcaps?$}] > -1 && [expr {[dbget top.insts.name */${endcapPrefix}* -e] != "" || [dbget top.insts.name ${endcapPrefix}* -e] != ""}]} {
     select_obj [dbget top.insts.name */${endcapPrefix}* -p]
     select_obj [dbget top.insts.name ${endcapPrefix}* -p]
-    set types [lsearch -not -all -inline $types "endcap"]
+    set types [lsearch -not -regexp -all -inline $types {^endcaps?$}]
   }
-  if {[lsearch -exact $types "welltap"] > -1 && [dbget top.insts.name ${welltapPrefix}* -e] != ""} {
+  if {[lsearch -regexp $types {^welltaps?$}] > -1 && [expr {[dbget top.insts.name */${welltapPrefix}* -e] != "" || [dbget top.insts.name ${welltapPrefix}* -e] != ""}]} {
+    select_obj [dbget top.insts.name */${welltapPrefix}* -p]
     select_obj [dbget top.insts.name ${welltapPrefix}* -p]
-    set types [lsearch -not -all -inline $types "welltap"]
+    set types [lsearch -not -regexp -all -inline $types {^welltaps?$}]
   }
   foreach type $types {
     if {[dbget top.insts.cell.subClass $type -e -u] != ""} {

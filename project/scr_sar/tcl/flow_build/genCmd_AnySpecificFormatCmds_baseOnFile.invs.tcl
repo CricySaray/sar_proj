@@ -31,11 +31,27 @@
 # 					  - Extra items in 'options' are ignored; too few cause an error
 # return    : outputfile
 #
-# examples  : 1) genCmd_AnySpecificFormatCmds_baseOnFile input_file blankLine {{3.5 3.5 3.5 3.5} {10 10 10 10}} "addHaloToBlock <value> <target>" output_file
-#             2) genCmd_AnySpecificFormatCmds_baseOnFile input_file blankLine {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20} "highlight -index <value> <target>" output_file
+# examples  : 1) genCmd_AnySpecificFormatCmds_baseOnFile -input_file "input" -groupMethod blankLine -options {{3.5 3.5 3.5 3.5} {10 10 10 10}} -format  "addHaloToBlock <value> <target>" -output_file output_file
+#             2) genCmd_AnySpecificFormatCmds_baseOnFile -input_file "input" -groupMethod blankLine -options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20} -format "highlight -index <value> <target>" -output_file output
 # ref       : link url
 # --------------------------
-proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine"} {options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}} {format "highlight -index <value> <target>"} {output_file ""} {regex ""} {debug 0}} {
+proc genCmd_AnySpecificFormatCmds_baseOnFile {} {
+  set input_file 
+  set groupMethod "blankLine"
+  set options {33 34 35 36 37 38 46 47 3 7 8 9 10 15 17 18 20}
+  set format "highlight -index <value> <target>"
+  set cmdPrefixSegments ""
+  set cmdSuffixSegments ""
+  set ifAddOriginContentAsComment 1
+  set output_file ""
+  set regex ""
+  set debug 0
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+
   # NOTICE: $options: these numbers are index of highlight
   # Internal procedure for debug messages
   proc debug_msg {msg debug_flag} {
@@ -44,9 +60,18 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
     }
   }
 
+  # Validate input file exists and is readable
+  if {![file exists $input_file]} {
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Input file '$input_file' does not exist"
+  }
+  if {![file readable $input_file]} {
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Input file '$input_file' is not readable"
+  }
+  debug_msg "Successfully validated input file: $input_file" $debug
+
   # Validate group method is valid
   if {$groupMethod ni {blankLine firstColumn}} {
-    error "Invalid group method: '$groupMethod'. Must be 'blankLine' or 'firstColumn'"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Invalid group method: '$groupMethod'. Must be 'blankLine' or 'firstColumn'"
   }
   debug_msg "Using grouping method: $groupMethod" $debug
 
@@ -55,15 +80,6 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
     set regex {^\s*$} ;# Default: match empty lines (including whitespace-only lines)
     debug_msg "No regex provided for blankLine grouping, using default: '$regex'" $debug
   }
-
-  # Validate input file exists and is readable
-  if {![file exists $input_file]} {
-    error "Input file '$input_file' does not exist"
-  }
-  if {![file readable $input_file]} {
-    error "Input file '$input_file' is not readable"
-  }
-  debug_msg "Successfully validated input file: $input_file" $debug
 
   # Handle output file naming with proper path handling
   if {$output_file eq ""} {
@@ -76,30 +92,30 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
     set output_dir [file dirname $output_file]
     if {$output_dir ne "."} {
       if {![file exists $output_dir]} {
-        error "Output directory '$output_dir' does not exist"
+        error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Output directory '$output_dir' does not exist"
       }
       if {![file isdirectory $output_dir]} {
-        error "'$output_dir' is not a valid directory"
+        error "proc genCmd_AnySpecificFormatCmds_baseOnFile: '$output_dir' is not a valid directory"
       }
     }
     if {[file exists $output_file] && ![file writable $output_file]} {
-      error "Output file '$output_file' is not writable"
+      error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Output file '$output_file' is not writable"
     }
     debug_msg "Successfully validated output file: $output_file" $debug
   }
 
   # Validate format string contains required placeholders
   if {[string first "<value>" $format] == -1} {
-    error "Format string must contain '<value>' placeholder"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Format string must contain '<value>' placeholder"
   }
   if {[string first "<target>" $format] == -1} {
-    error "Format string must contain '<target>' placeholder"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Format string must contain '<target>' placeholder"
   }
   debug_msg "Format string validated: '$format'" $debug
 
   # Validate options is a proper list
   if {![llength $options] eq [llength $options]} {
-    error "Options parameter must be a valid list"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Options parameter must be a valid list"
   }
   debug_msg "Options list validated. Contains [llength $options] elements" $debug
 
@@ -108,7 +124,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
   set line_count 0
 
   if {[catch {open $input_file r} in_channel]} {
-    error "Failed to open input file '$input_file': $in_channel"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Failed to open input file '$input_file': $in_channel"
   }
 
   if {$groupMethod eq "firstColumn"} {
@@ -136,7 +152,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
       set column_count [llength $columns]
       if {$column_count != 2} {
         close $in_channel
-        error "firstColumn grouping: Line $line_count has $column_count columns (requires exactly 2)"
+        error "proc genCmd_AnySpecificFormatCmds_baseOnFile: firstColumn grouping: Line $line_count has $column_count columns (requires exactly 2)"
       }
       
       set group_id [lindex $columns 0]
@@ -198,7 +214,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
       set column_count [llength $columns]
       if {$column_count != 1} {
         close $in_channel
-        error "blankLine grouping: Line $line_count has $column_count columns (requires exactly 1)"
+        error "proc genCmd_AnySpecificFormatCmds_baseOnFile: blankLine grouping: Line $line_count has $column_count columns (requires exactly 1)"
       }
       
       # Add line to current group
@@ -220,7 +236,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
   }
   
   if {[catch {close $in_channel} close_err]} {
-    error "Error closing input file: $close_err"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Error closing input file: $close_err"
   }
   
   set group_count [llength $groups]
@@ -229,7 +245,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
   # Validate option count is sufficient
   set option_count [llength $options]
   if {$option_count < $group_count} {
-    error "Insufficient options: $option_count options provided for $group_count groups (needs at least $group_count)"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Insufficient options: $option_count options provided for $group_count groups (needs at least $group_count)"
   }
   set used_options [lrange $options 0 [expr {$group_count - 1}]]
   debug_msg "Using first $group_count options: [join $used_options ", "]" $debug
@@ -245,12 +261,12 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
   
   # Second pass: process file and generate output
   if {[catch {open $output_file w} out_channel]} {
-    error "Failed to open output file '$output_file' for writing: $out_channel"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Failed to open output file '$output_file' for writing: $out_channel"
   }
   
   if {[catch {open $input_file r} in_channel]} {
     close $out_channel
-    error "Failed to reopen input file '$input_file': $in_channel"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Failed to reopen input file '$input_file': $in_channel"
   }
   
   set line_count 0
@@ -265,6 +281,9 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
     debug_msg "Initialized blankLine processing with $total_groups groups" $debug
   }
   
+  if {$cmdPrefixSegments != ""} {
+    puts $out_channel $cmdPrefixSegments 
+  }
   while {[gets $in_channel line] != -1} {
     incr line_count
     debug_msg "Processing line $line_count for output" $debug
@@ -326,7 +345,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
     if {![dict exists $group_option_map $group_id]} {
       close $in_channel
       close $out_channel
-      error "Internal error: Group '$group_id' not found in mapping (line $line_count)"
+      error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Internal error: Group '$group_id' not found in mapping (line $line_count)"
     }
     set option_value [dict get $group_option_map $group_id]
     
@@ -335,16 +354,19 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
     debug_msg "Line $line_count transformed: '$line' -> '$new_line'" $debug
     
     # Write transformed line
+    if {$ifAddOriginContentAsComment} {puts $out_channel "##(origin content) $line"}
     puts $out_channel $new_line
     incr processed_lines
   }
-  
+  if {$cmdSuffixSegments != ""} {
+    puts $out_channel $cmdSuffixSegments 
+  }
   # Clean up file handles
   if {[catch {close $in_channel} in_close_err]} {
-    error "Error closing input file: $in_close_err"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Error closing input file: $in_close_err"
   }
   if {[catch {close $out_channel} out_close_err]} {
-    error "Error closing output file: $out_close_err"
+    error "proc genCmd_AnySpecificFormatCmds_baseOnFile: Error closing output file: $out_close_err"
   }
   
   debug_msg "Processing complete. Statistics: Total=$line_count, Processed=$processed_lines, Skipped=$skipped_lines" $debug
@@ -352,3 +374,17 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {input_file {groupMethod "blankLine
   return "Processing completed successfully. Output saved to: $output_file"
 }
 
+define_proc_arguments genCmd_AnySpecificFormatCmds_baseOnFile \
+  -info "gen cmd for any specific format cmds based on file"\
+  -define_args {
+    {-input_file "specify the type of eco" AString string optional}
+    {-groupMethod "specify the method of grouping" oneOfString one_of_string {optional value_type {values {blankLine firstColumn}}}}
+    {-options "specify inst to eco when type is add/delete" AString string optional}
+    {-format "specify the distance of movement of inst when type is 'move'" AString string optional}
+    {-cmdPrefixSegments "specify the prefix segments of cmd" AString string optional}
+    {-cmdSuffixSegments "specify the suffix segments of cmd" AString string optional}
+    {-ifAddOriginContentAsComment "if add origin content as comment in output file" "" boolean optional}
+    {-output_file "specify the output file name " AString string optional}
+    {-regexp "specify the regexp expression for delimiter" AString string optional}
+    {-debug "debug mode" "" boolean optional}
+  }

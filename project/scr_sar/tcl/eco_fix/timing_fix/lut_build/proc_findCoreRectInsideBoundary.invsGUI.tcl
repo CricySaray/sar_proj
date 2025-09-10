@@ -37,3 +37,19 @@ proc findCoreRectsInsideBoundary {rectsOfAllBoundaryCell} {
     return $rectsDigOutInnerMemoryRects
   }
 }
+proc findCoreRectsInsideBoundary_withBoundaryArea {rectsOfAllBoundaryCell} {
+  if {![every x $rectsOfAllBoundaryCell { every y $x { string is double $y } }]} {
+    error "proc findCoreRectsInsideBoundary: check your input: rectsOfAllBoundaryCell($rectsOfAllBoundaryCell) is invalid!!!"
+  } else {
+    set rectExp "{[join $rectsOfAllBoundaryCell "} OR {"]}"
+    set mergedRects [dbShape -output hrect {*}$rectExp]
+    set biggestRect [dbShape -output hrect $mergedRects NOHOLES]
+    set rectsRemoveOutermostRectWithSomeHoles [dbShape -output hrect $biggestRect ANDNOT $mergedRects]
+    set rectsRemoveBoundaryRectsWithOutHoles [dbShape -output hrect $rectsRemoveOutermostRectWithSomeHoles NOHOLES]
+    set memoryRectsInsideRemoveOutermostRectWithOutHoles [dbShape -output hrect $mergedRects INSIDE $rectsRemoveBoundaryRectsWithOutHoles]
+    set allMemoryRectInsideCoreRectWithOutBoundaryRects [dbShape -output hrect $memoryRectsInsideRemoveOutermostRectWithOutHoles NOHOLES]
+    set rectsDigOutInnerMemoryRects [dbShape -output hrect $rectsRemoveBoundaryRectsWithOutHoles ANDNOT $allMemoryRectInsideCoreRectWithOutBoundaryRects]
+    set rectsDigOutInnerMemoryRects_addBoundaryRects [dbShape -output hrect $rectsDigOutInnerMemoryRects OR $mergedRects]
+    return $rectsDigOutInnerMemoryRects_addBoundaryRects
+  }
+}

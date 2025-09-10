@@ -39,6 +39,7 @@ proc genCmd_createPowerDomain {{coreRect {}} {pd_names_boxList_minGaps {}} {last
     }
     #lappend cmdsList "# for last power domain: $lastPowerDomainName"
     #lappend cmdsList "setObjFPlanBoxList Group $lastPowerDomainName \{$lastPdRect\}"
+    #lappend cmdsList "modifyPowerDomainAttr $lastPowerDomainName -minGaps \{5.04 5.04 5.6 5.6\}"
     lappend cmdsList "deleteRow -all"
     lappend cmdsList "initCoreRow"
     return $cmdsList

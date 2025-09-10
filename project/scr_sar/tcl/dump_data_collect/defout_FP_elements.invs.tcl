@@ -17,7 +17,7 @@ proc defout_FP_elements {args} {
   set testOrRun         "test"
   set path              "./"
   set suffix            ""
-  set types             {pd term rblkg pblkg endcap welltap block pad padSpacer cornerBottomRight}
+  set types             {pd physicalPin term rblkg pblkg endcap welltap   block pad padSpacer cornerBottomRight}
   set netNamesList      {DVSS DVDD_ONO DVDD_AON}
   set objectTypeForNets {Wire Via} ; # Wire|Via
   set endcapPrefix      "ENDCAP"
@@ -35,6 +35,10 @@ proc defout_FP_elements {args} {
         editSelect -net $tempnet -object_type $objectTypeForNets
       }
     }
+  }
+  if {[lsearch -regexp $types {^physical[pP]ins?$}] > -1} {
+    editSelect -physical_pin_only
+    set types [lsearch -not -regexp -all -inline $types {^physical[pP]ins?$}] 
   }
   if {[lsearch -regexp $types {^pds?|power[dD]omains?$}] > -1} {
     select_obj [dbget top.pds.] 

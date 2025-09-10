@@ -17,8 +17,13 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
     error "Invalid return mode: $returnMode. Must be either 'movements' or 'coordinates'"
   }
 
-  # Parse specification regions
+  # Parse specification regions and calculate combined bounding box
   set specRegionList [list]
+  set combinedRx [expr {1e20}]
+  set combinedRy [expr {1e20}]
+  set combinedRx1 [expr {-1e20}]
+  set combinedRy1 [expr {-1e20}]
+  
   foreach region $specRegions {
     if {[llength $region] != 4} {
       error "Invalid region format: $region, expected {x y x1 y1}"
@@ -32,7 +37,19 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
       error "Invalid region coordinates, x must be less than x1 and y must be less than y1: $region"
     }
     lappend specRegionList [list $x $y $x1 $y1]
+    
+    # Update combined bounding box
+    set combinedRx [expr {min($combinedRx, $x)}]
+    set combinedRy [expr {min($combinedRy, $y)}]
+    set combinedRx1 [expr {max($combinedRx1, $x1)}]
+    set combinedRy1 [expr {max($combinedRy1, $y1)}]
   }
+  
+  # Calculate region divisions for keeping relative positions
+  set regionWidth [expr {$combinedRx1 - $combinedRx}]
+  set regionHeight [expr {$combinedRy1 - $combinedRy}]
+  set thirdWidth [expr {$regionWidth / 3.0}]
+  set thirdHeight [expr {$regionHeight / 3.0}]
 
   # Collect all rectangle information
   set rectInfo [dict create]
@@ -80,6 +97,22 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
     set centerX [expr {($x + $x1) / 2.0}]
     set centerY [expr {($y + $y1) / 2.0}]
 
+    # Determine general area within combined region to prevent large movements
+    set generalAreaX "middle"
+    if {$centerX < $combinedRx + $thirdWidth} {
+      set generalAreaX "left"
+    } elseif {$centerX > $combinedRx1 - $thirdWidth} {
+      set generalAreaX "right"
+    }
+    
+    set generalAreaY "middle"
+    if {$centerY < $combinedRy + $thirdHeight} {
+      set generalAreaY "bottom"
+    } elseif {$centerY > $combinedRy1 - $thirdHeight} {
+      set generalAreaY "top"
+    }
+    set generalArea [list $generalAreaX $generalAreaY]
+
     # Check if completely outside all specification regions
     set fullyOutside 1
     foreach specRegion $specRegionList {
@@ -94,7 +127,7 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
       error "Rectangle $memName is completely outside all specification regions"
     }
 
-    # Save rectangle information including original position
+    # Save rectangle information including original position and general area
     dict set rectInfo $memName [dict create \
       originalRect $memRect \
       originalX $x \
@@ -107,12 +140,13 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
       height [expr {$y1 - $y}] \
       centerX $centerX \
       centerY $centerY \
+      generalArea $generalArea \
       orient $memOrient \
       refDir $refDir \
     ]
 
     if {$debug} {
-      puts "Rectangle $memName info: region=$memRect, orientation=$memOrient, refDir=$refDir, center=($centerX, $centerY)"
+      puts "Rectangle $memName info: region=$memRect, general area=[lindex $generalArea 0],[lindex $generalArea 1], refDir=$refDir"
     }
   }
 
@@ -226,50 +260,238 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
     set width [dict get $info width]
     set height [dict get $info height]
     set refDir [dict get $info refDir]
+    set generalArea [dict get $info generalArea]
+    lassign $generalArea areaX areaY
 
     if {$debug} {
-      puts "Processing rectangle $memName with reference direction: $refDir"
+      puts "Processing rectangle $memName (general area: $areaX,$areaY) with reference direction: $refDir"
     }
 
     # Calculate initial position within specification regions
     set newX $x
     set newY $y
 
-    # Check if on region boundary, move to inner boundary if needed
+    # Keep within general area to prevent large movements
+    set minAreaX $combinedRx
+    set maxAreaX $combinedRx1
+    set minAreaY $combinedRy
+    set maxAreaY $combinedRy1
+    
+    # Apply area constraints based on general area classification
+    if {$areaX eq "left"} {
+      set maxAreaX [expr {$combinedRx + $thirdWidth + $width}]
+    } elseif {$areaX eq "right"} {
+      set minAreaX [expr {$combinedRx1 - $thirdWidth - $width}]
+    }
+    
+    if {$areaY eq "bottom"} {
+      set maxAreaY [expr {$combinedRy + $thirdHeight + $height}]
+    } elseif {$areaY eq "top"} {
+      set minAreaY [expr {$combinedRy1 - $thirdHeight - $height}]
+    }
+
+    # Check if on region boundary, move to inner boundary if needed but stay in general area
     foreach specRegion $specRegionList {
       lassign $specRegion rx ry rx1 ry1
       
-      # Left boundary check
+      # Left boundary check with area constraint
       if {$newX < $rx} {
         set newX $rx
-        if {$debug} {
-          puts "Rectangle $memName moved to left boundary: $newX"
-        }
       }
-      # Right boundary check
+      if {$newX < $minAreaX} {
+        set newX $minAreaX
+      }
+      
+      # Right boundary check with area constraint
       if {$newX + $width > $rx1} {
         set newX [expr {$rx1 - $width}]
-        if {$debug} {
-          puts "Rectangle $memName moved to right boundary: $newX"
-        }
       }
-      # Bottom boundary check
+      if {$newX + $width > $maxAreaX} {
+        set newX [expr {$maxAreaX - $width}]
+      }
+      
+      # Bottom boundary check with area constraint
       if {$newY < $ry} {
         set newY $ry
-        if {$debug} {
-          puts "Rectangle $memName moved to bottom boundary: $newY"
-        }
       }
-      # Top boundary check
+      if {$newY < $minAreaY} {
+        set newY $minAreaY
+      }
+      
+      # Top boundary check with area constraint
       if {$newY + $height > $ry1} {
         set newY [expr {$ry1 - $height}]
-        if {$debug} {
-          puts "Rectangle $memName moved to top boundary: $newY"
+      }
+      if {$newY + $height > $maxAreaY} {
+        set newY [expr {$maxAreaY - $height}]
+      }
+    }
+
+    # Adjust position based on already placed rectangles to prevent overlaps
+    set overlapFound 1
+    set iteration 0
+    set maxIterations 20  ;# Prevent infinite loops
+    while {$overlapFound && $iteration < $maxIterations} {
+      set overlapFound 0
+      set iteration [expr {$iteration + 1}]
+      
+      foreach placedMem [dict keys $placedRects] {
+        set placedInfo [dict get $placedRects $placedMem]
+        set placedX [dict get $placedInfo x]
+        set placedY [dict get $placedInfo y]
+        set placedWidth [dict get $placedInfo width]
+        set placedHeight [dict get $placedInfo height]
+        set placedRefDir [dict get $placedInfo refDir]
+
+        # Check for overlap
+        set overlap [expr {
+          $newX < $placedX + $placedWidth &&
+          $newX + $width > $placedX &&
+          $newY < $placedY + $placedHeight &&
+          $newY + $height > $placedY
+        }]
+
+        if {$overlap} {
+          set overlapFound 1
+          if {$debug} {
+            puts "Overlap detected between $memName and $placedMem, adjusting position..."
+          }
+
+          # Get relative position
+          set pos [dict get $relativePositions $memName $placedMem]
+
+          # Adjust based on relative position to resolve overlap
+          switch $pos {
+            "left" {
+              # Move left to resolve overlap
+              set requiredX [expr {$placedX - $width - $minSpacing}]
+              if {$requiredX >= $minAreaX && $requiredX < $newX} {
+                set newX $requiredX
+              } else {
+                # If can't move left enough, try moving up/down
+                set verticalSpace [expr {max($placedY - ($newY + $height), ($newY - ($placedY + $placedHeight)))}]
+                if {$verticalSpace < $minSpacing} {
+                  set needed [expr {$minSpacing - $verticalSpace}]
+                  if {$newY + $height + $needed + $placedHeight <= $maxAreaY} {
+                    set newY [expr {$newY + $needed}]
+                  } elseif {$newY - $needed >= $minAreaY} {
+                    set newY [expr {$newY - $needed}]
+                  } else {
+                    error "Cannot resolve overlap between $memName and $placedMem without moving outside general area"
+                  }
+                }
+              }
+            }
+            "right" {
+              # Move right to resolve overlap
+              set requiredX [expr {$placedX + $placedWidth + $minSpacing}]
+              if {$requiredX + $width <= $maxAreaX && $requiredX > $newX} {
+                set newX $requiredX
+              } else {
+                # If can't move right enough, try moving up/down
+                set verticalSpace [expr {max($placedY - ($newY + $height), ($newY - ($placedY + $placedHeight)))}]
+                if {$verticalSpace < $minSpacing} {
+                  set needed [expr {$minSpacing - $verticalSpace}]
+                  if {$newY + $height + $needed + $placedHeight <= $maxAreaY} {
+                    set newY [expr {$newY + $needed}]
+                  } elseif {$newY - $needed >= $minAreaY} {
+                    set newY [expr {$newY - $needed}]
+                  } else {
+                    error "Cannot resolve overlap between $memName and $placedMem without moving outside general area"
+                  }
+                }
+              }
+            }
+            "above" {
+              # Move up to resolve overlap
+              set requiredY [expr {$placedY + $placedHeight + $minSpacing}]
+              if {$requiredY + $height <= $maxAreaY && $requiredY > $newY} {
+                set newY $requiredY
+              } else {
+                # If can't move up enough, try moving left/right
+                set horizontalSpace [expr {max($placedX - ($newX + $width), ($newX - ($placedX + $placedWidth)))}]
+                if {$horizontalSpace < $minSpacing} {
+                  set needed [expr {$minSpacing - $horizontalSpace}]
+                  if {$newX + $width + $needed + $placedWidth <= $maxAreaX} {
+                    set newX [expr {$newX + $needed}]
+                  } elseif {$newX - $needed >= $minAreaX} {
+                    set newX [expr {$newX - $needed}]
+                  } else {
+                    error "Cannot resolve overlap between $memName and $placedMem without moving outside general area"
+                  }
+                }
+              }
+            }
+            "below" {
+              # Move down to resolve overlap
+              set requiredY [expr {$placedY - $height - $minSpacing}]
+              if {$requiredY >= $minAreaY && $requiredY < $newY} {
+                set newY $requiredY
+              } else {
+                # If can't move down enough, try moving left/right
+                set horizontalSpace [expr {max($placedX - ($newX + $width), ($newX - ($placedX + $placedWidth)))}]
+                if {$horizontalSpace < $minSpacing} {
+                  set needed [expr {$minSpacing - $horizontalSpace}]
+                  if {$newX + $width + $needed + $placedWidth <= $maxAreaX} {
+                    set newX [expr {$newX + $needed}]
+                  } elseif {$newX - $needed >= $minAreaX} {
+                    set newX [expr {$newX - $needed}]
+                  } else {
+                    error "Cannot resolve overlap between $memName and $placedMem without moving outside general area"
+                  }
+                }
+              }
+            }
+            "overlap" {
+              # Complete overlap, try to move in the direction with most space
+              set spaceRight [expr {$maxAreaX - ($newX + $width)}]
+              set spaceLeft [expr {$newX - $minAreaX}]
+              set spaceUp [expr {$maxAreaY - ($newY + $height)}]
+              set spaceDown [expr {$newY - $minAreaY}]
+              
+              set maxSpace [max($spaceRight, $spaceLeft, $spaceUp, $spaceDown)]
+              
+              if {$maxSpace < $minSpacing} {
+                error "Cannot resolve overlap between $memName and $placedMem - insufficient space in general area"
+              }
+              
+              if {$maxSpace == $spaceRight} {
+                set newX [expr {$newX + $minSpacing}]
+              } elseif {$maxSpace == $spaceLeft} {
+                set newX [expr {$newX - $minSpacing}]
+              } elseif {$maxSpace == $spaceUp} {
+                set newY [expr {$newY + $minSpacing}]
+              } else {
+                set newY [expr {$newY - $minSpacing}]
+              }
+            }
+          }
+
+          # After adjustment, check if still in general area
+          if {$newX < $minAreaX || $newX + $width > $maxAreaX ||
+              $newY < $minAreaY || $newY + $height > $maxAreaY} {
+            error "Adjusting $memName to avoid overlap would move it outside general area"
+          }
+
+          # Check reference direction alignment after overlap resolution
+          if {($pos eq "left" || $pos eq "right") && $refDir eq $placedRefDir} {
+            if {$refDir eq "top"} {
+              # Align bottom edges
+              set newY [expr {$placedY + $placedHeight - $height}]
+            } elseif {$refDir eq "bottom"} {
+              # Align top edges
+              set newY $placedY
+            }
+          }
         }
       }
     }
 
-    # Adjust position based on already placed rectangles
+    if {$iteration >= $maxIterations && $overlapFound} {
+      error "Failed to resolve overlaps for $memName after $maxIterations iterations"
+    }
+
+    # Check reference direction edge distances
     foreach placedMem [dict keys $placedRects] {
       set placedInfo [dict get $placedRects $placedMem]
       set placedX [dict get $placedInfo x]
@@ -278,126 +500,45 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
       set placedHeight [dict get $placedInfo height]
       set placedRefDir [dict get $placedInfo refDir]
 
-      # Get relative position
-      set pos [dict get $relativePositions $memName $placedMem]
-
-      # Adjust based on relative position
-      switch $pos {
-        "left" {
-          # Current rectangle is to the left of placed rectangle
-          set minX [expr {$placedX - $width - $minSpacing}]
-          if {$newX > $minX} {
-            set newX $minX
-            if {$debug} {
-              puts "Rectangle $memName adjusted to left of $placedMem, new X: $newX"
-            }
-          }
-
-          # Check if opposite edges of reference directions need alignment
-          if {$refDir eq "top" && $placedRefDir eq "top"} {
-            # Both use top as reference, align bottom edges
-            set newY [expr {$placedY + $placedHeight - $height}]
-            if {$debug} {
-              puts "Rectangle $memName aligned with $placedMem's bottom edge, new Y: $newY"
-            }
-          } elseif {$refDir eq "bottom" && $placedRefDir eq "bottom"} {
-            # Both use bottom as reference, align top edges
-            set newY $placedY
-            if {$debug} {
-              puts "Rectangle $memName aligned with $placedMem's top edge, new Y: $newY"
-            }
-          } elseif {$refDir ne $placedRefDir} {
-            puts "Warning: Reference directions of $memName and $placedMem do not match, manual adjustment may be needed"
-          }
-        }
-        "right" {
-          # Current rectangle is to the right of placed rectangle
-          set minX [expr {$placedX + $placedWidth + $minSpacing}]
-          if {$newX < $minX} {
-            set newX $minX
-            if {$debug} {
-              puts "Rectangle $memName adjusted to right of $placedMem, new X: $newX"
-            }
-          }
-
-          # Check if opposite edges of reference directions need alignment
-          if {$refDir eq "top" && $placedRefDir eq "top"} {
-            # Both use top as reference, align bottom edges
-            set newY [expr {$placedY + $placedHeight - $height}]
-            if {$debug} {
-              puts "Rectangle $memName aligned with $placedMem's bottom edge, new Y: $newY"
-            }
-          } elseif {$refDir eq "bottom" && $placedRefDir eq "bottom"} {
-            # Both use bottom as reference, align top edges
-            set newY $placedY
-            if {$debug} {
-              puts "Rectangle $memName aligned with $placedMem's top edge, new Y: $newY"
-            }
-          } elseif {$refDir ne $placedRefDir} {
-            puts "Warning: Reference directions of $memName and $placedMem do not match, manual adjustment may be needed"
-          }
-        }
-        "above" {
-          # Current rectangle is above placed rectangle
-          set minY [expr {$placedY + $placedHeight + $minSpacing}]
-          if {$newY < $minY} {
-            set newY $minY
-            if {$debug} {
-              puts "Rectangle $memName adjusted above $placedMem, new Y: $newY"
-            }
-          }
-        }
-        "below" {
-          # Current rectangle is below placed rectangle
-          set minY [expr {$placedY - $height - $minSpacing}]
-          if {$newY > $minY} {
-            set newY $minY
-            if {$debug} {
-              puts "Rectangle $memName adjusted below $placedMem, new Y: $newY"
-            }
-          }
-        }
-      }
-
-      # Check minimum distance for reference direction edges
-      set refDist 0
+      # Calculate reference direction edge positions
       switch $refDir {
         "top" {
-          set refY1 [expr {$newY + $height}]
+          set refY [expr {$newY + $height}]
         }
         "bottom" {
-          set refY1 $newY
+          set refY $newY
         }
         "left" {
-          set refX1 $newX
+          set refX $newX
         }
         "right" {
-          set refX1 [expr {$newX + $width}]
+          set refX [expr {$newX + $width}]
         }
       }
 
       switch $placedRefDir {
         "top" {
-          set placedRefY1 [expr {$placedY + $placedHeight}]
+          set placedRefY [expr {$placedY + $placedHeight}]
         }
         "bottom" {
-          set placedRefY1 $placedY
+          set placedRefY $placedY
         }
         "left" {
-          set placedRefX1 $placedX
+          set placedRefX $placedX
         }
         "right" {
-          set placedRefX1 [expr {$placedX + $placedWidth}]
+          set placedRefX [expr {$placedX + $placedWidth}]
         }
       }
 
       # Calculate distance between reference direction edges
+      set refDist 0
       if {($refDir eq "left" || $refDir eq "right") && 
           ($placedRefDir eq "left" || $placedRefDir eq "right")} {
-        set refDist [expr {abs($refX1 - $placedRefX1)}]
+        set refDist [expr {abs($refX - $placedRefX)}]
       } elseif {($refDir eq "top" || $refDir eq "bottom") && 
                 ($placedRefDir eq "top" || $placedRefDir eq "bottom")} {
-        set refDist [expr {abs($refY1 - $placedRefY1)}]
+        set refDist [expr {abs($refY - $placedRefY)}]
       }
 
       # Check if reference edge distance is greater than minimum spacing
@@ -406,7 +547,7 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
       }
     }
 
-    # Save placed rectangle information including original position for movement calculation
+    # Save placed rectangle information
     dict set placedRects $memName [dict create \
       originalX $originalX \
       originalY $originalY \
@@ -419,7 +560,7 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
     ]
 
     if {$debug} {
-      puts "Rectangle $memName placed at: ([list $newX $newY [expr {$newX + $width}] [expr {$newY + $height}]])"
+      puts "Rectangle $memName placed at: ([list $newX $newY [expr {$newX + $width}] [expr {$newY + $height}]]), moved [expr {abs($newX - $originalX)}] in X, [expr {abs($newY - $originalY)}] in Y"
     }
   }
 
@@ -435,7 +576,6 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
     }
   } else {
     # Return mode 2: movement directions and distances
-    # Using 'up' and 'down' for vertical movements, 'left' and 'right' for horizontal
     foreach memName $rectNames {
       set info [dict get $placedRects $memName]
       set originalX [dict get $info originalX]
@@ -443,9 +583,9 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
       set newX [dict get $info x]
       set newY [dict get $info y]
       
-      # Calculate X movement (left/right remain unchanged)
+      # Calculate X movement
       set xDiff [expr {$newX - $originalX}]
-      if {abs($xDiff) > 1e-6} {  # Consider as movement if difference is significant
+      if {abs($xDiff) > 1e-6} {
         if {$xDiff > 0} {
           lappend result [list $memName "right" $xDiff]
         } else {
@@ -453,9 +593,9 @@ proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coo
         }
       }
       
-      # Calculate Y movement (using up/down instead of top/bottom)
+      # Calculate Y movement
       set yDiff [expr {$newY - $originalY}]
-      if {abs($yDiff) > 1e-6} {  # Consider as movement if difference is significant
+      if {abs($yDiff) > 1e-6} {
         if {$yDiff > 0} {
           lappend result [list $memName "up" $yDiff]
         } else {

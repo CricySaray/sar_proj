@@ -2,81 +2,160 @@
 
 # ----------------------
 source ~/project/scr_sar/tcl/misc/gui_actions/to_eco_command_from_selected_obj_in_gui.invs.tcl
-alias te "to_eco_command_from_selected_obj_in_gui"
-alias li "dbget head.libCells.name"
-alias df "deleteFiller -perfix "
 
-alias pgopen "verifyConnectivity -type special -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
-alias ssopen "verifyConnectivity -type regular -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
-alias pc "setLayerPreference pinObj -isVisible 0"
-alias po "setLayerPreference pinObj -isVisible 1"
+if {[is_common_ui_mode]} {
+  alias te "to_eco_command_from_selected_obj_in_gui"
+  alias li "get_db head.libCells.name"
+  alias df "delete_filler -perfix "
 
-alias rd "restoreDesign"
-alias sd "saveDesign -tcon -verilog -def"
-alias sdt "saveDesign -tcon -verilog -def -addTiming"
-alias snot "restoreDesign -noTiming"
-#only check the short between signal and PG. between PG and PG
-alias pgshort "verify_PG_short -no_routing_blkg -no_cell_blkg"
-#only check the short between signal and signal
-alias ssshort "verify_drc -check_short_only -exclude_pg_net"
-#check signal and pg open
-alias spgopen "verifyConnectivity -noFill -noSoftPGConnect -noWeakConnect -noAntenna -noUnConnPin -noUnroutedNet"
-alias setprefer "setPreference CmdLogMode 1"
-#get the path of this innovus log
-alias vlog "viewLog"
+  alias pgopen "check_connectivity -type special -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
+  alias ssopen "verifyConnectivity -type regular -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
+  alias pc "set_layer_preference pinObj -is_visible 0"
+  alias po "set_layer_preference pinObj -is_visible 1"
 
-alias len "llength"
-alias gs "dbget selected.name"
-alias gb "dbget selected.box"
-alias glog "getLogFileName -fullPath"
-alias gcmd "getCmdLogFileName"
-alias si "selectInst"
-alias sic "selectInstByCellName"
-#alias rp "refinePlace"
-#alias er "ecoRoute"
-alias cp "checkPlace"
-alias gp "get_property"
-alias rd "redirect"
-alias m "man"
-alias seteco "setEcoMode -batchMode true -honorDontTouch false -honorDontUse false -updateTiming false -honorFixedStatus false -LEQCheck false -refinePlace false"
-alias setecoreset "setEcoMode -reset"
-alias eda "ecoDeleteRepeater"
-alias ear "ecoAddRepeater"
-alias ecc "ecoChangeCell"
-alias dpb "deletePlaceBlockage"
-alias rg "report_globals"
-alias gcpu "getMultiCpuUsage"
-alias scpu "setMultiCpuUsage -localCpu"
-alias rt "report_timing"
-alias f "fit"
-alias w "win"
-alias woff "win off"
-#alias sh "select_highlighted"
-alias sp "selectPin"
-alias sn "selectNet"
-alias hl "highlight"
-alias dhl "dehighlight"
-alias dhls "dehighlight -select"
-alias zs "zoomSelected"
-alias ds "deselectAll"
-alias so "select_obj"
-proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
-alias dg "dbget"
-alias s "source"
-alias sa "source /home/pd_sar/.invs_alias.tcl"
-alias g "gvim"
-alias c "cd"
+  alias rd "read_db"
+  alias sd "saveDesign -verilog -def"
+  alias sdt "write_db  -verilog -def -add_ignored_timing"
+  alias snot "read_db -no_timing"
+  #only check the short between signal and PG. between PG and PG
+  alias pgshort "verify_PG_short -no_routing_blkg -no_cell_blkg"
+  #only check the short between signal and signal
+  alias ssshort "verify_drc -check_short_only -exclude_pg_net"
+  #check signal and pg open
+  alias spgopen "verifyConnectivity -noFill -noSoftPGConnect -noWeakConnect -noAntenna -noUnConnPin -noUnroutedNet"
+  alias setprefer "setPreference CmdLogMode 1"
+  #get the path of this innovus log
+  alias vlog "viewLog"
+
+  alias len "llength"
+  alias gs "dbget selected.name"
+  alias gb "dbget selected.box"
+  alias glog "getLogFileName -fullPath"
+  alias gcmd "getCmdLogFileName"
+  alias si "selectInst"
+  alias sic "selectInstByCellName"
+  #alias rp "refinePlace"
+  #alias er "ecoRoute"
+  alias cp "checkPlace"
+  alias gp "get_property"
+  alias rd "redirect"
+  alias m "man"
+  alias seteco "setEcoMode -batchMode true -honorDontTouch false -honorDontUse false -updateTiming false -honorFixedStatus false -LEQCheck false -refinePlace false"
+  alias setecoreset "setEcoMode -reset"
+  alias eda "ecoDeleteRepeater"
+  alias ear "ecoAddRepeater"
+  alias ecc "ecoChangeCell"
+  alias dpb "deletePlaceBlockage"
+  alias rg "report_globals"
+  alias gcpu "getMultiCpuUsage"
+  alias scpu "setMultiCpuUsage -localCpu"
+  alias rt "report_timing"
+  alias f "fit"
+  alias w "gui_show"
+  alias woff "gui_hide"
+  #alias sh "select_highlighted"
+  alias sp "select_pin"
+  alias sn "selectNet"
+  alias hl "highlight"
+  alias dhl "dehighlight"
+  alias dhls "dehighlight -select"
+  alias zs "gui_zoom -selected"
+  alias ds "deselect_obj -all"
+  alias so "select_obj"
+  proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
+  alias dg "get_db"
+  alias s "source"
+  alias sa "source /home/pd_sar/.invs_alias.tcl"
+  alias g "gvim"
+  alias c "cd"
+
+} else {
+  alias te "to_eco_command_from_selected_obj_in_gui"
+  alias li "dbget head.libCells.name"
+  alias df "deleteFiller -perfix "
+
+  alias pgopen "verifyConnectivity -type special -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
+  alias ssopen "verifyConnectivity -type regular -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
+  alias pc "setLayerPreference pinObj -isVisible 0"
+  alias po "setLayerPreference pinObj -isVisible 1"
+
+  alias rd "restoreDesign"
+  alias sd "saveDesign -tcon -verilog -def"
+  alias sdt "saveDesign -tcon -verilog -def -addTiming"
+  alias snot "restoreDesign -noTiming"
+  #only check the short between signal and PG. between PG and PG
+  alias pgshort "verify_PG_short -no_routing_blkg -no_cell_blkg"
+  #only check the short between signal and signal
+  alias ssshort "verify_drc -check_short_only -exclude_pg_net"
+  #check signal and pg open
+  alias spgopen "verifyConnectivity -noFill -noSoftPGConnect -noWeakConnect -noAntenna -noUnConnPin -noUnroutedNet"
+  alias setprefer "setPreference CmdLogMode 1"
+  #get the path of this innovus log
+  alias vlog "viewLog"
+
+  alias len "llength"
+  alias gs "dbget selected.name"
+  alias gb "dbget selected.box"
+  alias glog "getLogFileName -fullPath"
+  alias gcmd "getCmdLogFileName"
+  alias si "selectInst"
+  alias sic "selectInstByCellName"
+  #alias rp "refinePlace"
+  #alias er "ecoRoute"
+  alias cp "checkPlace"
+  alias gp "get_property"
+  alias rd "redirect"
+  alias m "man"
+  alias seteco "setEcoMode -batchMode true -honorDontTouch false -honorDontUse false -updateTiming false -honorFixedStatus false -LEQCheck false -refinePlace false"
+  alias setecoreset "setEcoMode -reset"
+  alias eda "ecoDeleteRepeater"
+  alias ear "ecoAddRepeater"
+  alias ecc "ecoChangeCell"
+  alias dpb "deletePlaceBlockage"
+  alias rg "report_globals"
+  alias gcpu "getMultiCpuUsage"
+  alias scpu "setMultiCpuUsage -localCpu"
+  alias rt "report_timing"
+  alias f "fit"
+  alias w "win"
+  alias woff "win off"
+  #alias sh "select_highlighted"
+  alias sp "selectPin"
+  alias sn "selectNet"
+  alias hl "highlight"
+  alias dhl "dehighlight"
+  alias dhls "dehighlight -select"
+  alias zs "zoomSelected"
+  alias ds "deselectAll"
+  alias so "select_obj"
+  proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
+  alias dg "dbget"
+  alias s "source"
+  alias sa "source /home/pd_sar/.invs_alias.tcl"
+  alias g "gvim"
+  alias c "cd"
+}
 
 # --------------------------
 # default config for invs gui
 # --------------------------
-setLayerPreference node_blockage -isVisible 0
-setLayerPreference node_power -isVisible 0
-setLayerPreference node_layer -isVisible 0
-setLayerPreference M0 -isVisible 0
-setLayerPreference VIA0 -isVisible 0
+if {[is_common_ui_mode]} {
+  set_layer_preference node_blockage -is_visible 0
+  set_layer_preference node_power -is_visible 0
+  set_layer_preference node_layer -is_visible 0
+  set_layer_preference M0 -is_visible 0
+  set_layer_preference VIA0 -is_visible 0
 
-setDbGetMode -displayFormat table
+} else {
+  setLayerPreference node_blockage -isVisible 0
+  setLayerPreference node_power -isVisible 0
+  setLayerPreference node_layer -isVisible 0
+  setLayerPreference M0 -isVisible 0
+  setLayerPreference VIA0 -isVisible 0
+
+  setDbGetMode -displayFormat table
+
+}
 
 # --------------------------
 # internal variables of invs  

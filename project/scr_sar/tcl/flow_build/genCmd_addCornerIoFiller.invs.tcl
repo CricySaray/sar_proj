@@ -11,8 +11,8 @@
 # --------------------------
 proc genCmd_addCornerIoFiller {args} {
   set ioFillerCellName "PCORNER_33_33_NT_DR"
-  set insertPointList  {}
-  set dieRects         [dbget top.fplan.box]
+  set insertPointList  {} ; # {{x y} {x y} ...}
+  set dieRects         [dbget top.fplan.box] ; # {{x y x1 y1} ...}
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

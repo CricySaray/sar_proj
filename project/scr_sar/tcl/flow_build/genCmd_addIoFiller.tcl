@@ -51,7 +51,7 @@ proc genCmd_addIoFiller {args} {
 define_proc_arguments genCmd_addIoFiller \
   -info "gen cmd for addIoFiller"\
   -define_args {
-    {-IoFillerCellOrder "specify the io Filler type, arranging them sequentially from wider fillers to narrower ones" AList lsit optional}
+    {-IoFillerCellOrder "specify the io Filler type, arranging them sequentially from wider fillers to narrower ones" AList list optional}
     {-sides "specify the side for inserting io filler" oneOfString one_of_string {optional {values {all left right top bottom}}}}
     {-fillerTypeCanForceInsert "specify the io filler type that can insert forcely" AList list optional}
   }

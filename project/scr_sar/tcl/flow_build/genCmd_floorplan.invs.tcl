@@ -213,7 +213,7 @@ proc createRectangle {args} {
   # ============================================================================
   set coreTotalArea 0.0
   foreach className $coreInstsCellsubClass {
-    set instNames [dbget [dbget top.insts.cell.subClass $className -p2].name]
+    set instNames [dbget [dbget top.insts.cell.subClass $className -p2].name -e]
     if {![llength $instNames]} {
       puts "WARNING: No instances found for class '$className'"
       continue

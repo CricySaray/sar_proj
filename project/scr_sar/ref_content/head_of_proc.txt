@@ -3,7 +3,7 @@
 # author    : sar song
 # date      : DATE
 # label     : 
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|misc_proc)
 #   perl -> (format_sub)
 # descrip   : what?
 # return    : 
@@ -29,6 +29,7 @@
 #                     operations like storage, mapping, and basic manipulation.
 #   -> db_proc    : some action proc about database process
 #   -> flow_proc  : Functions specifically designed for building flow processes.
+#   -> report_proc : gen report file of information
 #   -> misc_proc  : some other uses of procs
 # perl sub:
 #   -> format_sub : processes data and outputs it in specific formats

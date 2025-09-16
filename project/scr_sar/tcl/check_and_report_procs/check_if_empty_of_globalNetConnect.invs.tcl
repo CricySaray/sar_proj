@@ -9,9 +9,58 @@
 # return    : output file
 # ref       : link url
 # --------------------------
-proc check_if_empty_of_globalNetConnect {} {
-  if {0} {
-   
+source ../packages/table_format_with_title.package.tcl; # table_format_with_title
+source ../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
+proc check_if_empty_of_globalNetConnect {args} {
+  set insts_toCheck        {}
+  set outputfilename       "checkGNC.rpt"
+  set ignorePin_signalOrPg {PO RTO SNS Y}
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+  if {[llength $insts_toCheck] && [any x $insts_toCheck { expr {[dbget top.insts.name $x -e] == ""} }]} {
+    error "proc check_if_empty_of_globalNetConnect: check your input: insts_toCheck($insts_toCheck) has inst that not found!!!"
+  } elseif {[llength $insts_toCheck]} {
+    set inst_signal_pg_emptyList [list ]
+    foreach inst [lsort -unique $insts_toCheck] {
+      set inst_ptr [dbget top.insts.name $inst -p]
+      set signalPins_ofInst [dbget $inst_ptr.instTerms. -e]
+      set temp_signalPin_empty [list]
+      if {$signalPins_ofInst != ""} {
+        foreach temp_signalpin $signalPins_ofInst {
+          set signal_net [dbget $temp_signalpin.net.name -e]
+          if {$signal_net == ""} {
+            lappend temp_signalPin_empty [lindex [split [dbget $temp_signalpin.name] "/"] end]
+          } 
+        }
+      }
+      set pgPins_ofInst [dbget $inst_ptr.pgInstTerms. -e]
+      set temp_pgPins_empty [list] 
+      if {$pgPins_ofInst != ""} {
+        foreach temp_pgpin $pgPins_ofInst {
+          set pg_net [dbget $temp_pgpin.net.name -e]
+          if {$pg_net == ""} {
+            lappend temp_pgPins_empty [dbget $temp_pgpin.name] 
+          } 
+        }
+      }
+      foreach x $ignorePin_signalOrPg {
+        set temp_signalPin_empty [lsearch -not -exact -all -inline $temp_signalPin_empty $x]
+        set temp_pgPins_empty [lsearch -not -exact -all -inline $temp_pgPins_empty $x]
+      }
+      if {[llength $temp_signalPin_empty] || [llength $temp_pgPins_empty]} {
+        if {![llength $temp_signalPin_empty]} { set temp_signalPin_empty "/" }
+        if {![llength $temp_pgPins_empty]} { set temp_pgPins_empty "/" }
+        lappend inst_signal_pg_emptyList [list $inst $temp_signalPin_empty $temp_pgPins_empty]
+      }
+    }
+    set inst_signal_pg_emptyList [linsert $inst_signal_pg_emptyList 0 [list instname signalPin pgPin]]
+    set tabled_content [table_format_with_title $inst_signal_pg_emptyList 0 "Specified insts globalNetConnect checking result"]
+    set fi [open $outputfilename w]
+    pw $fi $tabled_content
+    close $fi
   } else {
     set all_cellSubClass [dbget top.insts.cell.subClass -u -e]
     if {$all_cellSubClass == ""} {
@@ -96,3 +145,11 @@ puts $all_cellSubClass
     }
   }
 }
+
+define_proc_arguments check_if_empty_of_globalNetConnect \
+  -info "check if the globalNetConnect(GNC) of every inst is empty, you can specify insts or check all inst of invs db."\
+  -define_args {
+    {-insts_toCheck "specify insts that need to check GNC" AList list optional}
+    {-outputfilename "specify file name to output" AString string require}
+    {-ignorePin_signalOrPg "specify the pins list to ignore, which is not check" AList list optional}
+  }

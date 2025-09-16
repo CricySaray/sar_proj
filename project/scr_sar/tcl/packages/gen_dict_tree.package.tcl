@@ -14,7 +14,7 @@
 #   var_name  - Name of the dictionary variable to process (will be root node name)
 #   debug     - Debug mode (0 = off, 1 = on), default is 0
 # Returns:    - List where each element is a line of the tree structure
-proc get_dict_tree {var_name {debug 0}} {
+proc gen_dict_tree {var_name {debug 0}} {
   # Access variable from caller's scope using upvar 1
   if {[catch {upvar 1 $var_name dict_data} err]} {
     error "Error: Failed to access variable '$var_name' from caller scope: $err"
@@ -65,7 +65,7 @@ proc get_dict_tree {var_name {debug 0}} {
     }
     
     # Call helper to process children and accumulate results
-    set node_results [_get_dict_node $node $value "" $is_last $debug]
+    set node_results [_gen_dict_node $node $value "" $is_last $debug]
     lappend result {*}$node_results
   }
   
@@ -84,7 +84,7 @@ proc get_dict_tree {var_name {debug 0}} {
 #   is_last      - Whether this is the last child of its parent
 #   debug        - Debug mode flag
 # Returns:       - List of lines for this node and its children
-proc _get_dict_node {current_key current_value prefix is_last debug} {
+proc _gen_dict_node {current_key current_value prefix is_last debug} {
   set lines [list]
   
   # Determine connector based on whether this is the last child
@@ -126,15 +126,15 @@ proc _get_dict_node {current_key current_value prefix is_last debug} {
     set child_value [dict get $current_value $child_key]
     set child_is_last [expr {$i == $total_children - 1}]
     
-    set child_lines [_get_dict_node $child_key $child_value $child_prefix $child_is_last $debug]
+    set child_lines [_gen_dict_node $child_key $child_value $child_prefix $child_is_last $debug]
     lappend lines {*}$child_lines
   }
   
   return $lines
 }
 
-
-if {0} {
+# TEST
+if {1} {
   # Complex test case for print_dict_tree procedure
   proc complex_test_case {} {
     # Create a deeply nested dictionary with various edge cases
@@ -248,7 +248,7 @@ if {0} {
     
     # Test in normal mode
     puts "=== Normal Mode Output ==="
-    set result [get_dict_tree software_project]
+    set result [gen_dict_tree software_project]
     puts [join $result \n]
     # Test in debug mode with more details
     #puts "\n\n=== Debug Mode Output ==="

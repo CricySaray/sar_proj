@@ -421,7 +421,7 @@ proc _get_dict_node {current_key current_value prefix is_last value_rules debug 
   
   # Process child nodes with possible simplification
   set processed_children [_process_nodes_with_simplification \
-    $current_value $child_keys $child_prefix $value_rules $debug $show_values $next_depth $max_depth $simpleDisplayMode $threshold]
+    $current_value $child_keys $child_prefix $value_rules $debug $show_values $next_depth $max_depth $simpleDisplayMode $threshold $threeFlagsForBuildTree]
   lappend lines {*}$processed_children
   
   return $lines

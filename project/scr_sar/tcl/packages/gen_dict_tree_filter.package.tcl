@@ -142,15 +142,6 @@ proc gen_dict_tree {args} {
   
   return $result
 }
-  set var_name          ""
-  set value_rules       {}
-  set show_values       1
-  set max_depth         0
-  set simpleDisplayMode 0
-  set threshold         5
-  set filter            {}
-  set greedy            0
-  set debug             0
 define_proc_arguments gen_dict_tree \
   -info "gen dict tree with filter function"\
   -define_args {

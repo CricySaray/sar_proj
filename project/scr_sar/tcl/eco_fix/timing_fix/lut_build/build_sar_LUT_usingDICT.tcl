@@ -188,10 +188,10 @@ proc build_sar_LUT_usingDICT {args} {
       # songNOTE: NOTICE: you can't judge if have error using catch cmd monitoring cmd 'regexp'. cuz regexp will not prompt error when it is not match successfully!!!
       if {!$ifInNoCare} { catch {unset wholname} ; catch {unset capacity} ; catch {unset vt} ; set ifErr [catch {regexp $celltypeMatchExp $temptypename wholname capacity vt} errInfo] }
       if {$ifInNoCare || ![info exists wholname]} {
-        set tempcapacity "NaN" 
-        set tempvttype "NaN"
-        set tempvtList "NaN"
-        set tempcapacityList "NaN"
+        set tempcapacity "NA" 
+        set tempvttype "NA"
+        set tempvtList "NA"
+        set tempcapacityList "NA"
         if {![info exists wholname]} {lappend cantMatchList [list $temptypename $tempclass]}
       } else {
         lassign [get_driveCapacity_of_celltype_returnCapacityAndVTtype $temptypename $celltypeMatchExp] tempcapacity_raw tempvttype_raw

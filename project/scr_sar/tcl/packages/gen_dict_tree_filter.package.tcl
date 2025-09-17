@@ -39,6 +39,7 @@ proc gen_dict_tree {args} {
     set $var $opt($arg)
   }
 
+  set flags_vbar_branch_end [list "" "" ""]
   # Validate parameters
   _validate_parameters $value_rules $debug $show_values $max_depth $simpleDisplayMode $threshold $filter $greedy
   

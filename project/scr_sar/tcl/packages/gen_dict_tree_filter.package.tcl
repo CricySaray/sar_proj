@@ -265,6 +265,7 @@ proc _filter_by_value {dict_data patterns debug} {
 
 # Helper procedure to process nodes with possible simplification
 proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules debug show_values current_depth max_depth simpleDisplayMode threshold threeFlagsForBuildTree} {
+  lassign $threeFlagsForBuildTree vbar branch treeEnd
   set lines [list]
   set total_nodes [llength $nodes]
   
@@ -302,9 +303,9 @@ proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules de
         
         # Add ellipsis for middle nodes
         set ellipsis_prefix $prefix
-        set ellipsis_line "${ellipsis_prefix}│   ..."
+        set ellipsis_line "${ellipsis_prefix}${vbar}   ..."
         lappend lines $ellipsis_line
-        set count_line "${ellipsis_prefix}│   (omitted [expr {$group_size - 2}] similar entries)"
+        set count_line "${ellipsis_prefix}${vbar}   (omitted [expr {$group_size - 2}] similar entries)"
         lappend lines $count_line
         
         # Process last node

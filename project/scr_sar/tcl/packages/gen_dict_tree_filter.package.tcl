@@ -39,7 +39,7 @@ proc gen_dict_tree {args} {
     set $var $opt($arg)
   }
 
-  set flags_vbar_branch_end [list "" "" ""]
+  set flags_vbar_branch_treeEnd [list "│" "├── " "└── "]
   # Validate parameters
   _validate_parameters $value_rules $debug $show_values $max_depth $simpleDisplayMode $threshold $filter $greedy
   
@@ -134,7 +134,7 @@ proc gen_dict_tree {args} {
   
   # Process top-level nodes with possible simplification
   set processed_nodes [_process_nodes_with_simplification \
-    $filtered_data $top_nodes "" $value_rules $debug $show_values 1 $max_depth $simpleDisplayMode $threshold]
+    $filtered_data $top_nodes "" $value_rules $debug $show_values 1 $max_depth $simpleDisplayMode $threshold $flags_vbar_branch_treeEnd]
   lappend result {*}$processed_nodes
   
   if {$debug} {
@@ -264,7 +264,7 @@ proc _filter_by_value {dict_data patterns debug} {
 }
 
 # Helper procedure to process nodes with possible simplification
-proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules debug show_values current_depth max_depth simpleDisplayMode threshold} {
+proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules debug show_values current_depth max_depth simpleDisplayMode threshold threeFlagsForBuildTree} {
   set lines [list]
   set total_nodes [llength $nodes]
   
@@ -281,7 +281,7 @@ proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules de
         foreach node $group_nodes {
           set value [dict get $parent_dict $node]
           set is_last [expr {$node eq [lindex $nodes end]}]
-          set node_results [_get_dict_node $node $value $prefix $is_last $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold]
+          set node_results [_get_dict_node $node $value $prefix $is_last $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold $threeFlagsForBuildTree]
           lappend lines {*}$node_results
         }
       } else {
@@ -297,7 +297,7 @@ proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules de
         # Process first node
         set first_value [dict get $parent_dict $first_node]
         set is_last_first [expr {0}]
-        set first_results [_get_dict_node $first_node $first_value $prefix $is_last_first $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold]
+        set first_results [_get_dict_node $first_node $first_value $prefix $is_last_first $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold $threeFlagsForBuildTree]
         lappend lines {*}$first_results
         
         # Add ellipsis for middle nodes
@@ -310,7 +310,7 @@ proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules de
         # Process last node
         set last_value [dict get $parent_dict $last_node]
         set is_last_last [expr {$last_node eq [lindex $nodes end]}]
-        set last_results [_get_dict_node $last_node $last_value $prefix $is_last_last $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold]
+        set last_results [_get_dict_node $last_node $last_value $prefix $is_last_last $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold $threeFlagsForBuildTree]
         lappend lines {*}$last_results
       }
     }
@@ -325,7 +325,7 @@ proc _process_nodes_with_simplification {parent_dict nodes prefix value_rules de
         puts "Debug: Processing key '$node' (is_last=$is_last, level=$current_depth)"
       }
       
-      set node_results [_get_dict_node $node $value $prefix $is_last $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold]
+      set node_results [_get_dict_node $node $value $prefix $is_last $value_rules $debug $show_values $current_depth $max_depth $simpleDisplayMode $threshold $threeFlagsForBuildTree]
       lappend lines {*}$node_results
     }
   }
@@ -367,11 +367,12 @@ proc _group_nodes_by_structure {parent_dict nodes value_rules debug current_dept
 }
 
 # Recursive helper procedure to build tree nodes list
-proc _get_dict_node {current_key current_value prefix is_last value_rules debug show_values current_depth max_depth simpleDisplayMode threshold} {
+proc _get_dict_node {current_key current_value prefix is_last value_rules debug show_values current_depth max_depth simpleDisplayMode threshold threeFlagsForBuildTree} {
+  lassign $threeFlagsForBuildTree vbar branch treeEnd
   set lines [list]
   
   # Determine connector based on whether this is the last child
-  set connector [expr {$is_last ? "└── " : "├── "}]
+  set connector [expr {$is_last ? $treeEnd : $branch}]
   
   # Check if current value is a valid value based on rules, or a dictionary
   set is_valid_value [_is_valid_value $current_value $value_rules $debug]
@@ -412,7 +413,7 @@ proc _get_dict_node {current_key current_value prefix is_last value_rules debug 
   }
   
   # Calculate prefix for child nodes
-  set child_prefix [expr {$is_last ? "${prefix}    " : "${prefix}│   "}]
+  set child_prefix [expr {$is_last ? "${prefix}    " : "${prefix}${vbar}   "}]
   set next_depth [expr {$current_depth + 1}]
   
   # Get and sort child keys

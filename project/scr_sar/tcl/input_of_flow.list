@@ -6,9 +6,13 @@ PR:
     gdsOutMap
     qrcTechFile (TSMC: in dir voltage_storm)
   from_syn_files:
+    func_netlist
     func_sdc
+    upf
     func_dont_touch_list
   from_dft_files:
+    dft_netlist
     scan_sdc
-    func_dont_touch_list
-
+    upf(with dft setting)
+    scan_dont_touch_list
+    scandef

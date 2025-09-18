@@ -8,12 +8,34 @@
 # return    : string of floorplan cmd
 # ref       : link url
 # --------------------------
-source ../packages/adjust_rectangle.package.tcl; # adjust_rectangle
+source ../packages/adjust_rectangle.rect_off.package.tcl; # adjust_rectangle
 source ../packages/adjust_to_multiple_of_num.package.tcl; # adjust_to_multiple_of_num
-proc genCmd_floorplan {{memAndIPsubClass block} {IOinstSubClassName padAreaIO} {coreAreaSiteName "sc9mc_cln40lp"} {coreDensity 0.55} {coreAspectRatio 1} {specifyWidthOrHeight {die height 2285.54}} {adjustPolicy "roundUp"} {adjustForDieOfMultiple 1.00}} {
-  set allIPmemInst [dbget [dbget -regexp top.insts.cell.subClass $memAndIPsubClass -p2].name]
-  set padHeight [lindex {*}[dbget [dbget top.insts.cell.subClass $IOinstSubClassName -p].size -u] 1]
-  set coreToDieDistance [expr $padHeight + 27]
+proc genCmd_floorplan {args} {
+  set memAndIPsubClass       block ; # can be empty string, like ""
+  set IOinstSubClassName     padAreaIO ; # can be empty string, like ""
+  set coreToIoDistance       2 ; # can not be multiple of site width or height ; order from inside to outer: coreArea -> coreToIoDistance -> IO height
+  set coreAreaSiteName       "sc9mc_cln40lp"
+  set coreDensity            0.6
+  set coreAspectRatio        1.39
+  set specifyWidthOrHeight   {} ; # for example: {die height 2285.54}
+  set adjustPolicy           "roundUp"
+  set adjustForDieOfMultiple 0.001
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+  if {$memAndIPsubClass == "" || [dbget top.insts.cell.subClass $memAndIPsubClass -e] == ""} {
+    set allIPmemInst ""
+  } else {
+    set allIPmemInst [dbget [dbget -regexp top.insts.cell.subClass $memAndIPsubClass -p2].name ]
+  }
+  if {$IOinstSubClassName == "" || [dbget top.insts.cell.subClass $IOinstSubClassName -e] == ""} {
+    set padHeight 0
+  } else {
+    set padHeight [lindex {*}[dbget [dbget top.insts.cell.subClass $IOinstSubClassName -p].size -u] 1]
+  }
+  set coreToDieDistance [expr $padHeight + $coreToIoDistance]
   set siteHW {*}[dbget [dbget head.sites.name $coreAreaSiteName -p].size]
   set rectangleInfo [createRectangle -instsSpecialSuchAsIPAndMem $allIPmemInst -coreWHMultipliers $siteHW -coreToDieDistance $coreToDieDistance -coreInstsCellsubClass {core} -coreDensity $coreDensity -coreAspectRatio $coreAspectRatio -fixedDim $specifyWidthOrHeight -adjustPolicy $adjustPolicy]
   lassign $rectangleInfo dieAreaLeftBottomPointAndRightTopPoint coreAreaLeftBottomPointAndRightTopPoint finalCoreToDie
@@ -25,6 +47,19 @@ proc genCmd_floorplan {{memAndIPsubClass block} {IOinstSubClassName padAreaIO} {
   set floorplan_cmd "floorplan -noSnapToGrid -flip f -b \{$floorplan_b\}"
   return $floorplan_cmd
 }
+define_proc_arguments genCmd_floorplan \
+  -info "gen cmd for floorplan"\
+  -define_args {
+    {-memAndIPsubClass "specify the subClass of mem or IP, default: block , can be empty" AList list optional}
+    {-IOinstSubClassName "specify the subClass of IO pad, can be empty" AList list optional}
+    {-coreToIoDistance "specify the distance from core to IO" AFloat float optional}
+    {-coreAreaSiteName "specify the core site name" AString string optional}
+    {-coreDensity "specify the density of core, which is removed from mem and IP area, that is calculated density by pure std cells" AFloat float optional}
+    {-coreAspectRatio "specify the aspect ratio of core area, ratio = width / height" AFloat float optional}
+    {-specifyWidthOrHeight "specify the die|core width|height value, format:{die|core width|height value}" AList list optional}
+    {-adjustPolicy "specify the adjustment policy" OneOfString one_of_string {optional value_type {values {roundUp roundDown}}}}
+    {-adjustForDieOfMultiple "specify the number to multiple after calculating die width and height, you can rearrange the die width and height multiple number" AFloat float optional}
+  }
 
 #!/bin/tclsh
 # --------------------------
@@ -55,8 +90,12 @@ proc genCmd_floorplan {{memAndIPsubClass block} {IOinstSubClassName padAreaIO} {
 proc createRectangle {args} {
   set instsSpecialSuchAsIPAndMem {inst1 inst2 inst3 ...}
   set coreWHMultipliers          {*}[dbget [dbget head.sites.name sc9mc_cln40lp -p].size]
-  set coreToDieDistance          [expr {[lindex {*}[dbget [dbget top.insts.cell.subClass padAreaIO -p].size -u] 1] + 27}]
-    # this num:27 is distance from edge of core to edge of IO area
+  if {[dbget top.insts.cell.subClass padAreaIO -e] == ""} {
+    set coreToDieDistance          [expr {0 + 27}]
+  } else {
+    set coreToDieDistance          [expr {[lindex {*}[dbget [dbget top.insts.cell.subClass padAreaIO -p].size -u] 1] + 27}]
+      # this num:27 is distance from edge of core to edge of IO area
+  }
   set coreInstsCellsubClass      {core}
   set coreDensity                0.55
   set coreAspectRatio            1
@@ -75,9 +114,6 @@ proc createRectangle {args} {
   # Step 1: Error Defense - Validate All Parameters
   # ============================================================================
   # Validate instsSpecialSuchAsIPAndMem (list of normal insts or placeToDie sublists)
-  if {![llength $instsSpecialSuchAsIPAndMem]} {
-    error "proc createRectangle: ERROR: Parameter 'instsSpecialSuchAsIPAndMem' cannot be empty"
-  }
   foreach item $instsSpecialSuchAsIPAndMem {
     set itemLen [llength $item]
     if {$itemLen == 0} {
@@ -475,7 +511,7 @@ define_proc_arguments createRectangle \
     {-coreToDieDistance "1 or 4 positive numbers specifying distance from core to die (single value for all, or 4 values for top/bottom/left/right)  " AList list require}
     {-coreInstsCellsubClass "non-empty list of subclass names that core instances belong to  " AList list require}
     {-coreDensity "number between 0 and 1 specifying the density of the core area  " AFloat float require}
-    {-coreAspectRatio "positive number specifying the aspect ratio of core area (width/height)  " AInt int require}
+    {-coreAspectRatio "positive number specifying the aspect ratio of core area (width/height)  " AFloat float require}
     {-fixedDim "3-element list {die|core width|height value} to specify fixed dimension of outer (die) or inner (core) rectangle  " AList list optional}
     {-adjustPolicy "\"roundUp\" or \"roundDown\" (default \"roundUp\") specifying adjustment policy for fixed dimensions to fit multipliers" AString string optional}
     {-prioritizeAspectRatio "1=aspect ratio priority, 0=area priority when fixedDim is set" "" boolean optional}

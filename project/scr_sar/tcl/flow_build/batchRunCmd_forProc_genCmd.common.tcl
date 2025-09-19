@@ -11,7 +11,7 @@
 # return    : /
 # ref       : link url
 # --------------------------
-source ./proc_run_and_print_cmd.common.tcl; # pe
+source ./common/run_and_print_cmd.common.tcl; # pe
 proc batchRunCmd_forProc_genCmd {{cmds {}} {ifRun 1}} {
   if {![llength $cmds]} {
     error "proc batchRunCmd_forProc_genCmd: check your input: cmds($cmds) is empty!!!"

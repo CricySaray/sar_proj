@@ -36,7 +36,10 @@ proc genCmd_floorplan {args} {
     set padHeight [lindex {*}[dbget [dbget top.insts.cell.subClass $IOinstSubClassName -p].size -u] 1]
   }
   set coreToDieDistance [expr $padHeight + $coreToIoDistance]
-  set siteHW {*}[dbget [dbget head.sites.name $coreAreaSiteName -p].size]
+  set siteHW {*}[dbget [dbget head.sites.name $coreAreaSiteName -p].size -e]
+  if {$siteHW == ""} {
+    error "proc genCmd_floorplan: check your input: coreAreaSiteName($coreAreaSiteName) is not found!!!" 
+  }
   set rectangleInfo [createRectangle -instsSpecialSuchAsIPAndMem $allIPmemInst -coreWHMultipliers $siteHW -coreToDieDistance $coreToDieDistance -coreInstsCellsubClass {core} -coreDensity $coreDensity -coreAspectRatio $coreAspectRatio -fixedDim $specifyWidthOrHeight -adjustPolicy $adjustPolicy]
   lassign $rectangleInfo dieAreaLeftBottomPointAndRightTopPoint coreAreaLeftBottomPointAndRightTopPoint finalCoreToDie
   set die_box [lmap tempNum [join $dieAreaLeftBottomPointAndRightTopPoint] { adjust_to_multiple_of_num $tempNum $adjustForDieOfMultiple roundUp }]
@@ -446,14 +449,23 @@ proc createRectangle {args} {
         set innerW [expr {$scaleW * $multiWidth}]
       }
     }
+  } else {
+    set quotientInnerW [expr $innerW / $multiWidth]
+    set innerW [expr {ceil($quotientInnerW) * $multiWidth}]
+    set quotientInnerH [expr $innerH / $multiHeight]
+    set innerH [expr {ceil($quotientInnerH) * $multiHeight}]
+  }
+  # Recalculate outer dimensions after inner adjustment
+  set outerW [expr {$innerW + $finalLd + $finalRd}]
+  set outerH [expr {$innerH + $finalBd + $finalTd}]
 
-    # Recalculate outer dimensions after inner adjustment
-    set outerW [expr {$innerW + $finalLd + $finalRd}]
-    set outerH [expr {$innerH + $finalBd + $finalTd}]
-
-    if {$debug} {
+  if {$debug} {
+    if {[llength $fixedDim] == 3} {
       puts "DEBUG: Applied fixedDim {[join $fixedDim]} -> adjusted to $adjustedFixedVal"
       puts "DEBUG: Aspect ratio priority: $prioritizeAspectRatio"
+      puts "DEBUG: Final inner dimensions (multiplier-constrained) (w:$innerW h:$innerH)"
+      puts "DEBUG: Final outer dimensions (w:$outerW h:$outerH)"
+    } else {
       puts "DEBUG: Final inner dimensions (multiplier-constrained) (w:$innerW h:$innerH)"
       puts "DEBUG: Final outer dimensions (w:$outerW h:$outerH)"
     }

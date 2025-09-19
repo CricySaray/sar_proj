@@ -9,7 +9,7 @@ if {[is_common_ui_mode]} {
   alias df "delete_filler -perfix "
 
   alias pgopen "check_connectivity -type special -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
-  alias ssopen "verifyConnectivity -type regular -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
+  alias ssopen "check_connectivity -type regular -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
   alias pc "set_layer_preference pinObj -is_visible 0"
   alias po "set_layer_preference pinObj -is_visible 1"
 

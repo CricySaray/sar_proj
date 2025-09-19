@@ -16,3 +16,16 @@ PR:
     upf(with dft setting)
     scan_dont_touch_list
     scandef
+STARRC:
+  fixed_files:
+    nxtgrd files(cbest cworst rcbest rcworst typical)
+PV:
+  fixed_files:
+    rule files(DRC/ANT/LVS_ERC/DM[Metal and OD_PO]/WireBound)
+  from_invs_files:
+    ED TEXT file(vary from location of physical pin)
+PT:
+  fixed_files:
+    db files(converted from lib using LC shell)
+PA:
+  

@@ -3,8 +3,8 @@
 # author    : sar song
 # date      : DATE
 # label     : 
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|misc_proc)
-#   perl -> (format_sub)
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : what?
 # return    : 
 # ref       : link url
@@ -30,6 +30,9 @@
 #   -> db_proc    : some action proc about database process
 #   -> flow_proc  : Functions specifically designed for building flow processes.
 #   -> report_proc : gen report file of information
+#   -> cross_lang_proc : retrieves data from other languages (like Perl), converts it to Tcl-compatible types, and enables collaborative functionality by leveraging each language's strengths.
 #   -> misc_proc  : some other uses of procs
 # perl sub:
 #   -> format_sub : processes data and outputs it in specific formats
+#   -> getInfo_sub : A subroutine specifically used to obtain specific information or data
+#   -> perl_task  : A complete Perl script designed for a full functional operation, rather than merely defining subroutines.

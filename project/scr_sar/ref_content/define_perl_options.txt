@@ -1,0 +1,13 @@
+use Getopt::Long;  
+my $name;    
+my $age;     
+my $verbose; 
+my $file;    
+GetOptions(
+    'name=s'   => \$name,   
+    'age=i'    => \$age,    
+    'verbose'  => \$verbose,
+    'file=s'   => \$file,   
+) or die "check your input \n";
+die "缺少必填参数--name！\n" unless defined $name;
+die "缺少必填参数--age！\n" unless defined $age;

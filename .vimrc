@@ -82,6 +82,7 @@ cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev vv vs ~/.vimrc
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
 cabbrev dp r ~/project/scr_sar/ref_content/define_proc_arguments.txt
+cabbrev pdp r ~/project/scr_sar/ref_content/define_perl_options.txt
 " insert head of proc for tcl or perl, can change DATE to time now
 function! InsertProcessHead()
   " 读取文件的前9行到当前位置

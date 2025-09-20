@@ -16,12 +16,10 @@ proc check_if_filePathsExist_providedPathLists { fileList { debug 0 } } {
   set existsFiles [list]
   set notFound [list]
   set folderPaths [list]
-
   # 检查输入是否为有效的列表
   if { ![llength $fileList] } {
     error "Invalid input: expected a list of file paths"
   }
-
   # 遍历每个文件路径
   foreach filePath $fileList {
     # 确保路径是字符串类型
@@ -32,11 +30,9 @@ proc check_if_filePathsExist_providedPathLists { fileList { debug 0 } } {
       lappend notFound $filePath
       continue
     }
-
     if { $debug } {
       puts "Checking path: $filePath"
     }
-
     # 检查路径是否存在
     if { [file exists $filePath] } {
       # 检查是否为文件
@@ -61,7 +57,6 @@ proc check_if_filePathsExist_providedPathLists { fileList { debug 0 } } {
       }
     }
   }
-
   if {$debug} {
     # 打印总结信息
     puts "\nSummary:"
@@ -69,26 +64,22 @@ proc check_if_filePathsExist_providedPathLists { fileList { debug 0 } } {
     foreach f $existsFiles {
       puts "    - $f"
     }
-
     puts "\n  Existing folders (not counted as files): [llength $folderPaths]"
     foreach f $folderPaths {
       puts "    - $f"
     }
-
     puts "\n  Not found or invalid: [llength $notFound] (includes folders above)"
     foreach f $notFound {
       puts "    - $f"
     }
     puts ""
   }
-
   # 返回指定格式的嵌套列表
   return [list \
     [list exists $existsFiles] \
     [list notFound $notFound] \
   ]
 }
-
 if {0} {
   # 测试路径列表
   set testPaths {
@@ -97,12 +88,9 @@ if {0} {
     "/non/existent/path.txt"
     "/another/valid.doc"
   }
-
   # 调用过程（开启debug模式）
   set result [check_if_filePathsExist_providedPathLists $testPaths 0]
-
   # 查看返回结果
   puts "Returned result:"
   puts $result
-  
 }

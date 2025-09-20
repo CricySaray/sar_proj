@@ -16,3 +16,23 @@ PR:
     upf(with dft setting)
     scan_dont_touch_list
     scandef
+STARRC:
+  fixed_files:
+    TCAD_GRD_FILE: nxtgrd files(cbest cworst rcbest rcworst typical)
+    MAPPING_FILE: Specifies the file containing physical layer mapping information between the input database and the specified nxtgrd file.
+    GDS_LAYER_MAP_FILE: mapping between the GDSII layer number and layer name in the design database
+PV:
+  fixed_files:
+    rule files(DRC/ANT/LVS_ERC/DM[Metal and OD_PO]/WireBound)
+  from_invs_files:
+    ED TEXT file(vary from location of physical pin)
+PT:
+  fixed_files:
+    db files(converted from lib using LC shell)
+  from_syn_files:
+    func_sdc
+    scan_sdc
+    func_dont_touch_list
+    scan_dont_touch_list
+PA:
+  

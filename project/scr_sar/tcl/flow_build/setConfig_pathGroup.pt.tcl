@@ -6,9 +6,14 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
 #   perl -> (format_sub)
 # descrip   : run cmds of setting path groups for pt
+# NOTICE    : There are some differences in the syntax between the `define_proc_a*` and `value_*` commands in PT and invs:  
+#             - In invs, the corresponding commands are: `define_proc_arguments` and `value_type`.  
+#             - In PT, the corresponding commands are: `define_proc_attributes` and `value_help`.  
+#             Please note the distinction.  
 # return    : /
 # ref       : link url
 # --------------------------
+source ../packages/logic_AND_OR.package.tcl; # eo
 proc runCmd_pathGroupSetting_pt {args} {
   set memExp                    {x|X} ; # expression of memory
   set shortOrLongExpressionMode "short" ; # short|long
@@ -42,6 +47,7 @@ proc runCmd_pathGroupSetting_pt {args} {
     group_path -name [eo [expr {$sl == "short"}] i2r in2reg] -from $inPorts -to $allSeqs
     group_path -name [eo [expr {$sl == "short"}] r2o reg2out] -from $allSeqs -to $outPorts
     group_path -name [eo [expr {$sl == "short"}] i2o in2out] -from $inPorts -to $outPorts
+
     group_path -name [eo [expr {$sl == "short"}] r2r reg2reg] -from $allSeqs -to $allSeqs
     group_path -name [eo [expr {$sl == "short"}] r2g reg2gate] -from $regs -to $icgs
     if {$mems != ""} {
@@ -58,9 +64,9 @@ proc runCmd_pathGroupSetting_pt {args} {
   }
 }
 
-define_proc_arguments runCmd_pathGroupSetting_pt \
+define_proc_attributes runCmd_pathGroupSetting_pt \
   -info "run cmd of setting path group"\
   -define_args {
-    {-shortOrLongExpressionMode "specify the mode of short or long mode" oneOfString one_of_string {optional value_type {values {short long}}}}
+    {-shortOrLongExpressionMode "specify the mode of short or long mode" oneOfString one_of_string {optional value_help {values {short long}}}} 
     {-memExp "specify the expression of mem" AString string optional}
   }

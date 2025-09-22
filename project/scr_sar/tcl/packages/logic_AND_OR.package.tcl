@@ -85,7 +85,7 @@ proc ol {args} {
 	return 0  ;# 所有参数都不满足条件，返回假
 }
 
-proc re {args} {
+proc re {value args} {
 	# 支持多种调用方式：
 	# 1. re <value>         - 直接取反单个值
 	# 2. re -list <list>    - 对列表中每个元素取反
@@ -100,31 +100,27 @@ proc re {args} {
 		# 列表模式：对每个元素取反
 		return [lmap item $list {expr {![_to_boolean $item]}}]
 	} elseif {[info exist dict]} {
-		# 字典模式：对每个值取反
-		if {[llength $args] != 1} {
-			error "Dictionary mode requires exactly one dictionary argument"
-		}
 		set resultDict [dict create]
 		dict for {key value} [lindex $dict 0] {
 			dict set resultDict $key [expr {![_to_boolean $value]}]
 		}
 		return $resultDict
-	} else {
+	} elseif {[info exist single]} {
 		# 单值模式：直接取反
-		if {[llength $args] != 1} {
-			error "Single value mode requires exactly one argument"
-		}
-		return [expr {![_to_boolean [lindex $args 0]]}]
+		return [expr {![_to_boolean [lindex $single 0]]}]
 	}
 }
 # TODO(FIXED) : 这里设置了option，但是假如没有写option，直接写了值或者字符串，该如何解析？
-define_proc_arguments re \
-  -info ":re ?-list|-dict? value(s) - Logical negation of values"\
-  -define_args {
-	  {value "boolean value" "" boolean optional}
-    {-list "list mode" AList list optional}
-    {-dict "dict mode" ADict list optional}
-  }
+[if {[catch {is_common_ui_mode}]} { ; # In order to adapt to the different writing styles/expressions used in INVS and PT
+  set temp define_proc_attributes
+} else {
+  set temp define_proc_arguments
+}] re \
+    -info ":re ?-list|-dict? value(s) - Logical negation of values"\
+    -define_args {
+      {-list "list mode" AList list optional}
+      {-dict "dict mode" ADict list optional}
+    }
 
 # 内部辅助函数：将各种类型的值转换为布尔值
 proc _to_boolean {value} {

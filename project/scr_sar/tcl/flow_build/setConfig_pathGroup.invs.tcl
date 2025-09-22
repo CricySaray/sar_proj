@@ -6,6 +6,10 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
 #   perl -> (format_sub)
 # descrip   : run cmds of setting path group for invs
+# NOTICE    : There are some differences in the syntax between the `define_proc_a*` and `value_*` commands in PT and invs:  
+#             - In invs, the corresponding commands are: `define_proc_arguments` and `value_type`.  
+#             - In PT, the corresponding commands are: `define_proc_attributes` and `value_help`.  
+#             Please note the distinction.  
 # return    : /
 # ref       : link url
 # --------------------------
@@ -51,18 +55,19 @@ proc runCmd_pathGroupSetting_invs {args} {
     setPathGroupOptions [eo [expr {$sl == "short"}] i2o in2out] -effortLevel low
 
     group_path -name [eo [expr {$sl == "short"}] r2r reg2reg] -from $allSeqs -to $allSeqs
-    group_path -name [eo [expr {$sl == "short"}] r2g reg2gating] -from $regs -to $icgs
+    group_path -name [eo [expr {$sl == "short"}] r2g reg2gate] -from $regs -to $icgs
 
     setPathGroupOptions [eo [expr {$sl == "short"}] r2r reg2reg] -effortLevel high -targetslack 0.0
-    setPathGroupOptions [eo [expr {$sl == "short"}] r2g reg2gating] -effortLevel high -targetslack 0.0
+    setPathGroupOptions [eo [expr {$sl == "short"}] r2g reg2gate] -effortLevel high -targetslack 0.0
+
     if {$memes != ""} {
       group_path -name [eo [expr {$sl == "short"}] r2m reg2mem] -from $regs_and_icgs -to $memes
-      group_path -name [eo [expr {$sl == "short"}] m2g mem2gating] -from $memes -to $icgs
+      group_path -name [eo [expr {$sl == "short"}] m2g mem2gate] -from $memes -to $icgs
       group_path -name [eo [expr {$sl == "short"}] m2r mem2reg] -from $memes -to $regs
       group_path -name [eo [expr {$sl == "short"}] m2m mem2mem] -from $memes -to $memes
 
       setPathGroupOptions [eo [expr {$sl == "short"}] r2m reg2mem] -effortLevel high -targetslack 0.0
-      setPathGroupOptions [eo [expr {$sl == "short"}] m2g mem2gating] -effortLevel high -targetslack 0.0
+      setPathGroupOptions [eo [expr {$sl == "short"}] m2g mem2gate] -effortLevel high -targetslack 0.0
       setPathGroupOptions [eo [expr {$sl == "short"}] m2r mem2reg] -effortLevel high -targetslack 0.0
       setPathGroupOptions [eo [expr {$sl == "short"}] m2m mem2mem] -effortLevel high -targetslack 0.0
     }

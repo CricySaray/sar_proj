@@ -14,7 +14,19 @@
 source ../packages/find_connected_regions.package.tcl; # find_connected_regions
 source ../packages/find_narrow_channels.package.tcl; # find_narrow_channels
 source ../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary_withBoundaryArea
-proc genCmd_add_routeBlk_for_gap_betweenDifferentEndcapGroups {{narrowChannelWidthThreshold 10} {off -1} {prefixNameOfBoundaryInsts "ENDCAP"} {routeBlkPrefix "autoGen_sar"} {layer {1 2 3 4 5 6}} {cutLayerOrViaLayer {1 2 3 4 5}} {debug 0}} {
+proc genCmd_add_routeBlk_for_gap_betweenDifferentEndcapGroups {args} {
+  set narrowChannelWidthThreshold 10
+  set off                         -1
+  set prefixNameOfBoundaryInsts   "ENDCAP"
+  set routeBlkPrefix              "autoGen_sar"
+  set layers                       {1 2 3 4 5 6}
+  set cutLayerOrViaLayers          {1 2 3 4 5}
+  set debug                       0
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
   set boundaryInstsBox [concat [dbget [dbget top.insts.name ${prefixNameOfBoundaryInsts}* -p].box -e] [dbget [dbget top.insts.name */${prefixNameOfBoundaryInsts}* -p].box -e]]
   set coreInnerBoundaryWithBoundaryRects [findCoreRectsInsideBoundary_withBoundaryArea $boundaryInstsBox]
   set groupedForRects [lrange [find_connected_regions $coreInnerBoundaryWithBoundaryRects] 1 end]
@@ -24,7 +36,19 @@ proc genCmd_add_routeBlk_for_gap_betweenDifferentEndcapGroups {{narrowChannelWid
   set narrowChannelsList [find_narrow_channels $groupedForRects $narrowChannelWidthThreshold $off $debug]
   set cmdsList [list]
   foreach temp_channel $narrowChannelsList {
-    lappend cmdsList "createRouteBlk -name $routeBlkPrefix -box \{$temp_channel\} -layer \{$layer\} -cutLayer \{$cutLayerOrViaLayer\}"
+    lappend cmdsList "createRouteBlk -name $routeBlkPrefix -box \{$temp_channel\} -layer \{$layers\} -cutLayer \{$cutLayerOrViaLayers\}"
   }
   return $cmdsList
 }
+
+define_proc_arguments genCmd_add_routeBlk_for_gap_betweenDifferentEndcapGroups \
+  -info "gen cmd for adding routeBlk for gap between different endcap groups(normally different power domains)"\
+  -define_args {
+    {-narrowChannelWidthThreshold "Set the judgment threshold for whether a channel is narrow. Channels with a size less than or equal to this value are identified as narrow channels." AFloat float optional}
+    {-off "specify an offset for the obtained narrow channel (gap) size, where positive numbers indicate enlargement and negative numbers indicate reduction." AFloat float optional}
+    {-prefixNameOfBoundaryInsts "specify the prefix name of boundary insts to search, default: ENDCAP" AString string optional}
+    {-routeBlkPrefix "specify the prefix name of offed routeBlk that will add on gap" AString string optional}
+    {-layers "specify the layers that need block for routing" AList list optional}
+    {-cutLayerOrViaLayers "specify the cut layers (via layers) that need block for routing" AList list optional}
+    {-debug "debug mode" "" boolean optional}
+  }

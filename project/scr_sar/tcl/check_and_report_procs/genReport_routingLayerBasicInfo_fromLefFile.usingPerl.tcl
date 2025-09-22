@@ -5,8 +5,11 @@
 # label     : report_proc cross_lang_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : Process LEF files via Perl scripts to obtain the corresponding data, then convert it to data in Tcl's list format, and use procs in Tcl for data interaction with other procs.
-# return    : print
+# descrip   : Process LEF files via Perl scripts to obtain the corresponding data, then convert it to data in Tcl's list format, and use procs in Tcl for 
+#             data interaction with other procs.
+# usage     : Use a Perl script:../../perl/extractRoutingLayersAttributes_accordingToLefFile_convertToTclListOrPrintTable.pl to read the techlef file, then generate data 
+#             in a format suitable for Tcl lists. This proc will read and analyze the data for subsequent operations.
+# return    : two-dimensional list
 # ref       : link url
 # --------------------------
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title

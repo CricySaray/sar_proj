@@ -35,6 +35,12 @@ alias md='mkdir -p'
 alias tt='tree'
 alias s='source'
 alias v='vim'
+alias bv='vim -esnc' # vim on batch mode
+# usage of bv, for example:
+# > bv 'argdo g/test/d|update' -c 'q' an*
+# It can batch delete all lines containing the "test" character in files with the "an*" pattern. 
+# Then, use the `update` command to save the modified files, and finally exit the editor with a 
+# single `q` command. Note that the `q` command must be written separately in a `-c` option.
 alias vv='vim ~/.vimrc'
 alias sv='source ~/.vimrc'
 alias vb='vim ~/.bashrc'

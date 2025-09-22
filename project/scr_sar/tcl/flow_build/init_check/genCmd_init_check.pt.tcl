@@ -11,14 +11,20 @@
 # --------------------------
 source ../../packages/timer.tcl; # start_timer end_timer
 source ../common/convert_file_to_list.common.tcl; # convert_file_to_list
-proc genCmd_init_check {} {
-  set dbListFile ""
+proc genCmd_init_check {args} {
+  set dbListFile         ""
   set formatOfResultFile "<design>_<suffix>.rpt" ; # like: "initCheck_<design>_<suffix>.rpt"; optional <design>|<suffix>
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  set designName [get_object_name [get_design]]
+
+# check input correction
+
+
+# logic part
   start_timer
   
   set timeSpend [end_timer "string"]

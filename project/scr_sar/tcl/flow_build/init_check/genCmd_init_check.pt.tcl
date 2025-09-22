@@ -13,18 +13,21 @@ source ../../packages/timer.tcl; # start_timer end_timer
 source ../common/convert_file_to_list.common.tcl; # convert_file_to_list
 source ../../packages/every_any.package.tcl; # any
 proc genCmd_init_check {args} {
-  set netlistFile ""
-  set funcSdcFile ""
+  set netlistFile           ""
+  set funcSdcFile           ""
+  set uncertaintyFile       ""
   set dbListFile            ""
-  set formatExpOfResultFile "<design>_<suffix>.rpt" ; # like: "initCheck_<design>_<suffix>.rpt"; optional <design>|<suffix>
+  set formatExpOfResultFile "<design>_<scenario>_<body>_<suffix>.rpt" ; # like: "initCheck_<design>_<suffix>.rpt"; optional <design>|<suffix>
   set resultDir             "./"
+
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+
   set designName [get_object_name [get_design]]
-  set optionsOfFormatExp [list "<design>" "<suffix>"]
+  set optionsOfFormatExp [list "<design>" "<suffix>" "<scenario>" "<body>"]
 
   # check input correction
   if {![file isfile $dbListFile]} {

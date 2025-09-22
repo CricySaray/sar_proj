@@ -5,13 +5,13 @@
 # label     : flow_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
 #   perl -> (format_sub)
-# descrip   : run cmds of setting path group
+# descrip   : run cmds of setting path group for invs
 # return    : /
 # ref       : link url
 # --------------------------
 source ../packages/logic_AND_OR.package.tcl; # eo
-proc runCmd_pathGroupSetting {args} {
-  set memExp {x|X} ; # expression of memory
+proc runCmd_pathGroupSetting_invs {args} {
+  set memExp                    {x|X} ; # expression of memory
   set shortOrLongExpressionMode "short" ; # short|long
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {

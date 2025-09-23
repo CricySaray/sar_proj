@@ -235,6 +235,32 @@ let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', 
 
 """ VIMSCRIPT & FUNCTIONS -------------------------------------------------------
 
+" ---------------------------
+" In visual block mode, press <Leader>i to implement number increment (default start value 1, step 1)
+vmap <Leader>i :call VisualBlockIncrement(1, 1)<CR>
+" In visual block mode, press <Leader>I to implement formatted number increment (e.g., 001, 002...)
+vmap <Leader>I :call VisualBlockIncrementWithFormat(1, 1, 3)<CR>
+" Core function: Implement number increment
+function! VisualBlockIncrement(start, step) range
+    let l:lines = getline(a:firstline, a:lastline)
+    let l:new_lines = []
+    for i in range(len(l:lines))
+        let l:num = a:start + i * a:step
+        call add(l:new_lines, substitute(l:lines[i], '\d\+', l:num, ''))
+    endfor
+    call setline(a:firstline, l:new_lines)
+endfunction
+" Extended function: Formatted number increment (e.g., with leading zeros)
+function! VisualBlockIncrementWithFormat(start, step, digits) range
+    let l:lines = getline(a:firstline, a:lastline)
+    let l:new_lines = []
+    for i in range(len(l:lines))
+        let l:num = a:start + i * a:step
+        let l:formatted_num = printf("%0".a:digits."d", l:num)
+        call add(l:new_lines, substitute(l:lines[i], '\d\+', l:formatted_num, ''))
+    endfor
+    call setline(a:firstline, l:new_lines)
+endfunction
 
 " ---------------------------
 " Process current buffer: remove duplicates by specified columns, keep larger/smaller values, then sort

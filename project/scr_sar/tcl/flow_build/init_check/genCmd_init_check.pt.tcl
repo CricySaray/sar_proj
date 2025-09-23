@@ -20,6 +20,9 @@ proc genCmd_init_check {args} {
   set formatExpOfResultFile "<design>_<scenario>_<body>_<suffix>.rpt" ; # like: "initCheck_<design>_<suffix>.rpt"; optional <design>|<suffix>
   set resultDir             "./"
 
+  set hostOptions           16
+  set shMessageLimit        20
+  set shSouchUsesSearchPath true
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

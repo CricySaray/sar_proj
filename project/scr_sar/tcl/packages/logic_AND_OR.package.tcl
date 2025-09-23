@@ -85,7 +85,7 @@ proc ol {args} {
 	return 0  ;# 所有参数都不满足条件，返回假
 }
 
-proc re {value args} {
+proc re {args} {
 	# 支持多种调用方式：
 	# 1. re <value>         - 直接取反单个值
 	# 2. re -list <list>    - 对列表中每个元素取反
@@ -95,20 +95,25 @@ proc re {value args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-	# 处理剩余参数
-	if {[info exist list]} {
-		# 列表模式：对每个元素取反
-		return [lmap item $list {expr {![_to_boolean $item]}}]
-	} elseif {[info exist dict]} {
-		set resultDict [dict create]
-		dict for {key value} [lindex $dict 0] {
-			dict set resultDict $key [expr {![_to_boolean $value]}]
-		}
-		return $resultDict
-	} elseif {[info exist single]} {
-		# 单值模式：直接取反
-		return [expr {![_to_boolean [lindex $single 0]]}]
-	}
+  foreach varname {A B C} optname {single list dict} { set $varname [info exist $optname] }
+  if {[expr ($A && !$B && !$C) || (!$A && $B && !$C) || (!$A && !$B && $C)]} {
+    # 处理剩余参数
+    if {[info exist list]} {
+      # 列表模式：对每个元素取反
+      return [lmap item $list {expr {![_to_boolean $item]}}]
+    } elseif {[info exist dict]} {
+      set resultDict [dict create]
+      dict for {key value} [lindex $dict 0] {
+        dict set resultDict $key [expr {![_to_boolean $value]}]
+      }
+      return $resultDict
+    } elseif {[info exist single]} {
+      # 单值模式：直接取反
+      return [expr {![_to_boolean [lindex $single 0]]}]
+    }
+  } else {
+    error "proc re: your input item can only specify one. " 
+  }
 }
 # TODO(FIXED) : 这里设置了option，但是假如没有写option，直接写了值或者字符串，该如何解析？
 [if {[catch {is_common_ui_mode}]} { ; # In order to adapt to the different writing styles/expressions used in INVS and PT
@@ -118,6 +123,7 @@ proc re {value args} {
 }] re \
     -info ":re ?-list|-dict? value(s) - Logical negation of values"\
     -define_args {
+      {-single "single value" AString string optional}
       {-list "list mode" AList list optional}
       {-dict "dict mode" ADict list optional}
     }

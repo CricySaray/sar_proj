@@ -14,7 +14,7 @@ if {[is_common_ui_mode]} {
   alias po "set_layer_preference pinObj -is_visible 1"
 
   alias rd "read_db"
-  alias sd "saveDesign -verilog -def"
+  alias sd "saveDesign -verilog -def "
   alias sdt "write_db  -verilog -def -add_ignored_timing"
   alias snot "read_db -no_timing"
   #only check the short between signal and PG. between PG and PG
@@ -79,8 +79,7 @@ if {[is_common_ui_mode]} {
   alias po "setLayerPreference pinObj -isVisible 1"
 
   alias rd "restoreDesign"
-  alias sd "saveDesign -tcon -verilog -def"
-  alias sdt "saveDesign -tcon -verilog -def -addTiming"
+  alias sd "saveDesign -tcon -verilog -def -addTiming"
   alias snot "restoreDesign -noTiming"
   #only check the short between signal and PG. between PG and PG
   alias pgshort "verify_PG_short -no_routing_blkg -no_cell_blkg"

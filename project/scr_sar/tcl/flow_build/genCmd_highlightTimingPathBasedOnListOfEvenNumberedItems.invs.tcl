@@ -13,6 +13,8 @@
 # ref       : link url
 # --------------------------
 proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {} {
+  set evenNumberList {}
+
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

@@ -78,8 +78,7 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set colorsIndexLoopListsForNet [expr {$indexOfColorsForNetInst % [llength $colorsIndexLoopListsForNet]}]
-  set colorsIndexLoopListsForInst [expr {$indexOfColorsForNetInst % [llength $colorsIndexLoopListsForInst]}]
+  set indexOfColorsForNetInst [expr {$indexOfColorsForNetInst % [expr {([llength $colorsIndexLoopListsForNet] + [llength $colorsIndexLoopListsForInst]) / 2 }]}]
   if {[expr {[llength $evenNumberList] % 2}]} {
     error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your evenNumberList（num: [llength $evenNumberList]) must be even number list!!!" 
   }

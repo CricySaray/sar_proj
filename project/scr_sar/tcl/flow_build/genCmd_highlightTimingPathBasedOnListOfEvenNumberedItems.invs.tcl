@@ -65,15 +65,16 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
 # --------------------------
 source ./common/add_markers_and_text_for_point_list.common.tcl; # add_markers_and_text_for_point_list
 proc genCmd_genMarkersAndTextOfPathDelay {args} {
-  set typeForMarkersAndText "add" ; # add|delete
-  set evenNumberList        {}
-  set textList              {}
-  set minLengthOfLine       0.7
-  set sizeOfText             {} 
-  set layerOfText           8 ; # routing layer name, can also use number
-  set ifAddMarkersForPin    1 ; # 1|0
-  set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
-  set markerShapeType       "STAR" ; # X|TICK|STAR
+  set typeForMarkersAndText  "add" ; # add|delete
+  set delelteTypes           {all} ; # all|shape|text|marker|selected
+  set evenNumberList         {}
+  set textList               {}
+  set minLengthOfLine        0.7
+  set sizeOfText             {}
+  set layerOfText            8 ; # routing layer name, can also use number
+  set ifAddMarkersForPin     1 ; # 1|0
+  set color                  "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
+  set markerShapeType        "STAR" ; # X|TICK|STAR
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -104,14 +105,6 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
 
 define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \
   -info "gen cmd for generating markers and text of delay of path"\
-  set typeForMarkersAndText "add" ; # add|delete
-  set evenNumberList        {}
-  set textList              {}
-  set sizeOfText             {} 
-  set layerOfText           8 ; # routing layer name, can also use number
-  set ifAddMarkersForPin    1 ; # 1|0
-  set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
-  set markerShapeType       "STAR" ; # X|TICK|STAR
   -define_args {
     {-typeForMarkersAndText "specify the type of actions for markers and text" oneOfString one_of_string {optional value_type {values {add delete}}}}
     {-evenNumberList "specify the even number list consisted of points pt" AList list optional}
@@ -120,8 +113,8 @@ define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \
     {-sizeOfText "specify the size of text, format: {width height}" AList list optional}
     {-layerOfText "specify the layer of text that need add to" AString string optional}
     {-ifAddMarkersForPin "if adding markers for pin" oneOfString one_of_string {optional value_type {values {0 1}}}}
-    {-color "specify the color of markers"}
-    {-markerShapeType ""}
+    {-color "specify the color of markers" oneOfString one_of_string {optional value_type {values {red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat}}}}
+    {-markerShapeType "specify the type of marker shape" oneOfString one_of_string {optional value_type {values {X TICK STAR}}}}
   }
 
 #!/bin/tclsh

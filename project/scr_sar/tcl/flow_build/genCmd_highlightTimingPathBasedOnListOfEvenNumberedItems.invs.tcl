@@ -63,6 +63,7 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
 # return    : cmds list
 # ref       : link url
 # --------------------------
+source ./common/add_markers_and_text_for_point_list.common.tcl; # add_markers_and_text_for_point_list
 proc genCmd_genMarkersAndTextOfPathDelay {args} {
   set typeForMarkersAndText "add" ; # add|delete
   set evenNumberList        {}
@@ -75,10 +76,10 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set allPinsList [list]
-  foreach temppin $evenNumberList { lappend allPinsList {*}$temppin }
-  set allPinPtsList [lmap temppin $allPinsList { set temp {*}[dbget [dbget top.insts.instTerms.name $temppin -p].pt -e] }]
-  set locationFromPointToPointList []
+  if {![llength $evenNumberList]} {
+    error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList) is empty!!!" 
+  }
+  set locationFromPointToPointList [add_markers_and_text_for_point_list $evenNumberList]
 }
 
 define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \

@@ -1,4 +1,15 @@
-proc add_annotations {coordinates min_line_length annotation_size {debug 0}} {
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/09/24 21:13:17 Wednesday
+# label     : atomic_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : Connect the lines according to the coordinates of the pins and their order, and add annotations to them. This proc is used to provide processed coordinates and text rectangles for annotation positions.
+# return    : list { {{x y} {x1 y1} {x y x1 y1}} ... }
+# ref       : link url
+# --------------------------
+proc add_markers_and_text_for_point_list {coordinates {min_line_length 0.7} {annotation_size {2 1}} {debug 0}} {
   # Error checking for input parameters
   if {![string is double -strict $min_line_length] || $min_line_length <= 0} {
     error "min_line_length must be a positive number"
@@ -73,7 +84,11 @@ proc add_annotations {coordinates min_line_length annotation_size {debug 0}} {
       
       # Create distance list (from min_line_length to 200, step 10)
       set distances [list]
-      for {set d $min_line_length} {$d <= 200} {incr d 10} {lappend distances $d}
+      set d $min_line_length
+      while {$d <= 200} {
+        lappend distances $d
+        set d [expr {$d + 10}]  ;# 使用expr替代incr处理浮点数
+      }
       
       # Try different distances using foreach
       foreach dist $distances {

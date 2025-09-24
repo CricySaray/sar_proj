@@ -1,37 +1,92 @@
-proc add_annotations {coordinates min_line_length annotation_size} {
-  # Store the result list
-  set result [list]
+proc add_annotations {coordinates min_line_length annotation_size {debug 0}} {
+  # Error checking for input parameters
+  if {![string is double -strict $min_line_length] || $min_line_length <= 0} {
+    error "min_line_length must be a positive number"
+  }
   
-  # Get annotation rectangle dimensions from parameter
+  if {[llength $annotation_size] != 2} {
+    error "annotation_size must be a list with two elements {width height}"
+  }
+  
   set rect_width [lindex $annotation_size 0]
   set rect_height [lindex $annotation_size 1]
+  
+  if {![string is double -strict $rect_width] || $rect_width <= 0 ||
+      ![string is double -strict $rect_height] || $rect_height <= 0} {
+    error "annotation_size elements must be positive numbers"
+  }
+  
+  if {![llength $coordinates]} {
+    error "coordinates list cannot be empty"
+  }
+  
+  # Validate coordinate points format
+  foreach point $coordinates {
+    if {[llength $point] != 2} {
+      error "Invalid coordinate format: $point. Each coordinate must be a list {x y}"
+    }
+    set x [lindex $point 0]
+    set y [lindex $point 1]
+    if {![string is double -strict $x] || ![string is double -strict $y]} {
+      error "Coordinate values must be numbers: $point"
+    }
+  }
+  
+  # Store the result list
+  set result [list]
   
   # Get the number of coordinate points
   set num_points [llength $coordinates]
   
-  # Process each coordinate point
-  for {set i 0} {$i < $num_points} {incr i} {
+  if {$debug} {
+    puts "Processing $num_points coordinates with:"
+    puts "  min_line_length = $min_line_length"
+    puts "  annotation_size = $annotation_size"
+  }
+  
+  # Create index list for coordinate points (0 to num_points-1)
+  set point_indices [list]
+  for {set i 0} {$i < $num_points} {incr i} {lappend point_indices $i}
+  
+  # Process each coordinate point using foreach
+  foreach i $point_indices {
     set point [lindex $coordinates $i]
     set x [lindex $point 0]
     set y [lindex $point 1]
+    
+    if {$debug} {
+      puts "\nProcessing point $i: ($x, $y)"
+    }
     
     # Try different directions to find suitable annotation position
     set directions [list {1 0} {-1 0} {0 1} {0 -1} {1 1} {1 -1} {-1 1} {-1 -1}]
     set found 0
     
-    # Try different directions and distances
+    # Try different directions
     foreach dir $directions {
       set dx [lindex $dir 0]
       set dy [lindex $dir 1]
       
-      # Start from minimum distance and increase gradually
-      for {set dist $min_line_length} {$dist <= 200} {incr dist 10} {
+      if {$debug} {
+        puts "  Trying direction: ($dx, $dy)"
+      }
+      
+      # Create distance list (from min_line_length to 200, step 10)
+      set distances [list]
+      for {set d $min_line_length} {$d <= 200} {incr d 10} {lappend distances $d}
+      
+      # Try different distances using foreach
+      foreach dist $distances {
         # Calculate annotation rectangle position
         set rect_x [expr {$x + $dx * $dist}]
         set rect_y [expr {$y + $dy * $dist}]
         set rect_x1 [expr {$rect_x + $rect_width}]
         set rect_y1 [expr {$rect_y + $rect_height}]
         set rect [list $rect_x $rect_y $rect_x1 $rect_y1]
+        
+        if {$debug} {
+          puts "    Checking distance $dist, rect: $rect"
+        }
         
         # Check if rectangle overlaps with any coordinate point
         set overlap 0
@@ -40,6 +95,9 @@ proc add_annotations {coordinates min_line_length annotation_size} {
           set py [lindex $p 1]
           if {[_point_in_rect $px $py $rect]} {
             set overlap 1
+            if {$debug} {
+              puts "    Overlap with point ($px, $py)"
+            }
             break
           }
         }
@@ -47,12 +105,19 @@ proc add_annotations {coordinates min_line_length annotation_size} {
           continue
         }
         
+        # Create line indices list (0 to num_points-2)
+        set line_indices [list]
+        for {set j 0} {$j < [expr {$num_points - 1}]} {incr j} {lappend line_indices $j}
+        
         # Check if rectangle intersects with any connecting line
-        for {set j 0} {$j < [expr {$num_points - 1}]} {incr j} {
+        foreach j $line_indices {
           set p1 [lindex $coordinates $j]
           set p2 [lindex $coordinates [expr {$j + 1}]]
           if {[_line_intersects_rect $p1 $p2 $rect]} {
             set overlap 1
+            if {$debug} {
+              puts "    Intersection with line from $p1 to $p2"
+            }
             break
           }
         }
@@ -60,12 +125,13 @@ proc add_annotations {coordinates min_line_length annotation_size} {
           continue
         }
         
-        # Find closest corner of the rectangle to the point
+        # Define rectangle corners
+        # Order: bottom-left, bottom-right, top-left, top-right
         set corners [list \
-          [list $rect_x $rect_y] \       ;# bottom-left
-          [list $rect_x1 $rect_y] \      ;# bottom-right
-          [list $rect_x $rect_y1] \      ;# top-left
-          [list $rect_x1 $rect_y1] \     ;# top-right
+          [list $rect_x $rect_y] \
+          [list $rect_x1 $rect_y] \
+          [list $rect_x $rect_y1] \
+          [list $rect_x1 $rect_y1] \
         ]
         
         set closest_corner [_find_closest_point $corners [list $x $y]]
@@ -78,9 +144,15 @@ proc add_annotations {coordinates min_line_length annotation_size} {
         
         # Ensure distance meets minimum requirement
         if {$corner_dist >= $min_line_length} {
-          # Add to result list in new format
+          # Add to result list in required format
           lappend result [list [list $point $closest_corner] $rect]
           set found 1
+          
+          if {$debug} {
+            puts "    Found valid position. Corner distance: $corner_dist"
+            puts "    Result entry: [list [list $point $closest_corner] $rect]"
+          }
+          
           break
         }
       }
@@ -100,7 +172,15 @@ proc add_annotations {coordinates min_line_length annotation_size} {
       
       # Add fallback to result list
       lappend result [list [list $point $closest_corner] $rect]
+      
+      if {$debug} {
+        puts "  No valid position found. Using fallback: $rect"
+      }
     }
+  }
+  
+  if {$debug} {
+    puts "\nProcessing complete. Returning [llength $result] results."
   }
   
   return $result
@@ -153,6 +233,7 @@ proc _line_intersects_rect {p1 p2 rect} {
   }
   
   # Check intersection with each edge of the rectangle
+  # Rectangle edges: bottom, right, top, left
   set rect_edges [list \
     [list [list $rx1 $ry1] [list $rx2 $ry1]] \
     [list [list $rx2 $ry1] [list $rx2 $ry2]] \

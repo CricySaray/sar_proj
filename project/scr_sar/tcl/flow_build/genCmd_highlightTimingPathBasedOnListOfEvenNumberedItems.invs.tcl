@@ -14,7 +14,11 @@
 # --------------------------
 source ../packages/logic_AND_OR.package.tcl; # eo
 proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
-  set evenNumberList {} ; # must be even number
+  set reportTimingFile "" ; # rpt file name that need to highlight
+  set lineExpToSplitPath {^TE} ; # used to regexp
+  set stdcellExp         {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
+  set startOfPath        {Point\s+} ; # end expression of launch timing path
+  set endOfPath          {data arrival time} ; # end expression of launch timing path
   set modeOfConnect "whole_net" ; # whole_net|flight_line
   set ifWithArrow   1; # 1|0
   set colorsIndexLoopListsForNet {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
@@ -25,6 +29,7 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  set evenNumberList [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp -startOfPath $startOfPath -endOfPath $endOfPath] ; # must be even number
   set colorsIndexLoopListsForNet [expr {$indexOfColorsForNetInst % [llength $colorsIndexLoopListsForNet]}]
   set colorsIndexLoopListsForInst [expr {$indexOfColorsForNetInst % [llength $colorsIndexLoopListsForInst]}]
   if {[expr {[llength $evenNumberList] % 2}]} {
@@ -52,10 +57,102 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
 define_proc_arguments genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems \
   -info "gen cmd for highlighting timing path based on list of even-numbered items"\
   -define_args {
+    {-reportTimingFile "specify the file name of report_timing" AString string optional}
+    {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
+    {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
+    {-startOfPath "specify the start expression of timing path" AString string optional}
+    {-endOfPath "specify the end expression of timing path" AString string optional}
     {-modeOfConnect "specify the type of eco" oneOfString one_of_string {optional value_type {values {whole_net flight_line}}}}
     {-evenNumberList "specify inst to eco when type is add/delete" AList list optional}
     {-ifWithArrow "if using arrow on line" oneOfString one_of_string {optional value_type {values {1 0}}}}
     {-colorsIndexLoopListsForNet "specify the colors index loop lists for net color" AList list optional}
     {-colorsIndexLoopListsForInst "specify the colors index loop lists for inst color" AList list optional}
     {-indexOfColorsForNetInst "specify the index of Net and Inst color, it can get index with circle" AInt int optional}
+  }
+
+
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/09/24 15:12:23 Wednesday
+# label     : misc_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : Obtain the path pins that need to be highlighted from the report_timing (rpt) file of PT, and different paths can be automatically split based on keywords.
+# return    : lists of even pins
+# ref       : link url
+# --------------------------
+source ./common/split_timing_path.common.tcl; # split_timing_path
+proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
+  set reportTimingFile   ""
+  set lineExpToSplitPath {^TE} ; # used to regexp
+  set stdcellExp         {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
+  set startOfPath        {Point\s+} ; # end expression of launch timing path
+  set endOfPath          {data arrival time} ; # end expression of launch timing path
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+  if {![file isfile $reportTimingFile]} {
+    error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your input: file name ($reportTimingFile) is not found!!!" 
+  }
+  set fi [open $reportTimingFile r]
+  set content [split [read $fi] \n]
+  set stdcellExpToMatchLine [subst -nocommands -nobackslashes {($stdcellExp)}]
+  set pinLines [lmap templine $content {
+    if {[regexp $lineExpToSplitPath|$stdcellExpToMatchLine|$startOfPath|$endOfPath $templine]} {
+      set temp $templine 
+    }
+  }]
+  set purePinListWithSplieLine [lmap templine $pinLines {
+    if {[regexp {^\s*$} $templine]} { continue }
+    set indexOfStdCell [lsearch -regexp $templine $stdcellExpToMatchLine]
+    if {$indexOfStdCell == -1} { 
+      if {[regexp $startOfPath $templine]} { 
+        set temp "START" 
+      } elseif {[regexp $endOfPath $templine]} {
+        set temp "END" 
+      } elseif {[regexp $lineExpToSplitPath $templine]} {
+        set temp "SPLIT"
+      }
+    } else {
+      set pinName [lindex $templine [expr {$indexOfStdCell - 1}]]
+    }
+  }]
+  set splitedPinList [split_timing_path $purePinListWithSplieLine]
+  set filteredPinList [lmap tempList $splitedPinList {
+    if {[llength $tempList] == 1} { continue } else {
+      if {[join [lrange [split [lindex $tempList 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1] "/"] 0 end-1] "/"]} {
+        set tempList [lrange $tempList 1 end] 
+      }
+      foreach {pin1 pin2} $tempList {
+        set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
+        set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
+        if {$net1 == "" || $net2 == ""} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!!" 
+        }
+        if {$net1 != $net2} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!!"
+        }
+      }
+    }
+    set temp $tempList
+  }]
+  return $filteredPinList
+}
+
+define_proc_arguments genCmd_getPurePinOfPath_fromTimingPathReport \
+  -info "gen cmd for geting pure pin of path from timing path report, \n\t \
+  Notice: This proc uses the report_timing rpt file generated by PT to match and \
+  obtain pin names. It must display both the input pin and output pin names of the \
+  inst, and must not only show the output pin name. In addition, after the pin name, \
+  there must be a number of spaces followed by the format '(stdCellName)', because \
+  the proc uses this positional relationship to obtain the pin name."\
+  -define_args {
+    {-reportTimingFile "specify the file name of report_timing" AString string optional}
+    {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
+    {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
+    {-startOfPath "specify the start expression of timing path" AString string optional}
+    {-endOfPath "specify the end expression of timing path" AString string optional}
   }

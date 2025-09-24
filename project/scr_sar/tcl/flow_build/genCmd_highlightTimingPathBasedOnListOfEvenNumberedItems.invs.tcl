@@ -55,8 +55,7 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
 proc genCmd_genMarkersAndTextOfPathDelay {args} {
   set typeForMarkersAndText "add" ; # add|delete
   set evenNumberList        {}
-  set boxOfText             {} ; # "Box" and "height" are mutually exclusive. If both exist, "box" will be used with priority.
-  set heightOfText          1 ; # um
+  set boxOfText             {} 
   set layerOfText           8 ; # routing layer name, can also use number
   set ifAddMarkersForPin    1 ; # 1|0
   set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
@@ -65,6 +64,9 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  set allPinsList [list]
+  foreach temppin $evenNumberList { lappend allPinsList {*}$temppin }
+  set allPinPtsList [lmap temppin $allPinsList { set temp {*}[dbget [dbget top.insts.instTerms.name $temppin -p].pt -e] }]
   
 }
 

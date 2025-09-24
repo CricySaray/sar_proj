@@ -53,9 +53,20 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
       if {[join [lrange [split [lindex $tempList 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1] "/"] 0 end-1] "/"]} {
         set tempList [lrange $tempList 1 end] 
       }
+      foreach {pin1 pin2} $tempList {
+        set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
+        set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
+        if {$net1 == "" || $net2 == ""} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!!" 
+        }
+        if {$net1 != $net2} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!!"
+        }
+      }
     }
+    set temp $tempList
   }]
-  return $splitedPinList
+  return $filteredPinList
 }
 
 define_proc_arguments genCmd_getPurePinOfPath_fromTimingPathReport \

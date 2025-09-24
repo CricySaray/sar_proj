@@ -19,7 +19,6 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   set ifWithArrow   1; # 1|0
   set colorsIndexLoopListsForNet {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
   set colorsIndexLoopListsForInst {1 2 3 5 7 9 10 11 14 15 17 19 20 21 24 22 25 28 30 32} ; # 20 items
-  set indexOfColorsForNetInst 0 ; # 0-19
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -28,9 +27,11 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   set evenNumberLists [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp \
                         -startOfPath $startOfPath -endOfPath $endOfPath]
   set cmdsList [list]
+  set i 0
   foreach tempEvenNumberList $evenNumberLists {
     set tempCmdsList [genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems -evenNumberList $tempEvenNumberList -modeOfConnect $modeOfConnect -ifWithArrow $ifWithArrow \
-                          -colorsIndexLoopListsForNet $colorsIndexLoopListsForNet -colorsIndexLoopListsForInst $colorsIndexLoopListsForInst -indexOfColorsForNetInst $indexOfColorsForNetInst]
+                          -colorsIndexLoopListsForNet $colorsIndexLoopListsForNet -colorsIndexLoopListsForInst $colorsIndexLoopListsForInst -indexOfColorsForNetInst $i]
+    incr i
     lappend cmdsList {*}$tempCmdsList
   }
   return $cmdsList
@@ -49,6 +50,25 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-colorsIndexLoopListsForNet "specify the colors index loop lists for net color" AList list optional}
     {-colorsIndexLoopListsForInst "specify the colors index loop lists for inst color" AList list optional}
     {-indexOfColorsForNetInst "specify the index of Net and Inst color, it can get index with circle" AInt int optional}
+  }
+
+proc genCmd_genMarkerAndTextOfPathDelay {args} {
+  set evenNumberList {}
+  set heightOfText 1 ; # um
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+  
+}
+
+define_proc_arguments genCmd_genMarkerAndTextOfPathDelay \
+  -info "gen cmd for generating markers and text of delay of path"\
+  -define_args {
+    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}
+    {-inst "specify inst to eco when type is add/delete" AString string require}
+    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
   }
 
 #!/bin/tclsh

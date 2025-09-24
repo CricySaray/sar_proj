@@ -126,6 +126,9 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
       if {[join [lrange [split [lindex $tempList 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1] "/"] 0 end-1] "/"]} {
         set tempList [lrange $tempList 1 end] 
       }
+      if {[expr {[llength $tempList] % 2}]} {
+        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!" 
+      }
       foreach {pin1 pin2} $tempList {
         set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
         set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]

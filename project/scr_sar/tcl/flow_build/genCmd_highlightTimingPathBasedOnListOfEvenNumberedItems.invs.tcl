@@ -52,6 +52,17 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-indexOfColorsForNetInst "specify the index of Net and Inst color, it can get index with circle" AInt int optional}
   }
 
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/09/24 20:27:30 Wednesday
+# label     : gui_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : Input a pin name list to obtain the positions and connections of the pins. Add markers and text at appropriate positions to label the path delay values.
+# return    : cmds list
+# ref       : link url
+# --------------------------
 proc genCmd_genMarkersAndTextOfPathDelay {args} {
   set typeForMarkersAndText "add" ; # add|delete
   set evenNumberList        {}
@@ -67,7 +78,7 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
   set allPinsList [list]
   foreach temppin $evenNumberList { lappend allPinsList {*}$temppin }
   set allPinPtsList [lmap temppin $allPinsList { set temp {*}[dbget [dbget top.insts.instTerms.name $temppin -p].pt -e] }]
-  
+  set locationFromPointToPointList []
 }
 
 define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \

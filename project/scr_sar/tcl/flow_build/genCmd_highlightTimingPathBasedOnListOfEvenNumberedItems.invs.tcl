@@ -68,7 +68,8 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
   set typeForMarkersAndText "add" ; # add|delete
   set evenNumberList        {}
   set textList              {}
-  set boxOfText             {} 
+  set minLengthOfLine       0.7
+  set sizeOfText             {} 
   set layerOfText           8 ; # routing layer name, can also use number
   set ifAddMarkersForPin    1 ; # 1|0
   set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
@@ -82,27 +83,45 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
     error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList) is empty!!!" 
   }
   if {[llength $evenNumberList] != [llength $textList]} {
-    error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList)(num: [llength $evenNumberList]) and textList($textList)(num: [llength $textList])" 
+    error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList)(num: [llength $evenNumberList]) and textList($textList)(num: [llength $textList]) need equal!!!" 
   }
-  set locationFromPointToPointList [add_markers_and_text_for_point_list $evenNumberList]
+  set locationFromPointToPointList [add_markers_and_text_for_point_list $evenNumberList $minLengthOfLine $sizeOfText 0]
+  if {[llength $locationFromPointToPointList] != [llength $textList]} {
+    error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : list that get location and processed(num: [llength $evenNumberList]) and textList($textList)(num: [llength $textList]) need equal!!!" 
+  }
   set cmdsList [list ]
   set i 0
-  foreach temp_list $locationFromPointToPointList {
+  foreach temp_list $locationFromPointToPointList temp_text $textList {
     incr i
     lassign $temp_list from_to box
     lassign $from_to temp_from temp_to
-    lappend cmdsList "add_gui_marker -color $color -pt $temp_to -type $markerShapeType -name $i" 
+    if {$ifAddMarkersForPin} {lappend cmdsList "add_gui_marker -color $color -pt $temp_to -type $markerShapeType -name $i"}
     lappend cmdsList "add_gui_shape -layer $layerOfText -line \{$temp_from $temp_to\} -arrow"
-    lappend cmdsList "add_gui_text -layer $layerOfText -pt $temp_from -box \{$box\}"
+    lappend cmdsList "add_gui_text -layer $layerOfText -pt $temp_from -box \{$box\} -label $temp_text"
   }
+  return $cmdsList
 }
 
 define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \
   -info "gen cmd for generating markers and text of delay of path"\
+  set typeForMarkersAndText "add" ; # add|delete
+  set evenNumberList        {}
+  set textList              {}
+  set sizeOfText             {} 
+  set layerOfText           8 ; # routing layer name, can also use number
+  set ifAddMarkersForPin    1 ; # 1|0
+  set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
+  set markerShapeType       "STAR" ; # X|TICK|STAR
   -define_args {
-    {-typeForMarkersAndText "specify the type of actions for markers and text" oneOfString one_of_string {required value_type {values {add delete}}}}
-    {-inst "specify inst to eco when type is add/delete" AString string require}
-    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
+    {-typeForMarkersAndText "specify the type of actions for markers and text" oneOfString one_of_string {optional value_type {values {add delete}}}}
+    {-evenNumberList "specify the even number list consisted of points pt" AList list optional}
+    {-textList "specify the list of text that need add when type is 'add'" AList list optional}
+    {-minLengthOfLine "specify the min length of line that is used to add_line" AFloat float optional}
+    {-sizeOfText "specify the size of text, format: {width height}" AList list optional}
+    {-layerOfText "specify the layer of text that need add to" AString string optional}
+    {-ifAddMarkersForPin "if adding markers for pin" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-color "specify the color of markers"}
+    {-markerShapeType ""}
   }
 
 #!/bin/tclsh

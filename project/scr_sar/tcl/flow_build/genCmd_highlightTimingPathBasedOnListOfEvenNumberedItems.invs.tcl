@@ -25,11 +25,15 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set evenNumberList [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp \
+  set evenNumberLists [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp \
                         -startOfPath $startOfPath -endOfPath $endOfPath]
-  set resultCmdsList [genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems -evenNumberList $evenNumberList -modeOfConnect $modeOfConnect -ifWithArrow $ifWithArrow \
-                        -colorsIndexLoopListsForNet $colorsIndexLoopListsForNet -colorsIndexLoopListsForInst $colorsIndexLoopListsForInst -indexOfColorsForNetInst $indexOfColorsForNetInst]
-  return $resultCmdsList
+  set cmdsList [list]
+  foreach tempEvenNumberList $evenNumberLists {
+    set tempCmdsList [genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems -evenNumberList $tempEvenNumberList -modeOfConnect $modeOfConnect -ifWithArrow $ifWithArrow \
+                          -colorsIndexLoopListsForNet $colorsIndexLoopListsForNet -colorsIndexLoopListsForInst $colorsIndexLoopListsForInst -indexOfColorsForNetInst $indexOfColorsForNetInst]
+    lappend cmdsList {*}$tempCmdsList
+  }
+  return $cmdsList
 }
 
 define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \

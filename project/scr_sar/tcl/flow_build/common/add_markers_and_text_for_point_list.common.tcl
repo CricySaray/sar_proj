@@ -9,10 +9,14 @@
 # return    : list { {{x y} {x1 y1} {x y x1 y1}} ... }
 # ref       : link url
 # --------------------------
-proc add_markers_and_text_for_point_list {coordinates {min_line_length 0.7} {annotation_size {2 1}} {debug 0}} {
-  # Error checking for input parameters
+proc add_markers_and_text_for_point_list {coordinates {min_line_length 0.7} {max_line_length 6} {annotation_size {2 1}} {debug 0}} {
+  # Validate input parameters
   if {![string is double -strict $min_line_length] || $min_line_length <= 0} {
     error "min_line_length must be a positive number"
+  }
+  
+  if {![string is double -strict $max_line_length] || $max_line_length <= $min_line_length} {
+    error "max_line_length must be a positive number greater than min_line_length"
   }
   
   if {[llength $annotation_size] != 2} {
@@ -43,24 +47,23 @@ proc add_markers_and_text_for_point_list {coordinates {min_line_length 0.7} {ann
     }
   }
   
-  # Store the result list
+  # Store results and tracking lists
   set result [list]
+  set placed_rects [list]
+  set annotation_lines [list]
   
-  # Get the number of coordinate points
+  # Get number of coordinate points
   set num_points [llength $coordinates]
   
   if {$debug} {
     puts "Processing $num_points coordinates with:"
     puts "  min_line_length = $min_line_length"
+    puts "  max_line_length = $max_line_length"
     puts "  annotation_size = $annotation_size"
   }
   
-  # Create index list for coordinate points (0 to num_points-1)
-  set point_indices [list]
-  for {set i 0} {$i < $num_points} {incr i} {lappend point_indices $i}
-  
-  # Process each coordinate point using foreach
-  foreach i $point_indices {
+  # Process each coordinate point in order
+  for {set i 0} {$i < $num_points} {incr i} {
     set point [lindex $coordinates $i]
     set x [lindex $point 0]
     set y [lindex $point 1]
@@ -69,128 +72,208 @@ proc add_markers_and_text_for_point_list {coordinates {min_line_length 0.7} {ann
       puts "\nProcessing point $i: ($x, $y)"
     }
     
-    # Try different directions to find suitable annotation position
-    set directions [list {1 0} {-1 0} {0 1} {0 -1} {1 1} {1 -1} {-1 1} {-1 -1}]
-    set found 0
+    # Determine placement side (alternating left/right)
+    set target_side [expr {$i % 2 == 0 ? "right" : "left"}]
+    if {$debug} {
+      puts "  Target side for this point: $target_side"
+    }
     
-    # Try different directions
-    foreach dir $directions {
-      set dx [lindex $dir 0]
-      set dy [lindex $dir 1]
+    # Calculate primary direction based on path segment
+    set primary_dirs [list]
+    if {$num_points > 1} {
+      set next_i [expr {($i + 1) % $num_points}]
+      set next_point [lindex $coordinates $next_i]
       
-      if {$debug} {
-        puts "  Trying direction: ($dx, $dy)"
-      }
+      # Calculate direction vector to next point
+      set dx [expr {[lindex $next_point 0] - $x}]
+      set dy [expr {[lindex $next_point 1] - $y}]
       
-      # Create distance list (from min_line_length to 200, step 10)
-      set distances [list]
-      set d $min_line_length
-      while {$d <= 200} {
-        lappend distances $d
-        set d [expr {$d + 10}]  ;# 使用expr替代incr处理浮点数
-      }
+      # Calculate left and right perpendicular directions
+      set right_dir [list [expr {-$dy}] [expr {$dx}]]  ;# Right perpendicular
+      set left_dir [list [expr {$dy}] [expr {-$dx}]]   ;# Left perpendicular
       
-      # Try different distances using foreach
-      foreach dist $distances {
-        # Calculate annotation rectangle position
-        set rect_x [expr {$x + $dx * $dist}]
-        set rect_y [expr {$y + $dy * $dist}]
-        set rect_x1 [expr {$rect_x + $rect_width}]
-        set rect_y1 [expr {$rect_y + $rect_height}]
-        set rect [list $rect_x $rect_y $rect_x1 $rect_y1]
-        
-        if {$debug} {
-          puts "    Checking distance $dist, rect: $rect"
-        }
-        
-        # Check if rectangle overlaps with any coordinate point
-        set overlap 0
-        foreach p $coordinates {
-          set px [lindex $p 0]
-          set py [lindex $p 1]
-          if {[_point_in_rect $px $py $rect]} {
-            set overlap 1
-            if {$debug} {
-              puts "    Overlap with point ($px, $py)"
-            }
-            break
-          }
-        }
-        if {$overlap} {
-          continue
-        }
-        
-        # Create line indices list (0 to num_points-2)
-        set line_indices [list]
-        for {set j 0} {$j < [expr {$num_points - 1}]} {incr j} {lappend line_indices $j}
-        
-        # Check if rectangle intersects with any connecting line
-        foreach j $line_indices {
-          set p1 [lindex $coordinates $j]
-          set p2 [lindex $coordinates [expr {$j + 1}]]
-          if {[_line_intersects_rect $p1 $p2 $rect]} {
-            set overlap 1
-            if {$debug} {
-              puts "    Intersection with line from $p1 to $p2"
-            }
-            break
-          }
-        }
-        if {$overlap} {
-          continue
-        }
-        
-        # Define rectangle corners
-        # Order: bottom-left, bottom-right, top-left, top-right
-        set corners [list \
-          [list $rect_x $rect_y] \
-          [list $rect_x1 $rect_y] \
-          [list $rect_x $rect_y1] \
-          [list $rect_x1 $rect_y1] \
-        ]
-        
-        set closest_corner [_find_closest_point $corners [list $x $y]]
-        
-        # Calculate distance from point to closest corner
-        set corner_dist [expr {sqrt(
-          ([lindex $closest_corner 0] - $x)*([lindex $closest_corner 0] - $x) +
-          ([lindex $closest_corner 1] - $y)*([lindex $closest_corner 1] - $y)
-        )}]
-        
-        # Ensure distance meets minimum requirement
-        if {$corner_dist >= $min_line_length} {
-          # Add to result list in required format
-          lappend result [list [list $point $closest_corner] $rect]
-          set found 1
-          
-          if {$debug} {
-            puts "    Found valid position. Corner distance: $corner_dist"
-            puts "    Result entry: [list [list $point $closest_corner] $rect]"
-          }
-          
-          break
-        }
-      }
-      if {$found} {
-        break
+      # Prioritize target side
+      if {$target_side eq "right"} {
+        lappend primary_dirs $right_dir $left_dir
+      } else {
+        lappend primary_dirs $left_dir $right_dir
       }
     }
     
-    # If no suitable position found, use default (fallback)
-    if {!$found} {
-      set rect_x [expr {$x + $min_line_length}]
-      set rect_y [expr {$y + $min_line_length}]
-      set rect_x1 [expr {$rect_x + $rect_width}]
-      set rect_y1 [expr {$rect_y + $rect_height}]
-      set rect [list $rect_x $rect_y $rect_x1 $rect_y1]
-      set closest_corner [list $rect_x $rect_y]
+    # Add basic directions as fallbacks
+    set base_directions [list {1 0} {-1 0} {0 1} {0 -1}]
+    set search_directions [concat $primary_dirs $base_directions]
+    
+    set found 0
+    
+    # Try each search direction
+    foreach dir $search_directions {
+      set base_dx [lindex $dir 0]
+      set base_dy [lindex $dir 1]
       
-      # Add fallback to result list
-      lappend result [list [list $point $closest_corner] $rect]
+      if {$base_dx == 0 && $base_dy == 0} {
+        continue
+      }
       
       if {$debug} {
-        puts "  No valid position found. Using fallback: $rect"
+        puts "  Trying direction: ($base_dx, $base_dy)"
       }
+      
+      # Generate distance candidates with 0.1 increments (shortest first)
+      set distances [list]
+      set d $min_line_length
+      while {[expr {$d <= $max_line_length + 1e-9}]} {  ;# Add epsilon to handle floating point precision
+        lappend distances $d
+        set d [expr {$d + 0.1}]
+        
+        # Prevent infinite loop in case of floating point precision issues
+        if {[llength $distances] > 10000} {
+          break
+        }
+      }
+      
+      # Check each distance
+      foreach dist $distances {
+        # Fine-tune direction with small angle variations
+        set angle_steps [list -10 0 10]
+        foreach angle $angle_steps {
+          set rad [expr {$angle * 3.1415926535 / 180}]
+          
+          # Rotate direction vector
+          set dx [expr {$base_dx * cos($rad) - $base_dy * sin($rad)}]
+          set dy [expr {$base_dx * sin($rad) + $base_dy * cos($rad)}]
+          
+          # Normalize direction
+          set len [expr {sqrt($dx*$dx + $dy*$dy)}]
+          if {$len > 0} {
+            set dx [expr {$dx / $len}]
+            set dy [expr {$dy / $len}]
+          }
+          
+          # Calculate rectangle position
+          set rect_x [expr {$x + $dx * $dist}]
+          set rect_y [expr {$y + $dy * $dist}]
+          set rect_x1 [expr {$rect_x + $rect_width}]
+          set rect_y1 [expr {$rect_y + $rect_height}]
+          set rect [list $rect_x $rect_y $rect_x1 $rect_y1]
+          
+          if {$debug && $angle == 0 && [expr {int(fmod($dist, 1.0) * 10)}] == 0} {
+            puts "    Checking distance $dist, rect: $rect"
+          }
+          
+          # Perform constraint checks
+          set valid 1
+          
+          # Check 1: Overlap with coordinate points
+          foreach p $coordinates {
+            set px [lindex $p 0]
+            set py [lindex $p 1]
+            if {[_point_in_rect $px $py $rect]} {
+              set valid 0
+              if {$debug} {
+                puts "    Invalid: Overlap with point ($px, $py)"
+              }
+              break
+            }
+          }
+          if {!$valid} continue
+          
+          # Check 2: Intersection with connecting lines
+          set line_indices [list]
+          for {set j 0} {$j < [expr {$num_points - 1}]} {incr j} {
+            lappend line_indices $j
+          }
+          
+          foreach j $line_indices {
+            set p1 [lindex $coordinates $j]
+            set p2 [lindex $coordinates [expr {$j + 1}]]
+            if {[_line_intersects_rect $p1 $p2 $rect]} {
+              set valid 0
+              if {$debug} {
+                puts "    Invalid: Intersection with line from $p1 to $p2"
+              }
+              break
+            }
+          }
+          if {!$valid} continue
+          
+          # Check 3: Overlap with existing annotations
+          foreach placed_rect $placed_rects {
+            if {[_rectangles_overlap $rect $placed_rect]} {
+              set valid 0
+              if {$debug} {
+                puts "    Invalid: Overlap with existing rect: $placed_rect"
+              }
+              break
+            }
+          }
+          if {!$valid} continue
+          
+          # Find closest corner of rectangle to point
+          set corners [list \
+            [list $rect_x $rect_y] \
+            [list $rect_x1 $rect_y] \
+            [list $rect_x $rect_y1] \
+            [list $rect_x1 $rect_y1] \
+          ]
+          
+          set closest_corner [_find_closest_point $corners [list $x $y]]
+          set current_line [list $closest_corner $point]
+          
+          # Check 4: Line crossing with existing annotation lines
+          foreach existing_line $annotation_lines {
+            if {[_segments_intersect [lindex $current_line 0] [lindex $current_line 1] \
+                 [lindex $existing_line 0] [lindex $existing_line 1]]} {
+              set valid 0
+              if {$debug} {
+                puts "    Invalid: Crosses existing annotation line"
+              }
+              break
+            }
+          }
+          if {!$valid} continue
+          
+          # Check 5: Line crossing with input segments
+          foreach j $line_indices {
+            set seg_p1 [lindex $coordinates $j]
+            set seg_p2 [lindex $coordinates [expr {$j + 1}]]
+            if {[_segments_intersect [lindex $current_line 0] [lindex $current_line 1] $seg_p1 $seg_p2]} {
+              set valid 0
+              if {$debug} {
+                puts "    Invalid: Crosses input segment from $seg_p1 to $seg_p2"
+              }
+              break
+            }
+          }
+          if {!$valid} continue
+          
+          # Check 6: Minimum distance requirement
+          set corner_dist [expr {sqrt(
+            ([lindex $closest_corner 0] - $x)*([lindex $closest_corner 0] - $x) +
+            ([lindex $closest_corner 1] - $y)*([lindex $closest_corner 1] - $y)
+          )}]
+          
+          if {$corner_dist >= $min_line_length} {
+            lappend result [list $current_line $rect]
+            lappend placed_rects $rect
+            lappend annotation_lines $current_line
+            set found 1
+            
+            if {$debug} {
+              puts "    Found valid position. Corner distance: $corner_dist"
+              puts "    Result entry: [list $current_line $rect]"
+            }
+            
+            break
+          }
+        }
+        if {$found} break
+      }
+      if {$found} break
+    }
+    
+    if {!$found} {
+      error "Could not find suitable position for annotation at point ($x, $y) on $target_side side within distance range ($min_line_length to $max_line_length)"
     }
   }
   
@@ -201,88 +284,18 @@ proc add_markers_and_text_for_point_list {coordinates {min_line_length 0.7} {ann
   return $result
 }
 
-# Helper function: Check if a point is inside a rectangle
-proc _point_in_rect {x y rect} {
-  set rx1 [lindex $rect 0]
-  set ry1 [lindex $rect 1]
-  set rx2 [lindex $rect 2]
-  set ry2 [lindex $rect 3]
+# All helper functions remain unchanged
+proc _segments_intersect {p1 p2 p3 p4} {
+  set a1x [lindex $p1 0]
+  set a1y [lindex $p1 1]
+  set a2x [lindex $p2 0]
+  set a2y [lindex $p2 1]
   
-  # Ensure coordinates are in correct order
-  if {$rx1 > $rx2} {
-    set temp $rx1
-    set rx1 $rx2
-    set rx2 $temp
-  }
-  if {$ry1 > $ry2} {
-    set temp $ry1
-    set ry1 $ry2
-    set ry2 $temp
-  }
+  set b1x [lindex $p3 0]
+  set b1y [lindex $p3 1]
+  set b2x [lindex $p4 0]
+  set b2y [lindex $p4 1]
   
-  return [expr {($x >= $rx1 && $x <= $rx2) && ($y >= $ry1 && $y <= $ry2)}]
-}
-
-# Helper function: Check if a line segment intersects with a rectangle
-proc _line_intersects_rect {p1 p2 rect} {
-  set x1 [lindex $p1 0]
-  set y1 [lindex $p1 1]
-  set x2 [lindex $p2 0]
-  set y2 [lindex $p2 1]
-  
-  set rx1 [lindex $rect 0]
-  set ry1 [lindex $rect 1]
-  set rx2 [lindex $rect 2]
-  set ry2 [lindex $rect 3]
-  
-  # Ensure coordinates are in correct order
-  if {$rx1 > $rx2} {
-    set temp $rx1
-    set rx1 $rx2
-    set rx2 $temp
-  }
-  if {$ry1 > $ry2} {
-    set temp $ry1
-    set ry1 $ry2
-    set ry2 $temp
-  }
-  
-  # Check intersection with each edge of the rectangle
-  # Rectangle edges: bottom, right, top, left
-  set rect_edges [list \
-    [list [list $rx1 $ry1] [list $rx2 $ry1]] \
-    [list [list $rx2 $ry1] [list $rx2 $ry2]] \
-    [list [list $rx2 $ry2] [list $rx1 $ry2]] \
-    [list [list $rx1 $ry2] [list $rx1 $ry1]] \
-  ]
-  
-  foreach edge $rect_edges {
-    if {[_segments_intersect $p1 $p2 [lindex $edge 0] [lindex $edge 1]]} {
-      return 1
-    }
-  }
-  
-  # Check if segment is completely inside rectangle
-  if {[_point_in_rect $x1 $y1 $rect] && [_point_in_rect $x2 $y2 $rect]} {
-    return 1
-  }
-  
-  return 0
-}
-
-# Helper function: Check if two line segments intersect
-proc _segments_intersect {a1 a2 b1 b2} {
-  set a1x [lindex $a1 0]
-  set a1y [lindex $a1 1]
-  set a2x [lindex $a2 0]
-  set a2y [lindex $a2 1]
-  
-  set b1x [lindex $b1 0]
-  set b1y [lindex $b1 1]
-  set b2x [lindex $b2 0]
-  set b2y [lindex $b2 1]
-  
-  # Cross product helper
   proc ccw {x1 y1 x2 y2 x3 y3} {
     return [expr {($x3 - $x1)*($y2 - $y1) - ($y3 - $y1)*($x2 - $x1)}]
   }
@@ -292,12 +305,10 @@ proc _segments_intersect {a1 a2 b1 b2} {
   set o3 [ccw $b1x $b1y $b2x $b2y $a1x $a1y]
   set o4 [ccw $b1x $b1y $b2x $b2y $a2x $a2y]
   
-  # General case
   if {($o1 * $o2 < 0) && ($o3 * $o4 < 0)} {
     return 1
   }
   
-  # Special cases (collinear and overlapping)
   proc on_segment {x1 y1 x2 y2 x3 y3} {
     return [expr {min($x1,$x2) <= $x3 && $x3 <= max($x1,$x2) &&
                   min($y1,$y2) <= $y3 && $y3 <= max($y1,$y2)}]
@@ -311,7 +322,71 @@ proc _segments_intersect {a1 a2 b1 b2} {
   return 0
 }
 
-# Helper function: Find closest point from a list to a target point
+proc _rectangles_overlap {rect1 rect2} {
+  set r1x1 [lindex $rect1 0]
+  set r1y1 [lindex $rect1 1]
+  set r1x2 [lindex $rect1 2]
+  set r1y2 [lindex $rect1 3]
+  
+  set r2x1 [lindex $rect2 0]
+  set r2y1 [lindex $rect2 1]
+  set r2x2 [lindex $rect2 2]
+  set r2y2 [lindex $rect2 3]
+  
+  if {$r1x1 > $r1x2} { set temp $r1x1; set r1x1 $r1x2; set r1x2 $temp }
+  if {$r1y1 > $r1y2} { set temp $r1y1; set r1y1 $r1y2; set r1y2 $temp }
+  if {$r2x1 > $r2x2} { set temp $r2x1; set r2x1 $r2x2; set r2x2 $temp }
+  if {$r2y1 > $r2y2} { set temp $r2y1; set r2y1 $r2y2; set r2y2 $temp }
+  
+  return [expr {($r1x1 < $r2x2 && $r1x2 > $r2x1 && $r1y1 < $r2y2 && $r1y2 > $r2y1)}]
+}
+
+proc _point_in_rect {x y rect} {
+  set rx1 [lindex $rect 0]
+  set ry1 [lindex $rect 1]
+  set rx2 [lindex $rect 2]
+  set ry2 [lindex $rect 3]
+  
+  if {$rx1 > $rx2} { set temp $rx1; set rx1 $rx2; set rx2 $temp }
+  if {$ry1 > $ry2} { set temp $ry1; set ry1 $ry2; set ry2 $temp }
+  
+  return [expr {($x >= $rx1 && $x <= $rx2) && ($y >= $ry1 && $y <= $ry2)}]
+}
+
+proc _line_intersects_rect {p1 p2 rect} {
+  set x1 [lindex $p1 0]
+  set y1 [lindex $p1 1]
+  set x2 [lindex $p2 0]
+  set y2 [lindex $p2 1]
+  
+  set rx1 [lindex $rect 0]
+  set ry1 [lindex $rect 1]
+  set rx2 [lindex $rect 2]
+  set ry2 [lindex $rect 3]
+  
+  if {$rx1 > $rx2} { set temp $rx1; set rx1 $rx2; set rx2 $temp }
+  if {$ry1 > $ry2} { set temp $ry1; set ry1 $ry2; set ry2 $temp }
+  
+  set rect_edges [list \
+    [list [list $rx1 $ry1] [list $rx2 $ry1]] \
+    [list [list $rx2 $ry1] [list $rx2 $ry2]] \
+    [list [list $rx2 $ry2] [list $rx1 $ry2]] \
+    [list [list $rx1 $ry2] [list $rx1 $ry1]] \
+  ]
+  
+  foreach edge $rect_edges {
+    if {[_segments_intersect [lindex $edge 0] [lindex $edge 1] $p1 $p2]} {
+      return 1
+    }
+  }
+  
+  if {[_point_in_rect $x1 $y1 $rect] && [_point_in_rect $x2 $y2 $rect]} {
+    return 1
+  }
+  
+  return 0
+}
+
 proc _find_closest_point {points target} {
   set tx [lindex $target 0]
   set ty [lindex $target 1]

@@ -15,10 +15,6 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   set stdcellExp         {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
   set startOfPath        {Point\s+} ; # end expression of launch timing path
   set endOfPath          {data arrival time} ; # end expression of launch timing path
-  set lineExpToSplitPath {^TE} ; # used to regexp
-  set stdcellExp         {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
-  set startOfPath        {Point\s+} ; # end expression of launch timing path
-  set endOfPath          {data arrival time} ; # end expression of launch timing path
   set modeOfConnect "whole_net" ; # whole_net|flight_line
   set ifWithArrow   1; # 1|0
   set colorsIndexLoopListsForNet {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
@@ -29,7 +25,11 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set evenNumberList [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp -startOfPath $startOfPath -endOfPath $endOfPath]
+  set evenNumberList [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp \
+                        -startOfPath $startOfPath -endOfPath $endOfPath]
+  set resultCmdsList [genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems -evenNumberList $evenNumberList -modeOfConnect $modeOfConnect -ifWithArrow $ifWithArrow \
+                        -colorsIndexLoopListsForNet $colorsIndexLoopListsForNet -colorsIndexLoopListsForInst $colorsIndexLoopListsForInst -indexOfColorsForNetInst $indexOfColorsForNetInst]
+  return $resultCmdsList
 }
 
 define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
@@ -41,7 +41,6 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-startOfPath "specify the start expression of timing path" AString string optional}
     {-endOfPath "specify the end expression of timing path" AString string optional}
     {-modeOfConnect "specify the type of eco" oneOfString one_of_string {optional value_type {values {whole_net flight_line}}}}
-    {-evenNumberList "specify inst to eco when type is add/delete" AList list optional}
     {-ifWithArrow "if using arrow on line" oneOfString one_of_string {optional value_type {values {1 0}}}}
     {-colorsIndexLoopListsForNet "specify the colors index loop lists for net color" AList list optional}
     {-colorsIndexLoopListsForInst "specify the colors index loop lists for inst color" AList list optional}
@@ -65,10 +64,6 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
 source ../packages/logic_AND_OR.package.tcl; # eo
 proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
   set evenNumberList     {} ; # must be even number list
-  set lineExpToSplitPath {^TE} ; # used to regexp
-  set stdcellExp         {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
-  set startOfPath        {Point\s+} ; # end expression of launch timing path
-  set endOfPath          {data arrival time} ; # end expression of launch timing path
   set modeOfConnect "whole_net" ; # whole_net|flight_line
   set ifWithArrow   1; # 1|0
   set colorsIndexLoopListsForNet {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items

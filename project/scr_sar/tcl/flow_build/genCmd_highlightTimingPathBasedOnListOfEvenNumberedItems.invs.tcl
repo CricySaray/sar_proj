@@ -55,6 +55,8 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
 proc genCmd_genMarkerAndTextOfPathDelay {args} {
   set evenNumberList {}
   set heightOfText 1 ; # um
+  set ifAddMarkersForPin 1 ; # 1|0
+  set color "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

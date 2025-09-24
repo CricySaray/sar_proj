@@ -67,10 +67,12 @@ source ./common/add_markers_and_text_for_point_list.common.tcl; # add_markers_an
 proc genCmd_genMarkersAndTextOfPathDelay {args} {
   set typeForMarkersAndText "add" ; # add|delete
   set evenNumberList        {}
+  set textList              {}
   set boxOfText             {} 
   set layerOfText           8 ; # routing layer name, can also use number
   set ifAddMarkersForPin    1 ; # 1|0
   set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
+  set markerShapeType       "STAR" ; # X|TICK|STAR
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -79,7 +81,20 @@ proc genCmd_genMarkersAndTextOfPathDelay {args} {
   if {![llength $evenNumberList]} {
     error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList) is empty!!!" 
   }
+  if {[llength $evenNumberList] != [llength $textList]} {
+    error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList)(num: [llength $evenNumberList]) and textList($textList)(num: [llength $textList])" 
+  }
   set locationFromPointToPointList [add_markers_and_text_for_point_list $evenNumberList]
+  set cmdsList [list ]
+  set i 0
+  foreach temp_list $locationFromPointToPointList {
+    incr i
+    lassign $temp_list from_to box
+    lassign $from_to temp_from temp_to
+    lappend cmdsList "add_gui_marker -color $color -pt $temp_to -type $markerShapeType -name $i" 
+    lappend cmdsList "add_gui_shape -layer $layerOfText -line \{$temp_from $temp_to\} -arrow"
+    lappend cmdsList "add_gui_text -layer $layerOfText -pt $temp_from -box \{$box\}"
+  }
 }
 
 define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \

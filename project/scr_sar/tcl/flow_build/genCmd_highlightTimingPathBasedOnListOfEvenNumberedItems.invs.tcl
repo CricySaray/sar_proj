@@ -1,6 +1,36 @@
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
+# date      : 2025/09/24 19:00:22 Wednesday
+# label     : gui_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : what?
+# return    : 
+# ref       : link url
+# --------------------------
+proc genCmd_highlightTimingPathBasedOnReportFile {args} {
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+  
+}
+
+define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
+  -info "gen cmd for highlighting timing path based on reprot file"\
+  -define_args {
+    {-reportTimingFile "specify the file name of report_timing" AString string optional}
+    {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
+    {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
+    {-startOfPath "specify the start expression of timing path" AString string optional}
+    {-endOfPath "specify the end expression of timing path" AString string optional}
+  }
+
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
 # date      : 2025/09/23 23:14:45 Tuesday
 # label     : gui_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
@@ -57,11 +87,6 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
 define_proc_arguments genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems \
   -info "gen cmd for highlighting timing path based on list of even-numbered items"\
   -define_args {
-    {-reportTimingFile "specify the file name of report_timing" AString string optional}
-    {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
-    {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
-    {-startOfPath "specify the start expression of timing path" AString string optional}
-    {-endOfPath "specify the end expression of timing path" AString string optional}
     {-modeOfConnect "specify the type of eco" oneOfString one_of_string {optional value_type {values {whole_net flight_line}}}}
     {-evenNumberList "specify inst to eco when type is add/delete" AList list optional}
     {-ifWithArrow "if using arrow on line" oneOfString one_of_string {optional value_type {values {1 0}}}}

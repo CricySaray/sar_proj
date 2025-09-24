@@ -49,7 +49,11 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   }]
   set splitedPinList [split_timing_path $purePinListWithSplieLine]
   set filteredPinList [lmap tempList $splitedPinList {
-    if {[llength $tempList] == 1} { continue } 
+    if {[llength $tempList] == 1} { continue } else {
+      if {[join [lrange [split [lindex $tempList 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1] "/"] 0 end-1] "/"]} {
+        set tempList [lrange $tempList 1 end] 
+      }
+    }
   }]
   return $splitedPinList
 }

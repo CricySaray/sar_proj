@@ -52,11 +52,14 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-indexOfColorsForNetInst "specify the index of Net and Inst color, it can get index with circle" AInt int optional}
   }
 
-proc genCmd_genMarkerAndTextOfPathDelay {args} {
-  set evenNumberList {}
-  set heightOfText 1 ; # um
-  set ifAddMarkersForPin 1 ; # 1|0
-  set color "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
+proc genCmd_genMarkersAndTextOfPathDelay {args} {
+  set typeForMarkersAndText "add" ; # add|delete
+  set evenNumberList        {}
+  set boxOfText             {} ; # "Box" and "height" are mutually exclusive. If both exist, "box" will be used with priority.
+  set heightOfText          1 ; # um
+  set layerOfText           8 ; # routing layer name, can also use number
+  set ifAddMarkersForPin    1 ; # 1|0
+  set color                 "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -65,10 +68,10 @@ proc genCmd_genMarkerAndTextOfPathDelay {args} {
   
 }
 
-define_proc_arguments genCmd_genMarkerAndTextOfPathDelay \
+define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \
   -info "gen cmd for generating markers and text of delay of path"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}
+    {-typeForMarkersAndText "specify the type of actions for markers and text" oneOfString one_of_string {required value_type {values {add delete}}}}
     {-inst "specify inst to eco when type is add/delete" AString string require}
     {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
   }

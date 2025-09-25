@@ -9,42 +9,51 @@
 # return    : cmds list
 # ref       : link url
 # --------------------------
+alias degui "delete_all_gui_object_and_highlight"
+proc delete_all_gui_object_and_highlight {} {
+  delete_gui_object -all
+  dehighlight -all
+}
 proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   # for genCmd_getPurePinOfPath_fromTimingPathReport
-  set reportTimingFile             ""
-  set ifAddMarkersAndText          1 ; # 1|0
-  set ifAddCellTypeOnTopOfInstRect 1
-  set lineExpToSplitPath           {^TE} ; # used to regexp
-  set stdcellExp                   {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
-  set startOfPath                  {Point\s+} ; # end expression of launch timing path
-  set endOfPath                    {data arrival time} ; # end expression of launch timing path
+  set reportTimingFile                    ""
+  set ifAddMarkersAndText                 1 ; # 1|0
+  set ifAddCellTypeOnTopOfInstRect        1
+  set ifAddNetLengthOnBottomOfDriverInst  1
+  set lineExpToSplitPath                  {^TE} ; # used to regexp
+  set stdcellExp                          {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
+  set startOfPath                         {Point\s+} ; # end expression of launch timing path
+  set endOfPath                           {data arrival time} ; # end expression of launch timing path
   # for genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems
-  set modeOfConnect                "whole_net" ; # whole_net|flight_line
-  set ifWithArrow                  1; # 1|0
-  set colorsIndexLoopListsForNet   {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
-  set colorsIndexLoopListsForInst  {33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 33 34 35 36} ; # 20 items
-  set layerOfText                  8
-  set indexOfPureNumberOnLine      "end-1"
+  set modeOfConnect                       "whole_net" ; # whole_net|flight_line
+  set ifWithArrow                         1; # 1|0
+  set colorsIndexLoopListsForNet          {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
+  set colorsIndexLoopListsForInst         {33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 33 34 35 36} ; # 20 items
+  set layerOfText                         8
+  set indexOfPureNumberOnLine             "end-1"
+  set indexOfAfterSplitOriginalLineList   "0"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set evenNumberLists_instName_instBox2_3_incrCellDelay [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath -stdcellExp $stdcellExp \
-                        -startOfPath $startOfPath -endOfPath $endOfPath]
-puts "point 1 : [lindex $evenNumberLists_instName_instBox2_3_incrCellDelay 1]"
+  set evenNumberLists_instName_instBox2_3_incrCellDelay [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath \
+                        -stdcellExp $stdcellExp -startOfPath $startOfPath -endOfPath $endOfPath -indexOfPureNumberOnLine $indexOfPureNumberOnLine \
+                        -indexOfAfterSplitOriginalLineList $indexOfAfterSplitOriginalLineList]
   set cmdsList [list]
   set i 0
   foreach tempEvenNumberList [lindex $evenNumberLists_instName_instBox2_3_incrCellDelay 0] {
     set tempCmdsList [genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems -evenNumberList $tempEvenNumberList -modeOfConnect $modeOfConnect -ifWithArrow $ifWithArrow \
                           -colorsIndexLoopListsForNet $colorsIndexLoopListsForNet -colorsIndexLoopListsForInst $colorsIndexLoopListsForInst -indexOfColorsForNetInst $i]
-    set tempMarkerCmdsList [list]
     set tempAddCellTypeOnTopOfInstRect [list]
     if {$ifAddCellTypeOnTopOfInstRect} {
       set tempAddCellTypeOnTopOfInstRect [genCmd_addCellTypeOnTopOfInstRect -evenNumberList $tempEvenNumberList -layerOfText $layerOfText]
     }
+    if {$ifAddNetLengthOnBottomOfDriverInst} {
+      set tempAddNetLengthOnBottomOfDriverInst [genCmd_addTextOfNetLengthOnBottomOfDriverInst -layerOfText $layerOfText -evenNumberList $tempEvenNumberList]
+    }
     incr i
-    lappend cmdsList {*}$tempCmdsList {*}$tempMarkerCmdsList {*}$tempAddCellTypeOnTopOfInstRect
+    lappend cmdsList {*}$tempCmdsList {*}$tempAddCellTypeOnTopOfInstRect {*}$tempAddNetLengthOnBottomOfDriverInst
   }
   if {$ifAddMarkersAndText} {
     foreach temp_instName_instBox2_3_incrCellDelay [lindex $evenNumberLists_instName_instBox2_3_incrCellDelay 1] {
@@ -70,6 +79,53 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-colorsIndexLoopListsForInst "specify the colors index loop lists for inst color" AList list optional}
     {-layerOfText "specify the layer of text that need add to" AString string optional}
     {-indexOfPureNumberOnLine "When the content in the 'line' becomes pure numbers (with non-numeric parts removed), the number of items in 'delay'" AString string optional}
+    {-indexOfAfterSplitOriginalLineList "specify the index of list after spliting original lines" AInt int optional}
+  }
+
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/09/25 12:54:25 Thursday
+# label     : gui_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : Obtain the shortest net length for a pin to reach the next pin based on the pin's name, and use the add_gui_text command to add text.
+# return    : cmds list
+# ref       : link url
+# --------------------------
+proc genCmd_addTextOfNetLengthOnBottomOfDriverInst {args} {
+  set layerOfText    8
+  set evenNumberList {}
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+  if {[llength $evenNumberList] && ![expr {[llength $evenNumberList] % 2}]} {
+    set cmdsList [list]
+    foreach {pin1 pin2} $evenNumberList {
+      set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e] 
+      set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e] 
+      if {$net1 == $net2 && $net1 != ""} {
+        set outNetLen [dict get [reportWirePath -start $pin1 -end $pin2 -tcl -no_output] total_length]
+        set inst1_rect {*}[dbget [dbget top.insts.name [join [lrange [split $pin1 "/"] 0 end-1] "/"] -p].box -e]
+        set inst1_rect_3_3 [lset inst1_rect end [expr {([lindex $inst1_rect 3] - [lindex $inst1_rect 1]) / 3 + [lindex $inst1_rect 1]}]]
+        lappend cmdsList "add_gui_text -layer $layerOfText -box \{$inst1_rect_3_3\} -no_bbox -label \"outLen:[format "%.1f" $outNetLen]\""
+      } else {
+        error "proc genCmd_addTextOfNetLengthOnBottomOfDriverInst: check your input : pin1($pin1) and pin2($pin2) of evenNumberList is not on same net!!!" 
+      }
+    }
+    return $cmdsList
+  } else {
+    error "proc genCmd_addTextOfNetLengthOnBottomOfDriverInst: check your input: evenNumberList($evenNumberList) is empty or is not even-number!!!" 
+  }
+}
+
+define_proc_arguments genCmd_addTextOfNetLengthOnBottomOfDriverInst \
+  -info "gen cmd for adding text of net length on center of net"\
+  -define_args {
+    {-layerOfText "specify the layer to add text" AString string optional}
+    {-evenNumberList "specify the list that is even-number" AList list optional}
   }
 
 #!/bin/tclsh
@@ -118,86 +174,6 @@ define_proc_arguments genCmd_addCellTypeOnTopOfInstRect \
   -define_args {
     {-evenNumberList "specify the even number list" AList list optional}
     {-layerOfText "specify the layer to add text" AString string optional}
-  }
-
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : 2025/09/24 20:27:30 Wednesday
-# label     : gui_proc
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
-#   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : Input a pin name list to obtain the positions and connections of the pins. Add markers and text at appropriate positions to label the path delay values.
-# return    : cmds list
-# ref       : link url
-# --------------------------
-source ./common/add_markers_and_text_for_point_list.common.tcl; # add_markers_and_text_for_point_list
-proc genCmd_genMarkersAndTextOfPathDelay {args} {
-  set typeForMarkersAndText  "add" ; # add|delete
-  set deleteTypes           {all} ; # all|shape|text|marker|selected
-  set evenNumberList         {}
-  set textList               {}
-  set minLengthOfLine        0.7
-  set maxLengthOfLine        6
-  set sizeOfText             {}
-  set layerOfText            8 ; # routing layer name, can also use number
-  set ifAddMarkersForPin     1 ; # 1|0
-  set color                  "cyan" ; # red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat
-  set markerShapeType        "STAR" ; # X|TICK|STAR
-  parse_proc_arguments -args $args opt
-  foreach arg [array names opt] {
-    regsub -- "-" $arg "" var
-    set $var $opt($arg)
-  }
-  if {[llength $deleteTypes] && $typeForMarkersAndText == "delete"} {
-    set all_deleteTypes {all shape text marker selected}
-    if {[any x $deleteTypes { expr {$x ni $all_deleteTypes} }]} {
-      error "proc genCmd_genMarkersAndTextOfPathDelay : check your input : deleteTypes($deleteTypes) have item that is not belong to list($all_deleteTypes)!!!"
-    }
-    foreach temp_type $deleteTypes {
-      lappend cmdsList "delete_gui_object [string cat {-} $temp_type]"
-    }
-  } elseif {$typeForMarkersAndText == "add"} {
-    if {![llength $evenNumberList]} {
-      error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList) is empty!!!" 
-    }
-    if {[llength $evenNumberList] != [llength $textList]} {
-      error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : evenNumberList($evenNumberList)(num: [llength $evenNumberList]) and textList($textList)(num: [llength $textList]) need equal!!!" 
-    }
-    set locationFromPointToPointList [add_markers_and_text_for_point_list $evenNumberList $minLengthOfLine $maxLengthOfLine $sizeOfText 0]
-    if {[llength $locationFromPointToPointList] != [llength $textList]} {
-      error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : list that get location and processed(num: [llength $evenNumberList]) and textList($textList)(num: [llength $textList]) need equal!!!" 
-    }
-    set cmdsList [list ]
-    set i 0
-    foreach temp_list $locationFromPointToPointList temp_text $textList {
-      incr i
-      lassign $temp_list from_to box
-      lassign $from_to temp_from temp_to
-      if {$ifAddMarkersForPin} {lappend cmdsList "add_gui_marker -color $color -pt $temp_to -type $markerShapeType -name $i"}
-      lappend cmdsList "add_gui_shape -layer $layerOfText -line \{$temp_from $temp_to\} -arrow"
-      lappend cmdsList "add_gui_text -layer $layerOfText -box \{$box\} -label $temp_text -no_bbox"
-    }
-  } else {
-    error "proc genCmd_genMarkersAndTextOfPathDelay: check your input : typeForMarkersAndText($typeForMarkersAndText) is only selected from 'add' and 'delete'!!!"
-  }
-  return $cmdsList
-}
-
-define_proc_arguments genCmd_genMarkersAndTextOfPathDelay \
-  -info "gen cmd for generating markers and text of delay of path"\
-  -define_args {
-    {-typeForMarkersAndText "specify the type of actions for markers and text" oneOfString one_of_string {optional value_type {values {add delete}}}}
-    {-deleteTypes "specify the types of 'delete gui'" AList list optional}
-    {-evenNumberList "specify the even number list consisted of points pt" AList list optional}
-    {-textList "specify the list of text that need add when type is 'add'" AList list optional}
-    {-minLengthOfLine "specify the min length of line that is used to add_line" AFloat float optional}
-    {-maxLengthOfLine "specify the max length of line that is used to add_line" AFloat float optional}
-    {-sizeOfText "specify the size of text, format: {width height}" AList list optional}
-    {-layerOfText "specify the layer of text that need add to" AString string optional}
-    {-ifAddMarkersForPin "if adding markers for pin" oneOfString one_of_string {optional value_type {values {0 1}}}}
-    {-color "specify the color of markers" oneOfString one_of_string {optional value_type {values {red blue green yellow magenta cyan pink orange brown purple violet teal olive gold maroon wheat}}}}
-    {-markerShapeType "specify the type of marker shape" oneOfString one_of_string {optional value_type {values {X TICK STAR}}}}
   }
 
 #!/bin/tclsh
@@ -275,12 +251,13 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems \
 # --------------------------
 source ./common/split_timing_path.common.tcl; # split_timing_path
 proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
-  set reportTimingFile        ""
-  set indexOfPureNumberOnLine "end-1"
-  set lineExpToSplitPath      {^TE} ; # used to regexp
-  set stdcellExp              {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
-  set startOfPath             {Point\s+} ; # end expression of launch timing path
-  set endOfPath               {data arrival time} ; # end expression of launch timing path
+  set reportTimingFile                  ""
+  set indexOfPureNumberOnLine           "end-1"
+  set indexOfAfterSplitOriginalLineList "0"
+  set lineExpToSplitPath                {^TE} ; # used to regexp
+  set stdcellExp                        {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
+  set startOfPath                       {Point\s+} ; # end expression of launch timing path
+  set endOfPath                         {data arrival time} ; # end expression of launch timing path
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -339,16 +316,39 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
         set tempList [lrange $tempList 1 end] 
       }
       if {[expr {[llength $tempList] % 2}]} {
-        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!" 
+        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
       }
       foreach {pin1 pin2} $tempList {
         set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
         set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
         if {$net1 == "" || $net2 == ""} {
-          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!!" 
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!! (in filteredPinList)" 
         }
         if {$net1 != $net2} {
-          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!!"
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!! (in filteredPinList)"
+        }
+      }
+    }
+    set temp $tempList
+  }]
+  set filteredOriginalLineList [lmap tempList $splitedOriginalList {
+    if {[llength $tempList] == 1} { continue } else {
+      if {[join [lrange [split [lindex $tempList 0 $indexOfAfterSplitOriginalLineList] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1 $indexOfAfterSplitOriginalLineList] "/"] 0 end-1] "/"]} {
+        set tempList [lrange $tempList 1 end]
+      }
+      if {[expr {[llength $tempList] % 2}]} {
+        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path(\n[join $tempList "\n - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredOriginalLineList)" 
+      }
+      foreach {line1 line2} $tempList {
+        set pin1 [lindex $line1 $indexOfAfterSplitOriginalLineList]
+        set pin2 [lindex $line2 $indexOfAfterSplitOriginalLineList]
+        set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
+        set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
+        if {$net1 == "" || $net2 == ""} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!!(in filteredOriginalLineList)" 
+        }
+        if {$net1 != $net2} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!!(in filteredOriginalLineList)"
         }
       }
     }
@@ -358,7 +358,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   set j 0
   foreach temp_sub_list $filteredPinList {
     foreach {pin1 pin2} $temp_sub_list {
-      set temp_line [lsearch -regexp -inline [lindex $splitedOriginalList $j] [subst -nocommands -nobackslashes {.*$pin1.*}]]
+      set temp_line [lsearch -regexp -inline [lindex $filteredOriginalLineList $j] [subst -nocommands -nobackslashes {.*$pin1.*}]]
       if {$temp_line == ""} {
         error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your input : pin1($pin1) can't find matched line in ([lindex $splitedOriginalList $j])!!!"
       }
@@ -391,6 +391,7 @@ define_proc_arguments genCmd_getPurePinOfPath_fromTimingPathReport \
   -define_args {
     {-reportTimingFile "specify the file name of report_timing" AString string optional}
     {-indexOfPureNumberOnLine "When the content in the 'line' becomes pure numbers (with non-numeric parts removed), the number of items in 'delay'" AString string optional}
+    {-indexOfAfterSplitOriginalLineList "specify the index of list after spliting original lines" AInt int optional}
     {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
     {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
     {-startOfPath "specify the start expression of timing path" AString string optional}

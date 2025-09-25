@@ -1,10 +1,9 @@
 # ----------------------
-
+# sar invs alias and other settings
 # ----------------------
-source ~/project/scr_sar/tcl/misc/gui_actions/to_eco_command_from_selected_obj_in_gui.invs.tcl
 
 if {[is_common_ui_mode]} {
-  alias te "to_eco_command_from_selected_obj_in_gui"
+  alias dim "gui_dim_foreground -light_level medium"
   alias li "get_db head.libCells.name"
   alias df "delete_filler -perfix "
 
@@ -38,7 +37,6 @@ if {[is_common_ui_mode]} {
   #alias er "ecoRoute"
   alias gp "get_property"
   alias rd "redirect"
-  alias m "man"
   alias seteco "setEcoMode -batchMode true -honorDontTouch false -honorDontUse false -updateTiming false -honorFixedStatus false -LEQCheck false -refinePlace false"
   alias setecoreset "setEcoMode -reset"
   alias eda "ecoDeleteRepeater"
@@ -63,13 +61,9 @@ if {[is_common_ui_mode]} {
   alias so "select_obj"
   proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
   alias dg "get_db"
-  alias s "source"
-  alias sa "source /home/pd_sar/.invs_alias.tcl"
-  alias g "gvim"
-  alias c "cd"
 
 } else {
-  alias te "to_eco_command_from_selected_obj_in_gui"
+  alias dim "gui_dim_foreground -lightness_level medium"
   alias li "dbget head.libCells.name"
   alias df "deleteFiller -perfix "
 
@@ -102,7 +96,6 @@ if {[is_common_ui_mode]} {
   #alias er "ecoRoute"
   alias gp "get_property"
   alias rd "redirect"
-  alias m "man"
   alias seteco "setEcoMode -batchMode true -honorDontTouch false -honorDontUse false -updateTiming false -honorFixedStatus false -LEQCheck false -refinePlace false"
   alias setecoreset "setEcoMode -reset"
   alias eda "ecoDeleteRepeater"
@@ -127,11 +120,13 @@ if {[is_common_ui_mode]} {
   alias so "select_obj"
   proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
   alias dg "dbget"
-  alias s "source"
-  alias sa "source /home/pd_sar/.invs_alias.tcl"
-  alias g "gvim"
-  alias c "cd"
 }
+# common
+alias s "source"
+alias sa "source /home/pd_sar/.invs_alias.tcl"
+alias g "gvim"
+alias c "cd"
+alias m "man"
 
 # --------------------------
 # default config for invs gui
@@ -149,10 +144,10 @@ if {[is_common_ui_mode]} {
   setLayerPreference node_layer -isVisible 0
   setLayerPreference M0 -isVisible 0
   setLayerPreference VIA0 -isVisible 0
-
   setDbGetMode -displayFormat table
-
 }
+# common setting for alias commands
+dim ; # dim foreground
 
 # --------------------------
 # internal variables of invs  
@@ -168,6 +163,81 @@ set sar "/backend/project/p100/pd/PNR/100P/d2d_ss/sar"
 # some proc using invs shell or for GUI
 # --------------------------
 # 
+
+alias gll "getLoaders_fromDriverPin"
+proc getLoaders_fromDriverPin {} {
+  set pin [dbget selected.name]
+  if {[dbget top.insts.instTerms.name $pin -e] != ""} {
+    set net [dbget [dbget top.insts.instTerms.name $pin -p].net.name] 
+    set inputTermsOnNet [dbget [dbget [dbget top.nets.name $net -p].instTerms.isInput 1 -p].name]
+  }
+  dehighlight -all
+  deselectAll
+  select_obj $inputTermsOnNet
+  highlight -index 4
+}
+
+alias gn "get_net"
+proc get_net {} {
+  set pin [dbget selected.name]
+  set net [get_object_name [get_nets -of $pin]]
+  foreach n $net {
+    puts "editDelete -net $n" 
+  }
+}
+
+alias tp "to_placeInstance" 
+proc to_placeInstance {} {
+  set insts_ptr [dbget selected.]
+  foreach inst_ptr $insts_ptr {
+    set name [dbget $inst_ptr.name]
+    set pt [dbget $inst_ptr.pt]
+    puts "placeInstance $name $pt" 
+  }
+}
+
+
+alias te "toeco"
+alias toeco "to_eco_command_from_selected_obj_in_gui"
+proc to_eco_command_from_selected_obj_in_gui {{objs ""}} {
+  if {$objs == ""} { set objs [dbget selected.name -e] }
+  if {$objs == ""} {
+    puts "error: no selected and no inputs!!!"
+  } else {
+    set insts ""
+    set terms ""
+    foreach obj $objs {
+      set inst [dbget top.insts.name $obj -e]
+      if {$inst != ""} {lappend insts $inst}
+      set term [dbget top.insts.instTerms.name $obj -e]
+      if {$term != ""} {lappend terms $term}
+    }
+    if {$insts != ""} {
+      foreach i $insts { puts "ecoChangeCell -cell [dbget [dbget top.insts.name $i -p].cell.name] -inst $i" } 
+    }
+    if {$terms != ""} {
+      foreach t $terms { puts "ecoAddRepeater -name sar_fix_what -cell what -term {$t} -loc { }"} 
+    }
+  }
+}
+
+alias gl "get_net_length"
+proc get_net_length {{net ""}} {
+  if {[lindex $net 0] == [lindex $net 0 0]} { ; # U001
+    set net [lindex $net 0]
+  }
+	if {$net == "0x0" || [dbget top.nets.name $net -e] == ""} { 
+		error "proc get_net_length: check your input: net($net) is not found!!!"
+	} else {
+    set wires_split_length [dbget [dbget top.nets.name $net -u -p].wires.length -e]
+    if {$wires_split_length == ""} { return 0 } ; # U002
+    set net_length 0
+    foreach wire_len $wires_split_length {
+      set net_length [expr $net_length + $wire_len]
+    }
+    return $net_length
+	}
+}
 
 alias sip "selectInstOfSelectedPin_invsGUI"
 # This proc has a defect

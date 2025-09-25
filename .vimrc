@@ -165,9 +165,6 @@ endif
 
 """ MAPPINGS --------------------------------------------------------------------
 
-" inserting info
-cnoremap dd !date +"%Y/%m/%d %H:%M:%S %A"
-
 " .vimrc config
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>

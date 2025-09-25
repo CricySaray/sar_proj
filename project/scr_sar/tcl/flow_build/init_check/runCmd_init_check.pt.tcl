@@ -12,6 +12,7 @@
 source ../../packages/timer.tcl; # start_timer end_timer
 source ../common/convert_file_to_list.common.tcl; # convert_file_to_list
 source ../../packages/every_any.package.tcl; # any
+source ../../packages/logic_AND_OR.package.tcl; # eo
 source ../batchRunCmd_forProc_genCmd.common.tcl; # batchRunCmd_forProc_genCmd
 source ../genCmd_setMaxTransition_forDataClock_byClockPeriod.pt.tcl; # genCmd_setMaxTransition_forDataClock_byClockPeriod
 source ./procs_of_init_check.pt.tcl; # init check procs
@@ -29,7 +30,7 @@ proc runCmd_init_check {args} {
   set scenario                                "func_setup_0p99v_cworst_m40c" ; # for example: func_setup_0p99v_cworst_m40c
   set designName                              "SC5019_TOP"
   set suffixOfResultRptFile                   "song"
-  set formatExpOfResultFile                   "<design>_<scenario>_<body>_<suffix>.rpt" ; # like: "initCheck_<design>_<suffix>.rpt"; optional <design>|<suffix>
+  set formatExpOfResultFile                   "<design>_<body>_<suffix>.rpt" ; # like: "initCheck_<design>_<suffix>.rpt"; optional <design>|<suffix>
   set bufferInverterCelltypeExpList           {{BUFFD*BWP*} {INVD*BWP*}}
   set resultDir                               "./"
 
@@ -52,41 +53,42 @@ proc runCmd_init_check {args} {
   }
   set tempStepIndexOfCmd $stepIndexOfRunCmd
   try {
+    set resultScenarioDir "$resultDir/$scenario"
+    set optionsOfFormatExp [list "<design>" "<suffix>" "<scenario>" "<body>"]
+    set stringname_of_formatExp [regexp -all -inline {<\w+>} $formatExpOfResultFile]
+    set varname_of_formatExp [lmap temp $stringname_of_formatExp { regsub {>|<} $temp ""  }]
+    set rawRptFileName $formatExpOfResultFile
+    set mapString [list <design> $designName <suffix> $suffixOfResultRptFile <scenario> $scenario]
+    foreach temp_varname [lsearch -not -all -inline -exact $varname_of_formatExp "body"] {
+      set rawRptFileName [string map $mapString $rawRptFileName]
+    }
     if {$tempStepIndexOfCmd == 0} {
       if {![file isdirectory $resultDir]} {
         error "proc runCmd_init_check: check your result dir($resultDir), is not exist!!!"
       }
-      set resultScenarioDir "$resultDir/$scenario"
-      set optionsOfFormatExp [list "<design>" "<suffix>" "<scenario>" "<body>"]
       # check input correction
       if {![file isfile $dbListFile]} {
         error "proc genCmd_init_check: check your input: dbListFile($dbListFile) is not found!!!" 
       }
-      set stringname_of_formatExp [regexp -all -inline {<\w+>} $formatExpOfResultFile]
       if {$formatExpOfResultFile == "" || ![every x $stringname_of_formatExp { expr {$x in $optionsOfFormatExp}}]} {
         error "proc genCmd_init_check: check your input: formatExpOfResultFile($formatExpOfResultFile) is not any option of list($optionsOfFormatExp) !!!"
-      }
-      set varname_of_formatExp [lmap temp $stringname_of_formatExp { regsub {>|<} $temp ""  }]
-      set rawRptFileName $formatExpOfResultFile
-      set mapString [list design $designName suffix $suffixOfResultRptFile scenario $scenario]
-      foreach temp_varname [lsearch -not -all -inline -exact $varname_of_formatExp "body"] {
-        set rawRptFileName [string map $mapString $rawRptFileName]
       }
       # NOTICE: Because the `uplevel` command is used along with the `subst` command for variable substitution in strings, issues arise during program execution 
       # due to the impact of subcommands such as `list` in expressions like `set temp [list "test" "is" "now"]`. To address this, a unified approach is 
       # adopted: define specific variables outside of `uplevel`, then redefine variables with the same name inside `uplevel` using the format `set testVar 
       # $testVar`. This method avoids executing subcommands within `uplevel` and prevents unexpected errors, as the scopes of these variables differ.
+      # NOTICE: Use the subst command with caution while using the uplevel command.
       uplevel #0 [subst {
         set resultScenarioDir "$resultDir/$scenario"
         exec mkdir -p $resultScenarioDir
-        set optionsOfFormatExp $optionsOfFormatExp
-        set stringname_of_formatExp $stringname_of_formatExp
+        set optionsOfFormatExp "$optionsOfFormatExp"
+        set stringname_of_formatExp "$stringname_of_formatExp"
         set_host_options -max_cores $maxCores
         set sh_message_limit $maxMessageLimit
         if {$ifSouchUsesSearchPath} { set sh_source_uses_search_path true } else { set sh_source_uses_search_path false }
-        set varname_of_formatExp $varname_of_formatExp
-        set mapString $mapString
-        set rawRptFileName $rawRptFileName
+        set varname_of_formatExp "$varname_of_formatExp"
+        set mapString "$mapString"
+        set rawRptFileName "$rawRptFileName"
       }]
       incr tempStepIndexOfCmd 1  ; # == 1
     }
@@ -95,14 +97,14 @@ proc runCmd_init_check {args} {
       start_timer
       uplevel #0 [list start_timer]
       set link_library [convert_file_to_list $dbListFile]
-      uplevel #0 [list set link_library $link_library]
+      uplevel #0 [list set link_library "$link_library"]
       incr tempStepIndexOfCmd 1 ; # == 2
     }
     if {$tempStepIndexOfCmd == 2} {
       uplevel #0 [subst {
-        foreach tempNetlist $netlistFiles {
-          puts " - > Reading Netlist: $tempNetlist ..."
-          read_verilog $tempNetlist 
+        foreach tempNetlist "$netlistFiles" {
+          puts " - > Reading Netlist: \$tempNetlist ..."
+          read_verilog \$tempNetlist 
         }
         current_design $designName
       }]
@@ -117,9 +119,9 @@ proc runCmd_init_check {args} {
     }
     if {$tempStepIndexOfCmd == 4} {
       uplevel #0 [subst {
-        foreach tempSdc $sdcFiles {
-          puts " - > Reading sdc file: $tempSdc"
-          read_sdc $tempSdc
+        foreach tempSdc "$sdcFiles" {
+          puts " - > Reading sdc file: \$tempSdc"
+          read_sdc \$tempSdc
         }
       }]
       incr tempStepIndexOfCmd 1 ; # == 5
@@ -129,14 +131,11 @@ proc runCmd_init_check {args} {
       set cmdsList_ofMaxTransition [genCmd_setMaxTransition_forDataClock_byClockPeriod -ratioOfClockWhenSetMaxTranForClock $ratioOfClockWhenSetMaxTranForClock -ratioOfClockWhenSetMaxTranForData $ratioOfClockWhenSetMaxTranForData \
         -ratioOfLibSetDefaultMaxTransitionOfData $ratioOfLibSetDefaultMaxTransitionOfData -userSetClockMaxTransition $userSetClockMaxTransition -userSetDataMaxTransition $userSetDataMaxTransition \
         -dataDefaultMaxTransitionInLibSet $dataDefaultMaxTransitionInLibSet -extraDerateForClock $extraDerateForClock -extraDerateForData $extraDerateForData]
-      uplevel #0 [subst {
-        set cmdsList_ofMaxTransition $cmdsList_ofMaxTransition
-        if {$cmdsList_ofMaxTransition != ""} {
-          batchRunCmd_forProc_genCmd $cmdsList_ofMaxTransition
-        } else {
-          puts " - > NOTICE: ERROR: have no any cmd of set_max_transition!!! check it!!!"
-        }
-      }]
+      if {$cmdsList_ofMaxTransition != ""} {
+        uplevel #0 [list batchRunCmd_forProc_genCmd $cmdsList_ofMaxTransition]
+      } else {
+        puts " - > NOTICE: ERROR: have no any cmd of set_max_transition!!! check it!!!"
+      }
       incr tempStepIndexOfCmd 1 ; # == 6
     }
     if {$tempStepIndexOfCmd == 6} {
@@ -152,50 +151,52 @@ proc runCmd_init_check {args} {
       incr tempStepIndexOfCmd 1 ; # == 8
     }
     if {$tempStepIndexOfCmd == 8} {
-      uplevel #0 [subst {
-        foreach_in_collection itr [get_nets -quiet -hier -filter "number_of_leaf_loads > 50" -top_net_of_hierarchical_group] {
-          if {[sizeof [get_pins -q -of [get_nets $itr]  -leaf]] > 0} {
-            set_annotated_delay -net 0.05 -load_delay net -from [get_pins -of [get_nets $itr] -leaf]
-            set_annotated_delay -net 0.05 -load_delay cell -from [get_pins -of [get_nets $itr] -leaf]
+      set filterBufInvExp [subst -nobackslashes {ref_name =~ [join $bufferInverterCelltypeExpList " || ref_name =~ " ]}]
+      uplevel #0 [subst -nocommands {
+        # !!! notice: have no option: -top_net_of_hierarchical_group
+        foreach_in_collection itr [get_nets -quiet -hier -filter "number_of_leaf_loads > 50"] {
+          if {[sizeof [get_pins -q -of [get_nets \$itr]  -leaf]] > 0} {
+            set_annotated_delay -net 0.05 -load_delay net -from [get_pins -of [get_nets \$itr] -leaf]
+            set_annotated_delay -net 0.05 -load_delay cell -from [get_pins -of [get_nets \$itr] -leaf]
           }
-          if {[sizeof [get_pins -q -of [get_nets $itr] -filter "direction == out" -leaf]] > 0} {
-            set_annotated_delay -net 0.01 -load_delay net -from [get_pins -of [get_nets $itr] -filter "direction == out" -leaf]
-            set_annotated_delay -net 0.01 -load_delay cell -from [get_pins -of [get_nets $itr] -filter "direction == out" -leaf]
+          if {[sizeof [get_pins -q -of [get_nets \$itr] -filter "direction == out" -leaf]] > 0} {
+            set_annotated_delay -net 0.01 -load_delay net -from [get_pins -of [get_nets \$itr] -filter "direction == out" -leaf]
+            set_annotated_delay -net 0.01 -load_delay cell -from [get_pins -of [get_nets \$itr] -filter "direction == out" -leaf]
           }
         }
-        set filterBufInvExp [subst -nobackslashes {ref_name =~ [join $bufferInverterCelltypeExpList " || ref_name =~ " ]}]
-        foreach_in_collection itr [get_cells -quiet -hier -filter "$filterBufInvExp" -top_net_of_hierarchical_group] {
-          if {[sizeof [get_pins -q -of [get_nets $itr] -filter "direction == out"  -leaf]] > 0} {
-            set_annotated_delay -net 0.01 -load_delay cell -from [get_pins -of [get_nets $itr] -filter "direction == out" -leaf]
+        set filterBufInvExp "$filterBufInvExp"
+        foreach_in_collection itr [get_cells -quiet -hier -filter "$filterBufInvExp"] {
+          if {[sizeof [get_pins -q -of [get_nets \$itr] -filter "direction == out"  -leaf]] > 0} {
+            set_annotated_delay -net 0.01 -load_delay cell -from [get_pins -of [get_nets \$itr] -filter "direction == out" -leaf]
           }
         }
       }]
       incr tempStepIndexOfCmd 1 ; # == 9
     }
     if {$tempStepIndexOfCmd == 9} {
-      uplevel #0 [list save_session $resultScenarioDir/[string map $mapString [join [lsearch -not -all -inline -exact $stringname_of_formatExp "<body>"] "_"]].session]
+      uplevel #0 [list save_session $resultScenarioDir/[string map $mapString [join [lsearch -not -all -inline -exact "$stringname_of_formatExp" "<body>"] "_"]].session]
       incr tempStepIndexOfCmd 1 ; # == 10
     }
     if {$tempStepIndexOfCmd == 10} {
-      uplevel #0 [subst {
+      uplevel #0 [subst -nocommands {
         set timing_check_defaults {generated_clocks no_input_delay unconstrained_endpoints no_clock loops}
-        redirect {check_timing -verbose} > $resultScenarioDir/[string map [list body "check_timing"] $rawRptFileName]
-        redirect {report_global_timing} > $resultScenarioDir/[string map [list body "global_timing"] $rawRptFileName]
-        redirect {report_timing -transition_time -nets -derate -delay_type max -slack_lesser_than 0 -nosplit -significant_digits 3 -max_path 100000} > $resultScenarioDir/[string map [list body "setup_timing"] $rawRptFileName]
-        redirect {report_min_pulse_width -crosstalk_delta -all_violators -significant_digits 3 -nosplit -path_type full_clock_expanded -input_pins} > $resultScenarioDir/[string map [list body "min_pulse"] $rawRptFileName]
+        redirect  $resultScenarioDir/[string map [list <body> "check_timing"] $rawRptFileName] {check_timing -verbose}
+        redirect  $resultScenarioDir/[string map [list <body> "global_timing"] $rawRptFileName] {report_global_timing}
+        redirect  $resultScenarioDir/[string map [list <body> "setup_timing"] $rawRptFileName] {report_timing -transition_time -nets -derate -delay_type max -slack_lesser_than 0 -nosplit -significant_digits 3 -max_path 100000}
+        redirect  $resultScenarioDir/[string map [list <body> "min_pulse"] $rawRptFileName] {report_min_pulse_width -crosstalk_delta -all_violators -significant_digits 3 -nosplit -path_type full_clock_expanded -input_pins}
         
-        redirect {report_design_status} > $resultScenarioDir/[string map [list body "design_states"] $rawRptFileName]
-        redirect {report_cell_status} > $resultScenarioDir/[string map [list body "cell_status"] $rawRptFileName]
-        redirect {report_floating_pins} > $resultScenarioDir/[string map [list body "floating_pins"] $rawRptFileName]
-        redirect {report_net_status} > $resultScenarioDir/[string map [list body "net_status"] $rawRptFileName]
-        redirect {report_port_status} > $resultScenarioDir/[string map [list body "port_status"] $rawRptFileName]
-        redirect {report_clock_status} > $resultScenarioDir/[string map [list body "clock_status"] $rawRptFileName]
-        redirect {report_dont_use_status $dontUseCellsRegExpList} > $resultScenarioDir/[string map [list body "dont_use_status"] $rawRptFileName]
-        redirect {report_vt_usage} > $resultScenarioDir/[string map [list body "vt_usage"] $rawRptFileName]
-        redirect {check_memory_info} > $resultScenarioDir/[string map [list body "memory_info"] $rawRptFileName]
-        redirect {report_asyn_status} > $resultScenarioDir/[string map [list body "async"] $rawRptFileName]
-        redirect {report_dont_touch_status} > $resultScenarioDir/[string map [list body "dont_touch"] $rawRptFileName]
-        redirect {report_dft_status} > $resultScenarioDir/[string map [list body "DFT_status"] $rawRptFileName]
+        redirect  $resultScenarioDir/[string map [list <body> "design_states"] $rawRptFileName] {report_design_status}
+        redirect  $resultScenarioDir/[string map [list <body> "cell_status"] $rawRptFileName] {report_cell_status}
+        redirect  $resultScenarioDir/[string map [list <body> "floating_pins"] $rawRptFileName] {report_floating_pins}
+        redirect  $resultScenarioDir/[string map [list <body> "net_status"] $rawRptFileName] {report_net_status}
+        redirect  $resultScenarioDir/[string map [list <body> "port_status"] $rawRptFileName] {report_port_status}
+        redirect  $resultScenarioDir/[string map [list <body> "clock_status"] $rawRptFileName] {report_clock_status}
+        redirect  $resultScenarioDir/[string map [list <body> "dont_use_status"] $rawRptFileName] {report_dont_use_status $dontUseCellsRegExpList}
+        redirect  $resultScenarioDir/[string map [list <body> "vt_usage"] $rawRptFileName] {report_vt_usage}
+        redirect  $resultScenarioDir/[string map [list <body> "memory_info"] $rawRptFileName] {check_memory_info}
+        redirect  $resultScenarioDir/[string map [list <body> "async"] $rawRptFileName] {report_asyn_status}
+        redirect  $resultScenarioDir/[string map [list <body> "dont_touch"] $rawRptFileName] {report_dont_touch_status}
+        redirect  $resultScenarioDir/[string map [list <body> "DFT_status"] $rawRptFileName] {report_dft_status}
       }]
       incr tempStepIndexOfCmd 1 ; # == 11
     }

@@ -7,20 +7,23 @@
 # descrip   : This proc automatically generates standardized file header comments with calling procedure name, author, 
 #             timestamp, description, and usage, featuring aligned labels and auto-wrapped long text. It uses a loop 
 #             to process comment fields, enabling easy extension with new labels.
+# update    : 2025/09/25 22:06:09 Thursday
+#             Add a $ifOnlyPutsNotDumpToFile parameter. If this parameter is set to 1, only use puts to output the information, and do not write the information into the file specified by fileID.
 # return    : provides consistent documentation of file origins and usage, improving code clarity and maintainability.
 # ref       : link url
 # --------------------------
 alias sus "subst -nocommands -nobackslashes"
 proc add_file_header {args} {
-  set fileID         ""
-  set proc_name      [lindex [info level 1] 0]
-  set author         "sar song"
-  set date 			     "auto"
-  set descrip        "None"
-  set usage          "None"
-  set line_width     150
-  set splitLineWidth 36
-  set tee            0
+  set fileID                  ""
+  set proc_name               [lindex [info level 1] 0]
+  set author                  "sar song"
+  set date 			              "auto"
+  set descrip                 "None"
+  set usage                   "None"
+  set line_width              150
+  set splitLineWidth          36
+  set tee                     0
+  set ifOnlyPutsNotDumpToFile 1
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -78,7 +81,7 @@ proc add_file_header {args} {
     return $wrapped
   }
   # Write top separator with optimal visual length
-  puts $fileID "# [string repeat "-" $splitLineWidth]"
+  puts [eo $ifOnlyPutsNotDumpToFile $fileID ""] "# [string repeat "-" $splitLineWidth]"
   if {$tee} {
     puts "# [string repeat "-" $splitLineWidth]"
   }
@@ -91,7 +94,7 @@ proc add_file_header {args} {
     set indent [string repeat " " $spaces]
     if {$wrap_needed} {
       # Handle fields that need text wrapping
-      puts -nonewline $fileID "# $indent$label :"
+      puts -nonewline [eo $ifOnlyPutsNotDumpToFile $fileID ""] "# $indent$label :"
       if {$tee} {
         puts -nonewline "# $indent$label :"
       }
@@ -102,12 +105,12 @@ proc add_file_header {args} {
       foreach line $wrapped_text {
         incr firstLine
         if {$firstLine == 1} {
-          puts $fileID " $line"
+          puts [eo $ifOnlyPutsNotDumpToFile $fileID ""] " $line"
           if {$tee} {
             puts " $line"
           }
         } else {
-          puts $fileID "# $text_indent$line"
+          puts [eo $ifOnlyPutsNotDumpToFile $fileID ""] "# $text_indent$line"
           if {$tee} {
             puts "# $text_indent$line"
           }
@@ -115,15 +118,15 @@ proc add_file_header {args} {
       }
     } else {
       # Handle fields with single-line values
-      puts $fileID "# $indent$label : $value"
+      puts [eo $ifOnlyPutsNotDumpToFile $fileID ""] "# $indent$label : $value"
       if {$tee} {
         puts "# $indent$label : $value"
       }
     }
   }
   # Write bottom separator
-  puts $fileID "# [string repeat "-" $splitLineWidth]"
-  puts $fileID ""
+  puts [eo $ifOnlyPutsNotDumpToFile $fileID ""] "# [string repeat "-" $splitLineWidth]"
+  puts [eo $ifOnlyPutsNotDumpToFile $fileID ""] ""
   if {$tee} {
     puts "# [string repeat "-" $splitLineWidth]"
     puts ""
@@ -133,7 +136,11 @@ proc add_file_header {args} {
   rename wrap_text ""
 }
 
-define_proc_arguments add_file_header \
+[if {[catch {is_common_ui_mode} errInformation]} {
+  set temp define_proc_attributes
+} else {
+  set temp define_proc_arguments
+}] add_file_header \
   -info "add file header"\
   -define_args {
     {-fileID "specify fileID, which you need write to" AString string required}
@@ -145,5 +152,6 @@ define_proc_arguments add_file_header \
     {-line_width "specify the max width of every line" AInt int optional}
     {-splitLineWidth "specify the fixed width of split line" AInt int optional}
     {-tee "1: will print on window and to file; 0: only print to file" "" boolean optional}
+    {-ifOnlyPutsNotDumpToFile "if only puts message, but not dump to file" "" boolean optional}
   }
 

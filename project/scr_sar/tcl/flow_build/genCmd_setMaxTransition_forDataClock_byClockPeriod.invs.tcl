@@ -9,7 +9,7 @@
 # return    : cmds list
 # ref       : link url
 # --------------------------
-proc genCmd_setMaxTransition_forDataClock_byClockPeriod_pt {args} {
+proc genCmd_setMaxTransition_forDataClock_byClockPeriod_invs {args} {
   set ratioOfClockWhenSetMaxTranForClock      0.167 ; # cycle ratio of the clock when setting the clock max transition. 1 / 6
   set ratioOfClockWhenSetMaxTranForData       0.33 ; # cycle ratio of the clock when setting the clock max transition. 1 / 3
   set userSetClockMaxTransition               150  ; # ps
@@ -24,8 +24,8 @@ proc genCmd_setMaxTransition_forDataClock_byClockPeriod_pt {args} {
     set $var $opt($arg)
   }
   foreach_in_collection clk_itr [all_clocks] {
-    set clk_name [get_attribute $clk_itr full_name]
-    set clk_period [get_attribute $clk_itr period -quiet]
+    set clk_name [lsort -u [get_property $clk_itr full_name]]
+    set clk_period [lsort -u [get_property $clk_itr period -quiet]]
     if {$clk_period != ""} {
       set clk_arr($clk_name) $clk_period 
     } 
@@ -38,7 +38,7 @@ proc genCmd_setMaxTransition_forDataClock_byClockPeriod_pt {args} {
     set minValue_of_transition_clock [expr min($ratioed_of_clock_period_for_clock, $userSetClockMaxTransition)]
     set strict_min_of_transition_clock [expr $minValue_of_transition_clock - $extraDerateForClock]
     set maxTransitionForClock [expr $strict_min_of_transition_clock / 1000.0] ; # ns
-    lappend clock_max_transition_cmdsList "set_max_transition $maxTransitionForClock -clock_path [get_object_name [get_clocks $name]]"
+    lappend clock_max_transition_cmdsList "set_max_transition $maxTransitionForClock -clock_path [lsort -u [get_object_name [get_clocks $name]]]"
   }
   # data
   foreach {name period} [lsort -stride 2 -index 1 -real -decreasing [array get clk_arr]] {
@@ -47,13 +47,13 @@ proc genCmd_setMaxTransition_forDataClock_byClockPeriod_pt {args} {
     set minValue_of_transition_data [expr min($ratioed_of_default_max_transition_of_std_cell_lib, $ratioed_of_clock_period_for_data, $userSetDataMaxTransition)]
     set strict_min_of_transition_clock [expr $minValue_of_transition_data - $extraDerateForClock]
     set maxTransitionForData [expr $strict_min_of_transition_clock / 1000.0] ; # ns
-    lappend data_max_transition_cmdsList "set_max_transition $maxTransitionForData -data_path [get_object_name [get_clocks $name]]"
+    lappend data_max_transition_cmdsList "set_max_transition $maxTransitionForData -data_path [lsort -u [get_object_name [get_clocks $name]]]"
   }
   return [concat $clock_max_transition_cmdsList $data_max_transition_cmdsList]
 }
 
-define_proc_attributes genCmd_setMaxTransition_forDataClock_byClockPeriod_pt \
-  -info "gen cmd for set_max_transition on PT by clock period, it will return the min value of max_transition"\
+define_proc_arguments genCmd_setMaxTransition_forDataClock_byClockPeriod_invs \
+  -info "gen cmd for set_max_transition on invs by clock period, it will return the min value of max_transition"\
   -define_args {
     {-ratioOfClockWhenSetMaxTranForClock "specify the ratio of clock period when set max transition for clock path" AFloat float optional}
     {-ratioOfClockWhenSetMaxTranForData "specify the ratio of clock period when set max transition for data path" AFloat float optional}

@@ -53,6 +53,7 @@ if {[is_common_ui_mode]} {
   alias zs "gui_zoom -selected"
   alias ds "deselect_obj -all"
   alias so "select_obj"
+  alias sr "select_routes"
   proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
   alias dg "get_db"
 

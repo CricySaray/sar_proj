@@ -627,7 +627,7 @@ inoremap <TAB> <c-r>=SkipPair()<CR>
 command! -nargs=0 TableOfVimrc :execute 'normal! :v/^""" [A-Z]\+/d<CR>'
 " Automatically load custom dictionary for automatic completion function
 "		you can get completion using ctrl x + ctrl k
-autocmd FileType tcl set dictionary=~/.vim/dict/invs_commands.dict,~/.vim/dict/invs_options_of_command.dict,~/.vim/dict/pt_command_list.dict,~/.vim/dict/invs_dbxxx_commands.dict,~/.vim/dict/PT_variables_and_attributes_2023_12.dict
+autocmd FileType tcl set dictionary=~/.vim/dict/invs_commands.dict,~/.vim/dict/invs_options_of_command.dict,~/.vim/dict/pt_command_list.dict,~/.vim/dict/invs_dbxxx_commands.dict,~/.vim/dict/PT_variables_and_attributes_2023_12.dict,~/.vim/dict/invs_commands_common_ui_22.12.dict,~/.vim/dict/invs_options_of_command_common_ui_22.12.dict
 
 """ STATUS LINE CONFIG ----------------------------------------------------------
 

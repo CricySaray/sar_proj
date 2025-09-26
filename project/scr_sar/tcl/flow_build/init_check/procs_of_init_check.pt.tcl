@@ -24,7 +24,7 @@ proc report_design_status {} {
   add_file_header -author "David yuan" -ifOnlyPutsNotDumpToFile -descrip "design.uniquify"
   set designIsUniquify 0
   set design_name [get_object_name [current_design]]
-  foreach hinst [lsort -u -dict -incr [get_attribute [get_cells -quiet * -hierarchical -filter "is_hierarchical==true"] ref_name]] {
+  foreach hinst [lsort -unique -dict -incr [get_attribute [get_cells -quiet * -hierarchical -filter "is_hierarchical==true"] ref_name]] {
     if {![regexp "$design_name" $hinst]} {
       puts "$hinst is not uniquify by \'$design_name\'"
       incr designIsUniquify 1
@@ -40,27 +40,36 @@ proc report_design_status {} {
     set cell_num [sizeof [get_cells * -quiet -hier -filter "ref_name=~$ptn"]]
     set high_tr_cell_num [expr $high_tr_cell_num + $cell_num]
   }
-  set highTRCellRatio [format "%5.3f" [expr $high_tr_cell_num*100.0/$totalInstances]]
-  set ratio_limit 25
-  set num 2
-  set area [lindex [lsort -u -incr -real [get_attribute [get_lib_cells */* -filter "number_of_pins==$num"] area]] 0]
-  set ratio_limit  [format "%.2f" [expr $num/$area]]
-
-  set highPinDensityNum 0
-  foreach libc [lsort -u [get_attribute [get_cells -quiet -hierarchical * -filter "is_hierarchical==false&&is_combinational==true&&number_of_pins>2&&number_of_pins<25"] ref_name]] {
-    set cell_area [lsort -u [get_attribute [get_lib_cells */$libc] area]]
-    set cell_pins [lsort -u [get_attribute [get_lib_cells */$libc] number_of_pins]]
-    set pinDensity [expr $cell_pins/$cell_area]
-    if {$pinDensity > $ratio_limit} {
-      set cell_num [sizeof [get_cells -quiet * -hier -filter "ref_name==$libc"]]
-      set highPinDensityNum [expr $highPinDensityNum + $cell_num]
-    }
+  if {$totalInstances == 0} { set highTRCellRatio 0.0 } else {
+    set highTRCellRatio [format "%5.3f" [expr $high_tr_cell_num*100.0/$totalInstances]]
   }
-  set totalInstances [sizeof [get_cells -quiet * -hier -filter "is_hierarchical==false&&number_of_pins>2&&number_of_pins<25"]]
-  set hpinDNRatio [format "%5.2f" [expr $highPinDensityNum*100.0/$totalInstances]]
-  set maxTrans [get_attribute [current_design] max_transition]
-  set maxFanout [get_attribute [current_design] max_fanout]
-  set maxCap [get_attribute [current_design] max_capacitance]
+  set ratio_limit 25
+  set num 2 ; # can't be zero
+  set area_raw [lsort -u -incr -real [get_attribute [get_lib_cells */* -filter "number_of_pins==$num"] area]]
+  if {$area_raw != ""} {
+    set area [lindex $area_raw 0]
+    set ratio_limit  [format "%.2f" [expr $num/$area]]
+
+    set highPinDensityNum 0
+    foreach libc [lsort -u [get_attribute [get_cells -quiet -hierarchical * -filter "is_hierarchical==false&&is_combinational==true&&number_of_pins>2&&number_of_pins<25"] ref_name]] {
+      set cell_area [lsort -u [get_attribute [get_lib_cells */$libc] area]]
+      set cell_pins [lsort -u [get_attribute [get_lib_cells */$libc] number_of_pins]]
+      set pinDensity [expr $cell_pins/$cell_area]
+      if {$pinDensity > $ratio_limit} {
+        set cell_num [sizeof [get_cells -quiet * -hier -filter "ref_name==$libc"]]
+        set highPinDensityNum [expr $highPinDensityNum + $cell_num]
+      }
+    }
+    set totalInstances [sizeof [get_cells -quiet * -hier -filter "is_hierarchical==false&&number_of_pins>2&&number_of_pins<25"]]
+    if {$totalInstances == 0} { set hpinDNRatio 0.0 } else {
+      set hpinDNRatio [format "%5.2f" [expr $highPinDensityNum*100.0/$totalInstances]]
+    }
+    set maxTrans [get_attribute [current_design] max_transition]
+    set maxFanout [get_attribute [current_design] max_fanout]
+    set maxCap [get_attribute [current_design] max_capacitance]
+  } else {
+    puts "# have no content of \$area, check it!!!"
+  }
 }
 
 proc report_cell_status {} {
@@ -194,8 +203,12 @@ proc report_cell_status {} {
   set all_sb_cells  [sizeof [get_cells -quiet $all_dffs -filter "ref_name !~ *2W_* && ref_name !~ *4W_* && ref_name !~ *6W_* && ref_name !~ *8W_*"]]
   set all_mb_cells [expr $all_mb2*2+$all_mb4*4+$all_mb6*6+$all_mb8*8]
   set all_sb_num [expr $all_mb_cells + $all_sb_cells]
-  set mbRatio [expr $all_mb_cells*100.0/$all_sb_num]
-  set mbRatio [format "%5.2f" $mbRatio]
+  if {$all_sb_num != 0} {
+    set mbRatio [expr $all_mb_cells*100.0/$all_sb_num]
+    set mbRatio [format "%5.2f" $mbRatio]
+  } else {
+    puts "# \$all_sb_num == 0, can't calculate!!! check it!!!" 
+  }
   add_file_header -author "David yuan" -ifOnlyPutsNotDumpToFile -descrip "cell type"
   set w1 20; set w2 30; set w3 30; set w4 30
   set splitline "+[string repeat - $w1]+[string repeat - $w2]+[string repeat - $w3]+[string repeat - $w4]+"
@@ -570,13 +583,15 @@ proc report_dont_use_status {{dont_use_list ""}} {
         lappend have_dont_use $number
       }
     }
-    puts "# Detail Report : "
+    puts "\n\n"
+    puts "Detail Report : "
     foreach {ptn number} $have_dont_use {
       puts [format "# %-48s= %-d :" $ptn $number]
       foreach_in_collection cell [get_cells -hierarchical -filter "ref_name =~ $ptn" -quiet] {
         set name  [get_object_name $cell]
         puts $name
       }
+      puts ""
     }
   } else {
     puts "# have no content for \$dont_use_list"

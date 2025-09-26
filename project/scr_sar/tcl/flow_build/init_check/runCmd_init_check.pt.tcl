@@ -180,22 +180,37 @@ proc runCmd_init_check {args} {
     if {$tempStepIndexOfCmd == 10} {
       uplevel #0 [subst -nocommands {
         set timing_check_defaults {generated_clocks no_input_delay unconstrained_endpoints no_clock loops}
+        puts " - > gen report of 'check_timing -verbose'"
         redirect  $resultScenarioDir/[string map [list <body> "check_timing"] $rawRptFileName] {check_timing -verbose}
+        puts " - > gen report of 'report_global_timing'"
         redirect  $resultScenarioDir/[string map [list <body> "global_timing"] $rawRptFileName] {report_global_timing}
+        puts " - > gen report of 'report_timing -transition_time -nets -derate -delay_type max -slack_lesser_than 0 -nosplit -significant_digits 3 -max_path 100000'"
         redirect  $resultScenarioDir/[string map [list <body> "setup_timing"] $rawRptFileName] {report_timing -transition_time -nets -derate -delay_type max -slack_lesser_than 0 -nosplit -significant_digits 3 -max_path 100000}
+        puts " - > gen report of 'report_min_pulse_width -crosstalk_delta -all_violators -significant_digits 3 -nosplit -path_type full_clock_expanded -input_pins'"
         redirect  $resultScenarioDir/[string map [list <body> "min_pulse"] $rawRptFileName] {report_min_pulse_width -crosstalk_delta -all_violators -significant_digits 3 -nosplit -path_type full_clock_expanded -input_pins}
-        
+        puts " - > gen report of 'report_design_status'"
         redirect  $resultScenarioDir/[string map [list <body> "design_states"] $rawRptFileName] {report_design_status}
+        puts " - > gen report of 'report_cell_status'"
         redirect  $resultScenarioDir/[string map [list <body> "cell_status"] $rawRptFileName] {report_cell_status}
+        puts " - > gen report of 'report_floating_pins'"
         redirect  $resultScenarioDir/[string map [list <body> "floating_pins"] $rawRptFileName] {report_floating_pins}
+        puts " - > gen report of 'report_net_status'"
         redirect  $resultScenarioDir/[string map [list <body> "net_status"] $rawRptFileName] {report_net_status}
+        puts " - > gen report of 'report_port_status'"
         redirect  $resultScenarioDir/[string map [list <body> "port_status"] $rawRptFileName] {report_port_status}
+        puts " - > gen report of 'report_clock_status'"
         redirect  $resultScenarioDir/[string map [list <body> "clock_status"] $rawRptFileName] {report_clock_status}
-        redirect  $resultScenarioDir/[string map [list <body> "dont_use_status"] $rawRptFileName] {report_dont_use_status $dontUseCellsRegExpList}
+        puts " - > gen report of 'report_dont_use_status \\$dontUseCellsRegExpList'"
+        redirect  $resultScenarioDir/[string map [list <body> "dont_use_status"] $rawRptFileName] {report_dont_use_status "$dontUseCellsRegExpList"}
+        puts " - > gen report of 'report_vt_usage'"
         redirect  $resultScenarioDir/[string map [list <body> "vt_usage"] $rawRptFileName] {report_vt_usage}
+        puts " - > gen report of 'check_memory_info'"
         redirect  $resultScenarioDir/[string map [list <body> "memory_info"] $rawRptFileName] {check_memory_info}
+        puts " - > gen report of 'report_asyn_status'"
         redirect  $resultScenarioDir/[string map [list <body> "async"] $rawRptFileName] {report_asyn_status}
+        puts " - > gen report of 'report_dont_touch_status'"
         redirect  $resultScenarioDir/[string map [list <body> "dont_touch"] $rawRptFileName] {report_dont_touch_status}
+        puts " - > gen report of 'report_dft_status'"
         redirect  $resultScenarioDir/[string map [list <body> "DFT_status"] $rawRptFileName] {report_dft_status}
       }]
       incr tempStepIndexOfCmd 1 ; # == 11
@@ -204,8 +219,8 @@ proc runCmd_init_check {args} {
     if {$stepIndexOfRunCmd <= 1} {
       set timeSpend [end_timer "string"]
       uplevel #0 [subst {
-        set timeSpend $timeSpend
-        redirect {puts "spend time : $timeSpend"} > $resultScenarioDir/runtime.rpt
+        set timeSpend "$timeSpend"
+        redirect $resultScenarioDir/runtime.rpt {puts "spend time : $timeSpend"} 
       }]
     }
   } on error {err_info} {

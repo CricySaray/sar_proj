@@ -82,8 +82,8 @@ proc add_file_header {args} {
     return $wrapped
   }
   # Write top separator with optimal visual length
-  [eo !$ifOnlyPutsNotDumpToFile "puts $fileID" "puts"] "# [string repeat "-" $splitLineWidth]"
-  if {$tee} {
+  if {!$ifOnlyPutsNotDumpToFile} {puts $fileID "# [string repeat "-" $splitLineWidth]"}
+  if {$tee || $ifOnlyPutsNotDumpToFile} {
     puts "# [string repeat "-" $splitLineWidth]"
   }
   
@@ -95,8 +95,8 @@ proc add_file_header {args} {
     set indent [string repeat " " $spaces]
     if {$wrap_needed} {
       # Handle fields that need text wrapping
-      [eo !$ifOnlyPutsNotDumpToFile "puts -nonewline $fileID" "puts -nonewline"] "# $indent$label :"
-      if {$tee} {
+      if {!$ifOnlyPutsNotDumpToFile} {puts -nonewline $fileID "# $indent$label :"}
+      if {$tee || $ifOnlyPutsNotDumpToFile} {
         puts -nonewline "# $indent$label :"
       }
       set wrap_width [expr {$line_width - $max_label_length - 2}]
@@ -106,29 +106,29 @@ proc add_file_header {args} {
       foreach line $wrapped_text {
         incr firstLine
         if {$firstLine == 1} {
-          [eo !$ifOnlyPutsNotDumpToFile "puts $fileID" "puts"] " $line"
-          if {$tee} {
+          if {!$ifOnlyPutsNotDumpToFile} {puts $fileID " $line"}
+          if {$tee || $ifOnlyPutsNotDumpToFile} {
             puts " $line"
           }
         } else {
-          [eo !$ifOnlyPutsNotDumpToFile "puts $fileID" "puts"] "# $text_indent$line"
-          if {$tee} {
+          if {!$ifOnlyPutsNotDumpToFile} {puts $fileID "# $text_indent$line"}
+          if {$tee || $ifOnlyPutsNotDumpToFile} {
             puts "# $text_indent$line"
           }
         }
       }
     } else {
       # Handle fields with single-line values
-      [eo !$ifOnlyPutsNotDumpToFile "puts $fileID" "puts"] "# $indent$label : $value"
-      if {$tee} {
+      if {!$ifOnlyPutsNotDumpToFile} {puts $fileID "# $indent$label : $value"}
+      if {$tee || $ifOnlyPutsNotDumpToFile} {
         puts "# $indent$label : $value"
       }
     }
   }
   # Write bottom separator
-  [eo !$ifOnlyPutsNotDumpToFile "puts $fileID" "puts"] "# [string repeat "-" $splitLineWidth]"
-  [eo !$ifOnlyPutsNotDumpToFile "puts $fileID" "puts"] ""
-  if {$tee} {
+  if {!$ifOnlyPutsNotDumpToFile} {puts $fileID "# [string repeat "-" $splitLineWidth]"}
+  if {!$ifOnlyPutsNotDumpToFile} {puts $fileID ""}
+  if {$tee || $ifOnlyPutsNotDumpToFile} {
     puts "# [string repeat "-" $splitLineWidth]"
     puts ""
   }

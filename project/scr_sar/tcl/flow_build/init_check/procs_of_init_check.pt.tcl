@@ -354,17 +354,17 @@ proc report_net_status {{fanout_vth 32}} {
       }
     }
   }
-
-  set clkNetFanoutVioRatio [format "%5.2f" [expr $clkNetFanoutVioNum*100.0/[sizeof $totalNets]]]
-  set datNetFanoutVioRatio [format "%5.2f" [expr $datNetFanoutVioNum*100.0/[sizeof $totalNets]]]
+  if {![sizeof $totalNets]} { set len_of_totalNets inf }
+  set clkNetFanoutVioRatio [format "%5.2f" [expr $clkNetFanoutVioNum*100.0/$len_of_totalNets]]
+  set datNetFanoutVioRatio [format "%5.2f" [expr $datNetFanoutVioNum*100.0/$len_of_totalNets]]
 
   foreach vrange [lsort -dict -incr [array names fanoutHistogram]] {
     set min [lindex [split $vrange ,] 0]
     set max [lindex [split $vrange ,] 1]
     if {$min == $max} {
-      puts [format "%10s   %10s:\t%10d\t%5.2f" $min "" $fanoutHistogram($vrange) [expr $fanoutHistogram($vrange)*100.0/[sizeof $totalNets]]]
+      puts [format "%10s   %10s:\t%10d\t%5.2f" $min "" $fanoutHistogram($vrange) [expr $fanoutHistogram($vrange)*100.0/$len_of_totalNets]]
     } else {
-      puts [format "%10s ~ %10s:\t%10d\t%5.2f" $min $max $fanoutHistogram($vrange) [expr $fanoutHistogram($vrange)*100.0/[sizeof $totalNets]]]
+      puts [format "%10s ~ %10s:\t%10d\t%5.2f" $min $max $fanoutHistogram($vrange) [expr $fanoutHistogram($vrange)*100.0/$len_of_totalNets]]
     }
   }
   #### dont touch nets
@@ -604,7 +604,7 @@ proc report_vt_usage {{cell_vt_group_mapList_eg_VTGroupName_regExpression {}}} {
     set all_cell_area [expr [join [get_attribute [get_cells * -quiet -hier -filter "is_hierarchical==false"] area] {+}]]
     array unset cell_count_result *
     array unset cell_area_result *
-    foreach {vtptn ptn } ${cell_vt_group_mapList_eg_VTGroupName_regExpression} {
+    foreach {vtptn ptn} ${cell_vt_group_mapList_eg_VTGroupName_regExpression} {
       set area 0
       set num [sizeof [get_cells * -quiet -hierarchical -filter "ref_name=~${ptn}"]]
       if {$num>0} {

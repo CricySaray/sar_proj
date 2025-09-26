@@ -8,13 +8,15 @@
 # descrip   : By obtaining the positions of the pre-placed BOUNDARY cells in the invs db (it must be ensured that the BOUNDARY cells are placed correctly without errors), 
 #             different power domains (or disconnected regions) are divided. Then, the gaps (narrow channels) between these power domains that meet the threshold requirements 
 #             are identified, and RouteBlk is added in these regions to prevent the addition of redundant pg nets in these areas during powerPlan.
+# BUG       : When adding routeBlk in the gaps, some of the shapes do not meet the expected requirements. They are larger than intended and need to be modified manually. 
+#             In the currently tested cases, when adding 4 rectangular routeBlks, 1 of them does not meet the expectations. So far, the cause of the problem has not been debugged.
 # return    : cmds list
 # ref       : link url
 # --------------------------
 source ../packages/find_connected_regions.package.tcl; # find_connected_regions
 source ../packages/find_narrow_channels.package.tcl; # find_narrow_channels
 source ../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary_withBoundaryArea
-proc genCmd_add_routeBlk_for_gap_betweenDifferentEndcapGroups {args} {
+proc genCmd_addRouteBlk_for_gap_betweenDifferentEndcapGroups {args} {
   set narrowChannelWidthThreshold 10
   set off                         -1
   set prefixNameOfBoundaryInsts   "ENDCAP"

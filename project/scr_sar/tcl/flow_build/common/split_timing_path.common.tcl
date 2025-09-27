@@ -12,25 +12,31 @@
 # return    : 
 # ref       : link url
 # --------------------------
-proc split_timing_path {input_list} {
+proc split_timing_path {args} {
   # Define special characters
-  set split_char "SPLIT"
-  set end_char "END"
-  set start_char "START"
+  set input_list {}
+  set split_exp  {^SPLIT}
+  set end_exp    {^END}
+  set start_exp  {^START}
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
   
   # Step 1: Split the list by SPLIT first
-  set sublists [_split_by_delimiter $input_list $split_char]
+  set sublists [_split_by_delimiter $input_list $split_exp]
   
   # If no SPLIT found, split by END
   if {[llength $sublists] == 1 && [lindex $sublists 0] eq $input_list} {
-    set sublists [_split_by_delimiter $input_list $end_char]
+    set sublists [_split_by_delimiter $input_list $end_exp]
   }
   
   # Step 2: Process each sublist and filter empty results
   set result [list]
   foreach sublist $sublists {
     set sublist [lsearch -regexp -not -all -inline $sublist {^\s*$}]
-    if {[catch {set processed [_process_sublist $sublist $start_char $end_char]} error_msg]} {
+    if {[catch {set processed [_process_sublist $sublist $start_exp $end_exp]} error_msg]} {
       error $error_msg
     }
     # Only add non-empty results
@@ -41,6 +47,14 @@ proc split_timing_path {input_list} {
   
   return $result
 }
+define_proc_arguments split_timing_path \
+  -info "split timing path"\
+  -define_args {
+    {-input_list "specify the list that need process" AList list optional}
+    {-split_exp "specify the reg expression of SPLIT" AString string optional}
+    {-end_exp "specify the reg expression of END" AString string optional}
+    {-start_exp "specify the reg expression of START" AString string optional}
+  }
 
 # Helper procedure: Split list by delimiter (no empty sublists)
 proc _split_by_delimiter {lst delimiter} {
@@ -48,7 +62,7 @@ proc _split_by_delimiter {lst delimiter} {
   set current [list]
   
   foreach item $lst {
-    if {$item eq $delimiter} {
+    if {[regexp $delimiter $item]} {
       # Add current only if not empty
       if {[llength $current] > 0} {
         lappend sublists $current
@@ -73,16 +87,16 @@ proc _split_by_delimiter {lst delimiter} {
 }
 
 # Helper procedure: Process single sublist with strict logic
-proc _process_sublist {sublist start_char end_char} {
+proc _process_sublist {sublist start_exp end_exp} {
   # Collect positions of START and END
   set start_positions [list]
   set end_positions [list]
   
   set index 0
   foreach item $sublist {
-    if {$item eq $start_char} {
+    if {[regexp $start_exp $item]} {
       lappend start_positions $index
-    } elseif {$item eq $end_char} {
+    } elseif {[regexp $end_exp $item]} {
       lappend end_positions $index
     }
     incr index

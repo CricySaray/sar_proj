@@ -29,6 +29,7 @@ proc split_timing_path {input_list} {
   # Step 2: Process each sublist and filter empty results
   set result [list]
   foreach sublist $sublists {
+    set sublist [lsearch -regexp -not -all -inline $sublist {^\s*$}]
     if {[catch {set processed [_process_sublist $sublist $start_char $end_char]} error_msg]} {
       error $error_msg
     }

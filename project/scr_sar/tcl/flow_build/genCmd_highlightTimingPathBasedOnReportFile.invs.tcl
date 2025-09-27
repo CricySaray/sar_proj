@@ -21,7 +21,6 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   set ifAddCellTypeOnTopOfInstRect        1
   set ifAddNetLengthOnBottomOfDriverInst  1
   set lineExpToSplitPath                  {^TE} ; # used to regexp
-  set stdcellExp                          {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
   set startOfPath                         {Point\s+} ; # end expression of launch timing path
   set endOfPath                           {data arrival time} ; # end expression of launch timing path
   # for genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems
@@ -38,7 +37,7 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
     set $var $opt($arg)
   }
   set evenNumberLists_instName_instBox2_3_incrCellDelay [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath \
-                        -stdcellExp $stdcellExp -startOfPath $startOfPath -endOfPath $endOfPath -indexOfPureNumberOnLine $indexOfPureNumberOnLine \
+                        -startOfPath $startOfPath -endOfPath $endOfPath -indexOfPureNumberOnLine $indexOfPureNumberOnLine \
                         -indexOfAfterSplitOriginalLineList $indexOfAfterSplitOriginalLineList]
   set cmdsList [list]
   set i 0
@@ -70,7 +69,6 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-reportTimingFile "specify the file name of report_timing" AString string optional}
     {-ifAddMarkersAndText "if add Markers and Text for path" oneOfString one_of_string {optional value_type {values {1 0}}}}
     {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
-    {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
     {-startOfPath "specify the start expression of timing path" AString string optional}
     {-endOfPath "specify the end expression of timing path" AString string optional}
     {-modeOfConnect "specify the type of eco" oneOfString one_of_string {optional value_type {values {whole_net flight_line}}}}
@@ -255,7 +253,6 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   set indexOfPureNumberOnLine           "end-1"
   set indexOfAfterSplitOriginalLineList "0"
   set lineExpToSplitPath                {^TE} ; # used to regexp
-  set stdcellExp                        {.*D\d+BWP(LVT)?} ; # don't use char '^' or '$'
   set startOfPath                       {Point\s+} ; # end expression of launch timing path
   set endOfPath                         {data arrival time} ; # end expression of launch timing path
   parse_proc_arguments -args $args opt
@@ -268,44 +265,34 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   }
   set fi [open $reportTimingFile r]
   set content [split [read $fi] \n]
-  set stdcellExpToMatchLine [subst -nocommands -nobackslashes {($stdcellExp)}]
+  set all_celltypes [dbget head.libCells.name -u -e]
   set pinLines [lmap templine $content {
-    if {[regexp $lineExpToSplitPath|$stdcellExpToMatchLine|$startOfPath|$endOfPath $templine]} {
+    regexp {.*\((.*)\).*} $templine wholename temp_celltype
+    if {[regexp $lineExpToSplitPath|$startOfPath|$endOfPath $templine] || $temp_celltype in $all_celltypes} {
       set temp $templine 
     }
   }]
+  set originalLineListWithSplitLine [list]
   set purePinListWithSplitLine [lmap templine $pinLines {
     if {[regexp {^\s*$} $templine]} { continue }
-    set indexOfStdCell [lsearch -regexp $templine $stdcellExpToMatchLine]
-    if {$indexOfStdCell == -1} { 
+    regexp {.*\((.*)\).*} $templine wholename temp_celltype
+    if {$temp_celltype ni $all_celltypes} { 
       if {[regexp $startOfPath $templine]} { 
+        lappend originalLineListWithSplitLine "START"
         set temp "START" 
       } elseif {[regexp $endOfPath $templine]} {
+        lappend originalLineListWithSplitLine "END"
         set temp "END" 
       } elseif {[regexp $lineExpToSplitPath $templine]} {
+        lappend originalLineListWithSplitLine "SPLIT"
         set temp "SPLIT"
       } else {
         continue
       }
     } else {
+      set indexOfStdCell [lsearch -exact $templine ($temp_celltype)]
+      lappend originalLineListWithSplitLine $templine
       set pinName [lindex $templine [expr {$indexOfStdCell - 1}]]
-    }
-  }]
-  set originalLineListWithSplitLine [lmap templine $pinLines {
-    if {[regexp {^\s*$} $templine]} { continue }
-    set indexOfStdCell [lsearch -regexp $templine $stdcellExpToMatchLine]
-    if {$indexOfStdCell == -1} { 
-      if {[regexp $startOfPath $templine]} { 
-        set temp "START" 
-      } elseif {[regexp $endOfPath $templine]} {
-        set temp "END" 
-      } elseif {[regexp $lineExpToSplitPath $templine]} {
-        set temp "SPLIT"
-      } else {
-        continue
-      }
-    } else {
-      set originalLine $templine
     }
   }]
   set splitedPinList [split_timing_path $purePinListWithSplitLine]
@@ -316,7 +303,11 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
         set tempList [lrange $tempList 1 end] 
       }
       if {[expr {[llength $tempList] % 2}]} {
-        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
+        if {[join [lrange [split [lindex $tempList end] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList end-1] "/"] 0 end-1] "/"]} {
+          set tempList [lrange $tempList 0 end-1]
+        } else {
+          error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
+        }
       }
       foreach {pin1 pin2} $tempList {
         set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
@@ -331,34 +322,11 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
     }
     set temp $tempList
   }]
-  set filteredOriginalLineList [lmap tempList $splitedOriginalList {
-    if {[llength $tempList] == 1} { continue } else {
-      if {[join [lrange [split [lindex $tempList 0 $indexOfAfterSplitOriginalLineList] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1 $indexOfAfterSplitOriginalLineList] "/"] 0 end-1] "/"]} {
-        set tempList [lrange $tempList 1 end]
-      }
-      if {[expr {[llength $tempList] % 2}]} {
-        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path(\n[join $tempList "\n - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredOriginalLineList)" 
-      }
-      foreach {line1 line2} $tempList {
-        set pin1 [lindex $line1 $indexOfAfterSplitOriginalLineList]
-        set pin2 [lindex $line2 $indexOfAfterSplitOriginalLineList]
-        set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
-        set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
-        if {$net1 == "" || $net2 == ""} {
-          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!!(in filteredOriginalLineList)" 
-        }
-        if {$net1 != $net2} {
-          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!!(in filteredOriginalLineList)"
-        }
-      }
-    }
-    set temp $tempList
-  }]
   set instName_instBox2_3_incrCellDelay [list]
   set j 0
   foreach temp_sub_list $filteredPinList {
     foreach {pin1 pin2} $temp_sub_list {
-      set temp_line [lsearch -regexp -inline [lindex $filteredOriginalLineList $j] [subst -nocommands -nobackslashes {.*$pin1.*}]]
+      set temp_line [lsearch -regexp -inline [lindex $splitedOriginalList $j] [subst -nocommands -nobackslashes {.*$pin1.*}]]
       if {$temp_line == ""} {
         error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your input : pin1($pin1) can't find matched line in ([lindex $splitedOriginalList $j])!!!"
       }
@@ -393,7 +361,6 @@ define_proc_arguments genCmd_getPurePinOfPath_fromTimingPathReport \
     {-indexOfPureNumberOnLine "When the content in the 'line' becomes pure numbers (with non-numeric parts removed), the number of items in 'delay'" AString string optional}
     {-indexOfAfterSplitOriginalLineList "specify the index of list after spliting original lines" AInt int optional}
     {-lineExpToSplitPath "specify expression of spliting timing path" AString string optional}
-    {-stdcellExp "specify the expression of match stdcell name(of LibCells)" AString string optional}
     {-startOfPath "specify the start expression of timing path" AString string optional}
     {-endOfPath "specify the end expression of timing path" AString string optional}
   }

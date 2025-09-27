@@ -375,7 +375,7 @@ if {[is_common_ui_mode]} {
         }
       }
     }
-    alias len "sar_get_whole_net_lengths"
+    alias gls "sar_get_whole_net_lengths"
   }
   
 } else {
@@ -594,7 +594,7 @@ if {[is_common_ui_mode]} {
       }
     }
   }
-  alias len "sar_get_whole_net_lengths"
+  alias gls "sar_get_whole_net_lengths"
     
 }
 

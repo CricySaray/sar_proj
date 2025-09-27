@@ -6,14 +6,21 @@ alias ct='cd ~/project/test_temp/'
 alias te='perl ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 
-ww() {
+function ww() {
   ca $1
   wn all_$1
+}
+function ca() {
+  filename="$1"
+  tclsh ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl $filename || return 
+  if [[ "$filename" == *.tcl ]]; then 
+    target_file="all_$filename"
+    sed -i 's/;$//g' $target_file
+  fi
 }
 alias vwn='vim ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias wn='perl ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias vca='vim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
-alias ca='tclsh ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
 alias fd='fdfind -Ist f'
 alias cs='ca ./fix_trans.invs.tcl'
 alias ts='tclsh'

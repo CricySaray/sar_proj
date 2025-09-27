@@ -24,7 +24,7 @@ proc add_file_header {args} {
   set line_width              150
   set splitLineWidth          36
   set tee                     0
-  set ifOnlyPutsNotDumpToFile 1
+  set ifOnlyPutsNotDumpToFile 0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

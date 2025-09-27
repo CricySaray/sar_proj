@@ -15,7 +15,7 @@
 #             dictName: $LUT_filename
 #               layer1 attribute: designName/mainCoreRowHeight/mainCoreSiteWidth/celltype 
 #               layer2 attribute of celltype: [allLibCellTypeNames(like BUFX3AR9/INVX8AL9/...)] 
-#               layer3 attribute of every item of celltype(layer2): class/size (AT001) capacity/vt(AT002) caplist/vtlist(AT003)
+#               layer3 attribute of every item of celltype(layer2): class/size (AT001) capacity/vt(AT002) caplist/vtlist(AT003) cellsite(AT004)
 # input     : $process: {M31GPSC900NL040P*_40N}|{TSMC_cln12ffc}
 # args      : $process: {M31GPSC900NL040P*_40N}|...
 # ref       : link url
@@ -217,8 +217,10 @@ proc build_sar_LUT_usingDICT {args} {
           set capcapacity
         }]]
       }
+      set tempcelltype2site [dbget $temptype_ptr.site.name -u -e]
+      if {$tempcelltype2site == ""} { set tempcelltype2site "NA" }
       if {$removeStdCellExp != "" && [regexp $removeStdCellExp $temptypename]} { continue } else {
-        set temp_typename_class_size "{{$temptypename $tempclass {$tempsize} $tempvttype $tempcapacity {$tempvtList} {$tempcapacityList}}}"
+        set temp_typename_class_size "{{$temptypename $tempcelltype2site $tempclass {$tempsize} $tempvttype $tempcapacity {$tempvtList} {$tempcapacityList}}}"
       }
     }]
     set sorted_celltype_class_size_D3List [lsort $celltype_class_size_D3List]
@@ -237,13 +239,15 @@ proc build_sar_LUT_usingDICT {args} {
     puts $fo "\}"
     puts $fo "foreach temp_celltype_attribute \$celltype_subAttributes \{"
     puts $fo "  set celltypeName \[lindex \$temp_celltype_attribute 0\]"
-    puts $fo "  set cellclass \[lindex \$temp_celltype_attribute 1\]"
-    puts $fo "  set cellsize \[lindex \$temp_celltype_attribute 2\]"
-    puts $fo "  set cellvt \[lindex \$temp_celltype_attribute 3\]"
-    puts $fo "  set cellcapacity \[lindex \$temp_celltype_attribute 4\]"
-    puts $fo "  set cellvtList \[lindex \$temp_celltype_attribute 5\]"
-    puts $fo "  set cellcapacityList \[lindex \$temp_celltype_attribute 6\]"
+    puts $fo "  set cellsite \[lindex \$temp_celltype_attribute 1\]"
+    puts $fo "  set cellclass \[lindex \$temp_celltype_attribute 2\]"
+    puts $fo "  set cellsize \[lindex \$temp_celltype_attribute 3\]"
+    puts $fo "  set cellvt \[lindex \$temp_celltype_attribute 4\]"
+    puts $fo "  set cellcapacity \[lindex \$temp_celltype_attribute 5\]"
+    puts $fo "  set cellvtList \[lindex \$temp_celltype_attribute 6\]"
+    puts $fo "  set cellcapacityList \[lindex \$temp_celltype_attribute 7\]"
     puts $fo "  dict set $lutDictName celltype \$celltypeName class \$cellclass" ; # AT001
+    puts $fo "  dict set $lutDictName celltype \$celltypeName site \$cellsite" ; # AT004
     puts $fo "  dict set $lutDictName celltype \$celltypeName size \$cellsize" ; # AT001
     puts $fo "  dict set $lutDictName celltype \$celltypeName vt \$cellvt" ; # AT002
     puts $fo "  dict set $lutDictName celltype \$celltypeName capacity \$cellcapacity" ; # AT002

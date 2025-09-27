@@ -20,6 +20,15 @@
 #             threshold, it will also be marked with the marker. If you don't want the proc to perform such monitoring, you can set the threshold variable to "inf" (infinity), 
 #             which will prevent any markers from being displayed under all circumstances.
 #             related: $incrDelayThreshold and $netLenThreshold
+# update    : 2025/09/28 00:24:12 Sunday
+#             (U003) If the value of the variable "$modeOfConnect" is "flight_line", it will display connection lines based on different layers. In this case, you must first enable all 
+#                   "layer" layers and then disable the display of "route" (winding lines). After doing so, you will be able to see the connection lines for different layers.
+#             If there are multiple "path"s that require connection line display, the system will start decrementing from the layer number you specified—counting down to 1, then 
+#                   reverting to the specified layer number and repeating the decrement cycle. Therefore, it is recommended that you use the "layerOfText" variable to specify 
+#                   the highest layer number; this ensures the maximum range for the decrement operation.
+#             This display method is particularly suitable for "path"s that share the same "endpoint", as it allows you to check at which "inst" these "paths" begin to diverge.
+#             If the "paths" correspond to different "endpoints", it is advisable to use "whole_net" as the connection line display option. This option supports more colors, 
+#                   is not limited by the number of layers, and also enables the complete display of the physical routing of the timeline.
 # return    : cmds list
 # ref       : link url
 # --------------------------
@@ -40,11 +49,11 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   set startOfPath                         {Point\s+} ; # end expression of launch timing path
   set endOfPath                           {data arrival time} ; # end expression of launch timing path
   # for genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems
-  set modeOfConnect                       "whole_net" ; # whole_net|flight_line
+  set modeOfConnect                       "whole_net" ; # whole_net|flight_line(U003)
   set ifWithArrow                         1; # 1|0
   set colorsIndexLoopListsForNet          {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
   set colorsIndexLoopListsForInst         {33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 33 34 35 36} ; # 20 items
-  set layerOfText                         8
+  set layerOfText                         8 ; # It is recommended to fill in the highest layer number, which must be an integer.
   set indexOfPureNumberOnLine             "end-1"
   set indexOfAfterSplitOriginalLineList   "0"
   set incrDelayThreshold                  0.1 ; # if not show, you can input: inf # U002

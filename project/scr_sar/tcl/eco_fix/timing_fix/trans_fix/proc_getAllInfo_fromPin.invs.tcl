@@ -238,7 +238,7 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
     }
   }
 }
-source ../../../proc_whichProcess_fromStdCellPattern.pt.tcl; # whichProcess_fromStdCellPattern
+source ../../../packages/proc_whichProcess_fromStdCellPattern.pt.tcl; # whichProcess_fromStdCellPattern
 # absolute proc
 proc judge_ifCanMapWithRegExp {{pinNameOrCelltype ""}} {
   set testPin [dbget top.insts.instTerms.name $pinNameOrCelltype -e -p]

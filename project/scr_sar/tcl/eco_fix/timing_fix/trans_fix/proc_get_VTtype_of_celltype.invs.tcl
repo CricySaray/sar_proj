@@ -8,7 +8,7 @@
 # return    : string of VTtype
 # ref       : link url
 # --------------------------
-source ../../../proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
+source ../../../packages/proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ../../../packages/logic_AND_OR.package.tcl; # er
 proc get_VTtype_of_celltype {{celltype ""} {regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"}} {
   if {$celltype == "" || $celltype == "0c0" || [dbget head.libCells.name $celltype -e] == ""} {

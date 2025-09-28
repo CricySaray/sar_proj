@@ -37,16 +37,19 @@ proc runCmd_summarize_pt_rpts {args} {
   }
   set allDirNameOnSearchDir [lmap temp_path [glob -nocomplaion $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
-  set constraintNameWnsNumLists [parse_constraint_report $reportConstraintFileName 0] ; # have item include "NA" like {max_delay NA NA}, you can add other actions for it NOTICE
   set allConstraintNameList [list min_delay max_daley max_capacitance max_transition max_fanout min_pulse_width min_period]
-  foreach temp_constaint_wns_num $constraintNameWnsNumLists {
-    lassign $temp_constaint_wns_num temp_const temp_wns temp_num
-    if {$temp_const in $allConstraintNameList} {
-      set wns_$temp_const $temp_wns
-      set num_$temp_const $temp_num
+
+  foreach temp_scenario_dir $scenarioDirs {
+    set constraintNameWnsNumLists [parse_constraint_report $reportConstraintFileName 0] ; # have item include "NA" like {max_delay NA NA}, you can add other actions for it NOTICE
+    foreach temp_constaint_wns_num $constraintNameWnsNumLists {
+      lassign $temp_constaint_wns_num temp_const temp_wns temp_num
+      if {$temp_const in $allConstraintNameList} {
+        set wns_$temp_const $temp_wns
+        set num_$temp_const $temp_num
+      }
     }
+    set 
   }
-# return    : nested list: {{min_delay worstViolValue violNum} {max_daley worstViolValue violNum} {max_capacitance worstViolValue violNum} {max_transition worstViolValue violNum} {max_fanout worstViolValue violNum} {min_pulse_width worstViolValue violNum} {min_period worstViolValue violNum}}
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

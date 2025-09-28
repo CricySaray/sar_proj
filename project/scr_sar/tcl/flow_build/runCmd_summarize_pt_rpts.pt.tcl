@@ -23,7 +23,7 @@ proc runCmd_summarize_pt_rpts {args} {
   set temperatureOfFormatExp   {25c m40c 125c}
   set designName               "SC5019_TOP" ; # only consisted of reportConstraintFileName
   set reportConstraintFileName "report_constraint_$designName.rpt"
-  set globalTimingFileName     ""
+  set globalTimingFileName     "${designName}.global_timing.rpt"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -37,7 +37,16 @@ proc runCmd_summarize_pt_rpts {args} {
   }
   set allDirNameOnSearchDir [lmap temp_path [glob -nocomplaion $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
-  set constraintNameWnsNumList [parse_constraint_report]
+  set constraintNameWnsNumLists [parse_constraint_report $reportConstraintFileName 0] ; # have item include "NA" like {max_delay NA NA}, you can add other actions for it NOTICE
+  set allConstraintNameList [list min_delay max_daley max_capacitance max_transition max_fanout min_pulse_width min_period]
+  foreach temp_constaint_wns_num $constraintNameWnsNumLists {
+    lassign $temp_constaint_wns_num temp_const temp_wns temp_num
+    if {$temp_const in $allConstraintNameList} {
+      set wns_$temp_const $temp_wns
+      set num_$temp_const $temp_num
+    }
+  }
+# return    : nested list: {{min_delay worstViolValue violNum} {max_daley worstViolValue violNum} {max_capacitance worstViolValue violNum} {max_transition worstViolValue violNum} {max_fanout worstViolValue violNum} {min_pulse_width worstViolValue violNum} {min_period worstViolValue violNum}}
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

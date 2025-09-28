@@ -39,7 +39,9 @@ proc runCmd_summarize_pt_rpts {args} {
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
   set allConstraintNameList [list min_delay max_daley max_capacitance max_transition max_fanout min_pulse_width min_period]
 
-  foreach temp_scenario_dir $scenarioDirs {
+  set infoOfAllScenarios [lmap temp_scenario_dir $scenarioDirs {
+    set splitedOptionOfScenario [regsub {>|<} [regexp -all {<.*>} $formatOfScenarios] ""]
+    if {[lsearch -exact $splitedOptionOfScenario "setup"]} { set typeOfScenario setup } elseif {[lsearch -exact $splitedOptionOfScenario "hold"]} { set typeOfScenario hold }
     set constraintNameWnsNumLists [parse_constraint_report "$searchDir/$temp_scenario_dir/$reportConstraintFileName" 0] ; # have item include "NA" like {max_delay NA NA}, you can add other actions for it NOTICE
     foreach temp_constaint_wns_num $constraintNameWnsNumLists {
       lassign $temp_constaint_wns_num temp_const temp_wns temp_num
@@ -53,7 +55,10 @@ proc runCmd_summarize_pt_rpts {args} {
     set valueList [split [lindex $globalTimingContent 1] ","]
     set totalTNS [lindex $valueList [lsearch -exact $titleList "Total_TNS"]]
     set reg2regTNS [lindex $valueList [lsearch -exact $titleList "reg2reg_TNS"]]
-  }
+    set reg2regNUM [lindex $valueList [lsearch -exact $titleList "reg2reg_NUM"]]
+    if {$typeOfScenario == "setup"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} elseif {$typeOfScenario == "hold"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} else {error "proc runCmd_summarize_pt_rpts: check your formatOfScenarios($formatOfScenarios), not find 'setup' or 'hold' !!!"}
+    list $wns_type_delay
+  }]
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

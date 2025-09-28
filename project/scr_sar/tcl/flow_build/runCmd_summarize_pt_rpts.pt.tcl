@@ -44,10 +44,10 @@ proc runCmd_summarize_pt_rpts {args} {
   if {![file isdirectory $searchDir]} {
     error "proc runCmd_summarize_pt_rpts: check your input: searchDir($searchDir) does not exist!!!" 
   }
-  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplaion $searchDir/*] { file tail $temp_path }]
+  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
   if {$scenarioDirs == ""} { error "proc runCmd_summarize_pt_rpts: " }
-  set allConstraintNameList [list min_delay max_daley max_capacitance max_transition max_fanout min_pulse_width min_period]
+  set allConstraintNameList [list min_delay max_delay max_capacitance max_transition max_fanout min_pulse_width min_period]
 
   set infoOfAllScenarios [lmap temp_scenario_dir $scenarioDirs {
     set splitedOptionOfScenario [regsub {>|<} [regexp -all {<.*>} $formatOfScenarios] ""]
@@ -60,7 +60,7 @@ proc runCmd_summarize_pt_rpts {args} {
         set num_$temp_const $temp_num
       }
     }
-    set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingCsvFileName" r] ; set globalTimingContent [split [read $fi] "\n"]
+    set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingCsvFileName" r] ; set globalTimingContent [split [read $fi_temp] "\n"]
     set titleList [split [lindex $globalTimingContent 0] ","]
     set valueList [split [lindex $globalTimingContent 1] ","]
     set totalTNS [lindex $valueList [lsearch -exact $titleList "Total_TNS"]]
@@ -86,7 +86,7 @@ proc runCmd_summarize_pt_rpts {args} {
   }
 }
 
-define_proc_attribute runCmd_summarize_pt_rpts \
+define_proc_attributes runCmd_summarize_pt_rpts \
   -info "run cmd of summarizing pt rpts"\
   -define_args {
     {-searchDir "specify the dir to search" AString string optional}

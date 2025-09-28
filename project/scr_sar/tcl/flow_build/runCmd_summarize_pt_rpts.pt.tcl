@@ -13,17 +13,17 @@
 source ./common/generate_combinations.common.tcl; # generate_combinations
 source ./common/parse_constraint_report.common.tcl; # parse_constraint_report
 proc runCmd_summarize_pt_rpts {args} {
-  set searchDir                "./"
-  set scenarios                "auto" ; # auto (will search ) or [list ...]
-  set formatOfScenarios        "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # func_setup_0p99v_rcworst_m40c
-  set modesOfFormatExp         {func scan}
-  set typeToCheckOfFormatExp   {setup hold}
-  set voltageOfFormatExp       {0p99v 1p1v 1p21v}
-  set rcCornerOfFormatExp      {cworst cbest rcworst rcbest typical}
-  set temperatureOfFormatExp   {25c m40c 125c}
-  set designName               "SC5019_TOP" ; # only consisted of reportConstraintFileName
-  set reportConstraintFileName "report_constraint_$designName.rpt"
-  set globalTimingFileName     "${designName}.global_timing.rpt"
+  set searchDir                   "./"
+  set scenarios                   "auto" ; # auto (will search ) or [list ...]
+  set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # func_setup_0p99v_rcworst_m40c
+  set modesOfFormatExp            {func scan}
+  set typeToCheckOfFormatExp      {setup hold}
+  set voltageOfFormatExp          {0p99v 1p1v 1p21v}
+  set rcCornerOfFormatExp         {cworst cbest rcworst rcbest typical}
+  set temperatureOfFormatExp      {25c m40c 125c}
+  set designName                  "SC5019_TOP" ; # only consisted of reportConstraintFileName
+  set reportConstraintFileName    "report_constraint_$designName.rpt"
+  set globalTimingCsvFileName     "${designName}.global_timing.csv" ; # please using command: report_global_timing -format csv -ouput .../$designName.global_timing.csv
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -49,7 +49,10 @@ proc runCmd_summarize_pt_rpts {args} {
       }
     }
     set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingFileName" r] ; set globalTimingContent [split [read $fi] "\n"]
-    set temp_tns [lindex [lsearch -inline -regexp $globalTimingContent {^TNS\s+.*}] 1]
+    set titleList [split [lindex $globalTimingContent 0] ","]
+    set valueList [split [lindex $globalTimingContent 1] ","]
+    set totalTNS [lindex $valueList [lsearch -exact $titleList "Total_TNS"]]
+    set reg2regTNS [lindex $valueList [lsearch -exact $titleList "reg2reg_TNS"]]
   }
 }
 

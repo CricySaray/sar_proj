@@ -140,33 +140,38 @@ proc parse_constraint_report {filename {debug 0}} {
         puts "  Contains [llength $block_lines] lines (lines $start_line to [expr {$end_line-1}])"
       }
     }
-    if {![dict exists block_contents min_delay]} { dict set block_contents "min_delay" [list]}
-    if {![dict exists block_contents max_delay]} { dict set block_contents "max_delay" [list]}
   }
   
   set group_vars [dict create]
   
-  set min_delay_blocks [dict get $block_contents "min_delay"]
-  set min_delay_subcontents [list]
-  foreach block $min_delay_blocks {
-    lassign $block group lines
-    set var_name "min_delay_${group}_content"
-    dict set group_vars $var_name $lines
-    lappend min_delay_subcontents $lines
-    if {$debug} {
-      puts "Stored min_delay sub-block $group with [llength $lines] lines"
+  if {![dict exists block_contents min_delay]} {
+    set min_delay_subcontents "" 
+  } else {
+    set min_delay_blocks [dict get $block_contents "min_delay"]
+    set min_delay_subcontents [list]
+    foreach block $min_delay_blocks {
+      lassign $block group lines
+      set var_name "min_delay_${group}_content"
+      dict set group_vars $var_name $lines
+      lappend min_delay_subcontents $lines
+      if {$debug} {
+        puts "Stored min_delay sub-block $group with [llength $lines] lines"
+      }
     }
   }
-  
-  set max_delay_blocks [dict get $block_contents "max_delay"]
-  set max_delay_subcontents [list]
-  foreach block $max_delay_blocks {
-    lassign $block group lines
-    set var_name "max_delay_${group}_content"
-    dict set group_vars $var_name $lines
-    lappend max_delay_subcontents $lines
-    if {$debug} {
-      puts "Stored max_delay sub-block $group with [llength $lines] lines"
+  if {![dict exists block_contents max_delay]} {
+    set max_delay_subcontents ""
+  } else {
+    set max_delay_blocks [dict get $block_contents "max_delay"]
+    set max_delay_subcontents [list]
+    foreach block $max_delay_blocks {
+      lassign $block group lines
+      set var_name "max_delay_${group}_content"
+      dict set group_vars $var_name $lines
+      lappend max_delay_subcontents $lines
+      if {$debug} {
+        puts "Stored max_delay sub-block $group with [llength $lines] lines"
+      }
     }
   }
   

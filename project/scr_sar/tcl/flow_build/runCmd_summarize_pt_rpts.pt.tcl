@@ -54,10 +54,11 @@ proc runCmd_summarize_pt_rpts {args} {
     set titleList [split [lindex $globalTimingContent 0] ","]
     set valueList [split [lindex $globalTimingContent 1] ","]
     set totalTNS [lindex $valueList [lsearch -exact $titleList "Total_TNS"]]
+    set reg2regWNS [lindex $valueList [lsearch -exact $titleList "reg2reg_WNS"]]
     set reg2regTNS [lindex $valueList [lsearch -exact $titleList "reg2reg_TNS"]]
     set reg2regNUM [lindex $valueList [lsearch -exact $titleList "reg2reg_NUM"]]
     if {$typeOfScenario == "setup"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} elseif {$typeOfScenario == "hold"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} else {error "proc runCmd_summarize_pt_rpts: check your formatOfScenarios($formatOfScenarios), not find 'setup' or 'hold' !!!"}
-    list $wns_type_delay
+    list $wns_type_delay $num_type_delay $totalTNS $reg2regWNS $reg2regNUM $reg2regTNS $wns_max_transition $num_max_transition $wns_max_fanout $num_max_fanout $wns_max_capacitance $num_max_capacitance $wns_min_period $num_min_period $wns_min_pulse_width $num_min_pulse_width
   }]
 }
 

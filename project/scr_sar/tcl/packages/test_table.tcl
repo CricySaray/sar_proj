@@ -12,14 +12,14 @@
 #                                   - Integer: uniform width limit for all columns (0 = no restriction)
 #                                   - List: per-column width limits (must match column count, 0 = no restriction)
 #             title               : table title to be displayed centered above the table
-#             align_spec          : alignment specification (valid values: left/center/right, or list of these values).
+#        U001 align_spec          : alignment specification (valid values: left/center/right, or list of these values).
 #                                   - Single value: apply to all columns
 #                                   - List: per-column alignment (must match column count)
 #                                   - Default: left
 # return    : formatted table string with title
 # ref       : based on original table_col_format_wrap proc
 # --------------------------
-proc table_format_with_title {inputData {width_spec 0} {title ""} {align_spec "left"}} {
+proc table_format_with_title {inputData {width_spec 0} {align_spec left} {title {}}} { ; # U001
   # Validate input parameters
   # 1. Check if inputData is a non-empty list (required for nested list structure)
   if {![llength $inputData]} {
@@ -102,7 +102,7 @@ proc table_format_with_title {inputData {width_spec 0} {title ""} {align_spec "l
     }
     foreach align $align_spec {
       if {[lsearch -exact $valid_alignments $align] == -1} {
-        error "proc table_format_with_title: invalid alignment '$align' in align_spec. Must be one of [join $valid_alignments {, }}]"
+        error "proc table_format_with_title: invalid alignment '$align' in align_spec. Must be one of [join $valid_alignments ", "]"
       }
       lappend align_cols $align
     }
@@ -265,8 +265,8 @@ if {1} {
     {"PRD-003" "27\" Monitor" 89 "Displays" "4K UHD (3840×2160); 100% sRGB; HDR10 support; height-adjustable stand"}
   }
   # 2. Call procedure: width specs [10, 18, 6, 12, 35]; title "Office Equipment Inventory"
-  set formatted_table [table_format_with_title $product_data {10 18 6 12 35} "Office Equipment Inventory" center]
-  set formatted_table [table_format_with_title $product_data {10 18 6 12 35} "" center]
+  set formatted_table [table_format_with_title $product_data {10 18 6 12 35} center "Office Equipment Inventory"]
+  set formatted_table [table_format_with_title $product_data {10 18 6 12 35} center ""]
   # 3. Output result
   puts "=== Test Case 1: Valid Nested List Input ==="
   puts [join $formatted_table \n]
@@ -274,10 +274,10 @@ if {1} {
   # Test Case 2: Invalid input (non-nested list, e.g., raw string) - should throw error
   puts "\n=== Test Case 2: Error Handling for Non-Nested List Input ==="
   set invalid_data "2024-09-01 Alice Engineering API integration completed"
-  puts [join [table_format_with_title $invalid_data 15 "" center] \n]
+  puts [join [table_format_with_title $invalid_data 15 center ""] \n]
   
   # Test Case 3: Invalid input (mixed list with non-sublist elements) - should throw error
   puts "\n=== Test Case 3: Error Handling for Mixed List Input ==="
   set mixed_data {{"Row1 Col1" "Row1 Col2"} "This is not a sublist" {"Row3 Col1" "Row3 Col2"}}
-  puts [join [table_format_with_title $mixed_data 0 "" center] \n]
+  puts [join [table_format_with_title $mixed_data 0 {right left left left left} ""] \n]
 }

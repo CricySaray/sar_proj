@@ -15,8 +15,7 @@ source ./common/parse_constraint_report.common.tcl; # parse_constraint_report
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc runCmd_summarize_pt_rpts {args} {
   set searchDir                   "./"
-  set ifPrintToWindow             1
-  set outputFileOfSummary         "sum.rpt"
+  set outputFileOfSummary         "sum.csv"
   set scenarios                   "auto" ; # auto (will search ) or [list ...]
   set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # func_setup_0p99v_rcworst_m40c
   set modesOfFormatExp            {func scan}
@@ -58,7 +57,7 @@ proc runCmd_summarize_pt_rpts {args} {
         set num_$temp_const $temp_num
       }
     }
-    set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingFileName" r] ; set globalTimingContent [split [read $fi] "\n"]
+    set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingCsvFileName" r] ; set globalTimingContent [split [read $fi] "\n"]
     set titleList [split [lindex $globalTimingContent 0] ","]
     set valueList [split [lindex $globalTimingContent 1] ","]
     set totalTNS [lindex $valueList [lsearch -exact $titleList "Total_TNS"]]
@@ -70,7 +69,6 @@ proc runCmd_summarize_pt_rpts {args} {
   }]
   set infoOfAllScenarios [linsert $infoOfAllScenarios 0 [list scenario wns num tns r2r_w r2r_n r2r_t transW transN maxfanW maxfanN maxCapW maxCapN minPeriodW minPeriodN minPulseW minPulseN]]
   set tableToDisplay [join [table_format_with_title $infoOfAllScenarios 0 ""]]
-  if {$ifPrintToWindow} { puts $tableToDisplay }
   set fo [open "$searchDir/$outputFileOfSummary" w]
   puts $fo $tableToDisplay
   close $fo
@@ -78,25 +76,17 @@ proc runCmd_summarize_pt_rpts {args} {
 
 define_proc_attribute runCmd_summarize_pt_rpts \
   -info "run cmd of summarizing pt rpts"\
-  set searchDir                   "./"
-  set ifPrintToWindow             1
-  set outputFileOfSummary         "sum.rpt"
-  set scenarios                   "auto" ; # auto (will search ) or [list ...]
-  set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # func_setup_0p99v_rcworst_m40c
-  set modesOfFormatExp            {func scan}
-  set typeToCheckOfFormatExp      {setup hold}
-  set voltageOfFormatExp          {0p99v 1p1v 1p21v}
-  set rcCornerOfFormatExp         {cworst cbest rcworst rcbest typical}
-  set temperatureOfFormatExp      {25c m40c 125c}
-  set designName                  "SC5019_TOP" ; # only consisted of reportConstraintFileName
-  set reportConstraintFileName    "report_constraint_$designName.rpt"
-  set globalTimingCsvFileName     "${designName}.global_timing.csv" ; # please using command: report_global_timing -format csv -ouput .../$designName.global_timing.csv
   -define_args {
     {-searchDir "specify the dir to search" AString string optional}
-    {-ifPrintToWindow "if print to window" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-outputFileOfSummary "specify the output file of summary" AString string optional}
     {-scenarios "you can specify some scenarios name list or 'auto' that is can match all possible scenarios" AList list optional}
     {-formatOfScenarios "specify the format of scenarios if \$scenarios == 'auto'" AString string optional}
     {-modesOfFormatExp "specify the modes of Format Exp if \$scenarios == 'auto'" AList list optional}
     {-typeToCheckOfFormatExp "specify the type to check of Format Exp if \$scenarios == 'auto'" AList list optional}
+    {-voltageOfFormatExp "specify the voltage of Format Exp if \$scenarios == 'auto'" AList list optional}
+    {-rcCornerOfFormatExp "spcify the rc corners of Format Exp if \$scenarios == 'auto'" AList list optional}
+    {-temperatureOfFormatExp "specify the temperature of Format Exp if \$scenarios == 'auto'" AList list optional}
+    {-designName "specify the design name" AString string optional}
+    {-reportConstraintFileName "specify the report_constraint file name" AString string optional}
+    {-globalTimingCsvFileName "specify the file name of ouput of report_global_timing -format csv" AString string optional}
   }

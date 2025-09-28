@@ -95,5 +95,5 @@ define_proc_attribute runCmd_summarize_pt_rpts \
     {-searchDir "specify the dir to search" AString string optional}
     {-ifPrintToWindow "if print to window" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-outputFileOfSummary "specify the output file of summary" AString string optional}
-    {-scenarios ""}
+    {-scenarios "you can specify some scenarios name list or 'auto' that is can match all possible scenarios" AList list optional}
   }

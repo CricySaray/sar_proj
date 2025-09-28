@@ -35,7 +35,7 @@ proc runCmd_summarize_pt_rpts {args} {
   }
   set allDirNameOnSearchDir [lmap temp_path [glob -nocomplaion $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
-  
+  set 
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

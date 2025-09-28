@@ -2,11 +2,12 @@
 # --------------------------
 # author    : sar song
 # date      : 2025/09/28 18:14:51 Sunday
-# label     : flow_proc
+# label     : package_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : what?
-# return    : 
+# descrip   : Parse the report_constraint command to obtain the number of VIOLATED instances and the maximum violated value for constraints such as setup, 
+#             hold, max_transition, max_cap, max_fanout, min_pulse_width, and min_period.
+# return    : nested list: {{min_delay worstViolValue violNum} {max_daley worstViolValue violNum} {max_capacitance worstViolValue violNum} {max_transition worstViolValue violNum} {max_fanout worstViolValue violNum} {min_pulse_width worstViolValue violNum} {min_period worstViolValue violNum}}
 # ref       : link url
 # --------------------------
 proc parse_constraint_report {filename {debug 0}} {
@@ -20,7 +21,7 @@ proc parse_constraint_report {filename {debug 0}} {
   set path ""
   
   if {![file exists $filename]} {
-    if {$debug} {puts "Error: File $filename does not exist"}
+    if {$debug} {puts "Error: proc parse_constraint_report: File $filename does not exist"}
     return [list]
   }
   

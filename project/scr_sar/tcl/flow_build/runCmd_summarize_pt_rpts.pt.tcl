@@ -40,7 +40,7 @@ proc runCmd_summarize_pt_rpts {args} {
   set allConstraintNameList [list min_delay max_daley max_capacitance max_transition max_fanout min_pulse_width min_period]
 
   foreach temp_scenario_dir $scenarioDirs {
-    set constraintNameWnsNumLists [parse_constraint_report $reportConstraintFileName 0] ; # have item include "NA" like {max_delay NA NA}, you can add other actions for it NOTICE
+    set constraintNameWnsNumLists [parse_constraint_report "$searchDir/$temp_scenario_dir/$reportConstraintFileName" 0] ; # have item include "NA" like {max_delay NA NA}, you can add other actions for it NOTICE
     foreach temp_constaint_wns_num $constraintNameWnsNumLists {
       lassign $temp_constaint_wns_num temp_const temp_wns temp_num
       if {$temp_const in $allConstraintNameList} {
@@ -48,7 +48,8 @@ proc runCmd_summarize_pt_rpts {args} {
         set num_$temp_const $temp_num
       }
     }
-    set 
+    set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingFileName" r] ; set globalTimingContent [split [read $fi] "\n"]
+    set temp_tns [lindex [] 1]
   }
 }
 

@@ -12,6 +12,7 @@
 # --------------------------
 source ./common/generate_combinations.common.tcl; # generate_combinations
 source ./common/parse_constraint_report.common.tcl; # parse_constraint_report
+source ../packages/table_format_with_title.package.tcl
 proc runCmd_summarize_pt_rpts {args} {
   set searchDir                   "./"
   set scenarios                   "auto" ; # auto (will search ) or [list ...]
@@ -60,6 +61,7 @@ proc runCmd_summarize_pt_rpts {args} {
     if {$typeOfScenario == "setup"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} elseif {$typeOfScenario == "hold"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} else {error "proc runCmd_summarize_pt_rpts: check your formatOfScenarios($formatOfScenarios), not find 'setup' or 'hold' !!!"}
     list $wns_type_delay $num_type_delay $totalTNS $reg2regWNS $reg2regNUM $reg2regTNS $wns_max_transition $num_max_transition $wns_max_fanout $num_max_fanout $wns_max_capacitance $num_max_capacitance $wns_min_period $num_min_period $wns_min_pulse_width $num_min_pulse_width
   }]
+  
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

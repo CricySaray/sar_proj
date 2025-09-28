@@ -60,6 +60,8 @@ proc sliding_rheostat_of_strategies {args} {
   set violValue                                0
   set violPin                                  ""
   set VTweight                                 {{AR9 3} {AL9 1} {AH9 0}}
+  set forbiddenVT                              HVT
+  set driveCapacityRange                       {1 12}
   set ifInFixLongNetMode                       0
   set ifCanChangeVTandCapacityInFixLongNetMode 0
   set ifCanChangeVTWhenChangeCapacity          1
@@ -77,7 +79,7 @@ proc sliding_rheostat_of_strategies {args} {
   } else {
     set promptInfo [string cat $promptPrefix "INFO"] ; set promptWarning [string cat $promptPrefix "WARN"] ; set promptError [string cat $promptPrefix "ERROR"]
     proc onlyReadTrace {var_name index operation} { error "proc onlyReadTrace: variable($var_name) is read-only, you can't write it!!!" }
-    set allInfo [get_allInfo_fromPin $violPin]
+    set allInfo [get_allInfo_fromPin $violPin $forbiddenVT $driveCapacityRange]
     trace add variable allInfo write onlyReadTrace
     dict for {infovar infovalue} $allInfo { set $infovar $infovalue ; trace add variable $infovar write onlyReadTrace}
     set addedInfoToShow [concat $violValue $infoToShow]
@@ -253,6 +255,8 @@ define_proc_arguments sliding_rheostat_of_strategies \
     {-violValue "specify the violation value of pin" AFloat float required}
     {-violPin "specify the violation pin" AString string required}
     {-VTweight "specify the VT weight for strategy_changeVT_withLUT proc" AList list optional}
+    {-forbiddenVT "specify the VT that is forbidden to use" AList list optional}
+    {-driveCapacityRange "specify the range of drive capacity, default: {1 12}" AList list optional}
     {-ifInFixLongNetMode "specify go to Fix Long Net Mode. it will always insert repeater however this viol value of path is small" "" boolean optional}
     {-ifCanChangeVTandCapacityInFixLongNetMode "In Fix Long Net Mode, you can specify this option" "" boolean optional}
     {-ifCanChangeVTWhenChangeCapacity  "trun on/off switch that allow changing VT when changing capacity" "" boolean optional}

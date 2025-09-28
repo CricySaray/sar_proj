@@ -348,6 +348,8 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
     }
     set filterReportFileContontFirst [split_timing_path -input_list $content -split_exp "xxxSPLIT" -start_exp $startLineExp -end_exp $endLineExp]
     set cutOutContent [concat {*}$filterReportFileContontFirst]
+  } else {
+    set cutOutContent $content 
   }
   set all_celltypes [dbget head.libCells.name -u -e]
   set pinLines [lmap templine $cutOutContent {

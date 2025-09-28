@@ -58,6 +58,7 @@ if {[is_common_ui_mode]} {
   alias dg "get_db"
 
 } else {
+  set restore_db_file_check 0
   alias dim "gui_dim_foreground -lightness_level medium"
   alias li "dbget head.libCells.name"
   alias df "deleteFiller -perfix "

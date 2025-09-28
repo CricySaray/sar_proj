@@ -45,14 +45,16 @@ source ./proc_mux_of_strategies.invs.tcl; # mux_of_strategies
 proc fix_trans {args} {
   # default value for all var
   set file_viol_pin                            ""
-  set columnDelimiter                          {|} ; # will not seperate if is {}. will sepeate or tablize using linux cmd 'column' if is not {} (empty)
+  set columnDelimiter                          {} ; # will not seperate if is {}. will sepeate or tablize using linux cmd 'column' if is not {} (empty)
   set violValue_pin_columnIndex                {4 1}
   set canChangeVT                              1
   set canChangeDriveCapacity                   1
   set canChangeVTandDriveCapacity              1
   set canAddRepeater                           1
   set maxWidthForString                        80
-  set normalNeedVtWeightList                   {{AL9 1} {AR9 3} {AH9 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
+  set normalNeedVtWeightList                   {{LVT 1} {RVT 3} {HVT 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
+  set forbiddenVT                              HVT
+  set driveCapacityRange                       {1 12}
   set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
   set suffixFilename                           "" ; # for example : eco4
@@ -152,7 +154,7 @@ proc fix_trans {args} {
 
     foreach case $violValue_driverPin_LIST {
       lassign $case violValue driverPin
-      lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode -ifCanChangeVTWhenChangeCapacity -ifCanChangeVTcapacityWhenAddRepeater] resultDict allInfo
+      lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode -ifCanChangeVTWhenChangeCapacity -ifCanChangeVTcapacityWhenAddRepeater -forbiddenVT $forbiddenVT -driveCapacityRange $driveCapacityRange] resultDict allInfo
       
       proc onlyReadTrace {var_name index operation} { error "proc onlyReadTrace in proc: fix_trans: variable($var_name) is read-only, you can't write it!!!" }
       trace add variable allInfo write onlyReadTrace 
@@ -188,6 +190,7 @@ proc fix_trans {args} {
     set titleOfListMap {{{# COMMANDS OF FIXED CASES:} cmd_List} {{## reRoute COMMANDS:} cmd_reRoute_List} {{FIXED CASES LIST:} fixed_List} {{NOT PASS PRECHECK LIST:} notPassPreCheck_List} {{FIX BUT FAILED LIST:} fix_but_failed_List} {{SKIPPED LIST:} skipped_List} {{CAN'T CHANGE LIST:} cantChange_List} {{NEED NOTICE CASE LIST:} needNoticeCase_List} {{DETAIL INFO OF ONE2MORE CASES:} detailInfoOfMore_List}}
     set filesIncludeListMap [subst {{$cmdFile {fixedPrompts cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixedPrompts fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
     foreach ListVar $ListVarCollection { dict set ListVarDict $ListVar [subst \${$ListVar}] }
+    set promptsOnlyList [list [list fixedPrompts $fixedPrompts]]
     set needDumpWindowList {cmd_List fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needLimitStringWidth {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needInsertSequenceNumberColumn {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
@@ -199,7 +202,7 @@ proc fix_trans {args} {
     set defaultColumnToCountSum 2
     set maxWidthForString $maxWidthForString
     
-    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -notNeedTitleHeader $notNeedTitleHeader -maxWidthForString $maxWidthForString -columnToCountSumMapList $columnToCountSumMapList -onlyCountTotalNumList $onlyCountTotalNumList -defaultColumnToCountSum $defaultColumnToCountSum
+    summarize_all_list_to_display -listsDict $ListVarDict -promptsOnlyList $promptsOnlyList -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -notNeedTitleHeader $notNeedTitleHeader -maxWidthForString $maxWidthForString -columnToCountSumMapList $columnToCountSumMapList -onlyCountTotalNumList $onlyCountTotalNumList -defaultColumnToCountSum $defaultColumnToCountSum
   }
 }
 define_proc_arguments fix_trans \
@@ -214,6 +217,8 @@ define_proc_arguments fix_trans \
     {-canAddRepeater "if it use strategy of adding repeater" "" boolean optional}
     {-maxWidthForString "specify the max width of every string of list" AInteger int optional}
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
+    {-forbiddenVT "specify the VT that is forbidden to use" AList list optional}
+    {-driveCapacityRange "specify the range of drive capacity, default: {1 12}" AList list optional}
     {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list required}
     {-suffixFilename "specify suffix of result filename" AString string optional}

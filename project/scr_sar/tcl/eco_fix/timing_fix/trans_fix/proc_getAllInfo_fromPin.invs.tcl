@@ -130,8 +130,8 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
       }]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
       set refBuffer [operateLUT -type read -attr {refbuffer}] ; set refBufferCapacity [operateLUT -type read -attr [list celltype $refBuffer capacity]]
-      if {$temp_mostCapacity ne "NaN"} { set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity [if {$temp_mostCapacity == 0.5} {set temp_mostCapacity 05} else {set temp_mostCapacity}]] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
-        if {[operateLUT -type read -attr [list celltype $temp_type capacity]] == "NaN"} { set temp $temp_type } else { continue }
+      if {$temp_mostCapacity ne "NA"} { set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity [if {$temp_mostCapacity == 0.5} {set temp_mostCapacity 05} else {set temp_mostCapacity}]] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
+        if {[operateLUT -type read -attr [list celltype $temp_type capacity]] == "NA"} { set temp $temp_type } else { continue }
       }] 0]}
     }]
     
@@ -200,14 +200,10 @@ proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
     error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
   } else {
     set process [operateLUT -type read -attr {process}] 
-    if {$process == "TSMC"} {
-      set VTrange {HVT SVT LVT ULVT}
-    } elseif {$process == {M31GPSC900NL040P*_40N}} {
-      set VTrange {AL9 AR9 AH9}
-    }
+    set VTrange [operateLUT -type read -attr {vtrange}]
     if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
-    if {$nowVT eq "NaN"} {return 1}
+    if {$nowVT eq "NA"} {return 1}
     set availableVTrange [xor $VTrange $forbidenVT]
     if {[lsearch -exact $availableVTrange $nowVT] != 0} { return 0 } else { return 1 }
   }
@@ -220,15 +216,8 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
     error "proc judge_ifHaveBeenLargestCapacityInRange: check your input: celltype($celltype) not valid !!!" 
   } else {
     set process [operateLUT -type read -attr {process}] 
-    if {$process == "TSMC"} {
-      set regExp "D(\\d+).*CPD(U?L?H?VT)?"
-      set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
-      if {$nowCapacity eq "NaN"} {return 1}
-    } elseif {$process == {M31GPSC900NL040P*_40N}} {
-      set regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"
-      set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
-      if {$nowCapacity eq "NaN"} {return 1}
-    }
+    set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
+    if {$nowCapacity eq "NA"} {return 1}
     set availableDriveCapacityList [operateLUT -type read -attr [list celltype $celltype caplist]]
     set filteredAvailableDriveCapacityList [filter_numberList $availableDriveCapacityList $driveCapacityRange]
     if {[lindex $filteredAvailableDriveCapacityList end] <= $nowCapacity} {

@@ -138,6 +138,7 @@ proc insert_sequence {nested_list {start_pos {1 0}} {placeholders {{all "/"} {{0
   return $result
 }
 
-
-set ok {{first song an rui} {second an rui song } {third rui an song}}
-puts [join [insert_sequence $ok {1 0} {{{0 0} "num"}}] \n]
+if {0} {
+  set ok {{first song an rui} {second an rui song } {third rui an song}}
+  puts [join [insert_sequence $ok {1 0} {{{0 0} "num"}}] \n]
+}

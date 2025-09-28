@@ -17,6 +17,7 @@ source ../../../packages/stringstore.package.tcl; # stringstore::* ss_init/ss_pr
 source ../../../packages/insert_sequence.package.tcl; # insert_sequence
 proc summarize_all_list_to_display {args} {
   set listsDict                      {}
+  set promptsOnlyList                {} ; # for example: [list [list promptListName [list promptListValue]]], this will be added to listsDict as a key-value
   set titleOfListMap                 {}
   set filesIncludeListMap            {}
   set needDumpWindowList             {}
@@ -33,6 +34,9 @@ proc summarize_all_list_to_display {args} {
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
+  }
+  foreach temp_promptlist $promptsOnlyList {
+    dict set listsDict [lindex $temp_promptlist 0] [lindex $temp_promptlist 1] 
   }
   if {![llength $listsDict] || ![llength $titleOfListMap] || ![llength $filesIncludeListMap]} {
     error "proc summarize_all_list_to_display: check your input: listsDict($listsDict) or titleOfListMap($titleOfListMap) or filesIncludeListMap($filesIncludeListMap) has error!!!" 
@@ -52,7 +56,7 @@ proc summarize_all_list_to_display {args} {
           set ifNeedInsertSequenceNumberColumn [expr {$tempListName in $needInsertSequenceNumberColumn}]
           set ifOnlyCountTotalNum [expr {$tempListName in $onlyCountTotalNumList}]
           set ifSpecifiedColumnToCountSum [expr {$tempListName in [lsort -unique [join [lmap tempColumnList $columnToCountSumMapList { lindex $tempColumnList 1 }]]]}]
-          set columnToCountSum [eo $ifSpecifiedColumnToCountSum [foreach tempColumnList $columnToCountSumMapList { if {[expr {$tempListName in [lindex $tempColumnList 1]}]} { set temp [lindex $tempContentList 0] ; break  } else {continue}  } ; set temp] $defaultColumnToCountSum]
+          set columnToCountSum [eo $ifSpecifiedColumnToCountSum [foreach tempColumnList $columnToCountSumMapList { if {[expr {$tempListName in [lindex $tempColumnList 1]}]} { set temp [lindex $tempColumnList 0] ; break  } else {continue}  } ; if {[info exists temp]} {set temp} else {continue}] $defaultColumnToCountSum]
           if {[lsearch -index 1 $titleOfListMap $tempListName] != -1} { 
             set ifHaveTitle 1 ; set titleName [lindex [lsearch -index 1 -inline $titleOfListMap $tempListName] 0]; set titleSegments [list [string repeat "-" 25] $titleName ""] } else { 
               set ifHaveTitle 0 ; set titleSegments [list [string repeat "-" 25] " list name: [lindex [lsearch -index 1 $titleOfListMap $tempListName] 1]" ""] }
@@ -72,7 +76,7 @@ proc summarize_all_list_to_display {args} {
         }
         set stringstoreList [stringstore::ss_get_all]
         if {[llength $stringstoreList]} {
-          {*}$preCmd [join "" [list [string repeat "-" 25] "STRING STORE LIST:" ] \n]
+          {*}$preCmd [join  [list "" [string repeat "-" 25] "STRING STORE LIST:" ] \n]
           {*}$preCmd [print_formattedTable $stringstoreList]
         }
         stringstore::ss_clear
@@ -83,9 +87,10 @@ proc summarize_all_list_to_display {args} {
 }
 
 define_proc_arguments summarize_all_list_to_display \
-  -info "summary"\
+  -info "summary for all list to display"\
   -define_args {
     {-listsDict "specify listsDict" AList list required}
+    {-promptsOnlyList "specify the list only including prompts" AList list optional}
     {-titleOfListMap "specify title for every list" AList list required}
     {-filesIncludeListMap "specify the map from files to List" AList list required}
     {-needDumpWindowList "specify the list to dump window" AList list optional}

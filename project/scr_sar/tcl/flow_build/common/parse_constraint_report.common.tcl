@@ -8,6 +8,7 @@
 # descrip   : Parse the report_constraint command to obtain the number of VIOLATED instances and the maximum violated value for constraints such as setup, 
 #             hold, max_transition, max_cap, max_fanout, min_pulse_width, and min_period.
 # return    : nested list: {{min_delay worstViolValue violNum} {max_daley worstViolValue violNum} {max_capacitance worstViolValue violNum} {max_transition worstViolValue violNum} {max_fanout worstViolValue violNum} {min_pulse_width worstViolValue violNum} {min_period worstViolValue violNum}}
+# NOTICE    : please generate report file using command: report_constraint -all_violator -path_type end|slack_only -nos -max_delay -min_delay -max_transition -max_capacitance -max_fanout -min_period -min_pulse_width
 # ref       : link url
 # --------------------------
 proc parse_constraint_report {filename {debug 0}} {
@@ -190,23 +191,21 @@ proc parse_constraint_report {filename {debug 0}} {
   foreach block_type {max_capacitance max_transition max_fanout min_pulse_width min_period} {
     if {[dict exists $block_contents $block_type]} {
       set var_name "${block_type}_content"
-      if {[set $var_name] eq "GET"} {
-        set $var_name [dict get $block_contents $block_type]
-        if {$debug} {
-          puts "Assigned $var_name with [llength [set $var_name]] lines"
-        }
+      set $var_name [dict get $block_contents $block_type]
+      if {$debug} {
+        puts "Assigned $var_name with [llength [set $var_name]] lines"
       }
     }
   }
   
-  if {$min_delay_content eq "GET" && [llength $min_delay_subcontents] > 0} {
+  if {[llength $min_delay_subcontents] > 0} {
     set min_delay_content [concat {*}$min_delay_subcontents]
     if {$debug} {
       puts "Merged min_delay sub-blocks into min_delay_content with [llength $min_delay_content] lines"
     }
   }
   
-  if {$max_delay_content eq "GET" && [llength $max_delay_subcontents] > 0} {
+  if {[llength $max_delay_subcontents] > 0} {
     set max_delay_content [concat {*}$max_delay_subcontents]
     if {$debug} {
       puts "Merged max_delay sub-blocks into max_delay_content with [llength $max_delay_content] lines"

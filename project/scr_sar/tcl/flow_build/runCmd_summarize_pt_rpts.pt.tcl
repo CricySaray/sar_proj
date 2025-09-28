@@ -11,6 +11,7 @@
 # ref       : link url
 # --------------------------
 source ./common/generate_combinations.common.tcl; # generate_combinations
+source ./common/parse_constraint_report.common.tcl; # parse_constraint_report
 proc runCmd_summarize_pt_rpts {args} {
   set searchDir                "./"
   set scenarios                "auto" ; # auto (will search ) or [list ...]
@@ -22,6 +23,7 @@ proc runCmd_summarize_pt_rpts {args} {
   set temperatureOfFormatExp   {25c m40c 125c}
   set designName               "SC5019_TOP" ; # only consisted of reportConstraintFileName
   set reportConstraintFileName "report_constraint_$designName.rpt"
+  set globalTimingFileName     ""
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -35,7 +37,7 @@ proc runCmd_summarize_pt_rpts {args} {
   }
   set allDirNameOnSearchDir [lmap temp_path [glob -nocomplaion $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
-  set 
+  set constraintNameWnsNumList [parse_constraint_report]
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

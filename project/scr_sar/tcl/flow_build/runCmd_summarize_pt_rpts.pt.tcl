@@ -96,4 +96,7 @@ define_proc_attribute runCmd_summarize_pt_rpts \
     {-ifPrintToWindow "if print to window" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-outputFileOfSummary "specify the output file of summary" AString string optional}
     {-scenarios "you can specify some scenarios name list or 'auto' that is can match all possible scenarios" AList list optional}
+    {-formatOfScenarios "specify the format of scenarios if \$scenarios == 'auto'" AString string optional}
+    {-modesOfFormatExp "specify the modes of Format Exp if \$scenarios == 'auto'" AList list optional}
+    {-typeToCheckOfFormatExp "specify the type to check of Format Exp if \$scenarios == 'auto'" AList list optional}
   }

@@ -12,9 +12,11 @@
 # --------------------------
 source ./common/generate_combinations.common.tcl; # generate_combinations
 source ./common/parse_constraint_report.common.tcl; # parse_constraint_report
-source ../packages/table_format_with_title.package.tcl
+source ../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc runCmd_summarize_pt_rpts {args} {
   set searchDir                   "./"
+  set ifPrintToWindow             1
+  set outputFileOfSummary         "sum.rpt"
   set scenarios                   "auto" ; # auto (will search ) or [list ...]
   set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # func_setup_0p99v_rcworst_m40c
   set modesOfFormatExp            {func scan}
@@ -61,7 +63,12 @@ proc runCmd_summarize_pt_rpts {args} {
     if {$typeOfScenario == "setup"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} elseif {$typeOfScenario == "hold"} {set wns_type_delay $wns_max_delay ; set num_type_delay $num_max_delay} else {error "proc runCmd_summarize_pt_rpts: check your formatOfScenarios($formatOfScenarios), not find 'setup' or 'hold' !!!"}
     list $wns_type_delay $num_type_delay $totalTNS $reg2regWNS $reg2regNUM $reg2regTNS $wns_max_transition $num_max_transition $wns_max_fanout $num_max_fanout $wns_max_capacitance $num_max_capacitance $wns_min_period $num_min_period $wns_min_pulse_width $num_min_pulse_width
   }]
-  
+  set infoOfAllScenarios [linsert $infoOfAllScenarios 0 [list wns num tns r2r_w r2r_n r2r_t transW transN maxfanW maxfanN maxCapW maxCapN minPeriodW minPeriodN minPulseW minPulseN]]
+  set tableToDisplay [join [table_format_with_title $infoOfAllScenarios 0 ""]]
+  if {$ifPrintToWindow} { puts $tableToDisplay }
+  set fo [open "$searchDir/$outputFileOfSummary" w]
+  puts $fo $tableToDisplay
+  close $fo
 }
 
 define_proc_arguments runCmd_summarize_pt_rpts \

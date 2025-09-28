@@ -1,3 +1,14 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/09/28 18:14:51 Sunday
+# label     : flow_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : what?
+# return    : 
+# ref       : link url
+# --------------------------
 proc parse_constraint_report {filename {debug 0}} {
   set max_delay_content "NA"
   set min_delay_content "NA"
@@ -144,7 +155,7 @@ proc parse_constraint_report {filename {debug 0}} {
   
   set group_vars [dict create]
   
-  if {![dict exists block_contents min_delay]} {
+  if {![dict exists $block_contents min_delay]} {
     set min_delay_subcontents "" 
   } else {
     set min_delay_blocks [dict get $block_contents "min_delay"]
@@ -159,7 +170,7 @@ proc parse_constraint_report {filename {debug 0}} {
       }
     }
   }
-  if {![dict exists block_contents max_delay]} {
+  if {![dict exists $block_contents max_delay]} {
     set max_delay_subcontents ""
   } else {
     set max_delay_blocks [dict get $block_contents "max_delay"]

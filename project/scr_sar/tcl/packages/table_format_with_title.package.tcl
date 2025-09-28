@@ -199,7 +199,7 @@ proc table_format_with_title {inputData {width_spec 0} {title ""}} {
 }
 
 ### TEST
-if {1} {
+if {0} {
   # 1. Prepare nested list data (valid input: only nested list)
   set product_data {
     {"ID" "Product Name" "Stock" "Category" "Description (long text test)"}

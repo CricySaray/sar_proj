@@ -5,9 +5,12 @@
 # label     : flow_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : 
+# descrip   : Generate the specified report using PT-specific commands, and then execute this proc in PT (where the define_proc_attributes command can only be executed in PT). 
+#             Summarize one or several scenarios and create a table, then generate the table into a file for easy reading. It can also be written into the PT flow, generating 
+#             a separate table file for each scenario. After all scenarios are executed, use a simple file aggregation to integrate the data from each scenario into a master 
+#             table. In this way, data can be saved layer by layer.
 # NOTICE    : please generate report file using command: report_constraint -all_violator -path_type end|slack_only -nos -max_delay -min_delay -max_transition -max_capacitance -max_fanout -min_period -min_pulse_width
-# return    : 
+# return    : csv summary file
 # ref       : link url
 # --------------------------
 source ./common/generate_combinations.common.tcl; # generate_combinations
@@ -70,17 +73,17 @@ proc runCmd_summarize_pt_rpts {args} {
   set infoOfAllScenarios [linsert $infoOfAllScenarios 0 [list scenario wns num tns r2r_w r2r_n r2r_t transW transN maxfanW maxfanN maxCapW maxCapN minPeriodW minPeriodN minPulseW minPulseN]]
   set tableToDisplay [join [table_format_with_title $infoOfAllScenarios 0]]
   if {[regexp {<scenario>} $outputFileOfSummary]} { 
-    if {$scenarios == "auto"} { 
-      set allOutputFileOfSummary [lmap temp_scenario $allCasesOfScenarios { 
-        set temp_output_file_of_summary [string map [list <scenario> $temp_scenario]]
-      }]
-    }
+    set allOutputFileOfSummary [lmap temp_scenario $allCasesOfScenarios { 
+      set temp_output_file_of_summary [string map [list <scenario> $temp_scenario] $outputFileOfSummary]
+    }]
   } else {
-    set allOutputFileOfSummary []
+    set allOutputFileOfSummary $outputFileOfSummary
   }
-  set fo [open "$outputFileOfSummary" w]
-  puts $fo $tableToDisplay
-  close $fo
+  foreach temp_file_to_output $allOutputFileOfSummary {
+    set fo [open "$temp_file_to_output" w]
+    puts $fo $tableToDisplay
+    close $fo
+  }
 }
 
 define_proc_attribute runCmd_summarize_pt_rpts \

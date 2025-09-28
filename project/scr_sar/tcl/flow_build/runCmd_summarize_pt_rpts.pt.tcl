@@ -17,10 +17,10 @@ source ./common/generate_combinations.common.tcl; # generate_combinations
 source ./common/parse_constraint_report.common.tcl; # parse_constraint_report
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc runCmd_summarize_pt_rpts {args} {
-  set searchDir                   "./"
+  set searchDir                   "./" ; # for example: /simulation/arsong/SC5019/PT/run/V0926_S0926_FP0926_0926_100_dft_v3_eco1
   set outputFileOfSummary         "$searchDir/<scenario>/sum.csv" ; # if have '<scenario>' in this path, this will write output for every scenario dir
-  set scenarios                   "auto" ; # auto (will search ) or [list ...]
-  set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # func_setup_0p99v_rcworst_m40c
+  set scenarios                   "auto" ; # auto (will search ) or [list ...], for example: func_hold_1p21v_rcbest_125c
+  set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # format instance like: func_setup_0p99v_rcworst_m40c
   set modesOfFormatExp            {func scan}
   set typeToCheckOfFormatExp      {setup hold}
   set voltageOfFormatExp          {0p99v 1p1v 1p21v}
@@ -46,7 +46,7 @@ proc runCmd_summarize_pt_rpts {args} {
   }
   set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
-  if {$scenarioDirs == ""} { error "proc runCmd_summarize_pt_rpts: " }
+  if {$scenarioDirs == ""} { error "proc runCmd_summarize_pt_rpts: check your input: scenarios dir on searching directory is empty!!!" }
   set allConstraintNameList [list min_delay max_delay max_capacitance max_transition max_fanout min_pulse_width min_period]
 
   set infoOfAllScenarios [lmap temp_scenario_dir $scenarioDirs {

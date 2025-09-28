@@ -49,7 +49,7 @@ proc runCmd_summarize_pt_rpts {args} {
       }
     }
     set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingFileName" r] ; set globalTimingContent [split [read $fi] "\n"]
-    set temp_tns [lindex [] 1]
+    set temp_tns [lindex [lsearch -inline -regexp $globalTimingContent {^TNS\s+.*}] 1]
   }
 }
 

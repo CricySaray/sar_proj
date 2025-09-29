@@ -70,4 +70,6 @@ define_proc_arguments runCmd_formalityFlow \
     {-referenceNetlist "specify reference netlist path" AString string optional}
     {-implementNetlist "specify implement netlist path" AString string optional}
     {-logFileName "specify the log file name" AString string optional}
+    {-failingPointReportFileName "specify the file name of failing points report" AString string optional}
+    {-constantSettingCmdsList "specify the cmds list of setting constant value" AList list optional}
   }

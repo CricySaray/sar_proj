@@ -1,0 +1,3 @@
+genCmd_* files: not to change invs/pt db
+runCmd_* files: will change invs/pt db
+genFile_* files: not to change invs/pt db, generate several file

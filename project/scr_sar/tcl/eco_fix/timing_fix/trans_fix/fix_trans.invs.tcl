@@ -68,7 +68,7 @@ proc fix_trans {args} {
   set sumFile                                 [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
   set cantExtractFile                         [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]
   set cmdFile                                 [eo $suffixFilename "sor_ecocmds_$suffixFilename.tcl" "sor_ecocmds.tcl"]
-  set one2moreDetailSinksInfoFile                  [eo $suffixFilename "sor_one2moreDetailViolInfo_$suffixFilename.tcl" "sor_one2moreDetailViolInfo.tcl"]
+  set one2moreDetailSinksInfoFile             [eo $suffixFilename "sor_one2moreDetailViolInfo_$suffixFilename.tcl" "sor_one2moreDetailViolInfo.tcl"]
   # songNOTE: only deal with loadPin viol situation, ignore drivePin viol situation
   # $violValue_pin_columnIndex  : for example : {3 1}
   #   violPin   xxx   violValue   xxx   xxx
@@ -149,7 +149,7 @@ proc fix_trans {args} {
     # ------
     # init LIST
     set cmd_reRoute_List [list ] ; set fix_but_failed_List [list ]
-    set cmd_List $fixedPrompts
+    set cmd_List [list]
     lappend cmd_List "" "setEcoMode -reset" "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false" ""
 
     foreach case $violValue_driverPin_LIST {
@@ -171,10 +171,10 @@ proc fix_trans {args} {
           lappend fixed_more_List_temp $fixed_more_list 
           lappend cmd_more_List_temp "# $fixed_more_list" {*}$cmd_more_list
         }
-        if {$ifHaveMovements} { lappend {*}[eo $ifOne2One [list fixed_one_List_temp $fixed_one_list] [list fixed_more_List_temp $fixed_more_list]] {*}$movement_cmd_list }
-        if {$ifFixButFailed} { lappend fix_but_failed_List $fix_but_failed_list }
-        if {$ifSkipped} { lappend skipped_List $skipped_list }
-        if {$ifCantChange && !$ifFixedSuccessfully} { lappend cantChange_List $cantChange_list }
+        if {$ifHaveMovements} { lappend [eo $ifOne2One cmd_one_List_temp cmd_more_List_temp] {*}$movement_cmd_list }
+        if {$ifFixButFailed} { lappend fix_but_failed_List {*}$fix_but_failed_list }
+        if {$ifSkipped} { lappend skipped_List {*}$skipped_list }
+        if {$ifCantChange && !$ifFixedSuccessfully} { lappend cantChange_List {*}$cantChange_list }
         if {$ifNeedNoticeCase} { lappend needNoticeCase_List $needNoticeCase_list }
       }
       if {!$ifOne2One} { lappend detailInfoOfMore_List {*}$detailInfoOfMore_list }
@@ -190,19 +190,19 @@ proc fix_trans {args} {
     set titleOfListMap {{{# COMMANDS OF FIXED CASES:} cmd_List} {{## reRoute COMMANDS:} cmd_reRoute_List} {{FIXED CASES LIST:} fixed_List} {{NOT PASS PRECHECK LIST:} notPassPreCheck_List} {{FIX BUT FAILED LIST:} fix_but_failed_List} {{SKIPPED LIST:} skipped_List} {{CAN'T CHANGE LIST:} cantChange_List} {{NEED NOTICE CASE LIST:} needNoticeCase_List} {{DETAIL INFO OF ONE2MORE CASES:} detailInfoOfMore_List}}
     set filesIncludeListMap [subst {{$cmdFile {fixedPrompts cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixedPrompts fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
     foreach ListVar $ListVarCollection { dict set ListVarDict $ListVar [subst \${$ListVar}] }
-    set promptsOnlyList [list [list fixedPrompts $fixedPrompts]]
+    dict set ListVarDict fixedPrompts $fixedPrompts
     set needDumpWindowList {cmd_List fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needLimitStringWidth {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needInsertSequenceNumberColumn {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set notNeedCountSum {fixedPrompts cmd_List cmd_reRoute_List}
-    set notNeedFormatTableList {cmd_List cmd_reRoute_List}
+    set notNeedFormatTableList {fixedPrompts cmd_List cmd_reRoute_List}
     set notNeedTitleHeader {fixedPrompts}
-    set columnToCountSumMapList {{2 {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}}}
+    set columnToCountSumMapList {{1 {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}}}
     set onlyCountTotalNumList {detailInfoOfMore_List fixedPrompts}
-    set defaultColumnToCountSum 2
+    set defaultColumnToCountSum 0
     set maxWidthForString $maxWidthForString
     
-    summarize_all_list_to_display -listsDict $ListVarDict -promptsOnlyList $promptsOnlyList -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -notNeedTitleHeader $notNeedTitleHeader -maxWidthForString $maxWidthForString -columnToCountSumMapList $columnToCountSumMapList -onlyCountTotalNumList $onlyCountTotalNumList -defaultColumnToCountSum $defaultColumnToCountSum
+    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -needInsertSequenceNumberColumn $needInsertSequenceNumberColumn -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -notNeedTitleHeader $notNeedTitleHeader -maxWidthForString $maxWidthForString -columnToCountSumMapList $columnToCountSumMapList -onlyCountTotalNumList $onlyCountTotalNumList -defaultColumnToCountSum $defaultColumnToCountSum
   }
 }
 define_proc_arguments fix_trans \

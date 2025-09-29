@@ -60,16 +60,35 @@ proc lmap {args} {
     foreach varList $varLists list $lists {
       set elements [lindex $list $i]
       # Ensure enough elements to match variable list
-      if {[llength $elements] < [llength $varList]} {
+      if {[llength $varList] > 1 && [llength $elements] < [llength $varList]} {
         error "list \"$list\" has too few elements for variable list \"$varList\""
       }
-      uplevel 1 [list lassign $elements {*}$varList]
+      # Handle single variable case differently to preserve sublists
+      if {[llength $varList] == 1} {
+        uplevel 1 [list set [lindex $varList 0] $elements]
+      } else {
+        uplevel 1 [list lassign $elements {*}$varList]
+      }
     }
     
-    # Execute body and collect result
-    lappend result [uplevel 1 $body]
+    # Execute body and collect result, handling continue
+    set code [catch {uplevel 1 $body} value]
+    if {$code == 0} {
+      # Normal execution, add result to list
+      lappend result $value
+    } elseif {$code == 4} {
+      # Continue command encountered, skip this iteration
+      continue
+    } else {
+      # Re-throw other errors
+      error $value $::errorInfo $::errorCode
+    }
   }
   
   return $result
 }
-    
+
+if {0} {
+  set song {{song an rui} {an rui song} {rui an song}} 
+  puts [lmap temp_x $song { join $temp_x "_" }]
+}

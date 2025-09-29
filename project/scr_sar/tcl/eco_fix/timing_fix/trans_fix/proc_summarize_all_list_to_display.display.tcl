@@ -16,31 +16,28 @@ source ../../../packages/count_items_advance.package.tcl; # count_items_advance
 source ../../../packages/stringstore.package.tcl; # stringstore::* ss_init/ss_process/ss_get_id/ss_get_string/ss_clear/ss_size/ss_get_max_length/ss_set_max_length/ss_get_all
 source ../../../packages/insert_sequence.package.tcl; # insert_sequence
 proc summarize_all_list_to_display {args} {
-  set listsDict                      {}
-  set promptsOnlyList                {} ; # for example: [list [list promptListName [list promptListValue]]], this will be added to listsDict as a key-value
-  set titleOfListMap                 {}
-  set filesIncludeListMap            {}
-  set needDumpWindowList             {}
-  set needLimitStringWidth           {}
-  set needInsertSequenceNumberColumn {}
-  set maxWidthForString              80
-  set notNeedCountSumList            {}
-  set notNeedFormatTableList         {}
-  set notNeedTitleHeader             {}
-  set columnToCountSumMapList        {}
-  set onlyCountTotalNumList          {}
-  set defaultColumnToCountSum        2
+  set listsDict                                  {}
+  set titleOfListMap                             {}
+  set filesIncludeListMap                        {}
+  set needDumpWindowList                         {}
+  set needLimitStringWidth                       {}
+  set needInsertSequenceNumberColumn             {}
+  set maxWidthForString                          80
+  set notNeedCountSumList                        {}
+  set notNeedFormatTableList                     {}
+  set notNeedTitleHeader                         {}
+  set columnToCountSumMapList                    {}
+  set onlyCountTotalNumList                      {}
+  set defaultColumnToCountSum                    2
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  foreach temp_promptlist $promptsOnlyList {
-    dict set listsDict [lindex $temp_promptlist 0] [lindex $temp_promptlist 1] 
-  }
+  set filesAllListName [lsort -unique [join [lmap file_lists $filesIncludeListMap { lindex $file_lists 1 }]]]
   if {![llength $listsDict] || ![llength $titleOfListMap] || ![llength $filesIncludeListMap]} {
     error "proc summarize_all_list_to_display: check your input: listsDict($listsDict) or titleOfListMap($titleOfListMap) or filesIncludeListMap($filesIncludeListMap) has error!!!" 
-  } elseif {[expr {[dict size $listsDict] != [llength [set filesAllList [lsort -unique [join [lmap file_lists $filesIncludeListMap { lindex $file_lists 1 }]]]]]}] || [any x [dict keys $listsDict] { set ifHave 0 ; foreach tempFileLists $filesIncludeListMap { if {[expr {$x in [lindex $tempFileLists 1]}]} { set ifHave 1 }} ; expr {!$ifHave} }]} {
+  } elseif {[expr {[dict size $listsDict] != [llength $filesAllListName]}] || [any x [dict keys $listsDict] { set ifHave 0 ; foreach tempFileLists $filesIncludeListMap { if {[expr {$x in [lindex $tempFileLists 1]}]} { set ifHave 1 }} ; expr {!$ifHave} }]} {
     error "proc summarize_all_list_to_display: check your listsDict(size: [dict size $listsDict] \n\t| keys : [lsort [dict keys $listsDict]]) \n\tand filesIncludeListMap(size : [llength $filesAllList] \n\t| content : [lsort -unique $filesAllList]) : not Match!!!" 
   } else {
     dict with listsDict {
@@ -64,7 +61,11 @@ proc summarize_all_list_to_display {args} {
           if {[llength [subst \${$tempListName}]] > 1} {
             {*}$preCmd [if {$ifNeedTitleHeader} { join $titleSegments \n } else { list }]
             if {$ifNeedLimitStringWidth} { set $tempListName [lmap tempContentList [subst \${$tempListName}] { lmap tempItem $tempContentList { stringstore::ss_process $tempItem } }] }
-            {*}$preCmd [if {$ifNeedFormatTable} { print_formattedTable [subst \${$tempListName}] } else { join [subst \${$tempListName}] \n } ]
+            if {$ifNeedFormatTable} { 
+              {*}$preCmd [print_formattedTable [subst \${$tempListName}]]
+            } else { 
+              {*}$preCmd [join [subst \${$tempListName}] \n]
+            }
             if {$tempListName ni $notNeedCountSumList} {
               set allCountList [count_items_advance [lrange [subst \${$tempListName}] 1 end] $columnToCountSum {type num}]
               set countList [eo $ifOnlyCountTotalNum [lindex $allCountList end] $allCountList]
@@ -90,7 +91,6 @@ define_proc_arguments summarize_all_list_to_display \
   -info "summary for all list to display"\
   -define_args {
     {-listsDict "specify listsDict" AList list required}
-    {-promptsOnlyList "specify the list only including prompts" AList list optional}
     {-titleOfListMap "specify title for every list" AList list required}
     {-filesIncludeListMap "specify the map from files to List" AList list required}
     {-needDumpWindowList "specify the list to dump window" AList list optional}

@@ -183,7 +183,7 @@ proc sliding_rheostat_of_strategies {args} {
         } elseif {!$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && $ifHaveBeenLargestCapacityInRange} { 
           set ifSkipped 1 ; set skippedFlag_02 "Lcap"
         } 
-        set skippedFlag [join [lmap flag [info locals skippedFlag_*] { subst {\${$flag}} }] "/"]
+        set skippedFlag [join [lmap flag [info locals skippedFlag_*] { subst \${$flag} }] "/"]
         lappend skipped_list [concat $driverSinksSymbol $skippedFlag $addedInfoToShow]
         ### add repeater (change VT/capacity) U010
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
@@ -238,7 +238,7 @@ proc sliding_rheostat_of_strategies {args} {
           }
         } elseif {!$ifFixedSuccessfully && [expr $netLen < [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # have fastest VT and largest capacity, and it is inside of functionGraph AT001:this var is 1
           set ifCantChange 1
-          lappend cantChange_list [concat $driverSinksSymbol $addedInfoToShow]
+          lappend cantChange_list [concat $driverSinksSymbol "FvtLcap" $addedInfoToShow]
         }
       }
     }

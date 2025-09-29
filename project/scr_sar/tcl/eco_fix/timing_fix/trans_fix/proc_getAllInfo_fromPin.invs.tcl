@@ -199,7 +199,6 @@ proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
     error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
   } else {
-    set process [operateLUT -type read -attr {process}] 
     set VTrange [operateLUT -type read -attr {vtrange}]
     if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
@@ -215,7 +214,6 @@ proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
     error "proc judge_ifHaveBeenLargestCapacityInRange: check your input: celltype($celltype) not valid !!!" 
   } else {
-    set process [operateLUT -type read -attr {process}] 
     set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]
     if {$nowCapacity eq "NA"} {return 1}
     set availableDriveCapacityList [operateLUT -type read -attr [list celltype $celltype caplist]]

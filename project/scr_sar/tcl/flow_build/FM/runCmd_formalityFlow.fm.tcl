@@ -27,7 +27,11 @@ proc runCmd_formalityFlow {args} {
       error "proc runCmd_formalityFlow: check your input: dbList($dbList) is empty!!!" 
     } else {
       if {![file isdirectory [file dirname $logFileName]]} {
-        error "proc runCmd_formalityFlow: check your input: dirname([file dirname $logFileName]) of logFileName($logFileName) is not a directory"
+        error "proc runCmd_formalityFlow: check your input: dirname([file dirname $logFileName]) of logFileName($logFileName) is not a directory!!!"
+      } else {
+        set hdlin_unresolved_modules black_box
+        set hdlin_warn_on_mismatch_message
+        set hdlin_warn_on_mismatch_message "FMR_ELAB-147 FMR_ELAB-146" 
       }
     }
   }

@@ -20,6 +20,17 @@ proc runCmd_formalityFlow {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  if {![every x [list $referenceNetlist $implementNetlist] {file isfile $x}]} {
+    error "proc runCmd_formalityFlow: check your input: referenceNetlist($referenceNetlist) or implementNetlist($implementNetlist) is not found!!!" 
+  } else {
+    if {$dbList == ""} {
+      error "proc runCmd_formalityFlow: check your input: dbList($dbList) is empty!!!" 
+    } else {
+      if {![file isdirectory [file dirname $logFileName]]} {
+        error "proc runCmd_formalityFlow: check your input: dirname([file dirname $logFileName]) of logFileName($logFileName) is not a directory"
+      }
+    }
+  }
 }
 
 define_proc_arguments runCmd_formalityFlow \
@@ -29,5 +40,5 @@ define_proc_arguments runCmd_formalityFlow \
     {-dbList "specify any rc corner db list" AList list optional}
     {-referenceNetlist "specify reference netlist path" AString string optional}
     {-implementNetlist "specify implement netlist path" AString string optional}
-    {-logFileName "specify the log file name "}
+    {-logFileName "specify the log file name" AString string optional}
   }

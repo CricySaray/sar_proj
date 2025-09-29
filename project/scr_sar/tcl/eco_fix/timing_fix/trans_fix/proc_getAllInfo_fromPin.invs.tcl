@@ -192,18 +192,17 @@ proc zipCellClass {driverCellClass mostFrequentInSinksCellClass numSinks} {
 }
 
 source ../../../packages/xor_ofList.package.tcl; # xor
-source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ./proc_get_VTtype_of_celltype.invs.tcl; # get_VTtype_of_celltype
 source ../lut_build/operateLUT.tcl; # operateLUT
 proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
     error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
   } else {
     set VTrange [operateLUT -type read -attr {vtrange}]
     if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
     if {$nowVT eq "NA"} {return 1}
-    set availableVTrange [xor $VTrange $forbidenVT]
+    #set availableVTrange [xor $VTrange $forbidenVT] ; # function to improve
     if {[lsearch -exact $availableVTrange $nowVT] != 0} { return 0 } else { return 1 }
   }
 }
@@ -211,7 +210,7 @@ source proc_getDriveCapacity_ofCelltype.invs.tcl; # get_driveCapacity_of_celltyp
 source ../../../packages/filter_numberList.package.tcl; # filter_numberList
 source ../lut_build/operateLUT.tcl; # operateLUT
 proc judge_ifHaveBeenLargestCapacityInRange {{celltype ""} {driveCapacityRange {1 12}}} {
-  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == "" || [whichProcess_fromStdCellPattern $celltype] == "other"} {
+  if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
     error "proc judge_ifHaveBeenLargestCapacityInRange: check your input: celltype($celltype) not valid !!!" 
   } else {
     set nowCapacity [operateLUT -type read -attr [list celltype $celltype capacity]]

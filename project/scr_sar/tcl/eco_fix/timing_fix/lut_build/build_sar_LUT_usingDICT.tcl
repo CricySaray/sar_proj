@@ -55,17 +55,17 @@ proc build_sar_LUT_usingDICT {args} {
   } elseif {$process in {TSMC_cln12ffc}} {
     set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP.*CPD(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWP6T24P96CPDLVT" ; set refClkBuffer "DCCKBD12BWP6T16P96CPDLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
-    set VT_mapList {{{} SVT} {LVT LVT} {ULVT UVLT} {HVT HVT}} ; set ifNeedMapVTlist 1
+    set VT_mapList {{{} SVT} {LVT LVT} {ULVT UVLT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_arm_cln40lp}} { ; # U002
     set capacityFlag "X" ; set vtFastRange {LVT RVT} ; set stdCellFlag "" ; set celltypeMatchExp {^[^_]*_X(\d+P?\d?)[ABEMF]?_A\dT([RL])40$} ; set refBuffer "BUF_X1M_A9TL40" ; set refClkBuffer "BUF_X1B_A9TL40"
     set special_StdCellVtMatchExp_from {^([^_]*_X)<cap>([ABEMF])_(A\dT)<vt>40$} ; set special_StdCellVtMatchExp_to {\1\d+P?\d?\2_\3[RL]40$}
-    set VT_mapList {{R RVT} {L LVT}} ; set ifNeedMapVTlist 1 ; # AT101
+    set VT_mapList {{R RVT} {L LVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1 ; # AT101
     set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
   } elseif {$process in {TSMC_tcbn40lpbwp}} {
     set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
-    set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set ifNeedMapVTlist 1
+    set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
   }
@@ -102,6 +102,24 @@ proc build_sar_LUT_usingDICT {args} {
     puts $fo "dict set $lutDictName stdcellflag \"\""
   } else {
     puts $fo "dict set $lutDictName stdcellflag $stdCellFlag" 
+  }
+  if {![info exists celltypeMatchExp] || $celltypeMatchExp == ""} {
+    puts $fo "$promptWARN: have no celltype match regExp defination!!!" 
+    puts $fo "dict set $lutDictName celltype_regexp \"\""
+  } else {
+    puts $fo "dict set $lutDictName celltype_regexp \{$celltypeMatchExp\}"
+  }
+  if {![info exists VT_mapList] || $VT_mapList == ""} {
+    puts $fo "$promptWARN: have no VT mapList defination!!!"
+    puts $fo "dict set $lutDictName vt_maplist \{\}" 
+  } else {
+    puts $fo "dict set $lutDictName vt_maplist \{$VT_mapList\}" 
+  }
+  if {![info exists driveCapacity_mapList] || $driveCapacity_mapList == ""} {
+    puts $fo "$promptWARN: have no drive capacity mapList defination!!!"
+    puts $fo "dict set $lutDictName cap_maplist \{\}" 
+  } else {
+    puts $fo "dict set $lutDictName cap_maplist \{$driveCapacity_mapList\}" 
   }
   debug_msg "# --- get design name ..."
   set designName [dbget top.name -e] 

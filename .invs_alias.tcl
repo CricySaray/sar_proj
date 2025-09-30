@@ -13,7 +13,7 @@ proc shis {index} {
 if {[is_common_ui_mode]} {
   alias dim "gui_dim_foreground -light_level medium"
   alias li "get_db head.libCells.name"
-  alias df "delete_filler -perfix "
+  alias df "delete_filler -prefix "
 
   alias pgopen "check_connectivity -type special -ignore_dangling_wires -ignore_weak_connects -ignore_unrouted_nets -ignore_soft_pg_connects -error 1000 -warning 50"
   alias ssopen "check_connectivity -type regular -ignore_dangling_wires -ignore_weak_connects -ignore_unrouted_nets -ignore_soft_pg_connects -error 1000 -warning 50"
@@ -69,7 +69,7 @@ if {[is_common_ui_mode]} {
   set restore_db_file_check 0
   alias dim "gui_dim_foreground -lightness_level medium"
   alias li "dbget head.libCells.name"
-  alias df "deleteFiller -perfix "
+  alias df "deleteFiller -prefix "
 
   alias pgopen "verifyConnectivity -type special -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"
   alias ssopen "verifyConnectivity -type regular -noAntenna -noWeakConnect -noUnroutedNet -noSoftPGConnect -error 1000 -warning 50"

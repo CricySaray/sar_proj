@@ -53,10 +53,26 @@ proc summarize_all_list_to_display {args} {
           set ifNeedInsertSequenceNumberColumn [expr {$tempListName in $needInsertSequenceNumberColumn}]
           set ifOnlyCountTotalNum [expr {$tempListName in $onlyCountTotalNumList}]
           set ifSpecifiedColumnToCountSum [expr {$tempListName in [lsort -unique [join [lmap tempColumnList $columnToCountSumMapList { lindex $tempColumnList 1 }]]]}]
-          set columnToCountSum [eo $ifSpecifiedColumnToCountSum [foreach tempColumnList $columnToCountSumMapList { if {[expr {$tempListName in [lindex $tempColumnList 1]}]} { set temp [lindex $tempColumnList 0] ; break  } else {continue}  } ; if {[info exists temp]} {set temp} else {continue}] $defaultColumnToCountSum]
+          #set columnToCountSum [eo $ifSpecifiedColumnToCountSum [foreach tempColumnList $columnToCountSumMapList { if {[expr {$tempListName in [lindex $tempColumnList 1]}]} { set temp_column [lindex $tempColumnList 0] ; break  } else {continue}  } ; if {[info exists temp_column]} {set temp_column} else {continue}] $defaultColumnToCountSum]
+          if {$ifSpecifiedColumnToCountSum} {
+            catch {unset temp_column}
+            foreach tempColumnList $columnToCountSumMapList {
+              if {[expr {$tempListName in [lindex $tempColumnList 1]}]} {
+                set temp_column [lindex $tempColumnList 0]
+                break
+              } else {
+                continue
+              }
+            }
+          }
+          if {[info exists temp_column]} {
+            set columnToCountSum $temp_column
+          } else {
+            set columnToCountSum $defaultColumnToCountSum
+          }
           if {[lsearch -index 1 $titleOfListMap $tempListName] != -1} { 
             set ifHaveTitle 1 ; set titleName [lindex [lsearch -index 1 -inline $titleOfListMap $tempListName] 0]; set titleSegments [list [string repeat "-" 25] $titleName ""] } else { 
-              set ifHaveTitle 0 ; set titleSegments [list [string repeat "-" 25] " list name: [lindex [lsearch -index 1 $titleOfListMap $tempListName] 1]" ""] }
+              set ifHaveTitle 0 ; set titleSegments [list "#[string repeat "-" 25]" " list name: [lindex [lsearch -index 1 $titleOfListMap $tempListName] 1]" ""] }
           set preCmd [list [eo $ifDumpWindow pw puts] $fi]
           if {[llength [subst \${$tempListName}]] > 1} {
             {*}$preCmd [if {$ifNeedTitleHeader} { join $titleSegments \n } else { list }]

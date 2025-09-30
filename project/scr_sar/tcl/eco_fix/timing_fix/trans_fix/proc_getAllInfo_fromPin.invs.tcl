@@ -203,7 +203,7 @@ proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
     if {$nowVT eq "NA"} {return 1}
     #set availableVTrange [xor $VTrange $forbidenVT] ; # function to improve
-    if {[lsearch -exact $availableVTrange $nowVT] != 0} { return 0 } else { return 1 }
+    if {[lsearch -exact $VTrange $nowVT] != 0} { return 0 } else { return 1 }
   }
 }
 source proc_getDriveCapacity_ofCelltype.invs.tcl; # get_driveCapacity_of_celltype

@@ -5,8 +5,15 @@
 # label     : atomic_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : what?
-# return    : 
+# descrip   : Use a regexp expression to match the `celltype`, retrieve the `driveCapacity` and `VTtype` from it, then specify the type to be replaced (`cap` or `vt`), and 
+#             provide the string that needs to be used for replacement. This `proc` (procedure) will then return the `celltype` after replacement.
+# update    : 2025/09/30 01:53:04 Tuesday
+#             This proc will extract the flag character preceding `driveCapacity` based on your regular expression. For example, it extracts "D" or "X" from "D4 / X8" — the 
+#             specific result depends on the regular expression. The extraction principle is as follows: locate the single character that comes right before the first `(\d+)` 
+#             (digit group) in the regular expression. 
+#             Take the regular expression `{^.*D(\d+)BWP(U?L?H?VT)?$}` as an example: the character "D" here is the flag character. When using `regsub` to replace the drive 
+#             size, this flag character will be included in the replacement process to improve the accuracy of the replacement.
+# return    : changed celltype
 # ref       : link url
 # --------------------------
 proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {debug 0}} {
@@ -50,11 +57,25 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
   # Perform replacement using regsub
   set result $input_str
   if {$pattern_type eq "cap"} {
-    # Escape special characters in cap for safe replacement
-    set escaped_cap [regsub -all {\W} $cap {\\&}];# Escape special characters
-    if {[regsub $escaped_cap $result $new_value result]} {
+    # Extract the leading character before the cap field (\d+)
+    if {![regexp {.*(\w)\(\\d\+\)} $regex -> leader_char]} {
+      error "Failed to extract leader character before cap in regex"
+    }
+    # Remove possible regex metacharacters from leader character
+    set leader_char [string trimright $leader_char "*."]
+    if {$debug} {
+      puts "Debug: Extracted leader character for cap: '$leader_char'"
+    }
+    
+    # Build matching pattern with leader character for more accurate replacement
+    set cap_pattern "${leader_char}${cap}"
+    set escaped_cap_pattern [regsub -all {\W} $cap_pattern {\\&}]
+    set new_cap_str "${leader_char}${new_value}"
+    
+puts "point 0: cap_pattern : $cap_pattern | escaped_cap_pattern: $escaped_cap_pattern | new_cap_str: $new_cap_str"
+    if {[regsub $escaped_cap_pattern $result $new_cap_str result]} {
       if {$debug} {
-        puts "Debug: Replaced cap from '$cap' to '$new_value'"
+        puts "Debug: Replaced cap pattern '$cap_pattern' with '$new_cap_str'"
       }
     } else {
       error "Failed to replace cap value in the input string"
@@ -62,17 +83,20 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
   } else {
     # For vt, handle empty string case
     if {$vt eq ""} {
-      # Find position to insert new_vt based on regex structure
-      # This assumes vt is the last part of the pattern
-      set pos [string first $cap $result]
-      if {$pos != -1} {
-        set pos [expr {$pos + [string length $cap]}]
-        set result [string replace $result $pos $pos "[string index $result $pos]$new_value"]
-        if {$debug} {
-          puts "Debug: Inserted vt '$new_value' at position $pos"
-        }
-      } else {
-        error "Failed to find position to insert vt value"
+      # Extract the part after cap to the end of the string (including fixed structures like BWP)
+      set cap_pos [string first $cap $result]
+      if {$cap_pos == -1} {
+        error "Failed to find cap value in the string"
+      }
+      set after_cap_pos [expr {$cap_pos + [string length $cap]}]
+      set after_cap [string range $result $after_cap_pos end]
+      
+      # Append new vt value to the end using string concatenation
+      set result "${result}${new_value}"
+      
+      if {$debug} {
+        puts "Debug: Appended vt '$new_value' to end of string"
+        puts "Debug: Cap was at position $cap_pos, followed by: '$after_cap'"
       }
     } else {
       # Escape special characters in vt for safe replacement
@@ -89,7 +113,6 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
 
   # Self-validation: check if modified string still matches the regex
   catch {unset new_cap new_vt}
-puts "result: $result"
   if {![regexp $regex $result -> new_cap new_vt]} {
     error "Self-validation failed: modified string no longer matches the regex"
   }
@@ -112,4 +135,4 @@ puts "result: $result"
   return $result
 }
 
-puts [change_driveCapacity_or_VTtype "BUFFD4BWP" {^.*D(\d+)BWP(U?L?H?VT)?$} vt LVT 1]
+# puts [change_driveCapacity_or_VTtype "BUFF4D4BWPLVT" {^.*D(\d+)BWP(U?L?H?VT)?$} cap 5 1]

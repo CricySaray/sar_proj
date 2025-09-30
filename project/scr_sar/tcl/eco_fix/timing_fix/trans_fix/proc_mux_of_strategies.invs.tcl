@@ -127,11 +127,11 @@ proc sliding_rheostat_of_strategies {args} {
         # ---------------------------------------------- 
         # begin process valid situations!!!
         switch -regexp $driverSinksSymbol {
-          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0.5 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0.5 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refSink" ; set capacityRange {3 12}}
-          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0.5 4} {1 4} {2 4} {3 8} {4 8} {6 12} {8 8}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {4 12}}
-          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0.5 4} {1 4} {2 4} {3 8} {4 8} {6 12} {8 8}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {4 12}}
-          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0.5 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.7 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
+          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refDriver" ; set capacityRange {2 12}}
+          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refSink" ; set capacityRange {3 12}}
+          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 4} {1 4} {2 4} {3 8} {4 8} {6 12} {8 8}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {4 12}}
+          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 4} {1 4} {2 4} {3 8} {4 8} {6 12} {8 8}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {4 12}}
+          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.7 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
         }
         if {$ifNeedConsiderThisDriverSinksSymbol} { puts "\n$promptWarning : this driverSinksSymbol($driverSinksSymbol) is not considered, you need add it!!!\n" }
         set farThresholdPointOfChangeCapacityAndInsertBuffer {30 130} ; # x: validViolValue , y: netLen
@@ -164,9 +164,10 @@ proc sliding_rheostat_of_strategies {args} {
         ### change Capacity {forbidden when Fix Long Net Mode}
         if {!$ifInFixLongNetMode && !$ifFixedSuccessfully && $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer && !$ifHaveBeenLargestCapacityInRange} {
           er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing Capacity\n" }
+          set flagInsideFixCap ""
           if {$ifCanChangeVTWhenChangeCapacity && !$ifHaveBeenFastestVTinRange} {
             set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 1]
-            if {![operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 }
+            if {![operateLUT -type exists -attr [list celltype $toVT]]} { set ifFixButFailed 1 } else { set flagInsideFixCap "T" }
           } else { set toVT $driverCellType }
           if {$ifFixButFailed} {
             lappend fix_but_failed_list [concat $driverSinksSymbol "failedVtWhenCap" $toVT $addedInfoToShow]
@@ -175,7 +176,7 @@ proc sliding_rheostat_of_strategies {args} {
             if {[operateLUT -type exists -attr [list celltype $toCap]]} {
               set ifFixedSuccessfully 1
               set cmd [print_ecoCommand -type change -celltype $toCap -inst $driverInstname] ; # U008
-              set fixedlist [concat $driverSinksSymbol "D" $toCap $addedInfoToShow]
+              set fixedlist [concat $driverSinksSymbol "${flagInsideFixCap}D" $toCap $addedInfoToShow]
               if {$ifOne2One} { set fixed_one_list $fixedlist  ; lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { 
                 set fixed_more_list $fixedlist ; lappend cmd_more_list $cmd ; set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]}
             } else {set ifFixButFailed 1 ; lappend fix_but_failed_list [concat $driverSinksSymbol "failedCap" $toCap $addedInfoToShow]}

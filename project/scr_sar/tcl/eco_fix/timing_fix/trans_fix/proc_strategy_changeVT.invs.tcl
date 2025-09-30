@@ -21,6 +21,7 @@
 # TODO: consider mix fluence between speed and weight!!!
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # whichProcess_fromStdCellPattern
 source ../lut_build/operateLUT.tcl; # operateLUT
+source ./proc_change_driveCapacity_or_VTtype.invs.tcl; # change_driveCapacity_or_VTtype
 proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}} {ifForceValid 1}} {
   # $weight:0 is stand for no using
   # $speed: the fastest must be in front. like ULVT must be the first
@@ -48,23 +49,16 @@ proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}
             set speedList_notWeight0 [lsearch -exact -inline -all -not $speedList_notWeight0 $weight0]
           }
 #puts "$celltype -$speedList_notWeight0- "
-          if {$processType == "TSMC"} {
-            set useVT [lindex $speedList_notWeight0 end]
-            if {$useVT == ""} {
-              return "0x0:4"; # don't have faster VT
-            } else {
-              #return $useVT 
-              if {$useVT == "SVT"} {
-                return [regsub "$VTtype" $celltype ""]
-              } elseif {$VTtype == "SVT"} {
-                return [regsub "$" $celltype $useVT] 
-              } else {
-                return [regsub $VTtype $celltype $useVT] 
-              }
-            }
-          } elseif {$processType == "M31GPSC900NL040P*_40N"} {
-            return [regsub $VTtype $celltype [lindex $speedList_notWeight0 end]] 
+          set useVT [lindex $speedList_notWeight0 end]
+          set celltypeRegExp [operateLUT -type read -attr celltype_regexp]
+          set vtMapList [operateLUT -type read -attr vt_maplist]
+          if {$vtMapList == ""} {
+            set toChangeVtExp $useVT
+          } else {
+            set toChangeVtExp [lindex [lsearch -index 1 -inline $vtMapList $useVT] 0]
           }
+          set toCelltype [change_driveCapacity_or_VTtype $celltype $celltypeRegExp vt $toChangeVtExp 0]
+          return $toCelltype
         } 
       } else {
         error "proc strategy_changeVT_withLUT: error operation, \$ifForceValid is 0, cell type can't be allowed to use, don't change VT type!!!"; # cell type can't be allowed to use, don't change VT type
@@ -85,29 +79,15 @@ proc strategy_changeVT_withLUT {{celltype ""} {weight {{SVT 3} {LVT 1} {ULVT 0}}
           return $celltype ; # if have no faster vt, it will return original celltype
         }
       }
-      if {$processType == "TSMC"} {
-        # NOTE: these VT type set now is only for TSMC cell pattern
-        # TSMC cell VT type pattern: (special situation!!!)
-        #   SVT: xxxCPD
-        #   LVT: xxxCPDLVT
-        #   ULVT: xxxCPDULVT
-        if {$useVT == ""} {
-          return "0x0:4"; # don't have faster VT
-        } else {
-          #return $useVT 
-          if {$useVT == "SVT"} {
-            return [regsub "$VTtype" $celltype ""]
-          } elseif {$VTtype == "SVT"} {
-            return [regsub "$" $celltype $useVT] 
-          } else {
-            return [regsub $VTtype $celltype $useVT] 
-          }
-        }
-      } elseif {$processType == "M31GPSC900NL040P*_40N"} {
-        # HH40 :
-        # AR9 AL9 AH9
-        return [regsub $VTtype $celltype $useVT] 
+      set celltypeRegExp [operateLUT -type read -attr celltype_regexp]
+      set vtMapList [operateLUT -type read -attr vt_maplist]
+      if {$vtMapList == ""} {
+        set toChangeVtExp $useVT
+      } else {
+        set toChangeVtExp [lindex [lsearch -index 1 -inline $vtMapList $useVT] 0]
       }
+      set toCelltype [change_driveCapacity_or_VTtype $celltype $celltypeRegExp vt $toChangeVtExp 0]
+      return $toCelltype
     }
   }
 }

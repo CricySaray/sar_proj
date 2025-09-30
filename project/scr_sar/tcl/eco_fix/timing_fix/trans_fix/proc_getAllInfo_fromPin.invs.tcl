@@ -82,12 +82,22 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo centerPtOfSinksPinPT [format "%.3f %.3f" {*}[calculateResistantCenter_fromPoints [dict get $allInfo sinksPinPT] "auto"]]
     dict set allInfo distanceOfDriver2CenterOfSinksPinPt [format "%.3f" [calculateDistance [dict get $allInfo driverPinPT] [dict get $allInfo centerPtOfSinksPinPT]]]
     if {[dict get $allInfo numSinks] == 1} {
-      set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
+      if {[dict get $allInfo netLen] != 0} {
+        set resultOfCheckRoutingLoop [checkRoutingLoop [dict get $allInfo distanceOfDriver2CenterOfSinksPinPt] [dict get $allInfo netLen] "normal"]
+      } else {
+        set resultOfCheckRoutingLoop -1
+      }
     } elseif {[dict get $allInfo numSinks] > 1} {
       set resultOfIfLoop_forOne2More [judgeIfLoop_forOne2More [dict get $allInfo driverPinPT] [dict get $allInfo sinksPinPT] [dict get $allInfo netLen] 16] ; # U001
-      set resultOfCheckRoutingLoop [lindex $resultOfIfLoop_forOne2More 0] 
+      if {[lindex $resultOfIfLoop_forOne2More 1] != 0} {
+        set resultOfCheckRoutingLoop [lindex $resultOfIfLoop_forOne2More 0] 
+      } else {
+        set resultOfCheckRoutingLoop -1
+      }
+      
     }
     dict set allInfo ifLoop [switch $resultOfCheckRoutingLoop {
+      -1 {set result "noNet"}
       0 {set result "noLoop"}
       1 {set result "mild"}
       2 {set result "moderate"}

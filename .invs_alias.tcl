@@ -1,7 +1,15 @@
 # ----------------------
 # sar invs alias and other settings
 # ----------------------
-
+history keep 10000
+proc shis {index} {
+  set history_list [split [history] \n]
+  if {$index > [expr [llength $history_list] + 1]} {
+    error "proc shis(search history) : index is out of avaiable index list(1 - [expr [llength $history_list] + 1])!!!"
+  } else {
+    puts [lindex $history_list [expr $index - 1]]
+  }
+}
 if {[is_common_ui_mode]} {
   alias dim "gui_dim_foreground -light_level medium"
   alias li "get_db head.libCells.name"

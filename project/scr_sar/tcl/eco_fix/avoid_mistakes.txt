@@ -1,0 +1,14 @@
+# The Mistake I Encountered
+ - When working on ECO, if you want to ecoDeleteRepeater buffers or inverters and also want to delete the net, you need 
+    to follow the order of first using editDelete -net, then ecoDeleteRepeater. If you delete the repeater first, some 
+    nets will no longer exist. When you then use editDelete -net to delete the nets that previously existed, it will 
+    cause the invs tool to be unable to reroute during subsequent ecoRoute. Therefore, you must follow the sequence of 
+    first using editDelete -net, then ecoDeleteRepeater to remove the corresponding buffers or inverters.
+    - Detail scenario:
+      After using ecoDeleteRepeater to delete the inst, if you immediately use editDelete -net to delete one of the nets 
+      that existed before the inst was deleted, the invs tool will not report an **ERROR. Therefore, this is a hidden 
+      error that is not easy to detect.
+      Once, I couldn't complete routing via ecoRoute. During LVS (Layout Versus Schematic) checks, I found this net was open. 
+      I sought help from several people but got no solution. In the end, I had to manually draw this net, which was extremely 
+      troublesome. So, such incorrect operations must never happen again. If you encounter a net where one buffer drives 
+      multiple sinks, the method of manually drawing the net will be really torturous and a huge waste of time.

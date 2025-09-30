@@ -175,7 +175,7 @@ proc fix_trans {args} {
         if {$ifFixButFailed} { lappend fix_but_failed_List {*}$fix_but_failed_list }
         if {$ifSkipped} { lappend skipped_List {*}$skipped_list }
         if {$ifCantChange && !$ifFixedSuccessfully} { lappend cantChange_List {*}$cantChange_list }
-        if {$ifNeedNoticeCase} { lappend needNoticeCase_List $needNoticeCase_list }
+        if {$ifNeedNoticeCase} { lappend needNoticeCase_List {*}$needNoticeCase_list }
       }
       if {!$ifOne2One} { lappend detailInfoOfMore_List {*}$detailInfoOfMore_list }
       dict for {infovar infovalue} [concat $resultDict $allInfo] { unset $infovar ; trace remove variable $infovar write onlyReadTrace }

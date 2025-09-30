@@ -100,7 +100,7 @@ proc sliding_rheostat_of_strategies {args} {
       # you can add other conditions(scripts) to precheck situation in list of $preCheckConds
       # it will return 1 if any of scripts return true or 1
       set ifDirtyCase [expr !$numSinks || !$netLen || !$ifNetConnected] ; # if 1: have problem
-      set ifNeedReRouteNet [expr {$ifLoop in {moderate severe}}] ; # if 1: the net has looped (adapted to one2one and one2more)
+      set ifNeedReRouteNet [expr {$ifLoop in {moderate severe} && $netLen > 10}] ; # if 1: the net has looped (adapted to one2one and one2more)
       set ifNotSupportCellClass [any x [list $simplizedDriverCellClass {*}$simplizedSinksCellClass] { regexp cantMap_ $x }] ; # now not support these cell class
       set ifComplexOne2More [expr !$ifSimpleOne2More] ; # if 1, now can't fix. it need fix by yourself
       set preCheckConds { 

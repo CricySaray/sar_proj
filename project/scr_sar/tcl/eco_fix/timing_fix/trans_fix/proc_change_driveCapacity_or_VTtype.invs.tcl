@@ -72,7 +72,7 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
     set escaped_cap_pattern [regsub -all {\W} $cap_pattern {\\&}]
     set new_cap_str "${leader_char}${new_value}"
     
-puts "point 0: cap_pattern : $cap_pattern | escaped_cap_pattern: $escaped_cap_pattern | new_cap_str: $new_cap_str"
+#puts "point 0: cap_pattern : $cap_pattern | escaped_cap_pattern: $escaped_cap_pattern | new_cap_str: $new_cap_str"
     if {[regsub $escaped_cap_pattern $result $new_cap_str result]} {
       if {$debug} {
         puts "Debug: Replaced cap pattern '$cap_pattern' with '$new_cap_str'"

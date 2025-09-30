@@ -71,7 +71,7 @@ proc summarize_all_list_to_display {args} {
             set columnToCountSum $defaultColumnToCountSum
           }
           if {[lsearch -index 1 $titleOfListMap $tempListName] != -1} { 
-            set ifHaveTitle 1 ; set titleName [lindex [lsearch -index 1 -inline $titleOfListMap $tempListName] 0]; set titleSegments [list [string repeat "-" 25] $titleName ""] } else { 
+            set ifHaveTitle 1 ; set titleName [lindex [lsearch -index 1 -inline $titleOfListMap $tempListName] 0]; set titleSegments [list "#[string repeat "-" 25]" $titleName ""] } else { 
               set ifHaveTitle 0 ; set titleSegments [list "#[string repeat "-" 25]" " list name: [lindex [lsearch -index 1 $titleOfListMap $tempListName] 1]" ""] }
           set preCmd [list [eo $ifDumpWindow pw puts] $fi]
           if {[llength [subst \${$tempListName}]] > 1} {
@@ -88,7 +88,7 @@ proc summarize_all_list_to_display {args} {
               {*}$preCmd [print_formattedTable $countList]
             }
           } else {
-            {*}$preCmd [join [list [string repeat "-" 25] "### HAVE NO [regsub ":" [eo $ifHaveTitle "$tempListName CONTENTS" $titleName] ""] !!!" ] \n]
+            {*}$preCmd [join [list "#[string repeat "-" 25]" "### HAVE NO [regsub ":" [eo $ifHaveTitle "$tempListName CONTENTS" $titleName] ""] !!!" ] \n]
           }
         }
         set stringstoreList [stringstore::ss_get_all]

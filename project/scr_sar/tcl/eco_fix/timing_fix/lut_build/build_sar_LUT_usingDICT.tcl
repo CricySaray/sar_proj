@@ -49,7 +49,7 @@ proc build_sar_LUT_usingDICT {args} {
     if {$inner_debug} { puts $msg }
   }
   if {$process in {M31GPSC900NL040P*_40N}} {
-    set capacityFlag "X" ; set vtFastRange {AL9 AR9 AH9} ; set stdCellFlag "" ; set celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$} ; set VtMatchExp {A[HRL]9} ; set refBuffer "BUFX3AR9" ; set refClkBuffer "CLKBUFX3AR9"
+    set capacityFlag "X" ; set vtFastRange {AL9 AR9 AH9} ; set stdCellFlag "" ; set clkFlag {^CLK}; set celltypeMatchExp {^.*X(\d+).*(A[HRL]9)$} ; set VtMatchExp {A[HRL]9} ; set refBuffer "BUFX3AR9" ; set refClkBuffer "CLKBUFX3AR9"
     set noCareCellClass {notFoundLibCell IP mem filler noCare IOfiller cutCell IOpad tapCell}
     set driveCapacity_specialMapList {{05 0.5}} ; set ifNeedSpecialDriveCapacityMap 1
   } elseif {$process in {TSMC_cln12ffc}} {
@@ -57,13 +57,13 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
     set VT_mapList {{{} SVT} {LVT LVT} {ULVT UVLT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_arm_cln40lp}} { ; # U002
-    set capacityFlag "X" ; set vtFastRange {LVT RVT} ; set stdCellFlag "" ; set celltypeMatchExp {^[^_]*_X(\d+P?\d?)[ABEMF]?_A\dT([RL])40$} ; set refBuffer "BUF_X1M_A9TL40" ; set refClkBuffer "BUF_X1B_A9TL40"
+    set capacityFlag "X" ; set vtFastRange {LVT RVT} ; set stdCellFlag "" ; set clkFlag {^DCCK} ; set celltypeMatchExp {^[^_]*_X(\d+P?\d?)[ABEMF]?_A\dT([RL])40$} ; set refBuffer "BUF_X1M_A9TL40" ; set refClkBuffer "BUF_X1B_A9TL40"
     set special_StdCellVtMatchExp_from {^([^_]*_X)<cap>([ABEMF])_(A\dT)<vt>40$} ; set special_StdCellVtMatchExp_to {\1\d+P?\d?\2_\3[RL]40$}
     set VT_mapList {{R RVT} {L LVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1 ; # AT101
     set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
   } elseif {$process in {TSMC_tcbn40lpbwp}} {
-    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set celltypeMatchExp {^.*D(\d+)BWP(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
+    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } else {
@@ -102,6 +102,12 @@ proc build_sar_LUT_usingDICT {args} {
     puts $fo "dict set $lutDictName stdcellflag \"\""
   } else {
     puts $fo "dict set $lutDictName stdcellflag $stdCellFlag" 
+  }
+  if {$clkFlag == ""} {
+    puts $fo "$promptWARN: have no process clock cell flag for regexp!!!" 
+    puts $fo "dict set $lutDictName clkflag \{$clkFlag\}"
+  } else {
+    puts $fo "dict set $lutDictName clkflag \{$clkFlag\}"
   }
   if {![info exists celltypeMatchExp] || $celltypeMatchExp == ""} {
     puts $fo "$promptWARN: have no celltype match regExp defination!!!" 

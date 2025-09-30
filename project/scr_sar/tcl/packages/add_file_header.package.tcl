@@ -137,10 +137,10 @@ proc add_file_header {args} {
   rename wrap_text ""
 }
 
-[if {[catch {is_common_ui_mode} errInformation]} {
-  set temp define_proc_attributes
-} else {
+[if {[info commands is_common_ui_mode] eq "is_common_ui_mode"} {
   set temp define_proc_arguments
+} else {
+  set temp define_proc_attributes
 }] add_file_header \
   -info "add file header"\
   -define_args {

@@ -6,9 +6,10 @@
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|misc_proc)
 # descrip   : check CTS cell type, must be LVT CLK class of cell type
 # return    : non-CLK/LVT cell type rpt(output file)
+# NOTICE    : $filter_list: Every item in this list will use the regexp command to match the celltype name. If the match is successful, it will not check whether this cell is a CTS cell.
 # ref       : link url
 # --------------------------
-source ../proc_whichProcess_fromStdCellPattern.pt.tcl; # whichProcess_fromStdCellPattern
+source ../packages/proc_whichProcess_fromStdCellPattern.pt.tcl; # whichProcess_fromStdCellPattern
 source ../eco_fix/timing_fix/trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacity_of_celltype
 source ../eco_fix/timing_fix/trans_fix/proc_get_cellDriveLevel_and_VTtype_of_inst.pt.tcl; # get_cellDriveLevel_and_VTtype_of_inst
 source ../packages/categorize_overlapping_sets.package.tcl; # categorize_overlapping_sets
@@ -16,25 +17,21 @@ source ../packages/print_formattedTable.package.tcl; # print_formattedTable
 source ../packages/print_formattedTable_D2withCategory.package.tcl; # print_formattedTable_D2withCategory
 source ../packages/count_items.package.tcl; # count_items
 source ../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
+source ../eco_fix/timing_fix/lut_build/operateLUT.tcl; # operateLUT
 proc check_CTScelltype {{filter_list {RCLIB_PLB DEL}} {specify_VT "ULVT"} {promptERROR "songERROR"}} {
   # $specify_VT : ULVT|AR9
   set allCTSinstname_collection [get_clock_network_objects -type cell -include_clock_gating_network]
   set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
   # deal with and categorize collection
-  set process [whichProcess_fromStdCellPattern [lindex [get_attribute $allCTSinstname_collection ref_name] 0]]
   set error_driveCapacity [add_to_collection "" ""]
   set error_VTtype [add_to_collection "" ""]
   set error_CLKcelltype [add_to_collection "" ""]
-  if {$process == "TSMC"} {
-    set regExp "D(\\d+).*CPD(U?L?H?VT)?"
-    set availableVT [list HVT SVT LVT ULVT]
-    set clkExp "DCCK"
-  } elseif {$process == "HH"} {
-    set regExp ".*X(\\d+).*(A\[HRL\]\\d+)$"
-    set availableVT [list AH9 AR9 AL9]
-    set clkExp "CLK\|GCK"
-  } else {
-    error "proc check_CTScelltype: Other process!!! can't match!!!"
+  set process [operateLUT -type read -attr process]
+  set regExp [operateLUT -type read -attr celltype_regexp]
+  set availableVT [operateLUT -type read -attr vtrange]
+  set clkFlag [operateLUT -type read -attr clkflag]
+  if {$process == "" || $regExp == "" || $availableVT == "" || $clkFlag == ""} {
+    error "proc check_CTScelltype: check your lutDict info: process($process) , regExp($regExp) , availableVT($availableVT) , clkFlag($clkFlag). check it!!!" 
   }
   set filterExp [join $filter_list "\|"]
   foreach_in_collection instname_itr $allCTSinstname_collection {
@@ -48,7 +45,7 @@ proc check_CTScelltype {{filter_list {RCLIB_PLB DEL}} {specify_VT "ULVT"} {promp
     } elseif {$specify_VT ni $availableVT} {
       error "proc check_CTScelltype: \$specify_VT can't in availableVT list from process $process"
     }
-    if {![regexp $clkExp [get_attribute $instname_itr ref_name]]} {
+    if {![regexp $clkFlag [get_attribute $instname_itr ref_name]]} {
       set error_CLKcelltype [add_to_collection $error_CLKcelltype $instname_itr] ; # CLK cell type
     }
   }

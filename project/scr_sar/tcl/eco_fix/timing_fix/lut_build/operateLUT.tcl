@@ -37,11 +37,22 @@ proc operateLUT {args} {
     }
   }
 }
-define_proc_arguments operateLUT \
-  -info "operateLUT" \
-  -define_args {
-    {-type "specify type of operation" oneOfString one_of_string {required value_type {values {read exists filter}}}} 
-    {-attr "specify attribute of obj" AList list required}
-    {-lutDictName "specify name of lutDictName" AString string optional}
-  }
+
+if {[info commands is_common_ui_mode] eq "is_common_ui_mode"} {
+  define_proc_arguments operateLUT \
+    -info "operateLUT" \
+    -define_args {
+      {-type "specify type of operation" oneOfString one_of_string {required value_types {values {read exists filter}}}}
+      {-attr "specify attribute of obj" AList list required}
+      {-lutDictName "specify name of lutDictName" AString string optional}
+    }
+} else {
+  define_proc_attributes operateLUT \
+    -info "operateLUT" \
+    -define_args {
+      {-type "specify type of operation" oneOfString one_of_string {required value_help {values {read exists filter}}}}
+      {-attr "specify attribute of obj" AList list required}
+      {-lutDictName "specify name of lutDictName" AString string optional}
+    }
+} 
 

@@ -93,7 +93,7 @@ proc summarize_all_list_to_display {args} {
         }
         set stringstoreList [stringstore::ss_get_all]
         if {[llength $stringstoreList]} {
-          {*}$preCmd [join  [list "" [string repeat "-" 25] "STRING STORE LIST:" ] \n]
+          {*}$preCmd [join  [list "" "#[string repeat "-" 25]" "STRING STORE LIST:" ] \n]
           {*}$preCmd [print_formattedTable $stringstoreList]
         }
         stringstore::ss_clear

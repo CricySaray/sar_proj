@@ -92,7 +92,7 @@ proc sliding_rheostat_of_strategies {args} {
     set validViolValue [expr abs($violValue) * 1000]
     # U004 $ifNeedConsiderThisDriverSinksSymbol : this flag tell that you need add this mix of type from driverSymbol to sinksSymbol
     set resultDict [dict create ifPassPreCheck 0 ifComplexOne2More 0 ifNeedReRouteNet 0 ifFixedSuccessfully 0 ifFixButFailed 0 ifSkipped 0 ifNotSupportCellClass 0 ifCantChange 0 ifDirtyCase 0 \
-                        ifHaveMovements 0 ifNeedNoticeCase 0 \
+                        ifHaveMovements 0 ifNeedNoticeCase 0 ifAddRepeater 0 \
                         ifNeedConsiderThisDriverSinksSymbol 0 ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity 0 ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer 0]
     set resultDict_lists [list fixed_one_list cmd_one_list fixed_more_list cmd_more_list detailInfoOfMore_list movement_cmd_list fix_but_failed_list fixed_reRoute_list cmd_reRoute_list skipped_list \
                               notPassPreCheck_list cantChange_list needNoticeCase_list]
@@ -269,7 +269,7 @@ proc sliding_rheostat_of_strategies {args} {
                 set toLoc [calculateRelativePoint $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
                 set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]
               }
-
+              set ifAddRepeater 1
               set refineLoc [findSpaceToInsertRepeater_using_lutDict -testOrRun run -celltype $toAdd -loc $toLoc -expandAreaWidthHeight $expandAreaWidthHeight -divOfForceInsert $divOfForceInsert -multipleOfExpandSpace $multipleOfExpandSpace]
               lassign $refineLoc refineLocType refineLocPosition refineLocDistance refineLocMovementList
               set baseAddFlag "A_[fm $relativeLoc]"

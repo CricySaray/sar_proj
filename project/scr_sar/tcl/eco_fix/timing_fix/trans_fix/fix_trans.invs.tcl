@@ -151,6 +151,7 @@ proc fix_trans {args} {
     set cmd_reRoute_List [list ] ; set fix_but_failed_List [list ]
     set cmd_List [list]
     lappend cmd_List "" "setEcoMode -reset" "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false" ""
+    set ifNeedFindSpaceInCoreArea 0
     foreach case $violValue_driverPin_LIST {
       lassign $case violValue driverPin
       lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode -ifCanChangeVTWhenChangeCapacity -ifCanChangeVTcapacityWhenAddRepeater -forbiddenVT $forbiddenVT -driveCapacityRange $driveCapacityRange] resultDict allInfo
@@ -159,6 +160,7 @@ proc fix_trans {args} {
       trace add variable allInfo write onlyReadTrace 
       trace add variable resultDict write onlyReadTrace
       dict for {infovar infovalue} [concat $resultDict $allInfo] { set $infovar $infovalue ; trace add variable $infovar write onlyReadTrace}
+      if {$ifAddRepeater} { set ifNeedFindSpaceInCoreArea 1 }
       if {!$ifPassPreCheck} {
         lappend notPassPreCheck_List $notPassPreCheck_list
         if {$ifNeedReRouteNet} { lappend cmd_reRoute_List "# $notPassPreCheck_list" $cmd_reRoute_list }
@@ -180,6 +182,9 @@ proc fix_trans {args} {
       dict for {infovar infovalue} [concat $resultDict $allInfo] { unset $infovar ; trace remove variable $infovar write onlyReadTrace }
       trace remove variable allInfo write onlyReadTrace 
       trace remove variable resultDict write onlyReadTrace
+    }
+    if {$ifNeedFindSpaceInCoreArea} {
+      set coreInnerBoundaryRects [operateLUT -type read -attr core_inner_boundary_rects] 
     }
     set fixed_List [concat $fixed_List $fixed_one_List_temp $fixed_more_List_temp]
     set cmd_List [concat $cmd_List $cmd_one_List_temp $cmd_more_List_temp]

@@ -52,7 +52,7 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   set modeOfConnect                       "whole_net" ; # whole_net|flight_line(U003)
   set ifWithArrow                         1; # 1|0
   set colorsIndexLoopListsForNet          {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
-  set colorsIndexLoopListsForInst         {33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 33 34 35 36} ; # 20 items
+  set colorsIndexLoopListsForInst         {39 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 33 34 35 36} ; # 20 items
   set layerOfText                         8 ; # It is recommended to fill in the highest layer number, which must be an integer.
   set indexOfPureNumberOnLine             "end-1"
   set indexOfAfterSplitOriginalLineList   "0"
@@ -353,8 +353,9 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   }
   set all_celltypes [dbget head.libCells.name -u -e]
   set pinLines [lmap templine $cutOutContent {
-    regexp {.*\((.*)\).*} $templine wholename temp_celltype
-    if {[regexp $lineExpToSplitPath|$startOfPath|$endOfPath $templine] || $temp_celltype in $all_celltypes} {
+    catch {regexp {.*\((.*)\).*} $templine wholename temp_celltype}
+    set ifMatchCelltype [expr {[info exists temp_celltype] && $temp_celltype in $all_celltypes}]
+    if {[regexp $lineExpToSplitPath|$startOfPath|$endOfPath $templine] || $ifMatchCelltype} {
       set temp $templine 
     }
   }]

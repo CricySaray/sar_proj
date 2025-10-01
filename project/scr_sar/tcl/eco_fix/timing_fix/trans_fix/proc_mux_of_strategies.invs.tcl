@@ -230,7 +230,7 @@ proc sliding_rheostat_of_strategies {args} {
                   set temp_move_cmd [print_ecoCommand -type move -inst $temp_instname -direction $temp_direction -distance $temp_distance]
                 }]
                 set ifHaveMovements 1
-                lappend movement_cmd_list $move_cmd
+                lappend movement_cmd_list {*}$move_cmd
               } elseif {$refineLocType in {forceInsert noSpace}} {
                 set ifNeedNoticeCase 1
                 lappend needNoticeCase_list $fixedlist

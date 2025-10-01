@@ -151,7 +151,6 @@ proc fix_trans {args} {
     set cmd_reRoute_List [list ] ; set fix_but_failed_List [list ]
     set cmd_List [list]
     lappend cmd_List "" "setEcoMode -reset" "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false" ""
-
     foreach case $violValue_driverPin_LIST {
       lassign $case violValue driverPin
       lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode -ifCanChangeVTWhenChangeCapacity -ifCanChangeVTcapacityWhenAddRepeater -forbiddenVT $forbiddenVT -driveCapacityRange $driveCapacityRange] resultDict allInfo

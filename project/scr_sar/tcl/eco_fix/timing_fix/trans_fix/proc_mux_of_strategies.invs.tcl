@@ -134,11 +134,11 @@ proc sliding_rheostat_of_strategies {args} {
         # TODO: A judgment criterion needs to be added: if the distance between two insts is very close and the driver end is logic or sequential, the 
         # driving size of the inserted buffer or inverter needs to be reduced to prevent excessive proximity from causing drv (driver violation) due to large driving strength.
         switch -regexp $driverSinksSymbol {
-          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refSink" ; set capacityRange {2 12}}
+          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.2 ; set addMethod "refDriver" ; set capacityRange {2 12}}
+          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refSink" ; set capacityRange {2 12}}
           "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12}}
           "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.7 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
+          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
         }
         if {$ifNeedConsiderThisDriverSinksSymbol} { puts "\n$promptWarning : this driverSinksSymbol($driverSinksSymbol) is not considered, you need add it!!!\n" }
         set farThresholdPointOfChangeCapacityAndInsertBuffer {30 130} ; # x: validViolValue , y: netLen
@@ -266,7 +266,7 @@ proc sliding_rheostat_of_strategies {args} {
                 set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $fited_wiresPts $relativeLoc]
               } elseif {$ifSimpleOne2More} {
                 set centerPointOfFartherGroupSinksPin [calculateResistantCenter_fromPoints $fartherGroupSinksPinPt "auto"] 
-                set toLoc [calculateRelativePoint $driverPinPT $centerPointOfFartherGroupSinksPin $relativeLoc]
+                set toLoc [calculateRelativePoint $centerPointOfFartherGroupSinksPin $driverPinPT $relativeLoc]
                 set detailInfoOfMore_list [gen_info_of_one2more_case $violValue $driverPin $sinksPin $wiresPts $infoToShow]
               }
               set ifAddRepeater 1

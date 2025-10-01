@@ -10,6 +10,13 @@
 #             $position {1.1 2.2}
 #             $distance 1.2
 #             $movementList: if $findType is expandSpace, it will return inside list. format: {{instname1 {left 1.4}} {instname2 {right 2.1}} ...}
+# NOTICE    : The prerequisite for using this proc is that there must be no overlap at the insertion position within the specified search range. That is, 
+#             there should be no overlap before insertion; otherwise, when the proc performs a self-check after moving the inst, the existing overlap issue 
+#             will cause a misjudgment, thereby terminating the program's operation. 
+#             (U003) It will also be necessary to add this function later: first check 
+#             whether there is already an overlap at the position where the inst needs to be inserted. If there is, the existing overlap needs to be fixed 
+#             first. Alternatively, ignore the existing overlap and do not check for existing overlap during the final self-check.
+#
 # TODO      : (U001) now the stratety is simple, as it can expand space only at one row,
 #                   in the future, need the candidate gap loc for testing and find available space. it can switch next candidate gap loc if this gap loc has no space to expand.
 # TODO      : (U002) can record previous action of movement list, run this expandation considering all previous action of movement!!! IMPORTANT

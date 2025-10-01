@@ -129,10 +129,10 @@ proc fix_trans {args} {
       "## A_09 A_0.9 - near the driver - addedRepeaterCell, below is toAddCelltype"
       "## A_01 A_0.1 - near the sink   - addedRepeaterCell, below is toAddCelltype"
       "## dTL_ : (when add repeater) dTL represents the operation of changing the VT of the driver celltype, where L stands for LVT, d stands for driver celltype, and T stands for change VT. "
-      "          The final underscore "_" is used to separate it from another operation. This symbol will be placed at the very front of the entire symbol, hence the trailing underscore."
+      "##        The final underscore "_" is used to separate it from another operation. This symbol will be placed at the very front of the entire symbol, hence the trailing underscore."
       "## dD4_ : (when add repeater) dD4 represents the operation of changing the driveCapacity of the driver celltype, where 4 stands for the drive size of the driver celltype after the "
-      "          change, d stands for driver celltype, and D stands for changeDriveCapacity. The final underscore is used to separate it from another operation. This "
-      "          symbol is generally placed at the beginning or middle of the entire symbol, hence the trailing underscore for separation."
+      "##        change, d stands for driver celltype, and D stands for changeDriveCapacity. The final underscore is used to separate it from another operation. This "
+      "##        symbol is generally placed at the beginning or middle of the entire symbol, hence the trailing underscore for separation."
       "## suffix: S - sufficient | E - sufficient with expanding space | f - force insert with movement | F - force insert without movement | N - no space to insert"
       "# special fixed"
       "## FS - fix special situation: change driveCelltype (changeVT and changeDriveCapacity)"
@@ -159,10 +159,10 @@ proc fix_trans {args} {
     set fixButFailedPrompts {
       "# tried to fix the violation case, but failed to do so due to certain reasons."
       "# failedVt         : When replacing the VT, the cell type after replacement is not in libCells.This may be due to an issue with the storage in the lutDict "
-      "                     variable, or it could be that the cell itself does not have all VT types. Alternatively, check the changeVT proc."
+      "#                    variable, or it could be that the cell itself does not have all VT types. Alternatively, check the changeVT proc."
       "# failedVtWhenCap  : Same as failedVt."
       "# failedCap        : An error occurred when changing the drive size of the celltype. The celltype after the change does not exist in the current libCells. "
-      "                     Please check the changeDriveCapacity proc."
+      "#                    Please check the changeDriveCapacity proc."
     }
     # cantChange_List info
     set VTrange [operateLUT -type read -attr {vtrange}] ; # The order of VTs in this variable is arranged from the fastest to the slowest.
@@ -177,14 +177,14 @@ proc fix_trans {args} {
     dict set allInfo farthestVT [lindex $VTrange 0] 
     set cantChangePrompts {
       "# The violation cases that cannot be fixed already have the maximum allowable drive and the fastest allowable VT type. Meanwhile, "
-      "   the netLength fails to meet the length requirement for inserting a buffer or inverter."
-      "FvtLcap : farthest vt($farthestVT) and largest drive capacity([lindex $driveCapacityRange end])!!!"
+      "#   the netLength fails to meet the length requirement for inserting a buffer or inverter."
+      "# FvtLcap : farthest vt($farthestVT) and largest drive capacity([lindex $driveCapacityRange end])!!!"
     }
     # needNoticeCase_List info
     set needNoticeCasePrompts {
       "# When inserting a repeater, there is not enough space for placement. During the insertion of the repeater, the largest space will be searched based on a 15μm width and "
-      "   height rectangle at the initially determined insertion point (this width and height will change according to input parameters). Then, using this space as a reference, "
-      "   the inst will be moved left and right within the row where this space is located to free up sufficient space."
+      "#   height rectangle at the initially determined insertion point (this width and height will change according to input parameters). Then, using this space as a reference, "
+      "#   the inst will be moved left and right within the row where this space is located to free up sufficient space."
     }
     set simpleDisplayList [list notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List]
     foreach templist $simpleDisplayList { set $templist [list [list Symbol Type {*}$allInfoTableTitle]] }

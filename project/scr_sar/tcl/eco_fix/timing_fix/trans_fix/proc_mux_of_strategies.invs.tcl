@@ -9,13 +9,15 @@
 # TODO      : 
 #             U006: change strategy according to the sinks capacity (advanced function)
 #             U008: need move inst when the size changes too
-#             U009 for change VT or/and capacity of driver celltype when adding repeater
 #             U010: add try command for critical stage such as addRepeater/changeVT/changeCapacity
 #             U011: In the case of one2more, by calculating the geometric area formed by the driver end and all sink ends, 
 #                   the coordinate area where repeaters can be placed is determined. This provides more sufficient spatial positions 
 #                   to choose from, reducing overlap issues caused by being unable to find positions for repeaters due to overly 
 #                   strict position constraints.
 #                   This method requires using algorithms to calculate the area where repeaters can be placed.
+#             U008: When inserting a repeater, check the VT (Voltage Threshold) type of the driver cell. If replacement is possible, perform the replacement directly and add the ecoChangeCell command to the final command list.
+#             U009: When adding a buffer or inverter after a logic unit, it is necessary to check the driving size of the logic. If it is smaller than a certain value, the driving capacity needs to be increased. 
+#                   This operation can be performed simultaneously with the VT replacement, which allows combining the two ecoChangeCell commands into one.
 # FIXED     :
 #             U001: consider Loop case, judge it before use mux_of_strategies. you must reRoute if severe case!!!
 #             U002: build a function relationship between netLen and violValue(one2one), need other more complex relationship when one2more
@@ -57,18 +59,21 @@ source ./proc_getAllInfo_fromPin.invs.tcl; # get_allInfo_fromPin
 #               [one2more: numFartherGroupSinks/fartherGroupSinksPinPt/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow/
 alias mux_of_strategies "sliding_rheostat_of_strategies"
 proc sliding_rheostat_of_strategies {args} {
-  set violValue                                0
-  set violPin                                  ""
-  set VTweight                                 {{AR9 3} {AL9 1} {AH9 0}}
-  set forbiddenVT                              HVT
-  set driveCapacityRange                       {1 12}
-  set ifInFixLongNetMode                       0
-  set ifCanChangeVTandCapacityInFixLongNetMode 0
-  set ifCanChangeVTWhenChangeCapacity          1
-  set ifCanChangeVTcapacityWhenAddRepeater     1
-  set newInstNamePrefix                        "sar_fix_trans_081420"
-  set promptPrefix                             "# song"
-  set debug                                    0
+  set violValue                                                0
+  set violPin                                                  ""
+  set VTweight                                                 {{AR9 3} {AL9 1} {AH9 0}}
+  set forbiddenVT                                              HVT
+  set driveCapacityRange                                       {1 12}
+  set lowestDriverCapacityOfBufferClassCelltypeWhenAddRepeater 2 ; # if == -1, will not set lowest drive capacity limit
+  set lowestDriverCapacityOfLogicClassCelltypeWhenAddRepeater  4
+  set adjustmentMethodForDriverCapacityWhenAddRepeater         "roundUp" ; # roundUp|roundDown when $lowestDriverCapacityOfBufferClassCelltypeWhenAddRepeater or $lowestDriverCapacityOfLogicClassCelltypeWhenAddRepeater is not in availableDriveCapacityList
+  set ifInFixLongNetMode                                       0
+  set ifCanChangeVTandCapacityInFixLongNetMode                 0
+  set ifCanChangeVTWhenChangeCapacity                          1
+  set ifCanChangeVTcapacityWhenAddRepeater                     1
+  set newInstNamePrefix                                        "sar_fix_trans_081420"
+  set promptPrefix                                             "# song"
+  set debug                                                    0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -130,9 +135,9 @@ proc sliding_rheostat_of_strategies {args} {
         # driving size of the inserted buffer or inverter needs to be reduced to prevent excessive proximity from causing drv (driver violation) due to large driving strength.
         switch -regexp $driverSinksSymbol {
           "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refSink" ; set capacityRange {3 12}}
-          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {4 12}}
-          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {4 12}}
+          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refSink" ; set capacityRange {2 12}}
+          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12}}
+          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12}}
           default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.7 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
         }
         if {$ifNeedConsiderThisDriverSinksSymbol} { puts "\n$promptWarning : this driverSinksSymbol($driverSinksSymbol) is not considered, you need add it!!!\n" }
@@ -192,14 +197,65 @@ proc sliding_rheostat_of_strategies {args} {
         if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
           if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after
-            set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
-            set ifInClkTree [regexp CLK $driverCellClass]
+            set ifInClkTree [regexp [operateLUT -type read -attr clkflag] $driverCellClass]
             if {$ifInClkTree} { set refCell [operateLUT -type read -attr [list refclkbuffer]] } else { set refCell [operateLUT -type read -attr [list refbuffer]] }
             set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $mostFrequentInSinksCellType $addMethod 0 $capacityRange 0 1 $refCell]
             if {![operateLUT -type exists -attr [list celltype $toAdd]]} {
               lappend fix_but_failed_list [concat $driverSinksSymbol "faildAdd" $toAdd $addedInfoToShow] 
             } else {
               set ifFixedSuccessfully 1
+              # BEGIN OF U008 and U009
+              set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
+              catch {unset toChangeVTorCapacityForDriver}
+              catch {unset tempCelltypeWhenChangeVT}
+              if {!$ifHaveBeenFastestVTinRange} {
+                set toChangeVTorCapacityForDriver [strategy_changeVT_withLUT $driverCellType $VTweight 1]
+                if {[operateLUT -type exists -attr [list celltype $toChangeVTorCapacityForDriver]]} {
+                  set vtFlagOfFirstCharacter [string cat [string index [operateLUT -type read -attr [list celltype $toChangeVTorCapacityForDriver vt]] 0] "_"]
+                  set suffixAddFlag [string cat $suffixAddFlag "dT" $vtFlagOfFirstCharacter]
+                  set tempCelltypeWhenChangeVT $toChangeVTorCapacityForDriver
+                } else {
+                  set toChangeVTorCapacityForDriver $driverCellType
+                }
+              }
+              set driverCapacityFixed $driverCapacity
+              if {$simplizedDriverCellClass eq "buffer"} { ; # 
+                if {$driverCapacity >= $lowestDriverCapacityOfBufferClassCelltypeWhenAddRepeater} {
+                  set driverCapacityFixed $lowestDriverCapacityOfBufferClassCelltypeWhenAddRepeater
+                } else { set driverCapacityFixed $driverCapacity }
+              } elseif {$simplizedDriverCellClass eq "logic"} {
+                if {$driverCapacity >= $lowestDriverCapacityOfLogicClassCelltypeWhenAddRepeater} {
+                  set driverCapacityFixed $lowestDriverCapacityOfLogicClassCelltypeWhenAddRepeater
+                } else { set driverCapacityFixed $driverCapacityFixed }
+                if {[operateLUT -type read -attr [list celltype $toAdd capacity]] > $driverCapacityFixed} { set driverCapacityFixed [operateLUT -type read -attr [list celltype $toAdd capacity]] }
+              }
+              set availableDriveCapacityList [operateLUT -type read -attr [list celltype $driverCellType caplist]]
+              if {$driverCapacityFixed ni $availableDriveCapacityList} {
+                if {$adjustmentMethodForDriverCapacityWhenAddRepeater eq "roundUp"} {
+                  set driverCapacityFixed [find_nearestNum_atIntegerList $availableDriveCapacityList $driverCapacityFixed 1 1] 
+                } elseif {$adjustmentMethodForDriverCapacityWhenAddRepeater eq "roundDown"} {
+                  set driverCapacityFixed [find_nearestNum_atIntegerList $availableDriveCapacityList $driverCapacityFixed 0 1] 
+                }
+              }
+              if {!$ifHaveBeenLargestCapacityInRange && $driverCapacityFixed > $driverCapacity} {
+                if {![info exists toChangeVTorCapacityForDriver]} { set toChangeVTorCapacityForDriver $driverCellType }
+                set toChangeVTorCapacityForDriver [strategy_changeDriveCapacity_withLUT $toChangeVTorCapacityForDriver $driverCapacityFixed {} 0 1] ; # TODO: U006: change strategy according to the sinks capacity ; AT002
+                if {[operateLUT -type exists -attr [list celltype $toChangeVTorCapacityForDriver]]} {
+                  set capNumFlagOfToChangeCapacity [string cat [operateLUT -type read -attr [list celltype $toChangeVTorCapacityForDriver capacity]] "_"]
+                  set suffixAddFlag [string cat $suffixAddFlag "dD" $capNumFlagOfToChangeCapacity]
+                } else {
+                  if {[info exists tempCelltypeWhenChangeVT]} {
+                    set toChangeVTorCapacityForDriver $tempCelltypeWhenChangeVT
+                  } else {
+                    set toChangeVTorCapacityForDriver $driverCellType 
+                  }
+                }
+              }
+              if {$toChangeVTorCapacityForDriver ne $driverCellType} {
+                set cmd [print_ecoCommand -type change -celltype $toChangeVTorCapacityForDriver -inst $driverInstname] ; # U008: need move inst when size of toChangeCelltype is different from original size
+                if {$ifOne2One} { lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend cmd_more_list $cmd }
+              }
+              # END OF U008 and U009
               if {[expr $netLen >= [expr [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] * 2]]} { ; # you can have more space to search when the netLen is long
                 set expandAreaWidthHeight {11 11} ; set divOfForceInsert 0.4 ; set multipleOfExpandSpace 1.5
               } else {

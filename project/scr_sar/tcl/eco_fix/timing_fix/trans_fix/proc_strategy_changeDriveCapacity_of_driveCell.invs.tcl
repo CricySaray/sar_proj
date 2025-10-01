@@ -50,7 +50,7 @@ proc strategy_changeDriveCapacity_withLUT {{celltype ""} {forceSpecifyDriveCapac
         set nowCapExp [lindex [lsearch -inline -index 1 $capMapList $driveLevel] 0] ; set toDrive [lindex [lsearch -inline -index 0 $capMapList $toDrive] 1]
       }
       set toCelltype [change_driveCapacity_or_VTtype $celltype $celltypeRegExp cap $toDrive 0]
-      if {[operateLUT -type exists -attr [list celltype $toCelltype]]} {
+      if {![operateLUT -type exists -attr [list celltype $toCelltype]]} {
         error "proc strategy_changeDriveCapacity_withLUT: fixed celltype($toCelltype) is not found in std cell lib!!! check it (forceSpecifyDriveCapacity mode)" 
       } else {
         return $toCelltype 

@@ -68,7 +68,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo numSinks [llength [dict get $allInfo sinksPin]]
     dict set allInfo shortenedSinksCellClass [shortenCellClass [dict get $allInfo sinksCellClass]] ; # b/b/s/v/l/f/f
     dict set allInfo simplizedSinksCellClass [simplizeCellClass [dict get $allInfo sinksCellClass]] ; # { buffer buffer sequential buffer logic buffer buffer  }
-    dict set allInfo simplizedDriverCellClass [simplizeCellClass [dict get $allInfo driverCellClass]]
+    dict set allInfo simplizedDriverCellClass [simplizeCellClass [dict get $allInfo driverCellClass]] ; # buffer/inverter -> buffer
     dict set allInfo shortenedSimplizedSinksCellClass [shortenCellClass [dict get $allInfo simplizedSinksCellClass]] ; # b/b/s/b/l/b/b
     # U002
     dict set allInfo uniqueSinksCellClass [lsort -unique [dict get $allInfo sinksCellClass] ] ; # { buffer sequential inverter logic CLKbuffer }

@@ -251,7 +251,7 @@ proc sliding_rheostat_of_strategies {args} {
                   }
                 }
               }
-              if {$toChangeVTorCapacityForDriver ne $driverCellType} {
+              if {[info exists toChangeVTorCapacityForDriver] && $toChangeVTorCapacityForDriver ne $driverCellType} {
                 set cmd [print_ecoCommand -type change -celltype $toChangeVTorCapacityForDriver -inst $driverInstname] ; # U008: need move inst when size of toChangeCelltype is different from original size
                 if {$ifOne2One} { lappend cmd_one_list $cmd } elseif {$ifSimpleOne2More} { lappend cmd_more_list $cmd }
               }

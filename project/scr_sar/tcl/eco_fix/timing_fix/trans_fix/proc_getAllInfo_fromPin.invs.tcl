@@ -19,7 +19,7 @@
 #               mostFrequentInSinksCellClass/numOfMostFrequentInSinksCellClass/centerPtOfSinksPinPT/
 #               distanceOfDriver2CenterOfSinksPinPt/ifLoop/ifOne2One/ifSimpleOne2More/driverSinksSymbol/ifHaveBeenFastestVTinRange/
 #               ifHaveBeenLargestCapacityInRange/ifNetConnected/ruleLen/sink_pt_D2List/sinkPinFarthestToDriverPin/sinksCellClassForShow/farthestSinkCellType/
-#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow/
+#               [one2more: numFartherGroupSinks/fartherGroupSinksPin/mostFrequentInSinksCellType]/infoToShow
 # return    : dict variable
 # ref       : link url
 # --------------------------
@@ -41,7 +41,7 @@ source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of
 source ../lut_build/operateLUT.tcl; # operateLUT
 
 alias sus "subst -nocommands -nobackslashes"
-proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1 12}}} {
+proc get_allInfo_fromPin {{pinname ""} {forbiddenVT {AH9}} {driveCapacityRange {1 12}}} {
   if {$pinname == "" || $pinname == "0x0" || [dbget top.insts.instTerms.name $pinname -e] == ""} {
     error "proc [regsub ":" [lindex [info level 0] 0] ""]: check your input: pinname($pinname) is incorrect!!!"
   } else {
@@ -108,7 +108,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbidenVT {AH9}} {driveCapacityRange {1
     dict set allInfo ifSimpleOne2More [expr ([dict get $allInfo numOfMostFrequentInSinksCellClass] == 1) ? 1 : 0]
     dict set allInfo driverSinksSymbol [zipCellClass [dict get $allInfo driverCellClass] [dict get $allInfo mostFrequentInSinksCellClass] [dict get $allInfo numSinks]]
 
-    dict set allInfo ifHaveBeenFastestVTinRange [judge_ifHaveBeenFastVTinRange [dict get $allInfo driverCellType] $forbidenVT]
+    dict set allInfo ifHaveBeenFastestVTinRange [judge_ifHaveBeenFastVTinRange [dict get $allInfo driverCellType] $forbiddenVT]
     dict set allInfo ifHaveBeenLargestCapacityInRange [judge_ifHaveBeenLargestCapacityInRange [dict get $allInfo driverCellType] $driveCapacityRange ]
 
     dict set allInfo ifNetConnected [judge_ifAllSegmentsConnected [dict get $allInfo wiresPts]] ; # 1: connected 0: not connected
@@ -204,15 +204,18 @@ proc zipCellClass {driverCellClass mostFrequentInSinksCellClass numSinks} {
 source ../../../packages/xor_ofList.package.tcl; # xor
 source ./proc_get_VTtype_of_celltype.invs.tcl; # get_VTtype_of_celltype
 source ../lut_build/operateLUT.tcl; # operateLUT
-proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbidenVT {AH9}}} {
+proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbiddenVT {AH9}}} {
   if {$celltype == "" || $celltype == "0x0" || [dbget head.libCells.name $celltype -e] == ""} {
     error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
   } else {
     set VTrange [operateLUT -type read -attr {vtrange}]
-    if {$forbidenVT != "" && [every x $forbidenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbidenVT($forbidenVT) is not in VTrange($VTrange)!!!" }
+    foreach temp_vt $forbiddenVT {
+      set VTrange [lsearch -not -all -inline -exact $VTrange $temp_vt]
+    }
+    if {$forbiddenVT != "" && [every x $forbiddenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbiddenVT($forbiddenVT) is not in VTrange($VTrange)!!!" }
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
     if {$nowVT eq "NA"} {return 1}
-    #set availableVTrange [xor $VTrange $forbidenVT] ; # function to improve
+    #set availableVTrange [xor $VTrange $forbiddenVT] ; # function to improve
     if {[lsearch -exact $VTrange $nowVT] != 0} { return 0 } else { return 1 }
   }
 }

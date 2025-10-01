@@ -53,8 +53,8 @@ proc fix_trans {args} {
   set canAddRepeater                           1
   set maxWidthForString                        80
   set normalNeedVtWeightList                   {{LVT 1} {SVT 3} {HVT 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
-  set forbiddenVT                              HVT
-  set driveCapacityRange                       {1 12}
+  set forbiddenVT                              {} ; # can be list
+  set driveCapacityRange                       {1 12} ; # Please write them in the format where smaller drive numbers come first and larger drive numbers come after.
   set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
   set suffixFilename                           "" ; # for example : eco4
@@ -64,6 +64,13 @@ proc fix_trans {args} {
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
+  }
+  # Check if the fillers have been deleted first from the invs db. If not, you need to delete the fillers first!
+  set coreInnerBoundaryRects [operateLUT -type read -attr core_inner_boundary_rects] 
+  set allCoreInstBoxes [dbget top.insts.box]
+  set rectsRemovedAllCoreInstsBoxes [dbShape -output area $coreInnerBoundaryRects ANDNOT $allCoreInstBoxes]
+  if {!$rectsRemovedAllCoreInstsBoxes} {
+    error "proc fix_trans: check your invs db: NEED DELETE FILLER!!! Please check whether the inserted filler has not been deleted!"
   }
   set sumFile                                 [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
   set cantExtractFile                         [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]
@@ -108,7 +115,7 @@ proc fix_trans {args} {
     if {$debug} { puts [join $violValue_driverPin_LIST \n] }
     # ----------------------
     # info collections
-    set allInfoPrompts [list violVal netLen ruleLen ifLoop -sub- class driverType driverPin -num- class sinkType sinkPin]
+    set allInfoTableTitle [list violVal netLen ruleLen ifLoop -sub- class driverType driverPin -num- class sinkType sinkPin]
     ## not pass precheck info
     set notPassPreCheckPrompts {
       "# not pass precheck symbols"
@@ -136,15 +143,46 @@ proc fix_trans {args} {
       "## 't' - dt - dont touch cell class: dontouch"
       "## 'u' - du - dont use cell class: dontuse"
     }
-    set fixed_List [list [list Symbol Methods useCell {*}$allInfoPrompts]]
+    set fixed_List [list [list Symbol Methods useCell {*}$allInfoTableTitle]]
     # skipped situation info
-    set skippedPrompt {
+    set skippedPrompts {
       "# NF - have no faster vt" 
       "# NL - have no lager drive capacity"
       "# NFL - have no both faster vt and lager drive capacity"
     }
+    # fix_but_failed_List info
+    set fixButFailedPrompts {
+      "# tried to fix the violation case, but failed to do so due to certain reasons."
+      "# failedVt         : When replacing the VT, the cell type after replacement is not in libCells.This may be due to an issue with the storage in the lutDict "
+      "                     variable, or it could be that the cell itself does not have all VT types. Alternatively, check the changeVT proc."
+      "# failedVtWhenCap  : Same as failedVt."
+      "# failedCap        : An error occurred when changing the drive size of the celltype. The celltype after the change does not exist in the current libCells. "
+      "                     Please check the changeDriveCapacity proc."
+    }
+    # cantChange_List info
+    set VTrange [operateLUT -type read -attr {vtrange}] ; # The order of VTs in this variable is arranged from the fastest to the slowest.
+    foreach temp_vt $forbiddenVT {
+      set VTrange [lsearch -not -all -inline -exact $VTrange $temp_vt]
+    }
+    if {$VTrange == ""} {
+      error "proc get_allInfo_fromPin: check your input: forbiddenVT($forbiddenVT), Currently, the vtrange obtained from lutDict is ([operateLUT -type read -attr vtrange]), \
+        and after removing the forbidden VT types specified by the forbiddenVT variable, there are no allowable VT types left, which is not permitted. This will cause subsequent \
+        fixing procedures to fail to run correctly."
+    }
+    dict set allInfo farthestVT [lindex $VTrange 0] 
+    set cantChangePrompts {
+      "# The violation cases that cannot be fixed already have the maximum allowable drive and the fastest allowable VT type. Meanwhile, "
+      "   the netLength fails to meet the length requirement for inserting a buffer or inverter."
+      "FvtLcap : farthest vt($farthestVT) and largest drive capacity([lindex $driveCapacityRange end])!!!"
+    }
+    # needNoticeCase_List info
+    set needNoticeCasePrompts {
+      "# When inserting a repeater, there is not enough space for placement. During the insertion of the repeater, the largest space will be searched based on a 15μm width and "
+      "   height rectangle at the initially determined insertion point (this width and height will change according to input parameters). Then, using this space as a reference, "
+      "   the inst will be moved left and right within the row where this space is located to free up sufficient space."
+    }
     set simpleDisplayList [list notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List]
-    foreach templist $simpleDisplayList { set $templist [list [list Symbol Type {*}$allInfoPrompts]] }
+    foreach templist $simpleDisplayList { set $templist [list [list Symbol Type {*}$allInfoTableTitle]] }
     set detailInfoOfMore_List [list [list violValue perSinkLen netLen ruleLen ifLoop driverClass driverType driverPin -numSinks- class sinkType sinkPin]]
     # ------
     # init LIST
@@ -152,6 +190,7 @@ proc fix_trans {args} {
     set cmd_List [list]
     lappend cmd_List "" "setEcoMode -reset" "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false" ""
     set ifNeedFindSpaceInCoreArea 0
+    set fixed_one_List_temp [list] ; set cmd_one_List_temp [list] ; set fixed_more_List_temp [list] ; set cmd_more_List_temp [list]
     foreach case $violValue_driverPin_LIST {
       lassign $case violValue driverPin
       lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode -ifCanChangeVTWhenChangeCapacity -ifCanChangeVTcapacityWhenAddRepeater -forbiddenVT $forbiddenVT -driveCapacityRange $driveCapacityRange] resultDict allInfo
@@ -183,24 +222,31 @@ proc fix_trans {args} {
       trace remove variable allInfo write onlyReadTrace 
       trace remove variable resultDict write onlyReadTrace
     }
-    if {$ifNeedFindSpaceInCoreArea} {
+    if {false && $ifNeedFindSpaceInCoreArea} { ; # This checking function is already executed at the very beginning of the `fix_trans` proc, so there is no need to execute it here.
       set coreInnerBoundaryRects [operateLUT -type read -attr core_inner_boundary_rects] 
+      set allCoreInstBoxes [dbget top.insts.box]
+      set rectsRemovedAllCoreInstsBoxes [dbShape -output area $coreInnerBoundaryRects ANDNOT $allCoreInstBoxes]
+      if {!$rectsRemovedAllCoreInstsBoxes} {
+        error "proc fix_trans: check your invs db: When addressing a violation case, it is necessary to insert a repeater, but there is no available space for insertion. Please check whether the inserted filler has not been deleted!"
+      }
     }
     set fixed_List [concat $fixed_List $fixed_one_List_temp $fixed_more_List_temp]
     set cmd_List [concat $cmd_List $cmd_one_List_temp $cmd_more_List_temp]
+    set fixed_List [lsearch -not -regexp -all -inline $fixed_List {^\s*$}]
+    set cmd_List [lsearch -not -regexp -all -inline $cmd_List {^\s*$}]
     lappend cmd_List  "" "setEcoMode -reset"
     set ListVarCollection [info locals *_List] ; # try to test
+    set PromptsVarCollection [info locals *Prompts]
     set ListVarDict [dict create]
     set titleOfListMap {{{# COMMANDS OF FIXED CASES:} cmd_List} {{## reRoute COMMANDS:} cmd_reRoute_List} {{FIXED CASES LIST:} fixed_List} {{NOT PASS PRECHECK LIST:} notPassPreCheck_List} {{FIX BUT FAILED LIST:} fix_but_failed_List} {{SKIPPED LIST:} skipped_List} {{CAN'T CHANGE LIST:} cantChange_List} {{NEED NOTICE CASE LIST:} needNoticeCase_List} {{DETAIL INFO OF ONE2MORE CASES:} detailInfoOfMore_List}}
-    set filesIncludeListMap [subst {{$cmdFile {fixedPrompts cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheck_List fixedPrompts fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
-    foreach ListVar $ListVarCollection { dict set ListVarDict $ListVar [subst \${$ListVar}] }
-    dict set ListVarDict fixedPrompts $fixedPrompts
+    set filesIncludeListMap [subst {{$cmdFile {fixedPrompts cmd_List cmd_reRoute_List}} {$sumFile {notPassPreCheckPrompts notPassPreCheck_List fixedPrompts fixed_List fixButFailedPrompts fix_but_failed_List skippedPrompts skipped_List cantChangePrompts cantChange_List needNoticeCasePrompts needNoticeCase_List}} {$one2moreDetailSinksInfoFile {detailInfoOfMore_List}}}]
+    foreach ListVar [concat $ListVarCollection $PromptsVarCollection] { dict set ListVarDict $ListVar [subst \${$ListVar}] }
     set needDumpWindowList {cmd_List fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needLimitStringWidth {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needInsertSequenceNumberColumn {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
-    set notNeedCountSum {fixedPrompts cmd_List cmd_reRoute_List}
-    set notNeedFormatTableList {fixedPrompts cmd_List cmd_reRoute_List}
-    set notNeedTitleHeader {fixedPrompts}
+    set notNeedCountSum {fixedPrompts notPassPreCheckPrompts fixButFailedPrompts skippedPrompts cantChangePrompts needNoticeCasePrompts cmd_List cmd_reRoute_List}
+    set notNeedFormatTableList {fixedPrompts notPassPreCheckPrompts fixButFailedPrompts skippedPrompts cantChangePrompts needNoticeCasePrompts cmd_List cmd_reRoute_List cmd_List cmd_reRoute_List}
+    set notNeedTitleHeader {fixedPrompts notPassPreCheckPrompts fixButFailedPrompts skippedPrompts cantChangePrompts needNoticeCasePrompts}
     set columnToCountSumMapList {{1 {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}}}
     set onlyCountTotalNumList {detailInfoOfMore_List fixedPrompts}
     set defaultColumnToCountSum 0

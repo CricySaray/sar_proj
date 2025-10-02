@@ -7,7 +7,6 @@
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : This proc generates all possible combinations of elements from an arbitrary number of input lists (each must be a valid non-empty list) while preserving their 
 #             relative order, with debug mode enabled by appending "-debug" as the last argument to show processing details.
-# NOTICE    : 
 # return    : combined list
 # ref       : link url
 # --------------------------

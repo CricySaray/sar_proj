@@ -406,7 +406,7 @@ proc _remove_waive_items {type content_list waive_list_file waive_prefix_prompt_
         }]
         foreach temp_pin_expr $waive_pin_of_type {
           if {[regexp {^regexp:(.*)} $temp_pin_expr -> temp_regExp]} {
-            set content_list [lsearch -regexp -index 0 -not -all -inline $content_list $temp_regExp]
+            set content_list [lsearch -regexp -index 0 -not -all -inline $content_list $temp_regExp] ; # Match the pin names that require waiving based on the regular expressions (regexp) specified in the waive_list.
           } else {
             set content_list [lsearch -exact -index 0 -not -all -inline $content_list $temp_pin_expr]
           }

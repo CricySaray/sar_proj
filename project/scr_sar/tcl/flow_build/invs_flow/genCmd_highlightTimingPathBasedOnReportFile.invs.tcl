@@ -51,6 +51,7 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   # for genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems
   set modeOfConnect                       "whole_net" ; # whole_net|flight_line(U003)
   set ifWithArrow                         1; # 1|0
+  set indexOfColorsForNetInst             0 ; # Set the color sequence starting points for "net" and "inst". The default value is 0, which means the cyclic coloring starts from the 0th position in the given color list.
   set colorsIndexLoopListsForNet          {60 50 62 63 61 55 52 4 6 14 15 17 28 29 31 56 57 61 64 42} ; # 20 items
   set colorsIndexLoopListsForInst         {39 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 33 34 35 36} ; # 20 items
   set layerOfText                         8 ; # It is recommended to fill in the highest layer number, which must be an integer.
@@ -72,7 +73,7 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
                         -indexOfAfterSplitOriginalLineList $indexOfAfterSplitOriginalLineList -startLineExp $startLineExpOfReportTimingFile \
                         -endLineExp $endLineExpOfReportTimingFile]
   set cmdsList [list]
-  set i 0
+  set i $indexOfColorsForNetInst
   if {$modeOfConnect == "flight_line"} {set temp_layerOfText $layerOfText}
   foreach tempEvenNumberList [lindex $evenNumberLists_instName_instBox2_3_incrCellDelay 0] {
     if {$modeOfConnect == "whole_net"} {set temp_layerOfText $layerOfText}
@@ -117,6 +118,7 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnReportFile \
     {-endOfPath "specify the end expression of timing path" AString string optional}
     {-modeOfConnect "specify the type of eco" oneOfString one_of_string {optional value_type {values {whole_net flight_line}}}}
     {-ifWithArrow "if using arrow on line" oneOfString one_of_string {optional value_type {values {1 0}}}}
+    {-indexOfColorsForNetInst "specify the index of Net and Inst color, it can get index with circle" AInt int optional}
     {-colorsIndexLoopListsForNet "specify the colors index loop lists for net color" AList list optional}
     {-colorsIndexLoopListsForInst "specify the colors index loop lists for inst color" AList list optional}
     {-layerOfText "specify the layer of text that need add to" AInt int optional}
@@ -247,7 +249,7 @@ define_proc_arguments genCmd_addCellTypeOnTopOfInstRect \
 # return    : cmds list
 # ref       : link url
 # --------------------------
-source ../packages/logic_AND_OR.package.tcl; # eo
+source ../../packages/logic_AND_OR.package.tcl; # eo
 proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
   set evenNumberList              {} ; # must be even number list
   set layerOfText                 8

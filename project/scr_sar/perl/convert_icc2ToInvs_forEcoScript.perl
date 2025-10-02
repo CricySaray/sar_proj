@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# related tcl script: ~/project/scr_sar/tcl/eco_fix/convertFile_icc2ToInvs_forEcoScript.tcl
 ## write_changes -format icc2tcl -out eco.icc2.tcl
 ## icc22invs.pt.tcl eco.icc2.tcl > eco.invs.tcl
 ## source -e eco.invs.tcl in innovus ECO step 

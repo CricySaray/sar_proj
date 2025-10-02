@@ -11,3 +11,7 @@
 # return    : 
 # ref       : link url
 # --------------------------
+# TO_WRITE
+proc check_ecoScriptCorrection {args} {
+  
+}

@@ -5,3 +5,6 @@ Below are three type file adapted to all code languages:
  - *.invsGUI.*: only for innovus GUI view, you can run it in invs shell, but effort can view in GUI
  - *.pt.*			: only for PrimeTime shell
 
+# Some of the scripts here are intended for **reserving slots in advance** - this is to prevent forgetting what types of scripts to write later. 
+# These scripts do not contain the core code; instead, only the `description` section is completed, which specifies what kind of script needs to 
+# be written. You can use the command `rg TO_WRITE` to search for them and get the names of these scripts that require completion of the main code section.

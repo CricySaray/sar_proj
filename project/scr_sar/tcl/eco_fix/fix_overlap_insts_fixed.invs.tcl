@@ -17,7 +17,7 @@
 #             and then, puts some pstatus info of refined insts.
 # ref       : link url
 # --------------------------
-source ./timing_fix/trans_fix/proc_print_formatedTable.common.tcl
+source ../packages/print_formattedTable.package.tcl ; # print_formattedTable
 proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefinePlace 1} {maxDistance 10} {ifRunEcoRoute 1} {only_refinePlace_violInsts "false"} {overlap_marker_name {SPOverlapViolation SPFillerGapViolation}}} {
   set default_dontTouchExp "ENDCAP|WELLTAP"; #regexp can match {/ENDCAP|/WELLTAP}
   set default_dontTouchBlock [dbget [dbget top.insts.cell.subClass block -p2].name]
@@ -63,7 +63,7 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
       set pstatus [dbget $inst.pstatus]
       set name_pstatus [list $i $pstatus $name]
     }]
-    puts [print_formatedTable [lsort -index 1 $index_pstatus_insts]]
+    puts [print_formattedTable [lsort -index 1 $index_pstatus_insts]]
     set fixedInstList [lsearch -exact -index 1 -all $index_pstatus_insts "fixed"]
     puts "total of fixed insts: [llength $fixedInstList]"
     # $testOrRun have low priority, $ifRunRefinePlace and $ifRunEcoRoute have higher priority!!
@@ -84,7 +84,7 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
           set pstatus [dbget $inst.pstatus]
           set name_pstatus [list $j $pstatus $name]
         }]
-        puts [print_formatedTable $setPlaced_index_pstatus_insts]
+        puts [print_formattedTable $setPlaced_index_pstatus_insts]
         puts "### -> end of setting"
 
         setPlaceMode -place_detail_eco_max_distance $maxDistance
@@ -119,7 +119,7 @@ proc fix_overlap_insts_fixed {{testOrRun "test"} {preCheckPlace 1} {ifRunRefineP
           set pstatus [dbget $inst.pstatus]
           set name_pstatus [list $k $pstatus $name]
         }]
-        puts [print_formatedTable [lsort -index 1 $recovered_index_pstatus_insts]]
+        puts [print_formattedTable [lsort -index 1 $recovered_index_pstatus_insts]]
         set fixedInstList [lsearch -exact -index 1 -all $recovered_index_pstatus_insts "fixed"]
         puts "total of fixed insts: [llength $fixedInstList]"
         puts "### -> end of recovering"

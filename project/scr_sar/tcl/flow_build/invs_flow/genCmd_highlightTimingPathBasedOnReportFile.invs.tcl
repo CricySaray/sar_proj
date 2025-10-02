@@ -321,7 +321,7 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems \
 # return    : lists of even pins
 # ref       : link url
 # --------------------------
-source ./common/split_timing_path.common.tcl; # split_timing_path
+source ../common/split_timing_path.common.tcl; # split_timing_path
 proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   set reportTimingFile                  ""
   set startLineExp                      {^START}

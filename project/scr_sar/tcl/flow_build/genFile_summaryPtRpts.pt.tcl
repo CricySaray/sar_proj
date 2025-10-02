@@ -20,7 +20,20 @@
 source ./common/generate_combinations.common.tcl; # generate_combinations
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title
 # NOTICE: you may need this proc: lmap implementation proc in tcl 8.5 when your tcl version is lower than tcl 8.6 : ../packages/lmap_implementation_on_Tcl8.5.package.tcl
-proc collect_sum_csv_file {{searchDir "./"} {formatOfScenarios "<mode>_<type>_<voltage>_<rcCorner>_<temperature>"} {modesOfFormatExp {func scan}} {typeToCheckOfFormatExp {setup hold}} {voltageOfFormatExp {0p99v 1p1v 1p21v}} {rcCornerOfFormatExp {cworst cbest rcworst rcbest typical}} {temperatureOfFormatExp {25c m40c 125c}}} {
+proc collect_sum_csv_file {args} {
+  set searchDir              "./"
+  set formatOfScenarios      "<mode>_<type>_<voltage>_<rcCorner>_<temperature>"
+  set modesOfFormatExp       {func scan}
+  set typeToCheckOfFormatExp {setup hold}
+  set voltageOfFormatExp     {0p99v 1p1v 1p21v}
+  set rcCornerOfFormatExp    {cworst cbest rcworst rcbest typical}
+  set temperatureOfFormatExp {25c m40c 125c}
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+
   set optionsOfFormatOfScenarios [list "<mode>" "<type>" "<voltage>" "<rcCorner>" "<temperature>"] ; # you only select options inside these
   set mode $modesOfFormatExp ; set type $typeToCheckOfFormatExp ; set voltage $voltageOfFormatExp ; set rcCorner $rcCornerOfFormatExp ; set temperature $temperatureOfFormatExp
   set allCasesOfScenarios [generate_combinations -connector "_" {*}[lmap temp_var [regsub -all {>|<} $optionsOfFormatOfScenarios ""] { if {![llength [subst \${$temp_var}]]} {error "proc collect_sum_csv_file: check your input: the $temp_var is empty!!!"} else {set $temp_var}}]]
@@ -49,6 +62,19 @@ proc collect_sum_csv_file {{searchDir "./"} {formatOfScenarios "<mode>_<type>_<v
   puts $fo $table_of_whole_sum_csv
   close $fo
 }
+define_proc_arguments collect_sum_csv_file \
+  -info "collect sum csv files when all scenarios run done, and every scenario's sum.csv has generated." \
+  -define_args {
+    {-searchDir "specify the searching directory for collecting" AString string optional}
+    {-formatOfScenarios "specify the format of scenarios, that will be used to match every dir to collect scenario dir" AString string optional}
+    {-modesOfFormatExp "specify the modes(like: func scan) when specifying format of scenarios" AList list optional}
+    {-typeToCheckOfFormatExp "specify the type(only be setup or hold) when specifying format of scenarios" AList list optional }
+    {-voltageOfFormatExp "specify the voltage(like: 1p1v 1p21v 0p99v) when specifying format of scenarios" AList list optional }
+    {-rcCornerOfFormatExp "specify the rc corners(like: cworst cbest rcbest rcworst typical) when specifying format of scenarios" AList list optional}
+    {-temperatureOfFormatExp "specify the temperature(like: 0c m40c 85c 125c) when specifying format of scenarios" AList list optional} 
+  }
+
+
 source ./common/generate_combinations.common.tcl; # generate_combinations
 source ./common/parse_constraint_report.common.tcl; # parse_constraint_report 
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title 

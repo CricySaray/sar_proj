@@ -18,6 +18,8 @@
 # TODO: judge powerdomain area and which powerdomain the inst is belong to, get accurate location of toAddRepeater, 
 #       to fix IMPOPT-616
 #       1) get powerdomains name, 2) get powerdomain area, 3) get powerdomain which the inst is belong to, 4) get location of inst, 5) calculate the loc of toAddRepeater
+#       NOTICE: You can use the -honorPowerIntent false command in setEcoMode to prevent the checking of different power domains. This allows buffers to be inserted into 
+#               nets across different power domains.
 # TODO: 1 v more: calculate lenth between every sinks of driveCell, and classify them to one or more group in order to fix fanout or set ecoAddRepeater -term {... ...}
 # TODO: songNOTE: judge mem and ip celltype!!! if driver is mem/ip, it can't fix. if sink is mem/ip, it can fix driver
 # --------------------------
@@ -129,7 +131,7 @@ proc fix_trans {args} {
       "## A_09 A_0.9 - near the driver - addedRepeaterCell, below is toAddCelltype"
       "## A_01 A_0.1 - near the sink   - addedRepeaterCell, below is toAddCelltype"
       "## dTL_ : (when add repeater) dTL represents the operation of changing the VT of the driver celltype, where L stands for LVT, d stands for driver celltype, and T stands for change VT. "
-      "##        The final underscore "_" is used to separate it from another operation. This symbol will be placed at the very front of the entire symbol, hence the trailing underscore."
+      "##        The final underscore '_' is used to separate it from another operation. This symbol will be placed at the very front of the entire symbol, hence the trailing underscore."
       "## dD4_ : (when add repeater) dD4 represents the operation of changing the driveCapacity of the driver celltype, where 4 stands for the drive size of the driver celltype after the "
       "##        change, d stands for driver celltype, and D stands for changeDriveCapacity. The final underscore is used to separate it from another operation. This "
       "##        symbol is generally placed at the beginning or middle of the entire symbol, hence the trailing underscore for separation."
@@ -249,9 +251,9 @@ proc fix_trans {args} {
     set needDumpWindowList {cmd_List fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needLimitStringWidth {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
     set needInsertSequenceNumberColumn {fixed_List notPassPreCheck_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}
-    set notNeedCountSum {fixedPrompts notPassPreCheckPrompts fixButFailedPrompts skippedPrompts cantChangePrompts needNoticeCasePrompts cmd_List cmd_reRoute_List}
-    set notNeedFormatTableList {fixedPrompts notPassPreCheckPrompts fixButFailedPrompts skippedPrompts cantChangePrompts needNoticeCasePrompts cmd_List cmd_reRoute_List cmd_List cmd_reRoute_List}
-    set notNeedTitleHeader {fixedPrompts notPassPreCheckPrompts fixButFailedPrompts skippedPrompts cantChangePrompts needNoticeCasePrompts}
+    set notNeedCountSum [concat [info locals *Prompts] "cmd_List cmd_reRoute_List"]
+    set notNeedFormatTableList [concat [info locals *Prompts] "cmd_List cmd_reRoute_List cmd_List cmd_reRoute_List"]
+    set notNeedTitleHeader [info locals *Prompts]
     set columnToCountSumMapList {{1 {notPassPreCheck_List fixed_List fix_but_failed_List skipped_List cantChange_List needNoticeCase_List}}}
     set onlyCountTotalNumList {detailInfoOfMore_List fixedPrompts}
     set defaultColumnToCountSum 0

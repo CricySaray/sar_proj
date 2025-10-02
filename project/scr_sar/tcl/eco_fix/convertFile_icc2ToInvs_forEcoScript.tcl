@@ -68,9 +68,8 @@ proc convertFile_icc2ToInvs_forEcoScript {{input_file "fix_timing.icc2.tcl"} {ou
       if {$debug} {
         puts "Debug: Reset current instance to empty"
       }
-    }
     # Handle current_instance (with argument)
-    elseif {[regexp {^current_instance\s+\{(\S+)\}} $line -> inst]} {
+    } elseif {[regexp {^current_instance\s+\{(\S+)\}} $line -> inst]} {
       set hinst "${inst}/"
       set line_matched 1
       if {$debug} {

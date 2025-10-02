@@ -21,7 +21,7 @@ function ca() {
 alias vwn='vim ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias wn='perl ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias vca='vim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
-alias fd='fdfind -Ist f'
+alias fd='fdfind -Is'
 alias cs='ca ./fix_trans.invs.tcl'
 alias ts='tclsh'
 alias tk='touch .gitkeep'; # for updating empty dir to git

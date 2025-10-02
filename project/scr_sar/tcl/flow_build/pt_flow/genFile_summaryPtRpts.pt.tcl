@@ -20,6 +20,10 @@
 source ../common/generate_combinations.common.tcl; # generate_combinations
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title
 # NOTICE: you may need this proc: lmap implementation proc in tcl 8.5 when your tcl version is lower than tcl 8.6 : ../packages/lmap_implementation_on_Tcl8.5.package.tcl
+# TODO U001: Based on the sor_* files generated for each scenario, perform merging and deduplication while taking the content of the waive_list into account. Read 
+#            each sor_* file, convert it into data in the list format used in Tcl, then sort and remove duplicates. After processing, re-tabulate the data and create 
+#            summary files (such as trans, cap, noise, fanout files) in the directory at the same level as the scenario. Keep the files as simple as possible to 
+#            facilitate opening with Vim and minimize the number of keystrokes required.
 proc collect_sum_csv_file {args} {
   set searchDir              "./"
   set formatOfScenarios      "<mode>_<type>_<voltage>_<rcCorner>_<temperature>"

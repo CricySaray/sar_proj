@@ -85,6 +85,12 @@ proc runCmd_ptDMSA {args} {
     check_eco
     update_timing
   }
+  foreach action [split $actionsString ";"] {
+    set cmdOptions [list]
+    foreach temp_option $action {
+       
+    } 
+  }
   
 
 }

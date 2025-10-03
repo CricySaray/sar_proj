@@ -22,6 +22,9 @@
 #               nets across different power domains.
 # TODO: 1 v more: calculate lenth between every sinks of driveCell, and classify them to one or more group in order to fix fanout or set ecoAddRepeater -term {... ...}
 # TODO: songNOTE: judge mem and ip celltype!!! if driver is mem/ip, it can't fix. if sink is mem/ip, it can fix driver
+# TODO: U005: Add a switch to control whether to allow the execution of mandatory insertion of inst operations in the eco script (even when there is insufficient space 
+#             after expand space). This switch needs to be added to the cmd_List and written into the ecoScript. You can set this switch in the eco script and determine 
+#             whether to allow such mandatory insertion based on specific circumstances.
 # --------------------------
 #
 # songNOTE: DEFENSIVE FIX:

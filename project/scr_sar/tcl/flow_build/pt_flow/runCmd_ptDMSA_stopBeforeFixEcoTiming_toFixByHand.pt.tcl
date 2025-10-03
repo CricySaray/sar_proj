@@ -7,6 +7,11 @@
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : Execute the PT DMSA command to fix DRV, setup, and hold violations in STA. Various options can be customized.
 # return    : /
+# NOTICE    : This script cannot be executed in the background and must be run in the foreground. After the script loads all variables, it will stop at 
+#             the desired position using `return -level 10`. Then, manual methods should be used to fix the timing sequentially—for example, first fix 
+#             the setup, then fix the hold (first perform size_cell, then insert_buffer). Finally, use the `write_changes` command to output all 
+#             modification commands.
+# TODO      : It is necessary to develop some functions that facilitate manual operations, simplifying the input of each complex command.
 # ref       : link url
 # --------------------------
 # TO_WRITE

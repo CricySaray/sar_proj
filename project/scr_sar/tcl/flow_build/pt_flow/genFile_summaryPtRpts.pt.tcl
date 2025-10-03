@@ -79,6 +79,10 @@ define_proc_arguments collect_sum_csv_file \
   }
 
 
+
+# TODO: U002: When generating each violation table starting with "sor_", additionally create an identical copy of the table. However, 
+#             in this copied table, prepend the group name to the "viol_pin" entry in the first row, following the format (groupname)viol_pin. 
+#             This will facilitate category classification.
 source ../common/generate_combinations.common.tcl; # generate_combinations
 source ../common/parse_constraint_report.common.tcl; # parse_constraint_report 
 source ../packages/table_format_with_title.package.tcl; # table_format_with_title 

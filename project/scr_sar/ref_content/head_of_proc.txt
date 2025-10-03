@@ -3,7 +3,7 @@
 # author    : sar song
 # date      : DATE
 # label     : 
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : what?
 # return    : 
@@ -31,6 +31,7 @@
 #   -> flow_proc  : Functions specifically designed for building flow processes.
 #   -> report_proc : gen report file of information
 #   -> cross_lang_proc : retrieves data from other languages (like Perl), converts it to Tcl-compatible types, and enables collaborative functionality by leveraging each language's strengths.
+#   -> eco_proc : specifically for ECO phase
 #   -> misc_proc  : some other uses of procs
 # perl sub:
 #   -> format_sub : processes data and outputs it in specific formats

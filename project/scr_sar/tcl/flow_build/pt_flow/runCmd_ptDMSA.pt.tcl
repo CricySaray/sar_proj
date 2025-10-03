@@ -14,7 +14,7 @@ proc runCmd_ptDMSA {args} {
   set scenariosToRun                   {}
   set scenariosDir                     "" ; # All the sessions of the scenarios that need to be read are available in this directory.
   set resultDir                        "./"
-  set workingDir                       [string cat $resultDir "/work"]
+  set workingDir                       [file join $resultDir "work"]
   set icc2ToInvsEcoScriptFile          "/path/to/icc2ToInvs.eco_script.tcl"
   set dontUseCellsList                 {}
   set defFileWhenPhysicalAware         ""

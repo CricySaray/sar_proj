@@ -7,7 +7,10 @@
 # descrip   : stringstore procs handle long string storage by generating formatted IDs, maintain 
 #             string-ID mappings, and support operations like querying, retrieval, and data clearing.
 # action procs : stringstore:: (init/process/get_id/get_string/clear/size/get_max_length/set_max_length/get_all)
-# return    : /
+# return    : original string or index of converted string
+# update    : 2025/10/03 10:11:26 Friday
+#             The input range of `max_len` has been expanded. Now, non-negative integers can be entered. When `max_len` is 0, no restrictions 
+#             are imposed on the length of the input string, and the original string will be returned in all cases.
 # mini descip: stringstore::* ss_init/ss_process/ss_get_id/ss_get_string/ss_clear/ss_size/ss_get_max_length/ss_set_max_length/ss_get_all
 # ref       : link url
 # --------------------------
@@ -18,7 +21,7 @@ namespace eval stringstore {
   variable store_str  ;# Maps strings to their IDs
   variable store_id   ;# Maps IDs to their strings
   variable next_id 1  ;# Next available ID number
-  variable max_len 0  ;# Maximum allowed length for unmodified strings
+  variable max_len 0  ;# Maximum allowed length for unmodified strings (0 = no limit)
   # Character mapping table: 0-9 followed by A-Z (total 36 characters)
   variable chars "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -29,9 +32,9 @@ namespace eval stringstore {
     variable next_id
     variable max_len
     
-    # Validate max_length is a positive integer
-    if {![string is integer -strict $max_length] || $max_length <= 0} {
-      error "Invalid maximum length: must be a positive integer"
+    # Validate max_length is a non-negative integer
+    if {![string is integer -strict $max_length] || $max_length < 0} {
+      error "Invalid maximum length: must be a non-negative integer"
     }
     
     # Clear any existing data and initialize
@@ -41,19 +44,15 @@ namespace eval stringstore {
     set max_len $max_length
     return 1
   }
-  # Helper function: Generate ID that conforms to the new rules
+
+  # Helper function: Generate ID that conforms to the rules
   proc ss_generate_id {num} {
     variable chars
     
-    # Calculate the index of the last character (0-35 corresponds to 0-9, A-Z)
     set last_char_idx [expr {($num - 1) % 36}]
     set last_char [string index $chars $last_char_idx]
-    
-    # Calculate the first four-digit part (starting from 0000)
     set prefix_num [expr {int(($num - 1) / 36)}]
     set prefix [format "%04d" $prefix_num]
-    
-    # Combine into a complete ID
     return "S${prefix}${last_char}"
   }
 
@@ -65,13 +64,18 @@ namespace eval stringstore {
     variable max_len
     
     # Check if package is initialized
-    if {$max_len == 0} {
-      error "Package not initialized. Call init first."
+    if {![info exists max_len]} {
+      error "Package not initialized. Call ss_init first."
     }
     
     # Validate input is a string
     if {![string is list $str]} {
       error "Invalid input: must be a single string"
+    }
+    
+    # When max_len is 0, no length limit - return original string without storage
+    if {$max_len == 0} {
+      return $str
     }
     
     # If string is within allowed length, return it
@@ -84,14 +88,10 @@ namespace eval stringstore {
       return $store_str($str)
     }
     
-    # Generate new ID
+    # Generate new ID and store
     set id [ss_generate_id $next_id]
-    
-    # Store the string with its ID
     set store_str($str) $id
     set store_id($id) $str
-    
-    # Increment next ID
     incr next_id
     
     return $id
@@ -102,41 +102,38 @@ namespace eval stringstore {
     variable store_str
     variable max_len
     
-    # Check if package is initialized
     if {$max_len == 0} {
-      error "Package not initialized. Call init first."
+      return ""  ;# No strings are stored when max_len is 0
     }
     
-    # Check if string exists in store
+    if {![info exists max_len]} {
+      error "Package not initialized. Call ss_init first."
+    }
+    
     if {[info exists store_str($str)]} {
       return $store_str($str)
     }
     
-    # Return empty string if not found (easily distinguishable)
     return ""
   }
 
-  # modify ID format validation in the get_string procedure
+  # Get string for an ID
   proc ss_get_string {id} {
     variable store_id
     variable max_len
     
-    # Check if package is initialized
-    if {$max_len == 0} {
-      error "Package not initialized. Call init first."
+    if {![info exists max_len]} {
+      error "Package not initialized. Call ss_init first."
     }
     
-    # New ID format validation: S + 4 digits + 1 character (digit or uppercase letter)
-    if {![regexp {^S\d[0-9A-Z]{4}$} $id]} {
+    if {![regexp {^S\d{4}[0-9A-Z]$} $id]} {
       error "Invalid ID format. Must be S followed by 4 digits and 1 alphanumeric (e.g., S00001, S0000A)"
     }
     
-    # Check if ID exists in store
     if {[info exists store_id($id)]} {
       return $store_id($id)
     }
     
-    # Return nothing if not found
     return
   }
 
@@ -168,26 +165,24 @@ namespace eval stringstore {
   proc ss_set_max_length {new_max} {
     variable max_len
     
-    if {![string is integer -strict $new_max] || $new_max <= 0} {
-      error "Invalid maximum length: must be a positive integer"
+    if {![string is integer -strict $new_max] || $new_max < 0} {
+      error "Invalid maximum length: must be a non-negative integer"
     }
     
     set max_len $new_max
     return $new_max
   }
 
-  # New: Get all stored content
+  # Get all stored content
   proc ss_get_all {} {
     variable store_id
     variable max_len
     
-    # Check if package is initialized
-    if {$max_len == 0} {
-      error "Package not initialized. Call init first."
+    if {![info exists max_len]} {
+      error "Package not initialized. Call ss_init first."
     }
     
     set result [list]
-    # Iterate through all ID-string pairs
     foreach id [array names store_id] {
       lappend result [list $id $store_id($id)]
     }
@@ -195,10 +190,10 @@ namespace eval stringstore {
     return [lsort -index 0 -increasing $result]
   }
 }
-package provide stringstore 1.1
+package provide stringstore 1.2
 namespace import stringstore::*
 
-if {0} {
+if {1} {
   # 加载包
   package require stringstore
   namespace import stringstore::*
@@ -206,7 +201,7 @@ if {0} {
   # 三种初始化方式（效果完全相同）
   stringstore::ss_init 10   ;# 原始方式
   #ss_init 10            ;# 短命名空间方式
-  stringstore::ss_init 10             ;# 全局过程方式
+  stringstore::ss_init 0             ;# 全局过程方式
 
   # 处理字符串的三种方式
   puts [stringstore::ss_process "short"]       ;# 输出: short

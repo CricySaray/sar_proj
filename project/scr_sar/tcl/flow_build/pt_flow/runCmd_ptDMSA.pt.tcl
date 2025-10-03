@@ -87,8 +87,12 @@ proc runCmd_ptDMSA {args} {
   }
   foreach action [split $actionsString ";"] {
     set cmdOptions [list]
+    set methods [list ]
     foreach temp_option $action {
-       
+      switch -regexp $temp_option {
+        "setup" - "max.*" { set cmdOptions [string cat $cmdOptions {-type max}] }
+        "^size_cell$" { set cmdOptions [string cat $methods "size_cell"] }
+      }
     } 
   }
   

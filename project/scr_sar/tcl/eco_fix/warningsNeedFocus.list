@@ -1,0 +1,5 @@
+# Some warning messages can be waived, but others cannot. Those that cannot be waived require serious attention and 
+# should be treated as errors. It is crucial to emphasize the significance of such warnings.
+
+invs:
+  NRDB-2082: INST %s and INST %s are overlapped.

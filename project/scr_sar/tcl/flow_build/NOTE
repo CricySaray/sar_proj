@@ -1,3 +1,8 @@
 genCmd_* files: not to change invs/pt db
 runCmd_* files: will change invs/pt db
 genFile_* files: not to change invs/pt db, generate several file
+
+# When building a flow, mutually exclusive logic must be applied. Specifically, when two versions of data from ECO9 need 
+# to run in parallel, both versions will call ECO9 data simultaneously. Moreover, they will modify the same STARRC or PT 
+# file at the same time—which may lead to mutual errors in data reading. This results in an undefined state. Therefore, 
+# when writing the flow, special attention must be paid to scenarios where different versions run in parallel.

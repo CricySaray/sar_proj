@@ -91,7 +91,11 @@ proc runCmd_ptDMSA {args} {
     foreach temp_option $action {
       switch -regexp $temp_option {
         "setup" - "max.*" { set cmdOptions [string cat $cmdOptions {-type max}] }
-        "^size_cell$" { set cmdOptions [string cat $methods "size_cell"] }
+        "^insert_buffer$" - "^size_cell$" - "^insert_buffer_at_load_pins$" - "^insert_buffer_at_driver_pins$" -
+        "^insert_inverter_pair$" - "^bypass_buffer$" - "^size_cell_side_load$" - "^remove_buffer$" { set cmdOptions [string cat $methods $temp_option] }
+        default {
+          error "proc runCmd_ptDMSA: check your actionsString($actionsString): option($temp_option) is invalid!!!" 
+        }
       }
     } 
   }

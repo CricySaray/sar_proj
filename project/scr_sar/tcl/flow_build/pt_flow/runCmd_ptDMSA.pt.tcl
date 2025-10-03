@@ -11,7 +11,9 @@
 # --------------------------
 # TO_WRITE
 proc runCmd_ptDMSA {args} {
-  set actionsString                    "setup size_cell ; hold size_cell ; hold insert_buffer"
+    # $actionsString : The order of commands you need to execute. Use a semicolon to separate each complete action, and use spaces to separate each 
+    #                   option within an action. The action commands will be executed in the order of the actions.
+  set actionsString                    "setup size_cell ; hold size_cell ; hold insert_buffer" ; # first: fix setup using mothod of size_cell, then fix hold using method of size_cell, finally, fix hold using method of insert_buffer
   set scenariosToRun                   {}
   set sessionPaths                      [glob -nocomplain run/version/*/*.session] ; # All the sessions of the scenarios that need to be read are available in this directory.
   set resultDir                        "./"

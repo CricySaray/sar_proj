@@ -86,7 +86,7 @@ proc runCmd_ptDMSA {args} {
     update_timing
   }
   proc ifHaveExists {{string ""} {list {}}} {
-    if {$string in $list} {
+    if {[expr {$string in $list}]} {
       error "proc ifHaveExists : check your input: option($string) have exists on string($list)!!!" 
     }
   }
@@ -95,12 +95,15 @@ proc runCmd_ptDMSA {args} {
     set methods [list ]
     foreach temp_option $action {
       switch -regexp $temp_option {
-        "setup" - "max.*" { set cmdOptions [string cat $cmdOptions {-type max}] }
+        "setup" - "max.*" { ifHaveExists {-type} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-type max}] }
         "^insert_buffer$" - "^size_cell$" - "^insert_buffer_at_load_pins$" - "^insert_buffer_at_driver_pins$" -
         "^insert_inverter_pair$" - "^bypass_buffer$" - "^size_cell_side_load$" - "^remove_buffer$" { set cmdOptions [string cat $methods $temp_option] }
-        "^path$" { set cmdOptions [string cat $cmdOptions {-pba_mode path}] }
-        "^exh\w*$" { set cmdOptions [string cat $cmdOptions {-pba_mode exhaustive}] }
-        "^ml_exh\w*$" { set cmdOptions [string cat $cmdOptions {-pba_mode ml_exhaustive}] }
+        "^path$" { ifHaveExists {-pba_mode} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-pba_mode path}] }
+        "^exh\w*$" { ifHaveExists {-pba_mode} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-pba_mode exhaustive}] }
+        "^ml_exh\w*$" { ifHaveExists {-pba_mode} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-pba_mode ml_exhaustive}] }
+        "^open\w*$" { ifHaveExists {-physical_mode} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-physical_mode open_site}] } 
+        "^occu\w*$" { ifHaveExists {-physical_mode} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-physical_mode occupied_site}] } 
+        "^fre\w*$" { ifHaveExists {-physical_mode} $cmdOptions ; set cmdOptions [string cat $cmdOptions {-physical_mode freeze_silicon}] }
         default {
           error "proc runCmd_ptDMSA: check your actionsString($actionsString): option($temp_option) is invalid!!!" 
         }

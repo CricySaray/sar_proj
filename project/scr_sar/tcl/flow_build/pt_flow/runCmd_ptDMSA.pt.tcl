@@ -11,12 +11,14 @@
 # --------------------------
 # TO_WRITE
 proc runCmd_ptDMSA {args} {
+  set actionsString                    "setup size_cell ; hold size_cell ; hold insert_buffer"
   set scenariosToRun                   {}
-  set scenariosDir                     "" ; # All the sessions of the scenarios that need to be read are available in this directory.
+  set sessionPaths                      [glob -nocomplain run/version/*/*.session] ; # All the sessions of the scenarios that need to be read are available in this directory.
   set resultDir                        "./"
   set workingDir                       [file join $resultDir "work"]
+  set dmsaRunningLogFile               "$resultDir/dmsa_running[clock format [clock seconds]]"
   set icc2ToInvsEcoScriptFile          "/path/to/icc2ToInvs.eco_script.tcl"
-  set dontUseCellsList                 {}
+  set dontUseCellsList                 "*/TIE* */DEL* */ANATENNA* */*AOI222* */MUX4* */D0BWP */*D0BWPLVT */G*"
   set defFileWhenPhysicalAware         ""
   set techLefFileWhenPhysicalAware     ""
   set lefFilesWhenPhysicalAware        ""
@@ -28,6 +30,7 @@ proc runCmd_ptDMSA {args} {
   set multiScenarioMergedErrorLogFile  error_multi_scenario.log
   set reportDefaultSignificantDigits   4
   set hostProcessesNum                 [llength $scenariosToRun] ; # The value of this option must be greater than the number of scenarios, and it is recommended that the two quantities be equal.
+  set maxCores                         4 
   set clockInverterList                {}
   set fixHoldBufferList                {}
   set fixSetupBuffList                 {}
@@ -55,9 +58,32 @@ proc runCmd_ptDMSA {args} {
   set multi_scenario_merged_error_log $multiScenarioMergedErrorLogFile
   set multi_scenario_working_directory $workingDir
   set report_default_significant_digits $reportDefaultSignificantDigits
-  foreach scenario $scenarios {
-    create_scenario -name $scenario -image $resultDir/$scenario/$scenario.session 
+  foreach scenario_session $sessionPaths {
+    create_scenario -name $scenario -image $scenario_session 
   }
+  set_app_var eco_enable_mim true
+  set_host_options -max_cores $maxCores -num_processes $hostProcessesNum
+  report_host_usage
+  start_hosts
+  current_session -all
+  current_scenario -all
+
+  set eco_allow_filler_cells_as_open_sites true
+  set eco_report_unfixed_reason_max_endpoints 1000000
+  set_app_var read_parasitics_load_locations true
+
+  remote_execute -verbose {
+    foreach temp_dontUse $dontUseCellsList {
+      set_dont_use $temp_dontUse 
+    }
+    set eco_strict_pin_name_equivalence true
+    set timing_save_pin_arrival_and_slack true
+    set_app_var eco_alternative_area_ratio_threshold 1.2
+    set_eco_options -physical_tech_lib_path $techLefFileWhenPhysicalAware -physical_lib_path $lefFilesWhenPhysicalAware -filler_cell_names $fillerCellsListWhenPhysicalAware -physical_enable_clock_data -log_file  $dmsaRunningLogFile
+    check_eco
+    update_timing
+  }
+  
 
 }
 

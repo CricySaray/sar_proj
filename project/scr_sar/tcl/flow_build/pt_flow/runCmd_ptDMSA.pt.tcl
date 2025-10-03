@@ -85,6 +85,11 @@ proc runCmd_ptDMSA {args} {
     check_eco
     update_timing
   }
+  proc ifHaveExists {{string ""} {list {}}} {
+    if {$string in $list} {
+      error "proc ifHaveExists : check your input: option($string) have exists on string($list)!!!" 
+    }
+  }
   foreach action [split $actionsString ";"] {
     set cmdOptions [list]
     set methods [list ]
@@ -93,6 +98,9 @@ proc runCmd_ptDMSA {args} {
         "setup" - "max.*" { set cmdOptions [string cat $cmdOptions {-type max}] }
         "^insert_buffer$" - "^size_cell$" - "^insert_buffer_at_load_pins$" - "^insert_buffer_at_driver_pins$" -
         "^insert_inverter_pair$" - "^bypass_buffer$" - "^size_cell_side_load$" - "^remove_buffer$" { set cmdOptions [string cat $methods $temp_option] }
+        "^path$" { set cmdOptions [string cat $cmdOptions {-pba_mode path}] }
+        "^exh\w*$" { set cmdOptions [string cat $cmdOptions {-pba_mode exhaustive}] }
+        "^ml_exh\w*$" { set cmdOptions [string cat $cmdOptions {-pba_mode ml_exhaustive}] }
         default {
           error "proc runCmd_ptDMSA: check your actionsString($actionsString): option($temp_option) is invalid!!!" 
         }

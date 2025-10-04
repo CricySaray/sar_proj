@@ -18,6 +18,7 @@ function ca() {
     sed -i 's/;$//g' $target_file
   fi
 }
+alias rp='realpath'
 alias vwn='vim ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias wn='perl ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias vca='vim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'

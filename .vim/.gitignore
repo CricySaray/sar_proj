@@ -1,2 +1,4 @@
 .git/
 pack/jetpack/opt/fzf/
+pack/jetpack/opt/fzf.vim/
+pack/jetpack/opt/vim-matchup/

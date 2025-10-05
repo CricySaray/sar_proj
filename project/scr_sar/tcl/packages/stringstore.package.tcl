@@ -190,10 +190,10 @@ namespace eval stringstore {
     return [lsort -index 0 -increasing $result]
   }
 }
-package provide stringstore 1.2
+package provide stringstore 1.1
 namespace import stringstore::*
 
-if {1} {
+if {0} {
   # 加载包
   package require stringstore
   namespace import stringstore::*

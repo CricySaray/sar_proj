@@ -67,9 +67,11 @@ proc sliding_rheostat_of_strategies {args} {
   set lowestDriverCapacityOfBufferClassCelltypeWhenAddRepeater 2 ; # if == -1, will not set lowest drive capacity limit
   set lowestDriverCapacityOfLogicClassCelltypeWhenAddRepeater  4
   set adjustmentMethodForDriverCapacityWhenAddRepeater         "roundUp" ; # roundUp|roundDown when $lowestDriverCapacityOfBufferClassCelltypeWhenAddRepeater or $lowestDriverCapacityOfLogicClassCelltypeWhenAddRepeater is not in availableDriveCapacityList
-  set ifInFixLongNetMode                                       0
+  set ifInFixLongNetMode                                       0 ; # if == 1, default dont change vt and drive capacity
+  set ifCanChangeVT                                            1 ; # high prior
   set ifCanChangeVTandCapacityInFixLongNetMode                 0
   set ifCanChangeVTWhenChangeCapacity                          1
+  set ifCanAddRepeater                                         1 ; # high prior
   set ifCanChangeVTcapacityWhenAddRepeater                     1
   set newInstNamePrefix                                        "sar_fix_trans_081420"
   set promptPrefix                                             "# song"
@@ -155,7 +157,7 @@ proc sliding_rheostat_of_strategies {args} {
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if this var is 1, you can change vt to fix viol
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
         ### change VT {forbidden when Fix Long Net Mode}
-        if {!$ifInFixLongNetMode && $ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
+        if {$ifCanChangeVT && !$ifInFixLongNetMode && $ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" }
           set toVT [strategy_changeVT_withLUT $driverCellType $VTweight 1]
           if {[operateLUT -type exists -attr [list celltype $toVT]]} {
@@ -194,7 +196,7 @@ proc sliding_rheostat_of_strategies {args} {
         set skippedFlag [join [lmap flag [info locals skippedFlag_*] { subst \${$flag} }] "/"]
         lappend skipped_list [concat $driverSinksSymbol $skippedFlag $addedInfoToShow]
         ### add repeater (change VT/capacity) U010
-        if {!$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
+        if {$ifCanAddRepeater && !$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
           if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after
             set ifInClkTree [regexp [operateLUT -type read -attr clkflag] $driverCellClass]
@@ -316,10 +318,12 @@ define_proc_arguments sliding_rheostat_of_strategies \
     {-VTweight "specify the VT weight for strategy_changeVT_withLUT proc" AList list optional}
     {-forbiddenVT "specify the VT that is forbidden to use" AList list optional}
     {-driveCapacityRange "specify the range of drive capacity, default: {1 12}" AList list optional}
-    {-ifInFixLongNetMode "specify go to Fix Long Net Mode. it will always insert repeater however this viol value of path is small" "" boolean optional}
-    {-ifCanChangeVTandCapacityInFixLongNetMode "In Fix Long Net Mode, you can specify this option" "" boolean optional}
-    {-ifCanChangeVTWhenChangeCapacity  "trun on/off switch that allow changing VT when changing capacity" "" boolean optional}
-    {-ifCanChangeVTcapacityWhenAddRepeater "trun on/off switch that allow changing VT|capacity when adding repeater" "" boolean optional}
+    {-ifInFixLongNetMode "specify go to Fix Long Net Mode. it will always insert repeater however this viol value of path is small" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-ifCanChangeVT "is can change vt" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-ifCanChangeVTandCapacityInFixLongNetMode "In Fix Long Net Mode, you can specify this option" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-ifCanChangeVTWhenChangeCapacity  "trun on/off switch that allow changing VT when changing capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-ifCanAddRepeater "if can add repeater" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-ifCanChangeVTcapacityWhenAddRepeater "trun on/off switch that allow changing VT|capacity when adding repeater" oneOfString one_of_string {optional value_type {values {0 1}}}}
     {-newInstNamePrefix "specify the new name for repeater that will be inserted" AString string optional}
     {-promptPrefix "specify the prefix for every type of prompt" AString string optional}  
     {-debug "trun on/off debuging mode that will print more info" "" boolean optional}

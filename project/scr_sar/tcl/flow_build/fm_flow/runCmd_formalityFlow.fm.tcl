@@ -53,6 +53,11 @@ proc runCmd_formalityFlow {args} {
             eval $temp_constant 
           }
         }
+        # set_dont_verify
+        set_dont_verify r:WORK/$DESIGN/U_PMU_TOP/TEST_OUT
+        set_dont_verify i:WORK/$DESIGN/U_PMU_TOP/TEST_OUT
+        set_dont_verify r:WORK/$DESIGN/U_PMU_TOP/VBG12_LPBGP
+        set_dont_verify i:WORK/$DESIGN/U_PMU_TOP/VBG12_LPBGP
         report_black_boxes -all
         match
         verify

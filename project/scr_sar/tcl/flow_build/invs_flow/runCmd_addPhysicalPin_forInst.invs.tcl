@@ -4,31 +4,31 @@
 # date      : Thu Jul  3 12:37:08 CST 2025
 # label     : task_proc
 #   -> (atomic_proc|display_proc|task_proc)
-#   -> atomic_proc : Specially used for calling and information transmission of other procs, 
-#                    providing a variety of error prompt codes for easy debugging
-#   -> display_proc : Specifically used for convenient access to information in the innovus command line, 
-#                    focusing on data display and aesthetics
-#   -> task_proc  : composed of multiple atomic_proc , focus on logical integrity, 
-#                   process control, error recovery, and the output of files and reports when solving problems.
 # descrip   : create physical pin for many inst(IP/mem/IOpad...)
 #             specific inst and layer
 #             have some switchs for control action of proc
 # update    : 2025/08/30 19:42:04 Saturday
 #             (U001) change return "0x0:1" to error cmd
+# update    : 2025/10/06 16:05:32 Monday
+#             Added the function of adding an independent PG pin for PG pins without a network connection, and you can choose whether to enable it by yourself
+# TODO      : by the way, dump out edText
 # ref       : link url
 # --------------------------
 proc add_physicalPin_for_inst {args} {
-  set inst                      "U_PMU_TOP"
-  set layer                     "RDL"
-  set testOrRun                 "test" ; # run | test
-  set off                       {0 0 0 0}
-  set terms                     {} ; # term list
-  set ifReportNoNetPin          true
-  set compareOriginBoxArea      true
-  set AreaThreshold             0
-  set typeToAddPhysicalPin      "all" ; # pg | signal | all
-  set debug                     false
-  set ignoreNoSignalOrNoPgTerms true
+  set inst                                  "U_PMU_TOP"
+  set layer                                 "AP"
+  set testOrRun                             "test" ; # run | test
+  set off                                   {0 0 0 0}
+  set terms                                 {} ; # term list
+  set ifReportNoNetPin                      true
+  set compareOriginBoxArea                  true
+  set AreaThreshold                         0
+  set typeToAddPhysicalPin                  "all" ; # pg | signal | all
+  set debug                                 false
+  set ignoreNoSignalOrNoPgTerms             true
+  set ifCreatePGPinForNoNetPGTerm           true
+  set regExpListForPowerNetToCreate         {VDD BUCK DCDC VBG}
+  set regExpListForGroundNetToCreate        {VSS GND VBG}
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -143,9 +143,27 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
           if {[llength $name_rect_area_woNet_D3List_pg]} {
             puts "-> have pg term whis is not connect net. please globalConnectNet:"
             foreach name_rect_area $name_rect_area_woNet_D3List_pg {
-              puts "noNetTerm: [lindex $name_rect_area 0] located: [lindex $name_rect_area 1]"
+              if {$ifCreatePGPinForNoNetPGTerm && [regexp [string cat [join $regExpListForPowerNetToCreate "|"] "|" [join $regExpListForGroundNetToCreate "|"]] [lindex $name_rect_area 0]]} {
+                if {[regexp [join $regExpListForPowerNetToCreate "|"] [lindex $name_rect_area 0]]} {
+                  if {[dbget top.nets.name [lindex $name_rect_area 0] -e] == ""} {
+                    set cmd_pg_no_net_createPGPin "addNet -physical -power [lindex $name_rect_area 0]"
+                    puts $cmd_pg_no_net_createPGPin ; eval $cmd_pg_no_net_createPGPin
+                  }
+                  set cmd_pg_no_net_createPGPin "createPGPin [lindex $name_rect_area 0] -geom $layer {*}[lindex $name_rect_area 1] -net [lindex $name_rect_area 0]"
+                  puts $cmd_pg_no_net_createPGPin ; eval $cmd_pg_no_net_createPGPin
+                } elseif {[regexp [join $regExpListForGroundNetToCreate "|"] [lindex $name_rect_area 0]]} {
+                  if {[dbget top.nets.name [lindex $name_rect_area 0] -e] == ""} {
+                    set cmd_pg_no_net_createPGPin "addNet -physical -ground [lindex $name_rect_area 0]"
+                    puts $cmd_pg_no_net_createPGPin ; eval $cmd_pg_no_net_createPGPin
+                  }
+                  set cmd_pg_no_net_createPGPin "createPGPin [lindex $name_rect_area 0] -geom $layer {*}[lindex $name_rect_area 1] -net [lindex $name_rect_area 0]"
+                  puts $cmd_pg_no_net_createPGPin ; eval $cmd_pg_no_net_createPGPin
+                }
+              } else {
+                puts "noNetTerm: [lindex $name_rect_area 0] located: [lindex $name_rect_area 1]"
+              }
             }
-            error "proc add_physicalPin_for_inst: check your pg terms([lindex $name_rect_area_woNet_D3List_pg 0])"; # have pg term whis is not connect net. please globalConnectNet
+            #error "proc add_physicalPin_for_inst: check your pg terms([lindex $name_rect_area_woNet_D3List_pg 0])"; # have pg term whis is not connect net. please globalConnectNet
           }
           foreach name_rect_area_net $name_rect_area_net_D4List_pg {
             set cmd_pgTerms_wiNet "createPhysicalPin $inst/[lindex $name_rect_area_net 0] -layer $layer -rect [lindex $name_rect_area_net 1] -net [lindex $name_rect_area_net 3]" 
@@ -185,6 +203,9 @@ define_proc_arguments add_physicalPin_for_inst \
     {-typeToAddPhysicalPin "specify types to add physical pin" oneOfString one_of_string {optional value_help {values {signal pg all}}}}
     {-debug "print some internal vars for debugging" "" boolean optional}
     {-ignoreNoSignalOrNoPgTerms "when no signal or pg terms occurs, it only is warned but no errors to interrupt" "" boolean optional}
+    {-ifCreatePGPinForNoNetPGTerm "if need create pg term for pg pin of any inst using createPGPin and addNet -physical -power/ground" oneOfString one_of_string {optional value_type {values {0 1}}} }
+    {-regExpListForPowerNetToCreate "specify the regExp list for matching power net to create according to pg pin name" AList list optional}
+    {-regExpListForGroundNetToCreate "specify the regExp list for matching ground net to create according to pg pin name" AList list optional}
   }
 
 proc calculate_area_of_box {{box {}}} {

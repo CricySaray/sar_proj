@@ -25,14 +25,15 @@
 # TODO: U005: Add a switch to control whether to allow the execution of mandatory insertion of inst operations in the eco script (even when there is insufficient space 
 #             after expand space). This switch needs to be added to the cmd_List and written into the ecoScript. You can set this switch in the eco script and determine 
 #             whether to allow such mandatory insertion based on specific circumstances.
-# TODO: 
+# TODO: U006 Add a space-constrained mode, try not to introduce new area, so that refinePlace cannot successfully place all insts in appropriate 
+#       positions. Meanwhile, when adding a driver, it is also necessary to calculate the width, height, and area of the cell to prevent 
+#       replacing cells with excessively large areas.
 # --------------------------
 #
 # songNOTE: DEFENSIVE FIX:
 #   if inst is mem/IP, it can't be changed DriveCapacibility and can't move location
 #   TODO: get previous fixing summary, and check if it is fixed in new iteration fix!
-#   TODO: deal with summary, select violated drivePin, driveInst, sinkPin and sinkInst in invsGUI for convenience
-# return time
+#   TODO: deal with summary, select violated drivePin, driveInst, sinkPin and sinkInst in invsGUI for convenience return time
 #
 # fix long net:
 #   get drive net len in PT:看看一个buf驱动和他同级的buffer时，不违例的net len最长长度，这个需要大量测试，每个项目都不一样。（脚本处理） tcl在pt里面获取海量原始数据，然后perl来处理和统计。为了给fix long net和fix trans脚本提供判断依据。
@@ -263,7 +264,20 @@ proc fix_trans {args} {
     set defaultColumnToCountSum 0
     set maxWidthForString $maxWidthForString
     
-    summarize_all_list_to_display -listsDict $ListVarDict -titleOfListMap $titleOfListMap -filesIncludeListMap $filesIncludeListMap -needDumpWindowList $needDumpWindowList -needLimitStringWidth $needLimitStringWidth -needInsertSequenceNumberColumn $needInsertSequenceNumberColumn -notNeedCountSum $notNeedCountSum -notNeedFormatTableList $notNeedFormatTableList -notNeedTitleHeader $notNeedTitleHeader -maxWidthForString $maxWidthForString -columnToCountSumMapList $columnToCountSumMapList -onlyCountTotalNumList $onlyCountTotalNumList -defaultColumnToCountSum $defaultColumnToCountSum
+    summarize_all_list_to_display \
+      -listsDict $ListVarDict \
+      -titleOfListMap $titleOfListMap \
+      -filesIncludeListMap $filesIncludeListMap \
+      -needDumpWindowList $needDumpWindowList \
+      -needLimitStringWidth $needLimitStringWidth \
+      -needInsertSequenceNumberColumn $needInsertSequenceNumberColumn \
+      -notNeedCountSum $notNeedCountSum \
+      -notNeedFormatTableList $notNeedFormatTableList \
+      -notNeedTitleHeader $notNeedTitleHeader \
+      -maxWidthForString $maxWidthForString \
+      -columnToCountSumMapList $columnToCountSumMapList \
+      -onlyCountTotalNumList $onlyCountTotalNumList \
+      -defaultColumnToCountSum $defaultColumnToCountSum
   }
 }
 define_proc_arguments fix_trans \

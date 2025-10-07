@@ -205,7 +205,18 @@ proc fix_trans {args} {
     set fixed_one_List_temp [list] ; set cmd_one_List_temp [list] ; set fixed_more_List_temp [list] ; set cmd_more_List_temp [list]
     foreach case $violValue_driverPin_LIST {
       lassign $case violValue driverPin
-      lassign [mux_of_strategies -violValue $violValue -violPin $driverPin -VTweight $normalNeedVtWeightList -newInstNamePrefix $ecoNewInstNamePrefix -ifCanChangeVTandCapacityInFixLongNetMode 1 -ifCanChangeVTWhenChangeCapacity 1 -ifCanChangeVTcapacityWhenAddRepeater 1 -forbiddenVT $forbiddenVT -driveCapacityRange $driveCapacityRange -ifCanChangeVT $canChangeVT -ifCanAddRepeater $canAddRepeater] resultDict allInfo
+      lassign [mux_of_strategies \
+        -violValue $violValue \
+        -violPin $driverPin \
+        -VTweight $normalNeedVtWeightList \
+        -newInstNamePrefix $ecoNewInstNamePrefix \
+        -ifCanChangeVTandCapacityInFixLongNetMode 1 \
+        -ifCanChangeVTWhenChangeCapacity 1 \
+        -ifCanChangeVTcapacityWhenAddRepeater 1 \
+        -forbiddenVT $forbiddenVT \
+        -driveCapacityRange $driveCapacityRange \
+        -ifCanChangeVT $canChangeVT \
+        -ifCanAddRepeater $canAddRepeater] resultDict allInfo
       
       proc onlyReadTrace {var_name index operation} { error "proc onlyReadTrace in proc: fix_trans: variable($var_name) is read-only, you can't write it!!!" }
       trace add variable allInfo write onlyReadTrace 

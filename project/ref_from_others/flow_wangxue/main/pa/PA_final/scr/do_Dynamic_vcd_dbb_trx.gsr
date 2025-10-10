@@ -1,0 +1,367 @@
+###define process
+TECHNOLOGY 	28
+
+
+FREQ		200e6
+DYNAMIC_SIMULATION_TIME 8.0e-9
+DYNAMIC_TIME_STEP 20e-12
+DYNAMIC_SAVE_WAVEFORM 2
+#Defines the default goggle rate of the nets on the chip
+
+
+TOGGLE_RATE 0.2 2
+
+
+TEMPERATURE 85
+TEMPERATURE_EM 110
+USE_DEF_VIARULE 1
+EXTRACT_INTERNAL_NET 1
+REXTRACTION_DETAIL_LEVEL 1
+VIA_COMPRESS 0
+IGNORE_LEF_DEF_MISMATCH 1
+IGNORE_DEF_ERROR 1
+IGNORE_PGARC_ERROR 1
+LIB2AVM 1
+
+
+#### EM setting #################################
+EM_LENGTH_USE_MAX_LENGTH 1
+USE_DRAWN_WIDTH_FOR_EM 1
+USE_DRAWN_WIDTH_FOR_EM_LOOKUP 1
+EM_MODE avg
+EM_REPORT_LINE_NUMBER -1 
+EM_REPORT_PERCENTAGE 100
+
+
+DELTA_T_RMS_EM 5
+POWER_MODE APL
+SCALE_CLOCK_POWER 0
+ITR_OVERRIDE_BPFS 1
+APL_MODE 4
+APL_INTERPOLATION_METHOD 4
+
+
+### GDS2DEF
+IGNORE_UNDEFINED_LAYER 1
+GDS_CELLS {
+PVDD2DGZ_V /home/user2/project/cx200/pa/gds2def/def
+PVSS1DGZ_V /home/user2/project/cx200/pa/gds2def/def
+PVDD1DGZ_V /home/user2/project/cx200/pa/gds2def/def
+PVSS2DGZ_V /home/user2/project/cx200/pa/gds2def/def
+PENDCAP /home/user2/project/cx200/pa/gds2def/def
+PVDD2DGZ_H /home/user2/project/cx200/pa/gds2def/def
+PVSS1DGZ_H /home/user2/project/cx200/pa/gds2def/def
+PVDD1DGZ_H /home/user2/project/cx200/pa/gds2def/def
+PVSS2DGZ_H /home/user2/project/cx200/pa/gds2def/def
+PVDD2POC_H /home/user2/project/cx200/pa/gds2def/def
+PFILLER10 /home/user2/project/cx200/pa/gds2def/def
+PDDW08DGZ_H /home/user2/project/cx200/pa/gds2def/def
+PDDW16DGZ_H /home/user2/project/cx200/pa/gds2def/def
+PDDW08DGZ_V /home/user2/project/cx200/pa/gds2def/def
+PDDW08SDGZ_V /home/user2/project/cx200/pa/gds2def/def
+PDUW04SDGZ_H /home/user2/project/cx200/pa/gds2def/def
+PDDW04SDGZ_H /home/user2/project/cx200/pa/gds2def/def
+}
+
+
+VCD_FILE {
+CX200A_SOC_TOP /local_disk/share/CX200_A/wave_for_irdrop/ECO4/ir_drop_dbb_trx_20us_net0211.fsdb
+FILE_TYPE FSDB
+FRONT_PATH harness/u_cx200a_chip
+SELECT_TYPE WORST_POWER_CYCLE
+SELECT_RANGE -1 -1
+TRUE_TIME 1
+}
+
+
+###### STA file #####################
+BLOCK_STA_FILE {
+CX200A_SOC_TOP /Data83/home/user2/project/cx200/dataout/final_0212/STA_file/CX200A_SOC_TOP_func_tt_85.irdrop.gz
+}
+######## CLK GAT OPT #####################
+STATE_PROPAGATION {
+PROPAGATION_MODE probability
+CLOCK_GATE_ENABLE_RATIO 0.5
+ENABLE_CASCADED_CLOCK_GATING 1
+}
+
+
+######################## ploc file ########################
+PAD_FILE {
+/Data83/home/user2/project/cx200/dataout/final_0212/ploc/PG.ploc 
+}
+
+
+######################## ploc file ########################
+SWITCH_MODEL_FILE {
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c/APLSW/aplsw_header.out 
+}
+########################PG name  ##########################
+#########################PG name #########################
+VDD_NETS {
+DVDD0P9_CORE 0.9
+DVDD0P9_DBB 0.9
+DVDD0P9_AON 0.9
+DVDD0P9_PSW 0.9
+VQPS 1.8
+DVDDIO 3.3
+DVDDIO_PSW 3.3
+}
+
+
+GND_NETS {
+VSS_CORE 0
+VSS_IO 0
+}
+
+
+DECAP_CELL {
+DCAP*
+GDCAP*
+}
+
+
+IGNORE_CELLS {
+FILL*
+GFILL*
+PFILL*
+TAPCELL*
+ENDCAP*
+}
+
+
+######## PA tech file #####################
+TECH_FILE {
+/local_disk/home/user10/work/PA/PA_flow/tsmcn28_8lm5X1Z1URDL.redhawk.typical.tech
+}
+
+
+
+
+######### DEF file ################
+DEF_FILES {
+/Data83/home/user2/project/cx200/dataout/final_0212/def/CX200A_SOC_TOP.pr.ir.def.gz top
+}
+
+
+################CELL_RC_FILE #############
+CELL_RC_FILE {
+CX200A_SOC_TOP /Data83/home/user2/project/cx200/dataout/final_0212/spef/CX200A_SOC_TOP.spef.tt_85.gz
+}
+
+
+##### LEF FILE ####################
+LEF_FILE {
+/local_disk/home/user2/project/CX200/lib_conf/tlef/tsmcn28_8lm5X1Z1URDL.tlef
+/process/TSMC28/IO/TSMCHOME/digital/Back_End/lef/tphn28hpcpgv18_110a/mt_2/8lm/lef/tphn28hpcpgv18_8lm.lef
+/process/TSMC28/IO/TSMCHOME/digital/Back_End/lef/tphn28hpcpgv2od3_210a/mt_2/8m/8M_5X2Z/lef/tphn28hpcpgv2od3_8lm.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t35p140_110a/lef/tcbn28hpcplusbwp7t35p140.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140hvt_110a/lef/tcbn28hpcplusbwp7t40p140hvt.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140cghvt_160a/lef/tcbn28hpcplusbwp7t40p140cghvt.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t35p140lvt_110a/lef/tcbn28hpcplusbwp7t35p140lvt.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t35p140cg_160a/lef/tcbn28hpcplusbwp7t35p140cg.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t35p140mb_150a/lef/tcbn28hpcplusbwp7t35p140mb.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t35p140mblvt_150a/lef/tcbn28hpcplusbwp7t35p140mblvt.lef
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140mbhvt_150a/lef/tcbn28hpcplusbwp7t40p140mbhvt.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp2048x32bm4b2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/ts3n28hpcpa32x126m8fs_130a.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp64x30m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp1024x32m4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/dp32x144m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp64x22m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/ts3n28hpcpa32x128m8fs_130a.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp64x32m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp64x24m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/dp256x40m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp64x26m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/dp128x80m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp768x64bm4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp4096x32bm8b2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/dp256x32m4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp2048x40m8.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/dp32x32m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rom10240x32m16.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rom1024x13m8.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp128x12m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp128x21m4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x12m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp512x32bm4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/dp8x144m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp64x4bm4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x24m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp8192x32bm16b2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x32m4.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x16m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp8192x52bm16b2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x28m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x36m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/sp256x40m2.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rom4096x32m16.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p32x128m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p128x30m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p128x32m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p128x22m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p256x12m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p128x24m1.lef
+/process/TSMC28/projects/CX200_A/frontend/memory/lef/rf2p128x26m1.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/FEOL/N28_DMY_TCD_FH_20100614.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/BEOL_MX_5X/BEOL_small_FDM6_20110323.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/BEOL_MX_5X/BEOL_small_FDM5_20110323.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/BEOL_MX_5X/BEOL_small_FDM4_20110323.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/BEOL_MX_5X/BEOL_small_FDM3_20110323.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/BEOL_MX_5X/BEOL_small_FDM2_20110323.lef
+/process/TSMC28/PDK/tn28cldr002_2_1/N28_TCD_library_kits_20110323/N28_TCD_library_kits_20110323/lef/BEOL_MX_5X/BEOL_small_FDM1_20110323.lef
+/process/TSMC28/MEM/efuse/0105876_tef28hpcpesd_p_130c_20221115/tef28hpcpesd_p_130c_sef/TSMCHOME/efuse/Back_End/lef/tef28hpcpesd_p_130c/lef/tef28hpcpesd_p_130c_4lm.lef
+/process/TSMC28/MEM/efuse/0105876_tef28hpcp64x32hd18_phrm_140a_20221115/tef28hpcp64x32hd18_phrm_120a_sef/TSMCHOME/efuse/Back_End/lef/tef28hpcp64x32hd18_phrm_120a/lef/tef28hpcp64x32hd18_phrm_120a_5lm.lef
+}
+#### LIB FILE ######################
+LIB_FILE {
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140_180a/tcbn28hpcplusbwp7t35p140tt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140_180a/tcbn28hpcplusbwp7t35p140tt0p9v0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140hvt_180a/tcbn28hpcplusbwp7t40p140hvttt0p9v0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140cghvt_160a/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140lvt_180a/tcbn28hpcplusbwp7t35p140lvttt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140hvt_180a/tcbn28hpcplusbwp7t40p140hvttt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140cg_160a/tcbn28hpcplusbwp7t35p140cgtt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140mb_170a/tcbn28hpcplusbwp7t35p140mbtt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140mblvt_170a/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c_ccs.lib
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140mbhvt_170a/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c_ccs.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp128x12m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp128x21m4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp8192x52bm16b2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp2048x32bm4b2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp64x32m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp64x24m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp8192x32bm16b2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp768x64bm4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rom1024x13m8_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/dp8x144m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp1024x32m4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x32m4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp64x4bm4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x24m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp64x26m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x16m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/dp32x144m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/dp128x80m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rom10240x32m16_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp512x32bm4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp2048x40m8_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/dp256x40m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp4096x32bm8b2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/dp32x32m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp64x30m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/dp256x32m4_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x28m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp64x22m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x12m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x36m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/sp256x40m2_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rom4096x32m16_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p32x128m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p128x30m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p128x32m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p128x24m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p128x26m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p256x12m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/rf2p128x22m1_tt_ctypical_0p90v_0p90v_85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/ts3n28hpcpa32x128m8fs_130a_tt0p9v85c.lib
+/process/TSMC28/projects/CX200_A/frontend/memory/lib/ts3n28hpcpa32x126m8fs_130a_tt0p9v85c.lib
+/process/TSMC28/IO/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tphn28hpcpgv2od3_210a/tphn28hpcpgv2od3tt0p9v3p3v85c.lib
+/process/TSMC28/MEM/efuse/0105876_tef28hpcp64x32hd18_phrm_140a_20221115/tef28hpcp64x32hd18_phrm_140a_nldm/TSMCHOME/efuse/Front_End/timing_power_noise/NLDM/tef28hpcp64x32hd18_phrm_140a/tef28hpcp64x32hd18_phrm_140a_tt0p9v1p8v85c.lib
+}
+
+
+#### APL FILE #########################
+APL_FILES {
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140_110c/redhawk/tcbn28hpcplusbwp35p140tt0p9v85c/CAP/tcbn28hpcplusbwp35p140tt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140hvt_110c/redhawk/tcbn28hpcplusbwp35p140hvttt0p9v85c/CAP/tcbn28hpcplusbwp35p140hvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140lvt_110c/redhawk/tcbn28hpcplusbwp35p140lvttt0p9v85c/CAP/tcbn28hpcplusbwp35p140lvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mb_170a/redhawk/tcbn28hpcplusbwp35p140mbtt0p9v85c/CAP/tcbn28hpcplusbwp35p140mbtt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mbhvt_170a/redhawk/tcbn28hpcplusbwp35p140mbhvttt0p9v85c/CAP/tcbn28hpcplusbwp35p140mbhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mblvt_170a/redhawk/tcbn28hpcplusbwp35p140mblvttt0p9v85c/CAP/tcbn28hpcplusbwp35p140mblvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140_130c/redhawk/tcbn28hpcplusbwp7t35p140tt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140tt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cg_160a/redhawk/tcbn28hpcplusbwp7t35p140cgtt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140cgtt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cghvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140cghvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cglvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cglvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140cglvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cguhvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cguhvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140cguhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140hvt_130c/redhawk/tcbn28hpcplusbwp7t35p140hvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140hvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140lvt_130c/redhawk/tcbn28hpcplusbwp7t35p140lvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140lvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mb_150a/redhawk/tcbn28hpcplusbwp7t35p140mbtt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140mbtt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbhvt_150a/redhawk/tcbn28hpcplusbwp7t35p140mbhvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140mbhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mblvt_170a/redhawk/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbuhvt_150a/redhawk/tcbn28hpcplusbwp7t35p140mbuhvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140mbuhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opp_130c/redhawk/tcbn28hpcplusbwp7t35p140opptt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140opptt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opphvt_130c/redhawk/tcbn28hpcplusbwp7t35p140opphvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140opphvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opplvt_130c/redhawk/tcbn28hpcplusbwp7t35p140opplvttt0p9v85c/CAP/tcbn28hpcplusbwp7t35p140opplvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140ehvt_170a/redhawk/tcbn28hpcplusbwp7t40p140ehvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140ehvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140hvt_130c/redhawk/tcbn28hpcplusbwp7t40p140hvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140hvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mb_150a/redhawk/tcbn28hpcplusbwp7t40p140mbtt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140mbtt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mbhvt_150a/redhawk/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mblvt_170a/redhawk/tcbn28hpcplusbwp7t40p140mblvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140mblvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mbuhvt_150a/redhawk/tcbn28hpcplusbwp7t40p140mbuhvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140mbuhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140opphvt_130c/redhawk/tcbn28hpcplusbwp7t40p140opphvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140opphvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140uhvt_140a/redhawk/tcbn28hpcplusbwp7t40p140uhvttt0p9v85c/CAP/tcbn28hpcplusbwp7t40p140uhvttt0p9v85c_cap.cdev cap
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140_110c/redhawk/tcbn28hpcplusbwp35p140tt0p9v85c/CURRENT/tcbn28hpcplusbwp35p140tt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140hvt_110c/redhawk/tcbn28hpcplusbwp35p140hvttt0p9v85c/CURRENT/tcbn28hpcplusbwp35p140hvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140lvt_110c/redhawk/tcbn28hpcplusbwp35p140lvttt0p9v85c/CURRENT/tcbn28hpcplusbwp35p140lvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mb_170a/redhawk/tcbn28hpcplusbwp35p140mbtt0p9v85c/CURRENT/tcbn28hpcplusbwp35p140mbtt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mbhvt_170a/redhawk/tcbn28hpcplusbwp35p140mbhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp35p140mbhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mblvt_170a/redhawk/tcbn28hpcplusbwp35p140mblvttt0p9v85c/CURRENT/tcbn28hpcplusbwp35p140mblvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140_130c/redhawk/tcbn28hpcplusbwp7t35p140tt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140tt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cg_160a/redhawk/tcbn28hpcplusbwp7t35p140cgtt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140cgtt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cghvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140cghvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cglvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cglvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140cglvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cguhvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cguhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140cguhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140hvt_130c/redhawk/tcbn28hpcplusbwp7t35p140hvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140hvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140lvt_130c/redhawk/tcbn28hpcplusbwp7t35p140lvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140lvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mb_150a/redhawk/tcbn28hpcplusbwp7t35p140mbtt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140mbtt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbhvt_150a/redhawk/tcbn28hpcplusbwp7t35p140mbhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140mbhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mblvt_170a/redhawk/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbuhvt_150a/redhawk/tcbn28hpcplusbwp7t35p140mbuhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140mbuhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbulvt_170a/redhawk/tcbn28hpcplusbwp7t35p140mbulvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140mbulvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opp_130c/redhawk/tcbn28hpcplusbwp7t35p140opptt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140opptt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opphvt_130c/redhawk/tcbn28hpcplusbwp7t35p140opphvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140opphvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opplvt_130c/redhawk/tcbn28hpcplusbwp7t35p140opplvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t35p140opplvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140ehvt_170a/redhawk/tcbn28hpcplusbwp7t40p140ehvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140ehvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140hvt_130c/redhawk/tcbn28hpcplusbwp7t40p140hvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140hvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mb_150a/redhawk/tcbn28hpcplusbwp7t40p140mbtt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140mbtt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mbhvt_150a/redhawk/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mblvt_170a/redhawk/tcbn28hpcplusbwp7t40p140mblvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140mblvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mbuhvt_150a/redhawk/tcbn28hpcplusbwp7t40p140mbuhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140mbuhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140opphvt_130c/redhawk/tcbn28hpcplusbwp7t40p140opphvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140opphvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140uhvt_140a/redhawk/tcbn28hpcplusbwp7t40p140uhvttt0p9v85c/CURRENT/tcbn28hpcplusbwp7t40p140uhvttt0p9v85c_current.spiprof current
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140_110c/redhawk/tcbn28hpcplusbwp35p140tt0p9v85c/PWC/tcbn28hpcplusbwp35p140tt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140hvt_110c/redhawk/tcbn28hpcplusbwp35p140hvttt0p9v85c/PWC/tcbn28hpcplusbwp35p140hvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140lvt_110c/redhawk/tcbn28hpcplusbwp35p140lvttt0p9v85c/PWC/tcbn28hpcplusbwp35p140lvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mb_170a/redhawk/tcbn28hpcplusbwp35p140mbtt0p9v85c/PWC/tcbn28hpcplusbwp35p140mbtt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mbhvt_170a/redhawk/tcbn28hpcplusbwp35p140mbhvttt0p9v85c/PWC/tcbn28hpcplusbwp35p140mbhvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp35p140mblvt_170a/redhawk/tcbn28hpcplusbwp35p140mblvttt0p9v85c/PWC/tcbn28hpcplusbwp35p140mblvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140_130c/redhawk/tcbn28hpcplusbwp7t35p140tt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140tt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cg_160a/redhawk/tcbn28hpcplusbwp7t35p140cgtt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140cgtt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cghvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140cghvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cglvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cglvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140cglvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140cguhvt_160a/redhawk/tcbn28hpcplusbwp7t35p140cguhvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140cguhvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140hvt_130c/redhawk/tcbn28hpcplusbwp7t35p140hvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140hvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140lvt_130c/redhawk/tcbn28hpcplusbwp7t35p140lvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140lvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mb_150a/redhawk/tcbn28hpcplusbwp7t35p140mbtt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140mbtt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbhvt_150a/redhawk/tcbn28hpcplusbwp7t35p140mbhvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140mbhvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mblvt_170a/redhawk/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140mblvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbuhvt_150a/redhawk/tcbn28hpcplusbwp7t35p140mbuhvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140mbuhvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140mbulvt_170a/redhawk/tcbn28hpcplusbwp7t35p140mbulvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140mbulvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opp_130c/redhawk/tcbn28hpcplusbwp7t35p140opptt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140opptt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opphvt_130c/redhawk/tcbn28hpcplusbwp7t35p140opphvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140opphvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t35p140opplvt_130c/redhawk/tcbn28hpcplusbwp7t35p140opplvttt0p9v85c/PWC/tcbn28hpcplusbwp7t35p140opplvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140cghvt_160a/redhawk/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140cghvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140ehvt_170a/redhawk/tcbn28hpcplusbwp7t40p140ehvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140ehvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140hvt_130c/redhawk/tcbn28hpcplusbwp7t40p140hvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140hvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mb_150a/redhawk/tcbn28hpcplusbwp7t40p140mbtt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140mbtt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mbhvt_150a/redhawk/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140mbhvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mblvt_170a/redhawk/tcbn28hpcplusbwp7t40p140mblvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140mblvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140mbuhvt_150a/redhawk/tcbn28hpcplusbwp7t40p140mbuhvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140mbuhvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140opphvt_130c/redhawk/tcbn28hpcplusbwp7t40p140opphvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140opphvttt0p9v85c_pwc.pwcdev pwc 
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Back_End/redhawk/tcbn28hpcplusbwp7t40p140uhvt_140a/redhawk/tcbn28hpcplusbwp7t40p140uhvttt0p9v85c/PWC/tcbn28hpcplusbwp7t40p140uhvttt0p9v85c_pwc.pwcdev pwc 
+}
+

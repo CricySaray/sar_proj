@@ -1,0 +1,10 @@
+#! /bin/csh
+
+rm func_* scan_* -rf
+setenv ver1 $1
+echo $ver1
+
+foreach session (scan_ssm40_cworst_T scan_ff125_cworst func_ssm40_2p5vio_cworst_T func_ss125_2p5vio_cworst_T func_ff125_2p5vio_cbest func_ssm40_1p8vio_cworst_T func_ff125_1p8vio_rcworst func_ff125_1p8vio_cbest func_ssm40_0p8std_cworst_T func_ssm40_0p8std_cworst)
+	ln -sf /home/user3/project/CX200UR1/CX200UR1_SOC_TOP/sta/rm_pt/run/${ver1}/${session}/CX200UR1_SOC_TOP_ss $session
+end
+

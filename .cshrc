@@ -1,12 +1,13 @@
+alias his 'history'
 alias tt 'tree'
 # open newest file
 alias vn 'vi `ls -t * | head -1`'
 # change newest dir
 alias lc 'cd`ls -dt */ | head -1`'
 
-set sort_big_perlfile = "~/scr_sar/perl/sort_big.pl"
-set icc2ToinvsFile_fix_timing = "/simulation/.../pteco2invs.pl"
-set logv_error_pick_out_file = "/simulation/.../file"
+setenv sort_big_perlfile "~/scr_sar/perl/sort_big.pl"
+setenv icc2ToinvsFile_fix_timing "/simulation/.../pteco2invs.pl"
+setenv logv_error_pick_out_file "/simulation/.../file"
 
 alias so 'perl $sort_big_perlfile'
 alias toinvs 'perl $icc2ToinvsFile_fix_timing'
@@ -50,11 +51,11 @@ alias vt 'vim ~/.tmux.conf'
 alias tm 'tmux'
 alias md 'mkdir'
 alias c 'cd'
-alias setPrompt 'set prompt="%{\e[32m%}%{\e[1m%}[%h]%{\e[0m%} %{\e[31m%}%{\e[1m%}%W/%D %T%{\e[0m%} [%n@%m %{\e[34m%}%/%{\e[0m%}] $"'
+alias setPrompt 'set prompt="%{\e[32m%}%{\e[1m%}[%h]%{\e[0m%} %{\e[31m%}%{\e[1m%}%W/%D %T%{\e[0m%} [%n@%m %{\e[34m%}%/%{\e[0m%}]$ "'
 alias cd 'chdir \!* && setPrompt'
 setPrompt
 
-set teamshare_file '/simulation/arsong/scr_sar/perl/team_share.pl'
+setenv teamshare_file '/simulation/arsong/scr_sar/perl/team_share.pl'
 alias pop 'perl $teamshare_file -pop'
 alias push 'perl $teamshare_file -push'
 

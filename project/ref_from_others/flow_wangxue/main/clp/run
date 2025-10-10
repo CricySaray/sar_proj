@@ -1,0 +1,1 @@
+lec -LPGXL -NOGui -dofile clp.do -64 -verify -logfile lec.log

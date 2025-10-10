@@ -1,0 +1,12 @@
+setup analysis_mode static
+import gsr ../scr/do_gridcheck.gsr
+setup design
+
+
+perform pwrcalc
+perform extraction -power -ground -l -c
+perform gridcheck -limit 10000000 -stdcell min -macro none -allPintype -excludeDecap -o grid_check.rpt
+perform emcheck -mode avg
+explore design
+export db gridcheck_design.db
+

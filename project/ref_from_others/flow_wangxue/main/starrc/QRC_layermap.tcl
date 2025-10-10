@@ -1,0 +1,22 @@
+conducting_layers
+	PO    n_fpoly
+	M1    M1      
+	M2    M2      
+	M3    M3      
+	M4    M4      
+	M5    M5      
+	M6    M6      
+	M7    M7      
+	M8    M8      
+	AP    AP
+via_layers
+	CO    n_polyCont  
+	VIA1  VIA1    
+	VIA2  VIA2    
+	VIA3  VIA3    
+	VIA4  VIA4    
+	VIA5  VIA5    
+	VIA6  VIA6    
+	VIA7  VIA7    
+	RV    RV     
+

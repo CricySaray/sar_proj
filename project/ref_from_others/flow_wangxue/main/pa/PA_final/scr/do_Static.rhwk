@@ -1,0 +1,12 @@
+setup analysis_mode static
+import gsr ../scr/do_Static.gsr
+setup design
+
+
+perform pwrcalc
+perform extraction -power -ground
+perform analysis -static
+perform emcheck -mode avg
+explore design
+export db Static_design.db
+

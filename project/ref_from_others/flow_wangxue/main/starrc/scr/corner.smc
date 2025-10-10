@@ -1,0 +1,69 @@
+CORNER_NAME: m40_cworst_T
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst_T/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst_T.nxtgrd
+OPERATING_TEMPERATURE: -40
+
+CORNER_NAME: m40_rcworst_T
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst_T/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst_T.nxtgrd
+OPERATING_TEMPERATURE: -40 
+
+CORNER_NAME: 125_cworst_T
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst_T/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst_T.nxtgrd
+OPERATING_TEMPERATURE: 125 
+
+CORNER_NAME: 125_rcworst_T
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst_T/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst_T.nxtgrd
+OPERATING_TEMPERATURE: 125
+
+CORNER_NAME: m40_cworst
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst.nxtgrd
+OPERATING_TEMPERATURE: -40
+
+CORNER_NAME: m40_rcworst
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.nxtgrd
+OPERATING_TEMPERATURE: -40 
+
+CORNER_NAME: 125_cworst
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst.nxtgrd
+OPERATING_TEMPERATURE: 125
+
+CORNER_NAME: 125_rcworst
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.nxtgrd
+OPERATING_TEMPERATURE: 125 
+
+CORNER_NAME: m40_rcbest
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest.nxtgrd
+OPERATING_TEMPERATURE: -40 
+
+CORNER_NAME: m40_cbest
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cbest/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cbest.nxtgrd
+OPERATING_TEMPERATURE: -40
+
+CORNER_NAME: 125_rcbest
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest.nxtgrd
+OPERATING_TEMPERATURE: 125
+
+CORNER_NAME: 125_cbest
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cbest/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cbest.nxtgrd
+OPERATING_TEMPERATURE: 125 
+
+CORNER_NAME: 0_cworst
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cworst.nxtgrd
+OPERATING_TEMPERATURE: 0
+
+CORNER_NAME: 0_rcworst
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.nxtgrd
+OPERATING_TEMPERATURE: 0
+
+CORNER_NAME: 0_rcbest
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest.nxtgrd
+OPERATING_TEMPERATURE: 0 
+
+CORNER_NAME: 0_cbest
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_cbest/crn28hpc+_1p08m+ut-alrdl_5x1z1u_cbest.nxtgrd
+OPERATING_TEMPERATURE: 0
+
+CORNER_NAME: tt_85
+TCAD_GRD_FILE: /process/TSMC28/PDK/tn28crbl046b1_1_3p2a/RC_Star-RCXT_crn28hpc+_1p8m_5x1z1u_ut-alrdl_9corners_1.3p2a/RC_Star-RCXT_crn28hpc+_1p08m+ut-alrdl_5x1z1u_typical/crn28hpc+_1p08m+ut-alrdl_5x1z1u_typical.nxtgrd
+OPERATING_TEMPERATURE: 85
+
+

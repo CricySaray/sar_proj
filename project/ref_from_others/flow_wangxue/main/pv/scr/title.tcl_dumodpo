@@ -1,0 +1,18 @@
+#! tvf
+namespace import tvf::VERBATIM tvf::LAYOUT tvf::DRC tvf::*
+
+LAYOUT PATH '/home/user3/project/CX200UR1/CX200UR1_SOC_TOP/pv/dataout/$env(DATAOUT_VERSION)/gds/$env(DESIGN).pr.afe.text.gds.gz'
+LAYOUT PRIMARY $env(DESIGN)
+
+DRC RESULTS DATABASE '../dataout/gds/$env(DESIGN).DODP.GDS' GDSII_DODP
+DRC SUMMARY REPORT '../pv/rpt/$env(DATAOUT_VERSION)_DODP.rep' REPLACE HIER
+DRC MAXIMUM RESULT ALL
+DRC CHECK TEXT ALL
+
+VERBATIM {
+LAYOUT SYSREM GDSII
+
+INCLUDE "/home/user3/project/CX200UR1/CX200UR1_SOC_TOP/pv/scr/Dummy_OD_PO_Calibre_28nm_HP.20a.encrypt"
+}
+
+

@@ -1,0 +1,3 @@
+lec -LPGXL -NOGui -dofile clp_dc.do -64 -verify -logfile lec_dc.log
+
+

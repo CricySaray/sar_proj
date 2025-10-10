@@ -1,0 +1,1 @@
+fm_shell -work_path ./work -f ./scr/fm.tcl  |tee ./log/fm.log

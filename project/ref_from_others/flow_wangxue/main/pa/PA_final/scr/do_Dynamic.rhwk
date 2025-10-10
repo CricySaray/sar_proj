@@ -1,0 +1,12 @@
+setup analysis_mode dynamic
+import gsr ../scr/do_Dynamic.gsr
+setup design
+
+
+perform pwrcalc
+perform extraction -power -ground -l -c
+perform analysis -vectorless
+perform emcheck -mode avg
+explore design
+export db Dynamic_design.db
+

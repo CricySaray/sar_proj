@@ -1,0 +1,12 @@
+setup analysis_mode signalEM
+import gsr ../scr/do_Signal_EM.gsr
+setup design
+
+
+perform pwrcalc
+perform extraction -signal
+perform analysis -signalEM
+perform emcheck
+explore design
+export db SignalEM_design.db
+

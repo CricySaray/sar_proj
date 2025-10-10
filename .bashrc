@@ -6,6 +6,9 @@ alias ct='cd ~/project/test_temp/'
 alias te='perl ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 
+alias fa='perl /home/cricy/project/scr_sar/perl/file_archiver.pl'
+alias vfa='vim /home/cricy/project/scr_sar/perl/file_archiver.pl'
+
 function ww() {
   ca $1
   wn all_$1

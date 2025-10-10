@@ -1,0 +1,47 @@
+set ss_lib " \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140_180a/tcbn28hpcplusbwp7t35p140ssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140_180a/tcbn28hpcplusbwp7t35p140ssg0p81v0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140hvt_180a/tcbn28hpcplusbwp7t40p140hvtssg0p81v0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140cghvt_160a/tcbn28hpcplusbwp7t40p140cghvtssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140lvt_180a/tcbn28hpcplusbwp7t35p140lvtssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140hvt_180a/tcbn28hpcplusbwp7t40p140hvtssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140cg_160a/tcbn28hpcplusbwp7t35p140cgssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140mb_170a/tcbn28hpcplusbwp7t35p140mbssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t35p140mblvt_170a/tcbn28hpcplusbwp7t35p140mblvtssg0p81vm40c_ccs.lib \
+/process/TSMC28/STD/tcbn28hpc/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140mbhvt_170a/tcbn28hpcplusbwp7t40p140mbhvtssg0p81vm40c_ccs.lib \
+/process/TSMC28/IO/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tphn28hpcpgv2od3_210a/tphn28hpcpgv2od3ssg0p81v3vm40c.lib \
+/process/TSMC28/MEM/efuse/0105876_tef28hpcp64x32hd18_phrm_140a_20230626/TSMCHOME/efuse/Front_End/timing_power_noise/NLDM/tef28hpcp64x32hd18_phrm_140a/tef28hpcp64x32hd18_phrm_140a_ssg0p81v1p62vm40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/dp256x32m4_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p128x144m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p128x22m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p128x24m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p128x26m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p128x30m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p128x32m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p256x12m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p256x40m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p32x144m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p32x32m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rf2p32x48m1_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp1024x32m4_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp128x21m4_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp2048x39m8_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp256x32m2_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp256x36m2_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp512x32bm4_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp64x24m2_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp64x4bm4_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rfsp768x64bm4_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rom10240x32m16_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rom32x128m8f_h_ssg0p81vm40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rom32x128m8f_l_ssg0p81vm40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/rom4096x32m16_ssg_cworstt_0p81v_0p81v_m40c.lib_ccs_tn \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/sp2048x32bm4b2_ssg_cworstt_0p81v_0p81v_m40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/sp4096x32bm8b2_ssg_cworstt_0p81v_0p81v_m40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/sp8192x32bm16b2_ssg_cworstt_0p81v_0p81v_m40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/sp8192x52bm16b2_ssg_cworstt_0p81v_0p81v_m40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/ts3n28hpcpa32x126m8fs_130a_ssg0p81vm40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/memory/lib/ts3n28hpcpa32x128m8fs_130a_ssg0p81vm40c.lib \
+/process/TSMC28/projects/CX200UR1/frontend/afe/LIB/2.0/CX200UR1_SOC_AFE_ss.lib \
+"
+

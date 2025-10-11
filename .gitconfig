@@ -9,7 +9,7 @@
 	back = restore --stage
 	chi = check-ignore -v # check ignored file status
 	re = remote
-  ls = !git ls-files | grep -v "8810flow/"
+  ls = !git ls-files | grep -v "8810flow" | grep -v "flow_wangxue"
 	a = add
 	aa = add --all
 	st = status

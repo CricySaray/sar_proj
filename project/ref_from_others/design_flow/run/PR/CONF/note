@@ -1,0 +1,2 @@
+U001: A separate function for loading variable names should implement as many isolation operations as possible, which can expand the room for subsequent functional extensions.
+U002: Add the operation of merging variable definition files into a single file to facilitate querying and searching.

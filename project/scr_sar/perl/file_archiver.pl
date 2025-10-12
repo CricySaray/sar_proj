@@ -26,7 +26,7 @@ my $archive_file = 'song_vim_config.dat';  # Default archive file
 my @source_paths;                  # Multiple source paths
 my $target_dir = 'song_vim_config.dat';# Default target directory
 my $mode = 'a';                          # 'archive' (or 'a') or 'extract' (or 'e')
-my $overwrite = 1;                 # Overwrite existing files/directories?
+my $overwrite = 0;                 # Overwrite existing files/directories?
 my $help = 0;                      # Show help?
 my $VERSION = '2.1.2';
 my $MAGIC_HEADER = "FILE_ARCHIVER_V2";

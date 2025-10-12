@@ -1,3 +1,3 @@
 namespace eval invs {
-  source ./basic_conf.tcl
+  source ./base_conf.tcl
 }

@@ -1,13 +1,1 @@
-proc _validate_var_index {} {
-proc defv {full_var value {allow_create_namespace 0}} {
-proc setv {var_name value} {
-proc getv {var_name} {
-proc _get_all_vars_in_namespace {namespace} {
-proc importv {namespace {allow_overwrite 0} {verbose 0}} {
-proc clear_namespace_vars {namespace} {
-proc unsetv {var_name_or_path} {
-proc clear_all_vars {} {
-proc listv {} {
-proc linkv {{args ""}} {
-proc unlinkv {{vars_to_unlink ""}} {
-proc getvns {args} {
+_validate_var_index  defv  setv  getv  _get_all_vars_in_namespace  importv  clear_namespace_vars  unsetv  clear_all_vars  listv  linkv  unlinkv  getvns  

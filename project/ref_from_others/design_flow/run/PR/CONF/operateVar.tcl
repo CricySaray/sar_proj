@@ -6,6 +6,19 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : what?
+#   - `_validate_var_index`: Validates that `var_index` is an array; initializes it if missing. No return value; throws error if `var_index` exists but isn't an array.
+# 	- `defv <full_var> <value> [allow_create_namespace=0]`: Defines a namespaced variable and updates `var_index`. `allow_create_namespace` (0/1) controls if last namespace level can be created. No return value; throws errors on invalid names/paths/duplicates.
+# 	- `setv <var_name> <value>`: Updates value of an existing managed variable via its short name. No return value; throws errors if variable is missing/invalid.
+# 	- `getv <var_name>`: Retrieves value of a managed variable via its short name. Returns variable's value; throws errors if variable is missing/invalid.
+# 	- `_get_all_vars_in_namespace <namespace>`: Recursively gets all variables in a namespace and its subnamespaces. Returns list of full variable paths.
+# 	- `importv <namespace> [allow_overwrite=0] [verbose=0]`: Imports variables from a namespace (and subnamespaces) into `var_index`. `allow_overwrite` (0/1) enables overwriting existing entries; `verbose` (0/1) controls output. Returns count of imported variables.
+# 	- `clear_namespace_vars <namespace>`: Clears all managed variables in a namespace (and subnamespaces) from both scope and `var_index`. Returns message with count of cleared variables.
+# 	- `unsetv <var_name_or_path>`: Removes a managed variable by short name or full path from scope and `var_index`. Returns success message; throws errors if variable is unmanaged/missing.
+# 	- `clear_all_vars`: Clears all managed variables from scope and resets `var_index`. Returns success message.
+# 	- `listv`: Lists all managed variables with their full paths and values. Returns formatted string with entries like "var -> path = value".
+# 	- `linkv ?-force 0|1? ?var1 ...?`: Links managed variables to current scope for direct `$var` access. `-force` (0/1) controls overwriting existing scope variables; no vars = link all. Returns count of linked variables.
+# 	- `unlinkv ?var1 ...?`: Unlinks variables from current scope (preserves underlying data). No vars = unlink all linked. Returns count of unlinked variables; throws errors on unlinked/unmanaged vars.
+# 	- `getvns <var1> ?var2 ...?`: Returns namespace hierarchy for variables (e.g., "song::an::rui::" for "testvar" in that path). Returns single string for one var, list for multiple; "NA" for missing vars.
 # return    : 
 # ref       : link url
 # --------------------------

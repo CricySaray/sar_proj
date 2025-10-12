@@ -9,6 +9,7 @@ setenv sort_big_perlfile "~/scr_sar/perl/sort_big.pl"
 setenv icc2ToinvsFile_fix_timing "/simulation/.../pteco2invs.pl"
 setenv logv_error_pick_out_file "/simulation/.../file"
 
+alias rp 'realpath'
 alias so 'perl $sort_big_perlfile'
 alias toinvs 'perl $icc2ToinvsFile_fix_timing'
 alias ca 'calibredrv'

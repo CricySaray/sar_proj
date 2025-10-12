@@ -495,3 +495,61 @@ proc unlinkv {{vars_to_unlink ""}} {
   return "unlinkv: Unlinked $unlinked_count variables"
 }
     
+
+# ------------
+
+# Get the namespace hierarchy of variables
+# Usage: getvns <var_name1> ?var_name2 ...?
+proc getvns {args} {
+  _validate_var_index
+  global var_index
+  
+  # Check for minimum arguments
+  if {[llength $args] == 0} {
+    error "getvns requires at least one variable name as argument"
+  }
+  
+  set results [list]
+  
+  foreach var_name $args {
+    # Validate variable name format
+    if {![string is wordchar -strict $var_name] || [string match {[0-9]*} $var_name]} {
+      error "Invalid variable name format: '$var_name'. Must start with letter and contain only alphanumerics"
+    }
+    
+    # Check if variable exists in index
+    if {![info exists var_index($var_name)]} {
+      lappend results "NA"
+      continue
+    }
+    
+    # Extract full path and split into components
+    set full_path $var_index($var_name)
+    set path_parts [split $full_path "::"]
+    
+    # If there's only one part, it means no namespace hierarchy
+    if {[llength $path_parts] == 1} {
+      lappend results ""
+      continue
+    }
+    
+    # Extract all parts except the last (variable name) and rejoin with ::
+    set namespace_parts [lrange $path_parts 0 end-1]
+    set namespace_hierarchy [join $namespace_parts "::"]
+    
+    # Add trailing :: to clearly indicate hierarchy
+    if {$namespace_hierarchy ne ""} {
+      append namespace_hierarchy "::"
+    }
+    
+    lappend results $namespace_hierarchy
+  }
+  
+  # Return single result as string, multiple as list
+  if {[llength $results] == 1} {
+    return [lindex $results 0]
+  } else {
+    return $results
+  }
+}
+    

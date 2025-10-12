@@ -211,7 +211,7 @@ sub print_help {
   print "                        (Existing directories remain, new ones from source are added)\n";
   print "  (default)             Abort if target directory exists (no changes made)\n\n";
   print "Required options:\n";
-  print "  -s, --source DIR       Source directory to scan for structure (required)\n";
+  print "  -s, --source DIR       Source directory to scan for structure, NOTICE: Only one folder name is allowed to be entered. (required)\n";
   print "  -t, --target-parent DIR Parent directory where new structure will be created (required)\n\n";
   print "Other options:\n";
   print "  -d, --debug            Enable debug mode - shows detailed operation information\n";

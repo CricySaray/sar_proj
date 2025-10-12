@@ -1,3 +1,16 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/10/12 18:29:07 Sunday
+# label     : 
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task)
+# descrip   : what?
+# return    : 
+# ref       : link url
+# --------------------------
+
+
 # Global index to map simple variable names to their full namespace paths
 array set var_index {}
 
@@ -496,8 +509,6 @@ proc unlinkv {{vars_to_unlink ""}} {
 }
     
 
-# ------------
-
 # Get the namespace hierarchy of variables
 # Usage: getvns <var_name1> ?var_name2 ...?
 proc getvns {args} {
@@ -526,6 +537,9 @@ proc getvns {args} {
     # Extract full path and split into components
     set full_path $var_index($var_name)
     set path_parts [split $full_path "::"]
+    
+    # Remove empty items from path parts (handles cases with leading/trailing :: or consecutive ::)
+    set path_parts [lsearch -all -inline -not $path_parts ""]
     
     # If there's only one part, it means no namespace hierarchy
     if {[llength $path_parts] == 1} {

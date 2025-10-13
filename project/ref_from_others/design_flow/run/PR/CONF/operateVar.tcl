@@ -28,12 +28,10 @@
 # 	        var, list for multiple; "NA" for missing vars.
 # ref       : link url
 # --------------------------
-
 # Global index to map simple variable names to their full namespace paths
-if {![info exists link_info]} {
+if {![info exists var_index]} {
     array set var_index {}
 }
-
 # Helper procedure to validate var_index is an array
 proc _validate_var_index {} {
   if {[info exists var_index]} {
@@ -45,7 +43,6 @@ proc _validate_var_index {} {
     array set var_index {}
   }
 }
-
 # Define a variable with namespace path, maintaining global index
 # Usage: defv <full_namespace_variable> <value> [allow_create_namespace=0]
 proc defv {full_var value {allow_create_namespace 0}} {
@@ -127,7 +124,6 @@ proc defv {full_var value {allow_create_namespace 0}} {
   # Add to index
   set var_index($var_name) $full_var
 }
-
 # Set value for an existing variable using its simple name
 # Usage: setv <variable_name> <new_value>
 proc setv {var_name value} {
@@ -158,7 +154,6 @@ proc setv {var_name value} {
   # Update the variable value
   uplevel 1 [list set $full_var $value]
 }
-
 # Get value of a variable using its simple name
 # Usage: getv <variable_name>
 proc getv {var_name} {
@@ -189,7 +184,6 @@ proc getv {var_name} {
   # Return the current value
   return [uplevel 1 [list set $full_var]]
 }
-
 # Recursive helper to get all variables in namespace and subnamespaces
 proc _get_all_vars_in_namespace {namespace} {
   set vars [info vars ${namespace}::*]
@@ -201,7 +195,6 @@ proc _get_all_vars_in_namespace {namespace} {
   
   return $vars
 }
-
 # Clear managed index entries (keep actual namespace variables intact)
 # Usage: clearv ?-all? ?-namespace|-n <namespace>? ?-recursive|-r? <var_name_or_path>?
 # -all: Clear all index entries (mutually exclusive with other options)
@@ -258,7 +251,6 @@ proc clearv {{args ""}} {
   if {$arg_count > 1} {
     error "proc clearv: -all, -namespace, and variable target are mutually exclusive"
   }
-
   # --------------------------
   # Case 1: Clear all index entries
   # --------------------------
@@ -277,7 +269,6 @@ proc clearv {{args ""}} {
     
     return "clearv: All index entries cleared (actual namespace variables remain intact)"
   }
-
   # --------------------------
   # Case 2: Clear by namespace
   # --------------------------
@@ -320,7 +311,6 @@ proc clearv {{args ""}} {
     set scope_desc [expr {$recursive ? "and its subnamespaces" : ""}]
     return "clearv: Cleared [llength $to_clear_index] index entries from namespace '$namespace' $scope_desc (actual variables remain intact)"
   }
-
   # --------------------------
   # Case 3: Clear single variable from index
   # --------------------------
@@ -356,11 +346,9 @@ proc clearv {{args ""}} {
     
     return "clearv: Index entry for '$var_name' cleared (actual variable '$full_var' remains intact)"
   }
-
   # No arguments provided
   error "proc clearv: Missing operation. Use -all, -namespace <ns> [-r], or specify a variable name/path"
 }
-
 # Import existing namespace variables into index (supports re-import after clearv)
 # Usage: importv <namespace> [allow_overwrite=0] [verbose=0]
 proc importv {namespace {allow_overwrite 0} {verbose 0}} {
@@ -382,7 +370,6 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
   if {![namespace exists $namespace]} {
     error "proc importv: Namespace '$namespace' does not exist"
   }
-
   # --------------------------
   # Get all actual variables in namespace (recursive)
   # --------------------------
@@ -392,7 +379,6 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
     if {$verbose} {puts "proc importv: $msg"}
     return 0
   }
-
   # --------------------------
   # First pass: Validate & collect variables (atomic import)
   # --------------------------
@@ -400,7 +386,6 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
   array set overwrite_list {};# Track variables needing overwrite
   set import_count 0
   set overwrite_count 0
-
   foreach full_var $full_vars {
     # Extract short name and validate format
     set parts [split $full_var "::"]
@@ -434,7 +419,6 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
     set temp_import($var_name) $full_var
     incr import_count
   }
-
   # --------------------------
   # Second pass: Actual import (only if all validation passed)
   # --------------------------
@@ -443,7 +427,6 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
     # Update index entry without modifying actual variable
     set var_index($var_name) $full_var
   }
-
   # --------------------------
   # Result reporting
   # --------------------------
@@ -452,12 +435,10 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
     append msg " ($overwrite_count variable(s) overwritten in index)"
   }
   if {$verbose} {puts "proc importv: $msg"}
-
   return $import_count
 }
     
     
-
 # List all variables in table format
 # Usage: listv (no parameters required)
 proc listv {} {
@@ -476,8 +457,8 @@ proc listv {} {
   foreach var_name [array names ::var_index] {
     set full_path $::var_index($var_name)
     
-    # Check if underlying variable still exists
-    if {![info exists ::$full_path]} {
+    # Fixed: Use full_path directly as it's already an absolute path
+    if {![info exists $full_path]} {
       puts stderr "Warning: Stale index entry - variable '$full_path' not found"
       continue
     }
@@ -507,7 +488,6 @@ proc listv {} {
   
   return [join $resultTable \n]
 }
-
 # Helper procedure to prepare table data for table_format_with_title
 proc format_table_data {var_data} {
   array set vars $var_data
@@ -535,7 +515,6 @@ proc format_table_data {var_data} {
 }
     
     
-
 # Get the namespace hierarchy of variables
 # Usage: getvns <var_name1> ?var_name2 ...?
 proc getvns {args} {
@@ -594,7 +573,6 @@ proc getvns {args} {
   }
 }
     
-
 source ~/project/scr_sar/tcl/packages/table_format_with_title.package.tcl ; # table_format_with_title
 # Global array to track link information
 # Check and initialize global array only if it doesn't exist
@@ -612,7 +590,6 @@ proc linkv {{args ""}} {
   _validate_var_index
   global var_index link_info
   upvar 1 "" current_scope  ;# Reference current scope
-
   # Default values
   set force 0
   set recursive 1
@@ -675,7 +652,6 @@ proc linkv {{args ""}} {
     }
     incr i
   }
-
   # Show linked variables list if requested
   if {$show_list} {
     # Prepare table data
@@ -715,7 +691,6 @@ proc linkv {{args ""}} {
     # Output formatted table
     return [join $formatted_table \n]
   }
-
   # Determine link method and details
   set link_method "direct"
   set link_details "specific variable"
@@ -727,10 +702,8 @@ proc linkv {{args ""}} {
     set link_method "all"
     set link_details "all managed variables"
   }
-
   # Get current time in specified format (YYYY/MM/DD HH:MM:SS)
   set current_time [clock format [clock seconds] -format "%Y/%m/%d %H:%M:%S"]
-
   # If namespace specified, get variables from that namespace
   if {$namespace ne ""} {
     set ns_vars [_get_all_vars_in_namespace $namespace]
@@ -773,7 +746,6 @@ proc linkv {{args ""}} {
     # No namespace or variables specified - link all
     set vars_to_link [array names var_index]
   }
-
   # Check for duplicates in requested variables
   array set temp_check {}
   foreach var_name $vars_to_link {
@@ -782,7 +754,6 @@ proc linkv {{args ""}} {
     }
     set temp_check($var_name) 1
   }
-
   # Link variables with force handling
   set new_count 0
   set overwrite_count 0
@@ -794,12 +765,10 @@ proc linkv {{args ""}} {
       error "proc linkv: Variable '$var_name' not in management system"
     }
     set full_var $var_index($var_name)
-
     # Check if underlying variable exists
-    if {![info exists ::$full_var]} {
+    if {![info exists $full_var]} {
       error "proc linkv: Underlying variable '$full_var' does not exist"
     }
-
     # Check if already linked
     set is_linked [info exists link_info($var_name)]
     
@@ -831,7 +800,6 @@ proc linkv {{args ""}} {
       incr new_count
     }
   }
-
   # Prepare result message
   set result "linkv: "
   if {$new_count > 0} {
@@ -849,7 +817,6 @@ proc linkv {{args ""}} {
   return $result
 }
     
-
 # Remove variable links: remove short variable links from current scope (doesn't affect underlying variables)
 # Usage: unlinkv ?-n <ns>? ?-r 0|1? ?var1 var2 ...?
 # -n: specify namespace to unlink variables from (optional)
@@ -858,7 +825,6 @@ proc linkv {{args ""}} {
 proc unlinkv {{args ""}} {
   _validate_var_index
   global var_index link_info
-
   # Default values
   set recursive 1
   set namespace ""
@@ -907,7 +873,6 @@ proc unlinkv {{args ""}} {
     }
     incr i
   }
-
   # Get all currently linked variables if none specified
   if {[llength $vars_to_unlink] == 0 && $namespace eq ""} {
     foreach var_name [array names var_index] {
@@ -916,7 +881,6 @@ proc unlinkv {{args ""}} {
       }
     }
   }
-
   # If namespace specified, filter variables from that namespace
   if {$namespace ne ""} {
     set ns_vars [_get_all_vars_in_namespace $namespace]
@@ -958,7 +922,6 @@ proc unlinkv {{args ""}} {
       error "proc unlinkv: No linked variables found in namespace '$namespace' (recursive=$recursive)"
     }
   }
-
   # Validate variables exist in caller's scope
   array set non_existent {}
   foreach var_name $vars_to_unlink {
@@ -969,7 +932,6 @@ proc unlinkv {{args ""}} {
   if {[array size non_existent] > 0} {
     error "proc unlinkv: Variables not linked in current scope: [join [array names non_existent] ", "]"
   }
-
   # Validate variables are in our management system
   array set not_managed {}
   foreach var_name $vars_to_unlink {
@@ -980,7 +942,6 @@ proc unlinkv {{args ""}} {
   if {[array size not_managed] > 0} {
     error "proc unlinkv: Variables not in management system: [join [array names not_managed] ", "]"
   }
-
   # Remove links from caller's scope
   set unlinked_count 0
   foreach var_name $vars_to_unlink {
@@ -991,7 +952,6 @@ proc unlinkv {{args ""}} {
     }
     incr unlinked_count
   }
-
   return "unlinkv: Unlinked $unlinked_count variables"
 }
     

@@ -3,9 +3,14 @@
 # author    : sar song
 # date      : 2025/10/11 16:49:11 Saturday
 # label     : perl_task
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc
+#             |report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : Copies files from multiple source directories to a single target directory, adding a path component as prefix or suffix to filenames to prevent overwriting.
+# descrip   : Copies files from multiple source directories to a single target directory, adding a path component as prefix or suffix to 
+#             filenames to prevent overwriting.
+# update    : 2025/10/13 14:39:05 Monday
+#             (U001) When adding a suffix, automatically recognize the file's extension so that adding the suffix does not affect the recognition 
+#                   of the file's extension.
 # return    : /
 # ref       : link url
 # --------------------------
@@ -25,6 +30,22 @@ my $path_level = 1;       # Level for path component (positive: left to right, n
 my $file_pattern = '.';   # Default: match all files
 my $help = 0;
 my @source_dirs;
+my @copy_queue;           # Queue to store all files to copy (source_path, target_path)
+
+# Define compression extensions (sorted by length descending to match longest first)
+my @COMPRESSION_EXTS = qw(
+  tar.gz tar.bz2 tar.xz tar.Z tar.bz tar.lz4 tar.lzma
+  gz bz2 xz Z bz lz4 lzma zip rar 7z
+);
+
+# Define valid file extensions (mainstream languages/tools, sorted by length descending)
+my @VALID_EXTS = qw(
+  pl tcl rpt list txt py html csv java c cpp cxx cc h hpp hxx
+  js jsx ts tsx php php7 rb ruby go rust swift kotlin scala
+  json xml yaml yml ini conf sh bash ksh zsh sql md markdown
+  pdf doc docx xls xlsx ppt pptx odt ods odp
+  exe dll so a jar war ear class
+);
 
 # Parse command line options with short formats
 GetOptions(
@@ -116,7 +137,10 @@ if (-d $target_dir) {
   }
 }
 
-# Process each source directory
+# --------------------------
+# Step 1: Scan all source directories and collect files to copy
+# --------------------------
+debug_print("\n=== Starting directory scan ===");
 foreach my $source_dir (@source_dirs) {
   # Validate source directory exists
   unless (-e $source_dir) {
@@ -132,32 +156,23 @@ foreach my $source_dir (@source_dirs) {
     next;
   }
   
-  # Check if directory is readable
-  unless (-r $source_dir) {
-    warn "Warning: Source directory '$source_dir' is not readable - skipping.\n" .
-         "Possible reasons: Insufficient permissions.\n" .
+  # Check if directory is readable and executable
+  unless (-r $source_dir && -x $source_dir) {
+    warn "Warning: Source directory '$source_dir' is not accessible (read/exec permissions required) - skipping.\n" .
          "Solution: Check permissions with 'ls -ld $source_dir' and adjust if necessary.\n";
     next;
   }
   
-  # Check if directory is executable (needed to list contents)
-  unless (-x $source_dir) {
-    warn "Warning: Source directory '$source_dir' is not executable - skipping.\n" .
-         "This usually means you don't have permission to access its contents.\n" .
-         "Solution: Check permissions with 'ls -ld $source_dir' and adjust if necessary.\n";
-    next;
-  }
+  debug_print("\nScanning source directory: $source_dir");
   
-  debug_print("\nProcessing source directory: $source_dir");
-  
-  # Get all files in source directory matching pattern
+  # Open directory and get matching files
   opendir(my $dh, $source_dir) or do {
     warn "Warning: Failed to open directory '$source_dir': $! - skipping.\n" .
          "Possible reasons: Permissions changed after initial check, directory was removed.\n";
     next;
   };
   
-  # Filter files: not hidden, is file, matches pattern
+  # Filter files: not hidden, is regular file, matches pattern
   my @files = grep { 
     !/^\./ && 
     -f "$source_dir/$_" && 
@@ -165,32 +180,15 @@ foreach my $source_dir (@source_dirs) {
   } readdir($dh);
   closedir($dh);
   
-  debug_print("Found " . scalar(@files) . " matching files in $source_dir");
+  my $file_count = scalar(@files);
+  debug_print("Found $file_count matching files in $source_dir");
   
-  if (!@files) {
-    debug_print("No files found matching pattern '$file_pattern' in $source_dir");
-    next;
-  }
+  next if $file_count == 0;
   
-  # Process each file
+  # Process each file (collect to queue, no copy yet)
   foreach my $file (@files) {
     my $source_path = "$source_dir/$file";
-    debug_print("\nProcessing file: $source_path");
-    
-    # Check if source file is readable
-    unless (-r $source_path) {
-      warn "Warning: Source file '$source_path' is not readable - skipping.\n" .
-           "Possible reasons: Insufficient permissions.\n" .
-           "Solution: Check file permissions with 'ls -l $source_path' and adjust if necessary.\n";
-      next;
-    }
-    
-    # Check if it's a regular file (not a special file)
-    unless (-f $source_path) {
-      warn "Warning: '$source_path' is not a regular file - skipping.\n" .
-           "The script only copies regular files, not special files or symlinks.\n";
-      next;
-    }
+    debug_print("\nProcessing file (queueing): $source_path");
     
     # Get path component for naming
     my $path_component = get_path_component($source_dir, $path_level);
@@ -202,43 +200,94 @@ foreach my $source_dir (@source_dirs) {
     }
     debug_print("Using path component for naming: $path_component");
     
-    # Construct target filename with underscore separator
+    # Parse filename into parts (base, valid_ext, compression_ext)
+    my ($base_name, $valid_ext, $compression_ext) = parse_filename($file);
+    debug_print(sprintf(
+      "Parsed filename: base='%s', valid_ext='%s', compression_ext='%s'",
+      $base_name, $valid_ext // '', $compression_ext // ''
+    ));
+    
+    # Build target filename
     my $target_file;
     if ($position eq 'prefix') {
-      $target_file = "$path_component\_$file";
+      # Prefix: path_component + _ + base + valid_ext + compression_ext
+      $target_file = $path_component . '_' . $base_name;
+      $target_file .= $valid_ext if defined $valid_ext;
+      $target_file .= $compression_ext if defined $compression_ext;
     } else {
-      $target_file = "$file\_$path_component";
+      # Suffix: base + _ + path_component + valid_ext + compression_ext
+      $target_file = $base_name . '_' . $path_component;
+      $target_file .= $valid_ext if defined $valid_ext;
+      $target_file .= $compression_ext if defined $compression_ext;
     }
     
     my $target_path = "$target_dir/$target_file";
-    debug_print("Target path: $target_path");
+    debug_print("Queued for copy: $source_path -> $target_path");
     
-    # Check for existing target file
+    # Check if target file already exists (prevent overwriting)
     if (-e $target_path) {
       warn "Warning: Target file '$target_path' already exists - skipping to avoid overwriting.\n" .
            "Solution: Remove the existing file or use a different level/position to generate unique filenames.\n";
       next;
     }
     
-    # Check if we can write to target directory (final check)
-    unless (-w $target_dir) {
-      warn "Warning: Target directory '$target_dir' is no longer writable - skipping remaining files in '$source_dir'.\n" .
-           "Possible reasons: Permissions changed during script execution.\n" .
-           "Solution: Check directory permissions and re-run the script.\n";
-      last;  # Skip remaining files in this directory
-    }
-    
-    # Copy the file
-    my $success = copy($source_path, $target_path);
-    if ($success) {
-      print "Copied: $source_path -> $target_path\n";
-    } else {
-      warn "Warning: Failed to copy '$source_path' to '$target_path': $!\n" .
-           "Possible reasons: File is locked, insufficient disk space, or permission issues.\n" .
-           "Solution: Check if the file is in use, verify disk space, and check permissions.\n";
-    }
+    # Add to copy queue
+    push @copy_queue, {
+      source => $source_path,
+      target => $target_path
+    };
   }
 }
+
+# --------------------------
+# Step 2: Execute copy for all queued files
+# --------------------------
+my $queue_size = scalar(@copy_queue);
+debug_print("\n=== Starting copy process ===");
+debug_print("Total files to copy: $queue_size");
+
+if ($queue_size == 0) {
+  print "No files to copy. Exiting.\n";
+  exit 0;
+}
+
+# Check target directory writability one last time before copy
+unless (-w $target_dir) {
+  die "Error: Target directory '$target_dir' is not writable - cannot proceed with copy.\n" .
+      "Possible reasons: Permissions changed during directory scan.\n" .
+      "Solution: Check directory permissions and re-run the script.\n";
+}
+
+# Process copy queue
+foreach my $item (@copy_queue) {
+  my $source = $item->{source};
+  my $target = $item->{target};
+  
+  debug_print("\nCopying file: $source -> $target");
+  
+  # Final check for source file readability
+  unless (-r $source) {
+    warn "Warning: Source file '$source' is no longer readable - skipping.\n" .
+         "Possible reasons: File was deleted or permissions changed after scan.\n";
+    next;
+  }
+  
+  # Copy the file
+  my $success = copy($source, $target);
+  if ($success) {
+    print "Copied: $source -> $target\n";
+  } else {
+    warn "Warning: Failed to copy '$source' to '$target': $!\n" .
+         "Possible reasons: File is locked, insufficient disk space, or permission issues.\n" .
+         "Solution: Check if the file is in use, verify disk space, and check permissions.\n";
+  }
+}
+
+debug_print("\n=== Copy process completed ===");
+
+# --------------------------
+# Subroutines
+# --------------------------
 
 # Extract specified level component from path
 sub get_path_component {
@@ -286,6 +335,42 @@ sub get_path_component {
   return $components[$index];
 }
 
+# Parse filename into base name, valid extension, and compression extension
+sub parse_filename {
+  my ($filename) = @_;
+  my $original = $filename;
+  my ($compression_ext, $valid_ext, $base_name) = (undef, undef, $filename);
+  
+  # Step 1: Remove compression extensions (longest match first)
+  foreach my $ext (@COMPRESSION_EXTS) {
+    if ($filename =~ /\.(\Q$ext\E)$/i) {
+      $compression_ext = '.' . lc($ext);  # Preserve lowercase for consistency
+      $filename =~ s/\.\Q$ext\E$//i;
+      debug_print("Extracted compression extension: $compression_ext (remaining: $filename)");
+      last;  # Stop after first match (longest extension)
+    }
+  }
+  
+  # Step 2: Check for valid extension (longest match first)
+  foreach my $ext (@VALID_EXTS) {
+    if ($filename =~ /\.(\Q$ext\E)$/i) {
+      $valid_ext = '.' . lc($ext);  # Preserve lowercase for consistency
+      $base_name = $filename;
+      $base_name =~ s/\.\Q$ext\E$//i;
+      debug_print("Extracted valid extension: $valid_ext (base name: $base_name)");
+      last;  # Stop after first match (longest extension)
+    }
+  }
+  
+  # If no valid extension found, base name remains the processed filename
+  if (!defined $valid_ext) {
+    $base_name = $filename;
+    debug_print("No valid extension found for '$original' (base name: $base_name)");
+  }
+  
+  return ($base_name, $valid_ext, $compression_ext);
+}
+
 # Debug printing function
 sub debug_print {
   my ($message) = @_;
@@ -299,63 +384,61 @@ sub print_help {
 Usage: $script_name [OPTIONS] SOURCE_DIRS...
 
 Description:
-  Copies files from multiple source directories to a single target directory,
-  adding a path component as prefix or suffix to filenames to prevent overwriting.
+  Scans multiple source directories first to collect all matching files, then copies them
+  to a single target directory. Adds a path component as prefix/suffix to filenames (before
+  valid extension, ignoring compression extensions) to prevent overwriting.
 
 Options:
-  --target|-t DIR       Specifies the target directory where files will be copied.
-                        This option is required.
+  --target|-t DIR       Required. Target directory where files will be copied.
+                        Creates the directory if it doesn't exist.
   
-  --position|-p POS     Specifies whether to use the path component as prefix or suffix.
-                        Possible values:
-                          'prefix' or 'p' - Use path component as prefix
-                          'suffix' or 's' - Use path component as suffix (default)
+  --position|-p POS     Optional. Whether to use path component as prefix or suffix.
+                        Values: 'prefix'/'p' (prefix), 'suffix'/'s' (suffix, default).
   
-  --level|-l NUM        Specifies which level of the source directory path to use
-                        for the prefix/suffix:
-                          Positive numbers: Count from left to right (1-based)
-                          Negative numbers: Count from right to left (1-based)
-                        Cannot be zero. Default value: 1
+  --level|-l NUM        Optional. Which level of source directory path to use for naming:
+                        - Positive NUM: Count from left (1-based, e.g., 2 = second component)
+                        - Negative NUM: Count from right (1-based, e.g., -1 = last component)
+                        Cannot be zero. Default: 1.
   
-  --pattern|-r REGEX    Regular expression to match files that should be copied.
-                        Default: '.' (matches all files)
+  --pattern|-r REGEX    Optional. Regular expression to filter files for copying.
+                        Default: '.' (matches all non-hidden files).
   
-  --debug|-d            Enable debug mode, showing detailed processing information.
+  --debug|-d            Optional. Enable debug mode (shows detailed scanning/copying info).
   
-  --help|-h             Display this help message and exit.
+  --help|-h             Optional. Display this help message and exit.
 
-Path Component Examples:
-  For absolute path: /home/user/documents/reports/
-    Level 1  → "home" (first component from left)
-    Level 3  → "documents" (third component from left)
-    Level -1 → "reports" (last component)
-    Level -2 → "documents" (second from last)
+Key Features:
+  1. Filename Handling Rules:
+     - Ignores compression extensions (e.g., .gz, .tar.gz) when adding suffix/prefix
+     - Adds suffix/prefix before valid extension (e.g., .tcl, .py)
+     - Preserves original compression/valid extensions
   
-  For relative path: ./projects/2023/july/
-    Level 1  → "projects" (first component from left)
-    Level 3  → "july" (third component from left)
-    Level -1 → "july" (last component)
-    Level -3 → "projects" (third from last)
+  2. Supported Extensions:
+     - Compression: tar.gz, tar.bz2, tar.xz, gz, bz2, xz, zip, rar, 7z, etc.
+     - Valid (programming/docs): pl, tcl, rpt, list, txt, py, html, csv, java, c, cpp,
+       js, ts, php, rb, go, rust, swift, kotlin, sql, md, pdf, docx, xlsx, etc.
 
 Usage Examples:
-  1. Basic usage - copy all files from two directories to 'output' directory,
-     using the last component of each source directory as suffix:
-     $script_name -t output /data/source1 /data/source2
-  
-  2. Copy only .txt files, using the first component as prefix:
-     $script_name -t output -p p -r '\\.txt$' /data/2023/reports /data/2024/reports
-  
-  3. Copy .jpg files, using the second component from left as suffix:
-     $script_name -t images -l 2 -r '\\.jpg$' ./photos/summer ./photos/winter
-  
-  4. Debug mode - see detailed processing information:
-     $script_name -d -t backup -p suffix -l -2 /docs/important /docs/personal
+  1. Basic copy (all files, last path component as suffix):
+     $script_name -t ./output /data/logs/2023 /data/logs/2024
+     # Copies /data/logs/2023/file.txt → ./output/file_2023.txt
+     # Copies /data/logs/2024/report.pdf → ./output/report_2024.pdf
 
-  5. combined with 'find'
-     find /path/to/source/dirs/ -type d -name 'dir_regexp_need_matched' -exec perl $script_name -t ./ -l -1 -p p -r 'regexp_need_match' {} +
+  2. Copy .tcl files with prefix (2nd path component from left):
+     $script_name -t ./tcl_scripts -p p -l 2 -r '\\.tcl$' /home/user/projects/projA /home/user/projects/projB
+     # Copies /home/user/projects/projA/code.tcl → ./tcl_scripts/projects_code.tcl
+     # Copies /home/user/projects/projB/utils.tcl → ./tcl_scripts/projects_utils.tcl
+
+  3. Copy compressed .txt.gz files (ignore .gz, add suffix before .txt):
+     $script_name -t ./backup -l -2 -r '\\.txt\\.gz$' /archive/old/2023
+     # Path: /archive/old/2023/data.txt.gz → level -2 = 'old'
+     # Copies to ./backup/data_old.txt.gz
+
+  4. Debug mode (see scanning/copying details):
+     $script_name -d -t ./test -p s -l -1 ./docs ./src
+     # Shows debug info for each file scanned and copied
 
 HELP
 }
 
 exit 0;
-

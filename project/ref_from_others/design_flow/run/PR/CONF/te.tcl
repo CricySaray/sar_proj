@@ -1,206 +1,3 @@
-#!/bin/tclsh
-# --------------------------
-# author    : sar song
-# date      : 2025/10/12 18:29:07 Sunday
-# label     : 
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
-#   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : what?
-#   - `_validate_var_index`: Validates that `var_index` is an array; initializes it if missing. No return value; throws error if `var_index` exists but isn't an array.
-# 	- `defv <full_var> <value> [allow_create_namespace=0]`: Defines a namespaced variable and updates `var_index`. `allow_create_namespace` (0/1) controls if last 
-# 	        namespace level can be created. No return value; throws errors on invalid names/paths/duplicates.
-# 	- `setv <var_name> <value>`: Updates value of an existing managed variable via its short name. No return value; throws errors if variable is missing/invalid.
-# 	- `getv <var_name>`: Retrieves value of a managed variable via its short name. Returns variable's value; throws errors if variable is missing/invalid.
-# 	- `_get_all_vars_in_namespace <namespace>`: Recursively gets all variables in a namespace and its subnamespaces. Returns list of full variable paths.
-# 	- `importv <namespace> [allow_overwrite=0] [verbose=0]`: Imports variables from a namespace (and subnamespaces) into `var_index`. `allow_overwrite` (0/1) 
-# 	        enables overwriting existing entries; `verbose` (0/1) controls output. Returns count of imported variables.
-# 	- `clear_namespace_vars <namespace>`: Clears all managed variables in a namespace (and subnamespaces) from both scope and `var_index`. Returns message 
-# 	        with count of cleared variables.
-# 	- `unsetv <var_name_or_path>`: Removes a managed variable by short name or full path from scope and `var_index`. Returns success message; throws errors 
-# 	        if variable is unmanaged/missing.
-# 	- `clear_all_vars`: Clears all managed variables from scope and resets `var_index`. Returns success message.
-# 	- `listv`: Lists all managed variables with their full paths and values. Returns formatted string with entries like "var -> path = value".
-# 	- `linkv ?-force 0|1? ?var1 ...?`: Links managed variables to current scope for direct `$var` access. `-force` (0/1) controls overwriting existing scope 
-# 	        variables; no vars = link all. Returns count of linked variables.
-# 	- `unlinkv ?var1 ...?`: Unlinks variables from current scope (preserves underlying data). No vars = unlink all linked. Returns count of unlinked variables; 
-# 	        throws errors on unlinked/unmanaged vars.
-# 	- `getvns <var1> ?var2 ...?`: Returns namespace hierarchy for variables (e.g., "song::an::rui::" for "testvar" in that path). Returns single string for one 
-# 	        var, list for multiple; "NA" for missing vars.
-# ref       : link url
-# --------------------------
-
-# Global index to map simple variable names to their full namespace paths
-if {![info exists link_info]} {
-    array set var_index {}
-}
-
-# Helper procedure to validate var_index is an array
-proc _validate_var_index {} {
-  if {[info exists var_index]} {
-    if {![array exists var_index]} {
-      error "proc _validate_var_index: var_index exists but is not an array. Cannot proceed."
-    }
-  } else {
-    # Initialize if not exists
-    array set var_index {}
-  }
-}
-
-# Define a variable with namespace path, maintaining global index
-# Usage: defv <full_namespace_variable> <value> [allow_create_namespace=0]
-proc defv {full_var value {allow_create_namespace 0}} {
-  _validate_var_index
-  global var_index
-  
-  # Check number of arguments
-  if {[llength [info level 0]] < 3 || [llength [info level 0]] > 4} {
-    error "proc defv: defv requires 2 or 3 arguments: full_variable_path, value, [allow_create_namespace=0]"
-  }
-  
-  # Validate allow_create_namespace is boolean
-  if {$allow_create_namespace ne "0" && $allow_create_namespace ne "1"} {
-    error "proc defv: allow_create_namespace must be 0 or 1"
-  }
-  
-  # Check if full_var is a valid string (only alphanumerics and :: allowed)
-  if {![string is wordchar -strict [string map {:: ""} $full_var]]} {
-    error "proc defv: Invalid variable path format: $full_var. Only alphanumerics and :: allowed"
-  }
-  
-  # Split into namespace parts and variable name
-  set parts [split $full_var "::"]
-  set var_name [lindex $parts end]
-  set namespace_parts [lrange $parts 0 end-1]
-  set namespace_path [join $namespace_parts "::"]
-  
-  # Check if variable name is valid
-  if {![string is wordchar -strict $var_name] || [string match {[0-9]*} $var_name]} {
-    error "proc defv: Invalid variable name: $var_name. Must start with letter and contain only alphanumerics"
-  }
-  
-  # Check namespace hierarchy validity
-  if {[llength $namespace_parts] > 0} {
-    set current_ns ""
-    set valid 1
-    set last_ns_idx [expr {[llength $namespace_parts] - 1}]  ;# Index of last namespace part
-    
-    # Check each namespace level
-    for {set i 0} {$i < [llength $namespace_parts]} {incr i} {
-      set part [lindex $namespace_parts $i]
-      set current_ns [expr {$current_ns eq "" ? $part : "${current_ns}::${part}"}]
-      
-      # Check if current namespace exists
-      if {![namespace exists $current_ns]} {
-        # Allow creation only for last namespace part when enabled
-        if {$i == $last_ns_idx && $allow_create_namespace} {
-          # Will create this namespace later
-        } else {
-          set valid 0
-          break
-        }
-      }
-    }
-    
-    if {!$valid} {
-      error "proc defv: Invalid namespace hierarchy: $namespace_path. Only last namespace part can be created"
-    }
-    
-    # Create last namespace part if needed and allowed
-    if {$allow_create_namespace && ![namespace exists $namespace_path]} {
-      namespace eval $namespace_path {}
-    }
-  }
-  
-  # Check for duplicate variable names in index
-  if {[info exists var_index($var_name)]} {
-    error "proc defv: Variable name conflict: '$var_name' already exists at '$var_index($var_name)'"
-  }
-  
-  # Check if the variable already exists at this path
-  if {[info exists $full_var]} {
-    error "proc defv: Variable path already exists: $full_var"
-  }
-  
-  # Create the variable with its value
-  uplevel 1 [list set $full_var $value]
-  
-  # Add to index
-  set var_index($var_name) $full_var
-}
-
-# Set value for an existing variable using its simple name
-# Usage: setv <variable_name> <new_value>
-proc setv {var_name value} {
-  _validate_var_index
-  global var_index
-  
-  # Check number of arguments
-  if {[llength [info level 0]] != 3} {
-    error "proc setv: setv requires exactly 2 arguments: variable_name and new_value"
-  }
-  
-  # Check if variable name is valid
-  if {![string is wordchar -strict $var_name] || [string match {[0-9]*} $var_name]} {
-    error "proc setv: Invalid variable name: $var_name. Must start with letter and contain only alphanumerics"
-  }
-  
-  # Check if variable exists in index
-  if {![info exists var_index($var_name)]} {
-    error "proc setv: Variable not found: $var_name. Use defv to define it first"
-  }
-  
-  # Get full path and verify it still exists
-  set full_var $var_index($var_name)
-  if {![info exists $full_var]} {
-    error "proc setv: Variable path missing: $full_var. Index may be corrupted"
-  }
-  
-  # Update the variable value
-  uplevel 1 [list set $full_var $value]
-}
-
-# Get value of a variable using its simple name
-# Usage: getv <variable_name>
-proc getv {var_name} {
-  _validate_var_index
-  global var_index
-  
-  # Check number of arguments
-  if {[llength [info level 0]] != 2} {
-    error "proc getv: getv requires exactly 1 argument: variable_name"
-  }
-  
-  # Check if variable name is valid
-  if {![string is wordchar -strict $var_name] || [string match {[0-9]*} $var_name]} {
-    error "proc getv: Invalid variable name: $var_name. Must start with letter and contain only alphanumerics"
-  }
-  
-  # Check if variable exists in index
-  if {![info exists var_index($var_name)]} {
-    error "proc getv: Variable not found: $var_name. Use defv to define it first"
-  }
-  
-  # Get full path and verify it still exists
-  set full_var $var_index($var_name)
-  if {![info exists $full_var]} {
-    error "proc getv: Variable path missing: $full_var. Index may be corrupted"
-  }
-  
-  # Return the current value
-  return [uplevel 1 [list set $full_var]]
-}
-
-# Recursive helper to get all variables in namespace and subnamespaces
-proc _get_all_vars_in_namespace {namespace} {
-  set vars [info vars ${namespace}::*]
-  
-  # Get subnamespaces
-  foreach subns [namespace children $namespace] {
-    lappend vars {*}[_get_all_vars_in_namespace $subns]
-  }
-  
-  return $vars
-}
 
 # Clear managed index entries (keep actual namespace variables intact)
 # Usage: clearv ?-all? ?-namespace|-n <namespace>? ?-recursive|-r? <var_name_or_path>?
@@ -456,158 +253,18 @@ proc importv {namespace {allow_overwrite 0} {verbose 0}} {
   return $import_count
 }
     
-    
-
-# List all variables in table format
-# Usage: listv (no parameters required)
-proc listv {} {
-  # Validate variable index system exists
-  if {![info exists ::var_index] || ![array exists ::var_index]} {
-    error "proc listv: Variable index system not initialized"
-  }
-  
-  # Check if there are any variables to display
-  if {[array size ::var_index] == 0} {
-    return "No variables in index system"
-  }
-  
-  # Collect and validate all variables
-  array set valid_vars {}
-  foreach var_name [array names ::var_index] {
-    set full_path $::var_index($var_name)
-    
-    # Check if underlying variable still exists
-    if {![info exists ::$full_path]} {
-      puts stderr "Warning: Stale index entry - variable '$full_path' not found"
-      continue
-    }
-    
-    # Safely retrieve variable value
-    if {[catch {set value [getv $var_name]} err]} {
-      puts stderr "Warning: Failed to retrieve value for '$var_name': $err"
-      set value "<retrieval error>"
-    }
-    
-    # Truncate long values for better display
-    if {[string length $value] > 30} {
-      set value "[string range $value 0 27]..."  ;# Add ellipsis for long values
-    }
-    
-    set valid_vars($var_name) [list $full_path $value]
-  }
-  
-  # Handle case where all variables were invalid
-  if {[array size valid_vars] == 0} {
-    return "No valid variables found in index system"
-  }
-  
-  # Prepare and format table data
-  set table_data [format_table_data [array get valid_vars]]
-  set resultTable [table_format_with_title $table_data 0 "left" "" 0]
-  
-  return [join $resultTable \n]
-}
-
-# Helper procedure to prepare table data for table_format_with_title
-proc format_table_data {var_data} {
-  array set vars $var_data
-  
-  # Create table structure with header
-  set table_data [list]
-  lappend table_data [list "Variable Name" "Namespace" "Value"]
-  
-  # Add formatted data rows
-  foreach var_name [lsort [array names vars]] {
-    lassign $vars($var_name) full_path value
-    
-    # Extract namespace from full path
-    set ns_end [string last "::" $full_path]
-    if {$ns_end == -1} {
-      set namespace "::"  ;# Root namespace indicator
-    } else {
-      set namespace [string range $full_path 0 $ns_end]
-    }
-    
-    lappend table_data [list $var_name $namespace $value]
-  }
-  
-  return $table_data
-}
-    
-    
-
-# Get the namespace hierarchy of variables
-# Usage: getvns <var_name1> ?var_name2 ...?
-proc getvns {args} {
-  _validate_var_index
-  global var_index
-  
-  # Check for minimum arguments
-  if {[llength $args] == 0} {
-    error "proc getvns: getvns requires at least one variable name as argument"
-  }
-  
-  set results [list]
-  
-  foreach var_name $args {
-    # Validate variable name format
-    if {![string is wordchar -strict $var_name] || [string match {[0-9]*} $var_name]} {
-      error "proc getvns: Invalid variable name format: '$var_name'. Must start with letter and contain only alphanumerics"
-    }
-    
-    # Check if variable exists in index
-    if {![info exists var_index($var_name)]} {
-      lappend results "NA"
-      continue
-    }
-    
-    # Extract full path and split into components
-    set full_path $var_index($var_name)
-    set path_parts [split $full_path "::"]
-    
-    # Remove empty items from path parts (handles cases with leading/trailing :: or consecutive ::)
-    set path_parts [lsearch -all -inline -not $path_parts ""]
-    
-    # If there's only one part, it means no namespace hierarchy
-    if {[llength $path_parts] == 1} {
-      lappend results ""
-      continue
-    }
-    
-    # Extract all parts except the last (variable name) and rejoin with ::
-    set namespace_parts [lrange $path_parts 0 end-1]
-    set namespace_hierarchy [join $namespace_parts "::"]
-    
-    # Add trailing :: to clearly indicate hierarchy
-    if {$namespace_hierarchy ne ""} {
-      append namespace_hierarchy "::"
-    }
-    
-    lappend results $namespace_hierarchy
-  }
-  
-  # Return single result as string, multiple as list
-  if {[llength $results] == 1} {
-    return [lindex $results 0]
-  } else {
-    return $results
-  }
-}
-    
-
-source ~/project/scr_sar/tcl/packages/table_format_with_title.package.tcl ; # table_format_with_title
-# Global array to track link information
 # Check and initialize global array only if it doesn't exist
 if {![info exists link_info]} {
     array set link_info {}
 }
-# Link variables between current scope and namespaces with bidirectional synchronization
-# Usage: linkv ?-n <namespace>? ?-r 0|1? ?-force|-f 0|1? ?-list|-l? ?var1 var2 ...?
-# -n: Specify source namespace (optional)
+
+# Create variable links: map short variable names to full namespace variables for direct $var access
+# Usage: linkv ?-n <ns>? ?-r 0|1? ?-force|-f 0|1? ?-list|-l? ?var1 var2 ...?
+# -n: specify namespace to link variables from (optional)
 # -r: 1=include subnamespaces, 0=only specified namespace (default=1)
 # -force|-f: 1=overwrite existing links, 0=skip existing links (default=0)
-# -list|-l: Show all linked variables with details (no linking performed)
-# Without variables/namespace: Link all managed variables
+# -list|-l: show currently linked variables with details (no linking performed)
+# If no variables or namespace specified, links all managed variables
 proc linkv {{args ""}} {
   _validate_var_index
   global var_index link_info
@@ -803,16 +460,12 @@ proc linkv {{args ""}} {
     # Check if already linked
     set is_linked [info exists link_info($var_name)]
     
-    if {$is_linked} {
+    if ($is_linked) {
       if {$force} {
-        # Remove existing link
-        uplevel 1 [list unset $var_name]
-        
-        # Create new alias link for bidirectional synchronization
-        if {[catch {uplevel 1 [list upvar #0 $full_var $var_name]} err]} {
-          error "proc linkv: Failed to create link for '$var_name': $err"
-        }
-        
+        # Overwrite existing link
+        upvar 1 $var_name link_var
+        upvar #0 $full_var real_var
+        set link_var $real_var
         # Update link info with current time
         set link_info($var_name) [dict create method $link_method details $link_details time $current_time]
         incr overwrite_count
@@ -821,11 +474,10 @@ proc linkv {{args ""}} {
         incr skip_count
       }
     } else {
-      # Create new alias link for bidirectional synchronization
-      if {[catch {uplevel 1 [list upvar #0 $full_var $var_name]} err]} {
-        error "proc linkv: Failed to create link for '$var_name': $err"
-      }
-      
+      # Create new link
+      upvar 1 $var_name link_var
+      upvar #0 $full_var real_var
+      set link_var $real_var
       # Record link info with current time
       set link_info($var_name) [dict create method $link_method details $link_details time $current_time]
       incr new_count
@@ -848,7 +500,6 @@ proc linkv {{args ""}} {
   
   return $result
 }
-    
 
 # Remove variable links: remove short variable links from current scope (doesn't affect underlying variables)
 # Usage: unlinkv ?-n <ns>? ?-r 0|1? ?var1 var2 ...?
@@ -994,4 +645,3 @@ proc unlinkv {{args ""}} {
 
   return "unlinkv: Unlinked $unlinked_count variables"
 }
-    

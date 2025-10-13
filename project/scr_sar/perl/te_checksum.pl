@@ -1,16 +1,4 @@
 #!/usr/bin/perl
-# --------------------------
-# author    : sar song
-# date      : 2025/10/12 21:42:49 Sunday
-# label     : flow_perl
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
-#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : This Perl script calculates checksums (MD5 or cksum) for files and directories from multiple sources, with options to 
-#             include or exclude hidden items. It outputs results in tree or full path format, including statistics on total files 
-#             and subdirectories processed.
-# return    : output file
-# ref       : link url
-# --------------------------
 use strict;
 use warnings;
 use Getopt::Long;

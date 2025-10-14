@@ -5,6 +5,8 @@
 # label     : misc_proc
 # descrip   : Merge sourced files with improved comment stripping; supports auto lang detection
 # update    : 2025/08/08 修复TCL行内注释处理导致的代码重复问题
+# update    : 2025/10/14 修复符号链接识别逻辑，使用file type替代不存在的file islink命令
+# update    : 2025/10/15 修复输出文件路径，确保在执行目录生成输出文件
 # --------------------------
 namespace eval CatAll {
   variable state
@@ -13,47 +15,45 @@ namespace eval CatAll {
     recursion_depth {}  ;# Record recursion depth
     original_dir ""     ;# Original working directory
     target_dir ""       ;# Target file directory
+    execution_dir ""    ;# Directory where command was executed
   }
-
-  proc init_state {original working} {
+  proc init_state {original working execution} {
     variable state
     array unset state
     set state(processed_files) [dict create]
     set state(recursion_depth) [dict create]
     set state(original_dir) $original
     set state(target_dir) $working
+    set state(execution_dir) $execution
   }
-
   proc is_file_processed {file} {
     variable state
     return [dict exists $state(processed_files) $file]
   }
-
   proc mark_file_processed {file} {
     variable state
     dict set state(processed_files) $file 1
   }
-
   proc set_recursion_depth {file depth} {
     variable state
     dict set state(recursion_depth) $file $depth
   }
-
   proc get_recursion_depth {file} {
     variable state
     return [dict get $state(recursion_depth) $file 0]
   }
-
   proc get_target_dir {} {
     variable state
     return $state(target_dir)
   }
-
+  proc get_execution_dir {} {
+    variable state
+    return $state(execution_dir)
+  }
   proc restore_original_dir {} {
     variable state
     catch {cd $state(original_dir)}
   }
-
   proc process_file {filename fo depth opts} {
     set max_depth [dict get $opts -max_depth]
     if {$depth > $max_depth} {
@@ -62,7 +62,6 @@ namespace eval CatAll {
       if {[dict get $opts -verbose]} {puts "Warning: $msg"}
       return
     }
-
     set current_dir [pwd]
     set abs_path [file normalize [file join $current_dir $filename]]
     if {[is_file_processed $abs_path]} {
@@ -71,7 +70,6 @@ namespace eval CatAll {
       if {[dict get $opts -verbose]} {puts $msg}
       return
     }
-
     mark_file_processed $abs_path
     set_recursion_depth $abs_path $depth
     set exclude [dict get $opts -exclude]
@@ -81,14 +79,12 @@ namespace eval CatAll {
       if {[dict get $opts -verbose]} {puts $msg}
       return
     }
-
     if {![file exists $filename]} {
       set msg "File not found: $filename (resolved to $abs_path)"
       puts $fo "# ERROR: $msg"
       if {[dict get $opts -verbose]} {puts "Error: $msg"}
       return
     }
-
     if {[catch {set fi [open $filename r]} err]} {
       set msg "Failed to open file $filename: $err"
       puts $fo "# ERROR: $msg"
@@ -96,30 +92,25 @@ namespace eval CatAll {
       return
     }
     fconfigure $fi -encoding utf-8
-
     # Switch to the directory of current file
     set file_dir [file dirname $abs_path]
     set original_processing_dir [pwd]
     cd $file_dir
-
     set lang [dict get $opts -lang]
     set strip_mode [dict get $opts -strip_comments]
     set comment_state [CommentState new $lang]
-
     if {[dict get $opts -include_comments]} {
       puts $fo "\n#"
       puts $fo "# START OF FILE: $filename (depth $depth)"
       puts $fo "# Resolved path: $abs_path"
       puts $fo "#"
     }
-
     set source_lines [list]
     set regular_lines [list]
     while {[gets $fi line] >= 0} {
       set is_source_cmd 0
       set filename_part ""
       set remainder ""
-
       # Branch by language to detect include commands (source for TCL, require for Perl)
       if {$lang eq "tcl"} {
         if {[regexp {^\s*source\s+(\S+)(.*)$} $line -> fp rem]} {
@@ -136,7 +127,6 @@ namespace eval CatAll {
           set is_source_cmd 1
           set filename_part $fp
           set remainder $rem
-
           # Clean up filename (remove semicolons, comments, etc.)
           set filename_part [string map {";" ""} $filename_part]
           set filename_part [string trimright $filename_part " \t;"]
@@ -146,7 +136,6 @@ namespace eval CatAll {
           }
         }
       }
-
       if {$is_source_cmd} {
         if {$lang eq "tcl"} {
           # Handle TCL's quoted filename syntax
@@ -178,7 +167,6 @@ namespace eval CatAll {
       }
     }
     close $fi
-
     # Process regular lines (strip comments if needed)
     foreach line $regular_lines {
       set processed_line [process_comments $line $comment_state $strip_mode]
@@ -186,7 +174,6 @@ namespace eval CatAll {
         puts $fo $processed_line
       }
     }
-
     # Process source lines (preserve order or sort)
     if {[dict get $opts -preserve_order]} {
       foreach item $source_lines {
@@ -199,18 +186,15 @@ namespace eval CatAll {
         process_source_line $src_file $orig_line $fo [expr {$depth + 1}] $opts
       }
     }
-
     if {[dict get $opts -include_comments]} {
       puts $fo "\n#"
       puts $fo "# END OF FILE: $filename (depth $depth)"
       puts $fo "#"
     }
-
     $comment_state destroy
     # Restore original directory before processing this file
     cd $original_processing_dir
   }
-
   proc process_source_line {src_file orig_line fo depth opts} {
     if {[dict get $opts -include_comments]} {
       puts $fo "\n# SOURCE COMMAND: $orig_line"
@@ -218,7 +202,6 @@ namespace eval CatAll {
     }
     process_file $src_file $fo $depth $opts
   }
-
   oo::class create CommentState {
     variable lang       ;# Language type (tcl/perl)
     variable brace_depth ;# Brace nesting depth
@@ -226,7 +209,6 @@ namespace eval CatAll {
     variable in_comment ;# In multi-line comment (for Perl)
     variable line_brace_depth ;# 单行内的括号深度变化
     variable line_in_quote   ;# 单行内的引号状态
-
     constructor {language} {
       set lang $language
       set brace_depth 0
@@ -235,11 +217,9 @@ namespace eval CatAll {
       set line_brace_depth 0
       set line_in_quote 0
     }
-
     method cget {-lang} {
       return $lang
     }
-
     method update_brace {char} {
       # 同时更新全局括号深度和单行括号深度
       if {$in_quote == 0 && $in_comment == 0} {
@@ -258,7 +238,6 @@ namespace eval CatAll {
       }
       return $brace_depth
     }
-
     method update_quote {char prev_char} {
       # 同时更新全局引号状态和单行引号状态
       if {$in_comment == 0} {
@@ -286,19 +265,15 @@ namespace eval CatAll {
       }
       return $in_quote
     }
-
     method get_prev_prev {} {
       return ""
     }
-
     method set_in_comment {val} {
       set in_comment $val
     }
-
     method get_state {} {
       return [list $brace_depth $in_quote $in_comment]
     }
-
     method set_state {state} {
       lassign $state brace_depth in_quote in_comment
       set brace_depth $brace_depth
@@ -308,18 +283,15 @@ namespace eval CatAll {
       set line_brace_depth 0
       set line_in_quote 0
     }
-
     # 获取单行内的括号深度变化
     method get_line_brace_depth {} {
       return $line_brace_depth
     }
-
     # 获取单行内的引号状态
     method get_line_in_quote {} {
       return $line_in_quote
     }
   }
-
   proc process_comments {line state_obj strip_mode} {
     set lang [$state_obj cget -lang]
     set current_state [$state_obj get_state]
@@ -328,7 +300,6 @@ namespace eval CatAll {
     set len [string length $line]
     set prev_char ""
     set i 0
-
     while {$i < $len} {
       set char [string index $line $i]
       $state_obj update_brace $char
@@ -336,7 +307,6 @@ namespace eval CatAll {
       lassign [$state_obj get_state] global_brace_depth global_in_quote global_in_comment
       set line_brace_depth [$state_obj get_line_brace_depth]
       set line_in_quote [$state_obj get_line_in_quote]
-
       # Handle multi-line comment continuation
       if {$global_in_comment} {
         if {$lang eq "perl" && $char eq "/" && $prev_char eq "*"} {
@@ -353,7 +323,6 @@ namespace eval CatAll {
         incr i
         continue
       }
-
       # Handle TCL's semicolon-followed comments (bit 2 in strip_mode)
       if {$lang eq "tcl" && ($strip_mode & 2) && $char eq "#" && $global_in_quote == 0} {
         # 提取当前位置前的内容
@@ -366,7 +335,6 @@ namespace eval CatAll {
           break
         }
       }
-
       # Handle TCL's standalone # comments (bit 1 in strip_mode)
       if {$lang eq "tcl" && ($strip_mode & 1) && $char eq "#" && $global_in_quote == 0} {
         set prefix [string range $line 0 [expr {$i-1}]]
@@ -375,7 +343,6 @@ namespace eval CatAll {
           break
         }
       }
-
       # Handle Perl's # comments 
       if {$lang eq "perl" && $char eq "#"} {
         # 特殊情况处理：排除$#变量格式
@@ -415,7 +382,6 @@ namespace eval CatAll {
         }
         # 如果不满足上述条件，#号将被视为普通字符保留
       }
-
       # Handle Perl's multi-line comment start (/* ... */)
       if {$lang eq "perl" && ($strip_mode & 2) && $char eq "*" && $prev_char eq "/" && $global_in_quote == 0 && $global_brace_depth == 0} {
         $state_obj set_in_comment 1
@@ -425,20 +391,20 @@ namespace eval CatAll {
         incr i
         continue
       }
-
       # Add valid character to result
       append result $char
       set prev_char $char
       incr i
     }
-
     $state_obj set_state [$state_obj get_state]
     # Trim trailing whitespace but keep leading/trailing non-whitespace
     return [string trimright $result]
   }
 }
-
 proc cat_all {filename {output ""} {verbose 0} {max_depth 10} {exclude ""} {include_comments 1} {preserve_order 1} {strip_comments 0} {lang "auto"}} {
+  # 记录执行命令时的原始目录
+  set execution_dir [file normalize [pwd]]
+  
   # Auto-detect language based on file extension if lang is "auto"
   if {$lang eq "auto"} {
     set file_ext [string tolower [file extension $filename]]
@@ -453,31 +419,70 @@ proc cat_all {filename {output ""} {verbose 0} {max_depth 10} {exclude ""} {incl
     if {$verbose} {puts "Auto-detected language: $lang (from file extension $file_ext)"}
   }
 
-  set original_dir [file normalize [pwd]]
-  set target_file_abs [file normalize $filename]
+  # Step 1: Normalize input file path first
+  set target_file_abs [file normalize [file join $execution_dir $filename]]
+
+  # Step 2: Handle symbolic links - resolve to final real file path
+  set real_file_abs $target_file_abs
+  if {[file exists $real_file_abs]} {
+    # Check if the input file is a symbolic link using file type
+    if {[file type $real_file_abs] eq "link"} {
+      # Resolve all levels of symbolic links (handle nested links)
+      if {[catch {set real_file_abs [file readlink $real_file_abs]} err_msg]} {
+        puts "Error: Failed to resolve symbolic link '$real_file_abs': $err_msg"
+        return 1
+      }
+      # Verify the resolved real file actually exists
+      if {![file exists $real_file_abs]} {
+        puts "Error: Symbolic link '$target_file_abs' points to non-existent file '$real_file_abs'"
+        return 1
+      }
+      # Output debug info when verbose mode is enabled
+      if {$verbose} {
+        puts "Debug: Resolved symbolic link - Original: '$target_file_abs' -> Real: '$real_file_abs'"
+      }
+      # Update target path to the real file path
+      set target_file_abs $real_file_abs
+    }
+  }
+
+  # Step 3: Check if the final target file (real path if linked) exists
   if {![file exists $target_file_abs]} {
-    puts "Error: Target file not found - $filename"
+    puts "Error: Target file not found - Original input: '$filename' (Resolved to: '$target_file_abs')"
     return 1
   }
 
+  # Step 4: Update target directory/filename based on resolved real path
   set target_dir [file dirname $target_file_abs]
   set target_file [file tail $target_file_abs]
-  CatAll::init_state $original_dir $target_dir
 
-  if {[catch {cd $target_dir} err]} {
-    puts "Error: Failed to change to target directory ($target_dir): $err"
+  # Initialize state with original, real target and execution directories
+  CatAll::init_state [file normalize [pwd]] $target_dir $execution_dir
+
+  # Step 5: Switch to the real target directory (ensure relative paths work)
+  if {[catch {cd $target_dir} err_msg]} {
+    puts "Error: Failed to change to real target directory ($target_dir): $err_msg"
     return 1
   }
 
-  # Set default output file if not specified
+  # Step 6: Handle output file path - ensure it's created in execution directory
   if {$output eq ""} {
     set output "all_$target_file"
-    set output_path [file join $original_dir $output]
+    set output_path [file join $execution_dir $output]
   } else {
-    set output_path [file normalize [file join $original_dir $output]]
+    # 如果输出路径是相对路径，则基于执行目录解析；如果是绝对路径，则直接使用
+    if {[file isabsolute $output]} {
+      set output_path $output
+    } else {
+      set output_path [file join $execution_dir $output]
+    }
+  }
+  
+  if {$verbose} {
+    puts "Debug: Output file will be created in execution directory: $output_path"
   }
 
-  # Prepare options dictionary
+  # Prepare options dictionary (add resolved paths implicitly)
   set opts [dict create \
     -verbose $verbose \
     -max_depth $max_depth \
@@ -489,29 +494,27 @@ proc cat_all {filename {output ""} {verbose 0} {max_depth 10} {exclude ""} {incl
     -lang $lang]
 
   # Open output file
-  if {[catch {set fo [open $output_path w]} err]} {
-    puts "Error: Failed to open output file ($output_path): $err"
+  if {[catch {set fo [open $output_path w]} err_msg]} {
+    puts "Error: Failed to open output file ($output_path): $err_msg"
     CatAll::restore_original_dir
     return 1
   }
   fconfigure $fo -encoding utf-8
 
-  # Process main file
+  # Process main file (now uses real file path and directory)
   if {[catch {
     CatAll::process_file $target_file $fo 0 $opts
-  } err]} {
-    puts "Error during processing: $err"
+  } err_msg]} {
+    puts "Error during processing: $err_msg"
   }
 
   close $fo
   CatAll::restore_original_dir
-
   if {[dict get $opts -verbose]} {
     puts "Merged file created: $output_path"
   }
   return 0
 }
-
 # Command line execution
 if {$argc > 0} {
   set filename [lindex $argv 0]
@@ -519,7 +522,6 @@ if {$argc > 0} {
   # Default values
   set output ""; set verbose 1; set max_depth 10; set exclude ""
   set include_comments 0; set preserve_order 1; set strip_comments 3; set lang "auto"
-
   # Parse command line options
   for {set i 0} {$i < [llength $options]} {incr i} {
     set opt [lindex $options $i]
@@ -538,13 +540,12 @@ if {$argc > 0} {
       }
     }
   }
-
   # Execute main function
   cat_all $filename $output $verbose $max_depth $exclude $include_comments $preserve_order $strip_comments $lang
 } else {
   # Usage help (Chinese explanation for options)
   puts "Usage: $argv0 filename ?options?"
-  puts "功能：合并脚本文件中通过 source (TCL) 或 require (Perl) 引用的所有文件"
+  puts "功能：合并脚本文件中通过 source (TCL) 或 require (Perl) 引用的所有文件，支持符号链接自动解析"
   puts "\n选项说明："
   puts "  -output outfile      指定输出文件路径（默认：当前目录下 all_原文件名）"
   puts "  -verbose 0|1         是否显示详细处理过程（0=不显示，1=显示，默认：1）"
@@ -554,11 +555,16 @@ if {$argc > 0} {
   puts "  -preserve_order 0|1  是否保留原文件引用顺序（0=按文件名排序，1=保留原顺序，默认：1）"
   puts "  -strip_comments mode 注释处理模式（0=保留所有注释，1=移除行首注释，2=移除行内注释，3=移除所有注释，默认：3）"
   puts "  -lang tcl|perl|auto  指定脚本语言（auto=通过文件后缀自动识别，.tcl→tcl，.pl→perl，默认：auto）"
+  puts "\n新增特性："
+  puts "  1. 自动识别符号链接文件，解析至最终真实文件路径，并切换至真实文件所在目录处理"
+  puts "     （确保 source/require 引用的相对路径基于真实文件目录，避免路径错误）"
+  puts "  2. 输出文件始终在执行命令的目录中生成，不受符号链接解析影响"
   puts "\n注释处理说明："
   puts "  TCL: 行内注释需以分号(;)开头，可跟空格，再跟#号，如: set var 1 ;# 这是注释"
   puts "  Perl: 仅当#不在同一行的引号/括号内，且不是$#变量格式时视为注释"
   puts "\n示例："
-  puts "  $argv0 main.tcl"
-  puts "  $argv0 app.pl -output merged_app.pl -lang perl"
+  puts "  $argv0 main.tcl                  # 处理TCL文件，在当前目录生成输出"
+  puts "  $argv0 app.pl -output merged.pl  # 处理Perl文件并指定输出路径"
+  puts "  $argv0 link_to_script.tcl -verbose 1  # 显示链接解析过程的详细日志"
 }
 

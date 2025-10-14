@@ -13,8 +13,8 @@
 # return    : cmds
 # ref       : link url
 # --------------------------
-source ../packages/every_any.package.tcl; # any
-source ../packages/adjust_rectangle.rect_off.package.tcl; # adjust_boxes
+source ../../packages/every_any.package.tcl; # any
+source ../../packages/adjust_rectangle.rect_off.package.tcl; # adjust_boxes
 proc genCmd_createPowerDomain {{coreRect {}} {pd_names_boxList_minGaps {}} {lastPowerDomainName "PDM_TOP"} {removeRectOfInst {}} {off_ofRemoveRectOfInst 0}} {
   if {[any x $pd_names_boxList_minGaps {expr {![llength $x]}}]} {
     error "proc genCmd_createPowerDomain: check your input: pd_names_boxList_minGaps($pd_names_boxList_minGaps) have empty item!!!"

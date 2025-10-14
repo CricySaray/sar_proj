@@ -232,6 +232,235 @@ let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', 
 
 """ VIMSCRIPT & FUNCTIONS -------------------------------------------------------
 
+
+" ---------------------------
+" Custom column alignment script with reset option
+" Usage:
+" 1. Select lines in visual mode
+" 2. Execute :AlignColumns [column range] [alignment method] [reset]
+"    Default: Align columns 1-3 with left alignment, no reset
+"    Examples: :AlignColumns              (Defaults: 1-3, left, no reset)
+"              :AlignColumns 2-5 r        (Align 2-5 right, no reset)
+"              :AlignColumns 1,3 c yes    (Align 1,3 center, no reset)
+"              :AlignColumns 1-3 reset    (Reset columns 1-3 to original state)
+"              :AlignColumns reset        (Reset default columns 1-3)
+
+function! AlignSelectedColumns(...) range
+  " Check if any lines are selected
+  if a:firstline == a:lastline && getline(a:firstline) =~ '^\s*$'
+    echo "Error: No lines selected or selected line is empty"
+    return
+  endif
+
+  " Parse arguments with support for reset option
+  let reset = 0
+  let columns = '1-3'
+  let alignment = 'l'
+  
+  " Handle reset as third or even first/second argument
+  if a:0 >= 1
+    if a:1 =~? '^reset$'
+      let reset = 1
+    else
+      let columns = a:1
+      
+      if a:0 >= 2
+        if a:2 =~? '^reset$'
+          let reset = 1
+        else
+          let alignment = a:2
+          
+          if a:0 >= 3 && a:3 =~? '^reset$'
+            let reset = 1
+          endif
+        endif
+      endif
+    endif
+  endif
+
+  " Validate alignment method (only if not resetting)
+  if !reset && index(['l', 'r', 'c'], alignment) == -1
+    echo "Error: Invalid alignment method. Use 'l' (left), 'r' (right), or 'c' (center)"
+    return
+  endif
+
+  " Validate column range format
+  if columns !~ '^\(\d\+[-,]\?\)\+$'
+    echo "Error: Invalid column format. Use numbers with commas (1,3) or ranges (1-3)"
+    return
+  endif
+
+  " Get selected lines
+  let lines = getline(a:firstline, a:lastline)
+  
+  " Check for empty selection
+  if empty(lines)
+    echo "Error: No lines selected"
+    return
+  endif
+
+  " Check if all lines are empty
+  let all_empty = 1
+  for line in lines
+    if line !~ '^\s*$'
+      let all_empty = 0
+      break
+    endif
+  endfor
+  if all_empty
+    echo "Error: Selected lines are all empty"
+    return
+  endif
+
+  let max_col = 0
+  let split_lines = []
+  
+  " Split each line and determine maximum column count
+  for line in lines
+    " Skip empty lines but keep them in the list
+    if line =~ '^\s*$'
+      call add(split_lines, [])
+      continue
+    endif
+    
+    " Use one or more spaces as delimiter
+    let parts = split(line, '\s\+')
+    call add(split_lines, parts)
+    if len(parts) > max_col
+      let max_col = len(parts)
+    endif
+  endfor
+  
+  " Check if there are enough columns to align
+  if max_col == 0
+    echo "Error: No columns found in selected lines"
+    return
+  endif
+
+  " Parse columns to align/reset
+  let cols_to_process = []
+  let col_specs = split(columns, ',')
+  for spec in col_specs
+    " Validate individual column spec
+    if spec =~ '^-\|-$' || spec =~ '--' || spec =~ ',-\|-,\|,,\|-\d\+-'
+      echo "Error: Invalid column specification: " . spec
+      return
+    endif
+    
+    if stridx(spec, '-') != -1
+      let range_parts = split(spec, '-')
+      if len(range_parts) != 2
+        echo "Error: Invalid range format: " . spec
+        return
+      endif
+      
+      let start = str2nr(range_parts[0])
+      let end = str2nr(range_parts[1])
+      
+      " Validate range logic
+      if start <= 0 || end <= 0 || start > end
+        echo "Error: Invalid column range: " . spec . " (must be start <= end and > 0)"
+        return
+      endif
+      
+      for col in range(start, end)
+        call add(cols_to_process, col - 1) " Convert to 0-based index
+      endfor
+    else
+      let col = str2nr(spec)
+      if col <= 0
+        echo "Error: Column number must be greater than 0: " . spec
+        return
+      endif
+      call add(cols_to_process, col - 1) " Convert to 0-based index
+    endif
+  endfor
+  
+  " Remove duplicate columns and sort
+  let cols_to_process = sort(uniq(cols_to_process))
+  
+  " Check if any columns were parsed
+  if empty(cols_to_process)
+    echo "Error: No valid columns specified"
+    return
+  endif
+  
+  " Check if column indices are valid
+  for col in cols_to_process
+    if col < 0 || col >= max_col
+      echo "Error: Column " . (col + 1) . " is out of range (max column: " . max_col . ")"
+      return
+    endif
+  endfor
+  
+  " Process lines - either reset or align
+  let new_lines = []
+  if reset
+    " Reset mode - remove extra spaces from specified columns
+    for parts in split_lines
+      if empty(parts)
+        call add(new_lines, '')
+        continue
+      endif
+      
+      " For reset, we just use original content without added padding
+      call add(new_lines, join(parts, ' '))
+    endfor
+  else
+    " Alignment mode - calculate widths and align
+    let max_widths = {}
+    for col in cols_to_process
+      let max_width = 0
+      for parts in split_lines
+        if !empty(parts) && col < len(parts) && len(parts[col]) > max_width
+          let max_width = len(parts[col])
+        endif
+      endfor
+      let max_widths[col] = max_width < 0 ? 0 : max_width
+    endfor
+    
+    " Rebuild lines with alignment
+    for parts in split_lines
+      if empty(parts)
+        call add(new_lines, '')
+        continue
+      endif
+      
+      let new_parts = copy(parts)
+      for col in cols_to_process
+        if col >= len(new_parts)
+          continue
+        endif
+        
+        let current = new_parts[col]
+        let width = max_widths[col]
+        let padding = width - len(current)
+        
+        if alignment == 'l'
+          let new_parts[col] = current . repeat(' ', padding)
+        elseif alignment == 'r'
+          let new_parts[col] = repeat(' ', padding) . current
+        elseif alignment == 'c'
+          let left = padding / 2
+          let right = padding - left
+          let new_parts[col] = repeat(' ', left) . current . repeat(' ', right)
+        endif
+      endfor
+      call add(new_lines, join(new_parts, ' '))
+    endfor
+  endif
+  
+  " Write processed lines back to buffer
+  call setline(a:firstline, new_lines)
+endfunction
+
+" Create command with optional parameters (0-3 arguments)
+command! -range -nargs=* AlignColumns <line1>,<line2>call AlignSelectedColumns(<f-args>)
+
+" Visual mode mapping, trigger with <leader>al
+vnoremap <leader>al :AlignColumns<space><CR>
+
+
 " ---------------------------
 " In visual block mode, press <Leader>i to implement number increment (default start value 1, step 1)
 vmap <Leader>i :call VisualBlockIncrement(1, 1)<CR>
@@ -645,7 +874,8 @@ Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
 Jetpack 'junegunn/fzf.vim'
 Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
 " vnoremap setting : 对齐 Tcl 变量的值（第三个参数），左侧不留空格
-Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>'}
+"Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>'}
+Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /[^;#]\+\s\+/l0l0l0<CR>'}
 Jetpack 'morhetz/gruvbox'
 Jetpack 'luochen1990/rainbow'
 Jetpack 'andymass/vim-matchup'

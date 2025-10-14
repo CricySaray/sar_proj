@@ -8,8 +8,8 @@
 # return    : string of floorplan cmd
 # ref       : link url
 # --------------------------
-source ../packages/adjust_rectangle.rect_off.package.tcl; # adjust_rectangle
-source ../packages/adjust_to_multiple_of_num.package.tcl; # adjust_to_multiple_of_num
+source ../../packages/adjust_rectangle.rect_off.package.tcl; # adjust_rectangle
+source ../../packages/adjust_to_multiple_of_num.package.tcl; # adjust_to_multiple_of_num
 proc genCmd_floorplan {args} {
   set memAndIPsubClass       block ; # can be empty string, like ""
   set IOinstSubClassName     padAreaIO ; # can be empty string, like ""

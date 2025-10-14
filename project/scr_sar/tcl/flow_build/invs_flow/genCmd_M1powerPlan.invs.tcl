@@ -9,8 +9,8 @@
 # return    : cmds
 # ref       : link url
 # --------------------------
-source ../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary_withBoundaryArea
-source ../packages/adjust_rectangle.rect_off.package.tcl; # adjust_boxes
+source ../../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary_withBoundaryArea
+source ../../packages/adjust_rectangle.rect_off.package.tcl; # adjust_boxes
 proc genCmd_M1powerPlan_usingAddStripeCmd {args} {
   set powerDomain_RectAndPGnetAndOrder  {} ; # for example : {{{{x y x1 y1} ...} {DVDD_AON DVSS} powerFirst} {{{x y x1 y1} ...} {DVDD_ONO DVSS} groundFirst} ...}
   set prefixNameOfBoundaryInsts "ENDCAP"

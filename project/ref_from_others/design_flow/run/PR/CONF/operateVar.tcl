@@ -2,30 +2,35 @@
 # --------------------------
 # author    : sar song
 # date      : 2025/10/12 18:29:07 Sunday
-# label     : 
-#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
+# label     : flow_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc
+#               |report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : what?
-#   - `_validate_var_index`: Validates that `var_index` is an array; initializes it if missing. No return value; throws error if `var_index` exists but isn't an array.
-# 	- `defv <full_var> <value> [allow_create_namespace=0]`: Defines a namespaced variable and updates `var_index`. `allow_create_namespace` (0/1) controls if last 
-# 	        namespace level can be created. No return value; throws errors on invalid names/paths/duplicates.
-# 	- `setv <var_name> <value>`: Updates value of an existing managed variable via its short name. No return value; throws errors if variable is missing/invalid.
-# 	- `getv <var_name>`: Retrieves value of a managed variable via its short name. Returns variable's value; throws errors if variable is missing/invalid.
-# 	- `_get_all_vars_in_namespace <namespace>`: Recursively gets all variables in a namespace and its subnamespaces. Returns list of full variable paths.
-# 	- `importv <namespace> [allow_overwrite=0] [verbose=0]`: Imports variables from a namespace (and subnamespaces) into `var_index`. `allow_overwrite` (0/1) 
-# 	        enables overwriting existing entries; `verbose` (0/1) controls output. Returns count of imported variables.
-# 	- `clear_namespace_vars <namespace>`: Clears all managed variables in a namespace (and subnamespaces) from both scope and `var_index`. Returns message 
-# 	        with count of cleared variables.
-# 	- `unsetv <var_name_or_path>`: Removes a managed variable by short name or full path from scope and `var_index`. Returns success message; throws errors 
-# 	        if variable is unmanaged/missing.
-# 	- `clear_all_vars`: Clears all managed variables from scope and resets `var_index`. Returns success message.
-# 	- `listv`: Lists all managed variables with their full paths and values. Returns formatted string with entries like "var -> path = value".
-# 	- `linkv ?-force 0|1? ?var1 ...?`: Links managed variables to current scope for direct `$var` access. `-force` (0/1) controls overwriting existing scope 
-# 	        variables; no vars = link all. Returns count of linked variables.
-# 	- `unlinkv ?var1 ...?`: Unlinks variables from current scope (preserves underlying data). No vars = unlink all linked. Returns count of unlinked variables; 
-# 	        throws errors on unlinked/unmanaged vars.
-# 	- `getvns <var1> ?var2 ...?`: Returns namespace hierarchy for variables (e.g., "song::an::rui::" for "testvar" in that path). Returns single string for one 
-# 	        var, list for multiple; "NA" for missing vars.
+# descrip   : 
+# 	1. _validate_var_index: Validates that 'var_index' is an array; initializes it if missing. No return value; throws error if 'var_index' 
+# 	    exists but isn't an array.
+# 	2. defv: Defines a namespaced variable and updates 'var_index'. Usage: defv <full_var> <value> [allow_create_namespace=0]. No return 
+# 	    value; throws errors on invalid names/paths/duplicates. 'allow_create_namespace' controls if last namespace level can be created.
+# 	3. setv: Updates value of an existing managed variable via its short name. Usage: setv <var_name> <value>. No return value; throws 
+# 	    errors if variable is missing/invalid.
+# 	4. getv: Retrieves value of a managed variable via its short name. Usage: getv <var_name>. Returns variable's value; throws errors 
+# 	    if variable is missing/invalid.
+# 	5. _get_all_vars_in_namespace: Recursively gets all variables in a namespace and its subnamespaces. Usage: _get_all_vars_in_namespace 
+# 	    <namespace>. Returns list of full variable paths.
+# 	6. clearv: Clears managed index entries (keeps actual variables). Usage: clearv ?-all? ?-namespace|-n <namespace>? ?-recursive|-r? 
+# 	    <var_name_or_path>?. Returns status message. Doesn't delete actual namespace variables.
+# 	7. importv: Imports namespace variables into 'var_index'. Usage: importv <namespace> [allow_overwrite=0] [verbose=0]. Returns count 
+# 	    of imported variables. 'allow_overwrite' enables overwriting existing entries.
+# 	8. listv: Lists all managed variables in table format. Usage: listv. Returns formatted string with variable details. Shows warnings 
+# 	    for stale index entries.
+# 	9. format_table_data: Prepares table data for 'table_format_with_title'. Usage: format_table_data <var_data>. Returns list of table 
+# 	    rows with headers and variable details.
+# 	10. getvns: Returns namespace hierarchy for variables. Usage: getvns <var1> ?var2 ...?. Returns single string for one var, list for 
+# 	    multiple; "NA" for missing vars. Adds trailing "::" to hierarchy.
+# 	11. linkv: Links managed variables to current scope for direct access. Usage: linkv ?-n <namespace>? ?-r 0|1? ?-force|-f 0|1? ?-list|-l? ?var1 ...?. 
+# 	    Returns count of linked variables. Supports bidirectional synchronization; -list shows linked variables.
+# 	12. unlinkv: Unlinks variables from current scope (preserves underlying data). Usage: unlinkv ?-n <ns>? ?-r 0|1? ?var1 ...?. Returns 
+# 	    count of unlinked variables. Restores original variable values after unsetting links (per Tcl upvar behavior).
 # ref       : link url
 # --------------------------
 # Global index to map simple variable names to their full namespace paths
@@ -681,7 +686,7 @@ proc linkv {{args ""}} {
       lappend table_data [list $var_name $ns_hierarchy $value "$method ($details)" $link_time]
     }
     
-    if {[llength $table_data] <= 1} {  # Only header exists
+    if {[llength $table_data] <= 1} {  ; # Only header exists
       return "No variables are currently linked"
     }
     
@@ -942,11 +947,26 @@ proc unlinkv {{args ""}} {
   if {[array size not_managed] > 0} {
     error "proc unlinkv: Variables not in management system: [join [array names not_managed] ", "]"
   }
-  # Remove links from caller's scope
+  # Remove links from caller's scope with variable restoration
   set unlinked_count 0
   foreach var_name $vars_to_unlink {
+    # From Tcl official documentation:
+    # If an upvar variable is unset (e.g. x in add2 above), the unset operation affects 
+    # the variable it is linked to, not the upvar variable. There is no way to unset an 
+    # upvar variable except by exiting the procedure in which it is defined. However, it 
+    # is possible to retarget an upvar variable by executing another upvar command.
+    
+    # Save original variable's full path and current value before unsetting
+    set full_var $var_index($var_name)
+    set value [getv $var_name]
+    
+    # Remove the link (this affects both the linked name and the original variable)
     uplevel 1 [list unset $var_name]
-    # Remove from link_info tracking
+    
+    # Restore the original variable's value to maintain data integrity
+    uplevel 1 [list set $full_var $value]
+    
+    # Remove from link tracking
     if {[info exists link_info($var_name)]} {
       unset link_info($var_name)
     }
@@ -954,4 +974,5 @@ proc unlinkv {{args ""}} {
   }
   return "unlinkv: Unlinked $unlinked_count variables"
 }
+    
     

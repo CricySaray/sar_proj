@@ -8,8 +8,8 @@
 # return    : 
 # ref       : link url
 # --------------------------
-source ../packages/table_col_format_wrap.package.tcl; # table_col_format_wrap
-source ../packages/add_file_header.package.tcl; # add_file_header
+source ../../packages/table_col_format_wrap.package.tcl; # table_col_format_wrap
+source ../../packages/add_file_header.package.tcl; # add_file_header
 proc get_cells_of_every_subClass_from_libCells {{outputfile ""} {ifFormatToTable 1} {ifShowCellList 1}} {
   if {$outputfile != ""} { set fi [open $outputfile w] }
   try {

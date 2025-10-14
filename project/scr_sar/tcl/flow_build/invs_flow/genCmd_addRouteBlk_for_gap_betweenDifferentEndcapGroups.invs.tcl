@@ -13,9 +13,9 @@
 # return    : cmds list
 # ref       : link url
 # --------------------------
-source ../packages/find_connected_regions.package.tcl; # find_connected_regions
-source ../packages/find_narrow_channels.package.tcl; # find_narrow_channels
-source ../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary_withBoundaryArea
+source ../../packages/find_connected_regions.package.tcl; # find_connected_regions
+source ../../packages/find_narrow_channels.package.tcl; # find_narrow_channels
+source ../../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary_withBoundaryArea
 proc genCmd_addRouteBlk_for_gap_betweenDifferentEndcapGroups {args} {
   set narrowChannelWidthThreshold 10
   set off                         -1

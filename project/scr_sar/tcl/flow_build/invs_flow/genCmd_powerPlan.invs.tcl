@@ -9,8 +9,8 @@
 # return    : cmds
 # ref       : link url
 # --------------------------
-source ../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl;
-source ../packages/adjust_rectangle.rect_off.package.tcl; # adjust_boxes
+source ../../eco_fix/timing_fix/lut_build/proc_findCoreRectInsideBoundary.invsGUI.tcl;
+source ../../packages/adjust_rectangle.rect_off.package.tcl; # adjust_boxes
 
 # check: 
 #   if have rects of every power domains

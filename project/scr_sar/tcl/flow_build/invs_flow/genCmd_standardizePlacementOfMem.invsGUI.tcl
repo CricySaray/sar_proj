@@ -1,3 +1,4 @@
+# TO_IMPROVE
 proc place_rectangles {specRegions rectNames minSpacing mapList {returnMode "coordinates"} {debug 0}} {
   # Validate input parameters
   if {[llength $specRegions] == 0} {

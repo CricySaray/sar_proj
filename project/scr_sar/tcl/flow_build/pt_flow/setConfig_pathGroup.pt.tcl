@@ -13,7 +13,7 @@
 # return    : /
 # ref       : link url
 # --------------------------
-source ../packages/logic_AND_OR.package.tcl; # eo
+source ../../packages/logic_AND_OR.package.tcl; # eo
 proc runCmd_pathGroupSetting_pt {args} {
   set memExp                    {x|X} ; # expression of memory
   set shortOrLongExpressionMode "short" ; # short|long

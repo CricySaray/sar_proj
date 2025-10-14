@@ -9,6 +9,7 @@
 # return    : 
 # ref       : link url
 # --------------------------
+# TO_WRITE
 proc get_globalNetConnect_ofAllDesign {} {
   
 }

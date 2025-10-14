@@ -9,9 +9,9 @@
 # return    : cmds
 # ref       : link url
 # --------------------------
-source ../packages/every_any.package.tcl; # every
-source ../packages/adjust_rectangle.rect_off.package.tcl; # adjust_rectangle
-source ../flow_build/batchRunCmd_forProc_genCmd.common.tcl; # batchRunCmd_forProc_genCmd
+source ../../packages/every_any.package.tcl; # every
+source ../../packages/adjust_rectangle.rect_off.package.tcl; # adjust_rectangle
+source ../../flow_build/batchRunCmd_forProc_genCmd.common.tcl; # batchRunCmd_forProc_genCmd
 proc genCmd_createRouteBlk {{insts {}} {off {}} {layer {1 2 3 4}} {cutLayer {1 2 3 4}} {ifPgNetOnly 1}} {
   set promptPrefix "# song"
   set promptWARN [string cat $promptPrefix "WARN"]

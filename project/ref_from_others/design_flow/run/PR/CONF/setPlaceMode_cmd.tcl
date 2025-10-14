@@ -1,0 +1,67 @@
+# default value
+setPlaceMode -reset                                          
+setPlaceMode -place_design_floorplan_mode                     flase    ; # {true|false}
+setPlaceMode -place_design_integrity_ir_fix_effort            low      ; # {low|medium|high}
+setPlaceMode -place_design_refine_macro                       flase    ; # {true|false}
+setPlaceMode -place_design_refine_place                       true     ; # {true|false}
+setPlaceMode -place_detail_activity_power_driven              flase    ; # {true|false}
+setPlaceMode -place_detail_allow_border_pin_abut              flase    ; # {true|false}
+setPlaceMode -place_detail_allow_single_height_row_symmetry_x ""       ; # siteName
+setPlaceMode -place_detail_check_cut_spacing                  false    ; # {true|false}
+setPlaceMode -place_detail_check_inst_space_group             false    ; # {true|false}
+setPlaceMode -place_detail_check_route                        flase    ; # {true | false}
+setPlaceMode -place_detail_color_aware_legal                  false    ; # {true|false}
+setPlaceMode -place_detail_context_aware_legal                all      ; # {none|all|optional|required|user}
+setPlaceMode -place_detail_eco_max_distance                   0        ; # maxDistance
+setPlaceMode -place_detail_eco_priority_insts                 placed   ; # {placed|fixed|eco}
+setPlaceMode -place_detail_fixed_shifter                      false    ; # {true|false}
+setPlaceMode -place_detail_honor_inst_pad                     false    ; # {true|false}
+setPlaceMode -place_detail_io_pin_blockage                    false    ; # {true|false}
+setPlaceMode -place_detail_iraware_max_drive_strength         0        ; # maxDriveStrength
+setPlaceMode -place_detail_irdrop_aware_effort                none     ; # {none|low|medium|high}
+setPlaceMode -place_detail_irdrop_aware_timing_effort         high     ; # {none|standard|high}
+setPlaceMode -place_detail_irdrop_region_number               100      ; # valueOfDebugIrdrop
+setPlaceMode -place_detail_legalization_inst_gap              0        ; # numberOfSites
+setPlaceMode -place_detail_max_shifter_column_depth           999      ; # value
+setPlaceMode -place_detail_max_shifter_depth                  999      ; # value
+setPlaceMode -place_detail_max_shifter_row_depth              999      ; # value
+setPlaceMode -place_detail_no_filler_without_implant          false    ; # {true|false}
+setPlaceMode -place_detail_pad_fixed_insts                    false    ; # {true|false}
+setPlaceMode -place_detail_pad_physical_cells                 false    ; # {true|false}
+setPlaceMode -place_detail_preroute_as_obs                    ""       ; # {layerNum ...}
+setPlaceMode -place_detail_preserve_routing                   true     ; # {true|false}
+setPlaceMode -place_detail_remove_affected_routing            false    ; # {true|false}
+setPlaceMode -place_detail_swap_eeq_cells                     false    ; # {true|false}
+setPlaceMode -place_detail_use_check_drc                      false    ; # {true|false}
+setPlaceMode -place_detail_use_diffusion_transition_fill      false    ; # {true|false}
+setPlaceMode -place_detail_use_GA_filler_groups               false    ; # {true|false}
+setPlaceMode -place_detail_use_no_diffusion_one_site_filler   false    ; # {true|false}
+setPlaceMode -place_detail_wire_length_opt_effort             medium   ; # {none|medium|high}
+setPlaceMode -place_global_activity_power_driven              false    ; # {false|true}
+setPlaceMode -place_global_activity_power_driven_effort       standard ; # {none|standard|high}
+setPlaceMode -place_global_align_macro                        true     ; # {true|false}
+setPlaceMode -place_global_allow_3d_stack                     false    ; # {true|false}
+setPlaceMode -place_global_auto_blockage_in_channel           none     ; # {none | soft | partial}
+setPlaceMode -place_global_clock_gate_aware                   true     ; # {true|false}
+setPlaceMode -place_global_clock_power_driven                 true     ; # {true|false}
+setPlaceMode -place_global_clock_power_driven_effort          low      ; # {low|standard|high}
+setPlaceMode -place_global_cong_effort                        auto     ; # {low|medium|high|auto}
+setPlaceMode -place_global_cpg_effort                         low      ; # {low|medium|high}
+setPlaceMode -place_global_cpg_file                           ""       ; # macro_loc_ori_file_name
+setPlaceMode -place_global_enable_advanced_pipeline           false    ; # {true|false}
+setPlaceMode -place_global_enable_distributed_place           false    ; # {true|false}
+setPlaceMode -place_global_ignore_scan                        true     ; # {true|1|false|0|auto}
+setPlaceMode -place_global_ignore_spare                       false    ; # {true|false}
+setPlaceMode -place_global_max_density                        -1.000   ; # value
+setPlaceMode -place_global_module_aware_spare                 false    ; # {true|false}
+setPlaceMode -place_global_module_padding                     ""       ; # module|factor
+setPlaceMode -place_global_place_io_pins                      false    ; # {true|false}
+setPlaceMode -place_global_reorder_scan                       true     ; # {true|false}
+setPlaceMode -place_global_soft_guide_strength                low      ; # {low|medium|high}
+setPlaceMode -place_global_timing_effort                      medium   ; # {medium|high}
+setPlaceMode -place_global_uniform_density                    false    ; # {false|true}
+setPlaceMode -place_hard_fence                                true     ; # {true|false}
+setPlaceMode -place_hierarchical_flow                         false    ; # {true|false}
+setPlaceMode -place_opt_post_place_tcl                        ""       ; # tcl_file
+setPlaceMode -place_opt_run_global_place                      full     ; # {none|seed|full}
+setPlaceMode -place_spare_update_timing_graph                 true     ; # {true|false}

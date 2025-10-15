@@ -234,7 +234,7 @@ let NERDTreeIgnore=['\.git$', '\.jpg$', '\.mp4$', '\.ogg$', '\.iso$', '\.pdf$', 
 
 
 " ---------------------------
-" Custom column alignment script with reset option
+" Custom column alignment script with indent preservation
 " Usage:
 " 1. Select lines in visual mode
 " 2. Execute :AlignColumns [column range] [alignment method] [reset]
@@ -314,17 +314,26 @@ function! AlignSelectedColumns(...) range
 
   let max_col = 0
   let split_lines = []
+  let indents = []  " Store original indentation for each line
   
   " Split each line and determine maximum column count
   for line in lines
     " Skip empty lines but keep them in the list
     if line =~ '^\s*$'
       call add(split_lines, [])
+      call add(indents, line)  " Preserve empty line as is
       continue
     endif
     
-    " Use one or more spaces as delimiter
-    let parts = split(line, '\s\+')
+    " Extract leading indentation (preserve original whitespace)
+    let indent = matchstr(line, '^\s*')
+    call add(indents, indent)
+    
+    " Get content without indentation
+    let content = substitute(line, '^\s*', '', '')
+    
+    " Use one or more spaces as delimiter for content
+    let parts = split(content, '\s\+')
     call add(split_lines, parts)
     if len(parts) > max_col
       let max_col = len(parts)
@@ -395,16 +404,18 @@ function! AlignSelectedColumns(...) range
   
   " Process lines - either reset or align
   let new_lines = []
+  let line_idx = 0  " Track index for indents array
   if reset
     " Reset mode - remove extra spaces from specified columns
     for parts in split_lines
+      let indent = indents[line_idx]
       if empty(parts)
-        call add(new_lines, '')
-        continue
+        call add(new_lines, indent)  " Preserve original indent for empty lines
+      else
+        " For reset, use original content without added padding
+        call add(new_lines, indent . join(parts, ' '))
       endif
-      
-      " For reset, we just use original content without added padding
-      call add(new_lines, join(parts, ' '))
+      let line_idx += 1
     endfor
   else
     " Alignment mode - calculate widths and align
@@ -421,8 +432,10 @@ function! AlignSelectedColumns(...) range
     
     " Rebuild lines with alignment
     for parts in split_lines
+      let indent = indents[line_idx]
       if empty(parts)
-        call add(new_lines, '')
+        call add(new_lines, indent)  " Preserve original indent for empty lines
+        let line_idx += 1
         continue
       endif
       
@@ -446,7 +459,8 @@ function! AlignSelectedColumns(...) range
           let new_parts[col] = repeat(' ', left) . current . repeat(' ', right)
         endif
       endfor
-      call add(new_lines, join(new_parts, ' '))
+      call add(new_lines, indent . join(new_parts, ' '))
+      let line_idx += 1
     endfor
   endif
   

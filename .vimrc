@@ -254,7 +254,7 @@ function! AlignSelectedColumns(...) range
 
   " Parse arguments with support for reset option
   let reset = 0
-  let columns = '1-3'
+  let columns = '1-2'
   let alignment = 'l'
   
   " Handle reset as third or even first/second argument
@@ -472,7 +472,7 @@ endfunction
 command! -range -nargs=* AlignColumns <line1>,<line2>call AlignSelectedColumns(<f-args>)
 
 " Visual mode mapping, trigger with <leader>al
-vnoremap <leader>al :AlignColumns<space><CR>
+vnoremap <leader>ta :AlignColumns<space><CR>
 
 
 " ---------------------------
@@ -888,8 +888,6 @@ Jetpack 'junegunn/fzf', { 'do': { -> fzf#install() }}
 Jetpack 'junegunn/fzf.vim'
 Jetpack 'rickhowe/diffchar.vim', { 'as' : 'diffchar'}
 " vnoremap setting : 对齐 Tcl 变量的值（第三个参数），左侧不留空格
-"Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /set\s\+\S\+\s\+/l0<CR>'}
-Jetpack 'godlygeek/tabular', {'hook_post_source': 'vnoremap <leader>ta :%Tabularize /[^;#]\+\s\+/l0l0l0<CR>'}
 Jetpack 'morhetz/gruvbox'
 Jetpack 'luochen1990/rainbow'
 Jetpack 'andymass/vim-matchup'

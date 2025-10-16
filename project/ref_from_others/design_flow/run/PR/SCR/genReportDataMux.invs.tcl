@@ -10,10 +10,11 @@
 # return    : 
 # ref       : link url
 # --------------------------
+source ~/project/scr_sar/tcl/check_and_report_procs/genReport_vt_ratio_count.invs.tcl; # genReport_vt_ratio_count
 proc genReportDataMux {args} {
-  set stage "" ; # init|preplace|preplace_drc|place|cts|postcts|route|postroute|chipfinish
-  set designName ""
-  set outputDir "./"
+  set stage              "" ; # init|preplace|preplace_drc|place|cts|postcts|route|postroute|chipfinish
+  set designName         ""
+  set outputDir          "./"
   set suffixOfOutputFile ""
 
   parse_proc_arguments -args $args opt
@@ -35,10 +36,10 @@ proc genReportDataMux {args} {
       check_timing -varbose > [eval $mapFilename check_timing]
       timeDesign -prePlace -expandedViews -prefix "${designName}.${stage}.setup" -outdir $outputDir
       summaryReport -noHtml -outfile [eval $mapFilename design_summary]
-      invs_
+      genReport_vt_ratio_count -outputFilename [eval $mapFilename vt_ratio_count]
     } 
   }
-
+  
 }
 define_proc_arguments genReportDataMux \
   -info "multiplexer of generating reports and data"\

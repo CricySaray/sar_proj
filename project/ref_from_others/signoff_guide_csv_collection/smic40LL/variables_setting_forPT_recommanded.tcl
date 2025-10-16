@@ -1,0 +1,13 @@
+set report_default_significant_digits 3
+set si_enable_analysis true
+set si_xtalk_double_switching_mode clock_network
+set timing_save_pin_arrival_and_slack true
+set timing_early_launch_at_borrowing_latches false
+set timing_remove_clock_reconvergence_pessimism true
+set timing_clock_gating_propagate_enable true
+set timing_report_use_worst_parallel_cell_arc true
+set timing_cpr_threshold_ps 1
+set read_parasitics_load_locations true
+set delay_calc_waveform_analysis_mode full_design
+set si_xtalk_composite_aggr_mode statistical
+set pba_exhaustive_endpoint_path_limit infinity

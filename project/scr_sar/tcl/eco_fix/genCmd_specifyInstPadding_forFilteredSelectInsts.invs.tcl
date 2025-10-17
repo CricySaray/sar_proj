@@ -8,8 +8,10 @@
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
 # descrip   : Add inst padding to the specified inst, reduce the local density, and prevent the refinePlace from failing to solve all overlap problems.
 # return    : cmds List
+# side_effect : Create a variable at the same level as proc to store the inst list with added padding.
 # ref       : link url
 # --------------------------
+source ../packages/every_any.package.tcl; # every
 proc genCmd_specifyInstPadding_forFilteredSelectedInsts {args} {
   set removeCellTypeRegExps   [list {^TAP}] ; # regexp, support more than one expression
   set removeInstByNameRegExps [list {^WELLTAP}] ; # same as above
@@ -19,7 +21,7 @@ proc genCmd_specifyInstPadding_forFilteredSelectedInsts {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set allSelectedInst_ptrs [dbget selected.insts. -e]
+  set allSelectedInst_ptrs [dbget selected.objType inst -p -e]
   if {$allSelectedInst_ptrs == ""} {
     error "proc genCmd_specifyInstPadding_forFilteredSelectedInsts: check your gui, have no selected insts!!!" 
   } else {
@@ -34,6 +36,7 @@ proc genCmd_specifyInstPadding_forFilteredSelectedInsts {args} {
       error "proc genCmd_specifyInstPadding_forFilteredSelectedInsts: check your input: paddingOfTBLR($paddingOfTBLR) is not meet requirements, which all must be integer number!!!" 
     }
     lassign $paddingOfTBLR top bottom left right
+    uplevel 1 [list set paddingInsts [dbget $allSelectedInst_ptrs.name -e]]
     foreach temp_selectedinst_ptr $allSelectedInst_ptrs {
       set temp_selectedinst_name [dbget $temp_selectedinst_ptr.name]
       lappend cmdsList "specifyInstPad $temp_selectedinst_name -top $top -bottom $bottom -left $left -right $right"

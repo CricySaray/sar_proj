@@ -151,7 +151,9 @@ set vars(metalfill)                                false
 #set vars(lsf,args) ""
 #set vars(rsh,host_list) "XIN-NB01"
 #set vars(distribute_timeout)                       ""
-
+#
+# end check
+#
 #######################################################################
 # Define innovus configure settings ...
 #-----------------------------------------------------------------

@@ -38,6 +38,10 @@ proc genReportDataMux {args} {
       summaryReport -noHtml -outfile [eval $mapFilename design_summary]
       genReport_vt_ratio_count -outputFilename [eval $mapFilename vt_ratio_count]
     } 
+    "preplace" {
+      checkPlace > [eval $mapFilename checkPlace]
+      reportIgnoredNets -outfile [eval $mapFilename reportIgnoredNets]
+    }
   }
   
 }

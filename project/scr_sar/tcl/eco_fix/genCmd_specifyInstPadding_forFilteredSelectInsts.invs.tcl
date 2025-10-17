@@ -36,6 +36,7 @@ proc genCmd_specifyInstPadding_forFilteredSelectedInsts {args} {
       error "proc genCmd_specifyInstPadding_forFilteredSelectedInsts: check your input: paddingOfTBLR($paddingOfTBLR) is not meet requirements, which all must be integer number!!!" 
     }
     lassign $paddingOfTBLR top bottom left right
+    uplevel 1 [list set paddingInsts_ptr $allSelectedInst_ptrs]
     uplevel 1 [list set paddingInsts [dbget $allSelectedInst_ptrs.name -e]]
     foreach temp_selectedinst_ptr $allSelectedInst_ptrs {
       set temp_selectedinst_name [dbget $temp_selectedinst_ptr.name]

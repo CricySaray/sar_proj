@@ -13,9 +13,9 @@
 # TO_WRITE
 source ../flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
 proc genCmd_consolidateLibPaths {args} {
-  set lefListFileName ""
-  set libListDividedByCornersFileName "" ; # This type of lib list file needs to be grouped by corner, and then variable settings for each group should be made through the files generated after grouping.
-  set libListAllCornersFileName "" ; # This type of lib list file does not need to be grouped by corners. They are generally the lib names of IPs, and these lib paths will be added to all corner groups.
+  set lefListFileName                   ""
+  set libListDividedByCornersFileName   "" ; # This type of lib list file needs to be grouped by corner, and then variable settings for each group should be made through the files generated after grouping.
+  set libListAllCornersFileName         "" ; # This type of lib list file does not need to be grouped by corners. They are generally the lib names of IPs, and these lib paths will be added to all corner groups.
   set groupByCornerPythonScriptFileName "" ; # You need to configure in advance the regular expressions and group names used for path matching in each group. You can use two interactive Python scripts for testing.
   set 
   parse_proc_arguments -args $args opt

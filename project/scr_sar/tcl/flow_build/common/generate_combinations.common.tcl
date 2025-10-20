@@ -2,7 +2,7 @@
 # --------------------------
 # author    : sar song
 # date      : 2025/09/28 11:36:05 Sunday
-# label     : 
+# label     : atomic_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : This proc generates all possible combinations of elements from an arbitrary number of input lists (each must be a valid non-empty list) while preserving their 
@@ -124,3 +124,12 @@ if {0} {
   puts "on debug mode:"
   puts [join [generate_combinations $one $tow -connector "-_+_-" $th -debug] \n]
 }
+if {1} {
+  set mode {func scan}
+  set type {setup hold}
+  set volt {0p99v 1p21v 1p1v}
+  set corner {cbest cworst rcbest rcworst typical}
+  set temp {m40c 25c 125c}
+  puts [join [generate_combinations $mode $type $volt $corner $temp -connector "_"] \n]
+}
+

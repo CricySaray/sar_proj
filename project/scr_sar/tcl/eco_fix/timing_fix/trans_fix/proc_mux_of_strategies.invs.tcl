@@ -25,6 +25,9 @@
 #             U004: add judgement for non-consider driver-sinks symbol
 #             U005: need shorten too long string of pinname using stringstore::* -> add this function at fix_trans.invs.tcl
 #             U007: you need split one2one and one2more situation.
+#             U012: If the net length is very short, but the viol value is large, and at the same time the driver size is smaller than the specified driver size 
+#                 (which can be specified separately according to different types, such as ll, lb), it is considered a special case and can be handled specially. 
+#                 Although adding a repeater is not allowed, the drive capacity can be changed.
 # NOTICE    : AT002: When setting the condition for determining whether it is the maximum allowable driver(proc judge_ifHaveBeenLargestCapacityInRange at 
 #                   ./proc_getAllInfo_fromPin.invs.tcl), it needs to correspond to the maximum driver in mapList; if it does not correspond, it will most 
 #                   likely report an error inside the proc.
@@ -136,11 +139,11 @@ proc sliding_rheostat_of_strategies {args} {
         # TODO: A judgment criterion needs to be added: if the distance between two insts is very close and the driver end is logic or sequential, the 
         # driving size of the inserted buffer or inverter needs to be reduced to prevent excessive proximity from causing drv (driver violation) due to large driving strength.
         switch -regexp $driverSinksSymbol {
-          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.2 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refSink" ; set capacityRange {2 12}}
-          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12}}
-          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set ifNeedConsiderThisDriverSinksSymbol 1}
+          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.2 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4 ; set biggestThresholdViolValueWhenU012 -0.05} ; # $lowestDriveCapacityWhenShortNetLenBigViolValue : U012
+          "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refSink" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 2}
+          "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4}
+          "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4}
+          default             {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.5 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 2 ; set ifNeedConsiderThisDriverSinksSymbol 1}
         }
         if {$ifNeedConsiderThisDriverSinksSymbol} { puts "\n$promptWarning : this driverSinksSymbol($driverSinksSymbol) is not considered, you need add it!!!\n" }
         set farThresholdPointOfChangeCapacityAndInsertBuffer {30 130} ; # x: validViolValue , y: netLen
@@ -156,6 +159,7 @@ proc sliding_rheostat_of_strategies {args} {
         set ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer [expr $netLen <= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1] || $netLen >= $netLenLineOfchangeCapacityAndInsertBuffer]; # if this var is 1, you can change capacity(and vt) to fix viol AT001
         set ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity [expr $netLen <= [lindex $crosspointOfChangeVTandCapacity 1] || $netLen >= $netLenLineOfchangeVTandCapacity]; # if this var is 1, you can change vt to fix viol
         er $debug { puts "if inside functions: $ifInsideFunctionRelationshipThresholdOfChangeCapacityAndInsertBuffer" }
+
         ### change VT {forbidden when Fix Long Net Mode}
         if {$ifCanChangeVT && !$ifInFixLongNetMode && $ifInsideFunctionRelationshipThresholdOfChangeVTandCapacity && !$ifHaveBeenFastestVTinRange} {
           er $debug { puts "\n$promptInfo : Congratulations!!! you can fix viol by changing VT\n" }

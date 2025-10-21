@@ -79,6 +79,8 @@ proc fix_trans {args} {
   set rectsRemovedAllCoreInstsBoxes [dbShape -output area $coreInnerBoundaryRects ANDNOT $allCoreInstBoxes]
   if {!$rectsRemovedAllCoreInstsBoxes} {
     error "proc fix_trans: check your invs db: NEED DELETE FILLER!!! Please check whether the inserted filler has not been deleted!"
+  } elseif {$rectsRemovedAllCoreInstsBoxes <= [expr {[dbShape -output area $coreInnerBoundaryRects] * 0.9}]} {
+    error "proc fix_trans: check your invs db: now the current core area density is too high, reaching 90%. It is recommended to check if there are any undeleted fillers in the invs db. If it is confirmed to be correct and further fixing is still needed, set the \$ifForceFixWhenHighCoreAreaDensity switch to 1." 
   }
   set sumFile                                 [eo $suffixFilename "sor_summary_of_result_$suffixFilename.list" "sor_summary_of_result.list" ]
   set cantExtractFile                         [eo $suffixFilename "sor_cantExtract_$suffixFilename.list" "sor_cantExtract.list"]

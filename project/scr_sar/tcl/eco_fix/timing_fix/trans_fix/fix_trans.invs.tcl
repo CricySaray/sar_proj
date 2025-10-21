@@ -215,6 +215,7 @@ proc fix_trans {args} {
         -violPin $driverPin \
         -VTweight $normalNeedVtWeightList \
         -newInstNamePrefix $ecoNewInstNamePrefix \
+        -ifInFixLongNetMode [expr !$canChangeVT && !$canChangeDriveCapacity] \
         -ifCanChangeVTandCapacityInFixLongNetMode 1 \
         -ifCanChangeVTWhenChangeCapacity $canChangeVtWhenChangeCapacity \
         -ifCanChangeVTcapacityWhenAddRepeater $canChangeVtCapacityWhenAddingRepeater \

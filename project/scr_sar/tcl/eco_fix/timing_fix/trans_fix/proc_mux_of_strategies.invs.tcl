@@ -28,6 +28,8 @@
 #             U012: If the net length is very short, but the viol value is large, and at the same time the driver size is smaller than the specified driver size 
 #                 (which can be specified separately according to different types, such as ll, lb), it is considered a special case and can be handled specially. 
 #                 Although adding a repeater is not allowed, the drive capacity can be changed.
+#             U013: Set a minimum value for the minimum driveCapacity on the driver side and a maximum violation trigger threshold. If the violation is greater 
+#                 than this value and the driver size is smaller than the specified value, then changeDriveCapacity.
 # NOTICE    : AT002: When setting the condition for determining whether it is the maximum allowable driver(proc judge_ifHaveBeenLargestCapacityInRange at 
 #                   ./proc_getAllInfo_fromPin.invs.tcl), it needs to correspond to the maximum driver in mapList; if it does not correspond, it will most 
 #                   likely report an error inside the proc.

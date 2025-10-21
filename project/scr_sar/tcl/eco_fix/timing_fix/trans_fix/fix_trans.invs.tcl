@@ -56,9 +56,9 @@ proc fix_trans {args} {
   set violValue_pin_columnIndex                {4 1}
   set canChangeVT                              1
   set canChangeDriveCapacity                   1
-  set canChangeVtWhenChanggCapacity            1
-  set canChangeVTandDriveCapacity              1
+  set canChangeVtWhenChangeCapacity            1
   set canAddRepeater                           1
+  set canChangeVtCapacityWhenAddingRepeater    1
   set maxWidthForString                        80
   set normalNeedVtWeightList                   {{LVT 1} {SVT 3} {HVT 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
   set forbiddenVT                              {} ; # can be list
@@ -212,8 +212,8 @@ proc fix_trans {args} {
         -VTweight $normalNeedVtWeightList \
         -newInstNamePrefix $ecoNewInstNamePrefix \
         -ifCanChangeVTandCapacityInFixLongNetMode 1 \
-        -ifCanChangeVTWhenChangeCapacity $canChangeVtWhenChanggCapacity \
-        -ifCanChangeVTcapacityWhenAddRepeater 1 \
+        -ifCanChangeVTWhenChangeCapacity $canChangeVtWhenChangeCapacity \
+        -ifCanChangeVTcapacityWhenAddRepeater $canChangeVtCapacityWhenAddingRepeater \
         -forbiddenVT $forbiddenVT \
         -driveCapacityRange $driveCapacityRange \
         -ifCanChangeVT $canChangeVT \
@@ -300,9 +300,9 @@ define_proc_arguments fix_trans \
     {-violValue_pin_columnIndex "specify the column of violValue and pinname" AList list optional}
     {-canChangeVT "if it use strategy of changing VT" oneOfString one_of_string {optional value_type {values {0 1}}}}
     {-canChangeDriveCapacity "if it use strategy of changing drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
-    {-canChangeVtWhenChanggCapacity "if can change vt when changing drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
-    {-canChangeVTandDriveCapacity "if it use strategy of changing VT and drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-canChangeVtWhenChangeCapacity "if can change vt when changing drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
     {-canAddRepeater "if it use strategy of adding repeater" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-canChangeVtCapacityWhenAddingRepeater "if can change vt and capacity when adding repeater" oneOfString one_of_string {optional value_type {values {0 1}}}}
     {-maxWidthForString "specify the max width of every string of list" AInteger int optional}
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
     {-forbiddenVT "specify the VT that is forbidden to use" AList list optional}

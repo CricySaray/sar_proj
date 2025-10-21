@@ -56,6 +56,7 @@ proc fix_trans {args} {
   set violValue_pin_columnIndex                {4 1}
   set canChangeVT                              1
   set canChangeDriveCapacity                   1
+  set canChangeVtWhenChanggCapacity            1
   set canChangeVTandDriveCapacity              1
   set canAddRepeater                           1
   set maxWidthForString                        80
@@ -211,7 +212,7 @@ proc fix_trans {args} {
         -VTweight $normalNeedVtWeightList \
         -newInstNamePrefix $ecoNewInstNamePrefix \
         -ifCanChangeVTandCapacityInFixLongNetMode 1 \
-        -ifCanChangeVTWhenChangeCapacity 1 \
+        -ifCanChangeVTWhenChangeCapacity $canChangeVtWhenChanggCapacity \
         -ifCanChangeVTcapacityWhenAddRepeater 1 \
         -forbiddenVT $forbiddenVT \
         -driveCapacityRange $driveCapacityRange \
@@ -297,10 +298,11 @@ define_proc_arguments fix_trans \
     {-file_viol_pin "specify violation filename" AString string required}
     {-columnDelimiter "specify the delimiter of column at file" AString string optional}
     {-violValue_pin_columnIndex "specify the column of violValue and pinname" AList list optional}
-    {-canChangeVT "if it use strategy of changing VT" "" boolean optional}
-    {-canChangeDriveCapacity "if it use strategy of changing drive capacity" "" boolean optional}
-    {-canChangeVTandDriveCapacity "if it use strategy of changing VT and drive capacity" "" boolean optional}
-    {-canAddRepeater "if it use strategy of adding repeater" "" boolean optional}
+    {-canChangeVT "if it use strategy of changing VT" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-canChangeDriveCapacity "if it use strategy of changing drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-canChangeVtWhenChanggCapacity "if can change vt when changing drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-canChangeVTandDriveCapacity "if it use strategy of changing VT and drive capacity" oneOfString one_of_string {optional value_type {values {0 1}}}}
+    {-canAddRepeater "if it use strategy of adding repeater" oneOfString one_of_string {optional value_type {values {0 1}}}}
     {-maxWidthForString "specify the max width of every string of list" AInteger int optional}
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
     {-forbiddenVT "specify the VT that is forbidden to use" AList list optional}

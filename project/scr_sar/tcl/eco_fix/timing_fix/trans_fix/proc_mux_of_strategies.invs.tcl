@@ -141,7 +141,7 @@ proc sliding_rheostat_of_strategies {args} {
         # TODO: A judgment criterion needs to be added: if the distance between two insts is very close and the driver end is logic or sequential, the 
         # driving size of the inserted buffer or inverter needs to be reduced to prevent excessive proximity from causing drv (driver violation) due to large driving strength.
         switch -regexp $driverSinksSymbol {
-          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.2 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4 ; set biggestThresholdViolValueWhenU012 -0.05} ; # $lowestDriveCapacityWhenShortNetLenBigViolValue and $biggestThresholdViolValueWhenU012 : U012
+          "^m?b\[ls\]$"       {set crosspointOfChangeCapacityAndInsertBuffer {15 15} ; set crosspointOfChangeVTandCapacity {4 4} ; set mapList {{0 2} {1 3} {2 4} {3 6} {4 6} {6 8} {8 12}} ; set relativeLoc 0.3 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4 ; set biggestThresholdViolValueWhenU012 -0.05} ; # $lowestDriveCapacityWhenShortNetLenBigViolValue and $biggestThresholdViolValueWhenU012 : U012
           "^m?bb$"            {set crosspointOfChangeCapacityAndInsertBuffer {25 25} ; set crosspointOfChangeVTandCapacity {6 6} ; set mapList {{0 3} {1 3} {2 4} {3 6} {4 6} {6 12} {8 12}} ; set relativeLoc 0.4 ; set addMethod "refSink" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 2 ; set biggestThresholdViolValueWhenU012 -0.04}
           "^m?\[ls\]b$"       {set crosspointOfChangeCapacityAndInsertBuffer {20 20} ; set crosspointOfChangeVTandCapacity {5 5} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4 ; set biggestThresholdViolValueWhenU012 -0.06 }
           "^m?\[ls\]\[ls\]$"  {set crosspointOfChangeCapacityAndInsertBuffer {10 10} ; set crosspointOfChangeVTandCapacity {3 3} ; set mapList {{0 2} {1 2} {2 2} {3 4} {4 4} {6 4} {8 4}} ; set relativeLoc 0.9 ; set addMethod "refDriver" ; set capacityRange {2 12} ; set lowestDriveCapacityWhenShortNetLenBigViolValue 4 ; set biggestThresholdViolValueWhenU012 -0.06}
@@ -216,7 +216,7 @@ proc sliding_rheostat_of_strategies {args} {
               set suffixAddFlag "" ; # U009 for change VT or/and capacity of driver celltype when adding repeater
               catch {unset toChangeVTorCapacityForDriver}
               catch {unset tempCelltypeWhenChangeVT}
-              if {!$ifHaveBeenFastestVTinRange} {
+              if {!$ifHaveBeenFastestVTinRange && $ifCanChangeVTcapacityWhenAddRepeater} {
                 set toChangeVTorCapacityForDriver [strategy_changeVT_withLUT $driverCellType $VTweight 1]
                 if {[operateLUT -type exists -attr [list celltype $toChangeVTorCapacityForDriver]]} {
                   set vtFlagOfFirstCharacter [string cat [string index [operateLUT -type read -attr [list celltype $toChangeVTorCapacityForDriver vt]] 0] "_"]
@@ -245,7 +245,7 @@ proc sliding_rheostat_of_strategies {args} {
                   set driverCapacityFixed [find_nearestNum_atIntegerList $availableDriveCapacityList $driverCapacityFixed 0 1] 
                 }
               }
-              if {!$ifHaveBeenLargestCapacityInRange && $driverCapacityFixed > $driverCapacity} {
+              if {!$ifHaveBeenLargestCapacityInRange && $ifCanChangeVTcapacityWhenAddRepeater && $driverCapacityFixed > $driverCapacity} {
                 if {![info exists toChangeVTorCapacityForDriver]} { set toChangeVTorCapacityForDriver $driverCellType }
                 set toChangeVTorCapacityForDriver [strategy_changeDriveCapacity_withLUT $toChangeVTorCapacityForDriver $driverCapacityFixed {} 0 1] ; # TODO: U006: change strategy according to the sinks capacity ; AT002
                 if {[operateLUT -type exists -attr [list celltype $toChangeVTorCapacityForDriver]]} {

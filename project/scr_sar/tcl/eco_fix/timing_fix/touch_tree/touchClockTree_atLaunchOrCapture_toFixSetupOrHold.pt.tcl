@@ -10,9 +10,11 @@
 # return    : cmds output file
 # ref       : link url
 # --------------------------
+# TO_WRITE
 proc touchClockTree_atLaunchOrCapture_toFixSetupOrHold {args} {
-  set typeToFix "setup" ; # setup|hold
-  set strategy  "launch" ; # launch|capture
+  set typeToFix             "setup" ; # setup|hold
+  set strategy              "launch" ; # launch|capture
+  set ratioOfViolValueToFix 0.7 ; # 0 - 1
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

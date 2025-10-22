@@ -4,7 +4,11 @@
 # date      : 2025/07/13 15:25:05 Sunday
 # label     : task_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
-# descrip   : fix trans
+# descrip   : fix trans/longnet/maxCapacitance
+# special using: songNOTE: When you want to fix the max capacitance, it is recommended to turn off the three switches: canChangeVT, canChangeDriveCapacity, 
+#               and canChangeVtWhenChangeCapacity, which means not allowing only the replacement of vt. When the driving size of your violating 
+#               driver is small, you can allow changeDriveCapacity; if it is large, then turn off the changeDriveCapacity switch. Generally, 
+#               maxCap issues are all one2more problems, so in most cases, you need to addRepeater. Therefore, just addRepeater is also fine.
 # update    : 2025/07/18 19:51:29 Friday
 #           (U001) check if changed cell meet rule that is larger than specified drive capacity(such as X1) at end of fixing looping
 #                  if $largerThanDriveCapacityOfChangedCelltype is X1, so drive capacity of needing to ecoChangeCell must be larger than X1

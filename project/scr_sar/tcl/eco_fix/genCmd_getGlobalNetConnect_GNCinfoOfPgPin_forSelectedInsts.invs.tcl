@@ -12,6 +12,7 @@
 # --------------------------
 proc genCmd_getGlobalNetConnect_GNCinfoOfPgPin_forSelectedInsts {args} {
   set ifClearGNC_atFirst 1
+  set
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

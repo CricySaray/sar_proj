@@ -10,7 +10,7 @@
 # update    : 2025/08/30 19:42:04 Saturday
 #             (U001) change return "0x0:1" to error cmd
 # update    : 2025/10/06 16:05:32 Monday
-#             Added the function of adding an independent PG pin for PG pins without a network connection, and you can choose whether to enable it by yourself
+#             (U002) Added the function of adding an independent PG pin for PG pins without a network connection, and you can choose whether to enable it by yourself
 # TODO      : by the way, dump out edText
 # ref       : link url
 # --------------------------
@@ -145,7 +145,7 @@ if {$debug} {puts "pg term name_rect_area : \n$name_rect_area_biggerThanAreaThre
             foreach name_rect_area $name_rect_area_woNet_D3List_pg {
               if {$ifCreatePGPinForNoNetPGTerm && [regexp [string cat [join $regExpListForPowerNetToCreate "|"] "|" [join $regExpListForGroundNetToCreate "|"]] [lindex $name_rect_area 0]]} {
                 if {[regexp [join $regExpListForPowerNetToCreate "|"] [lindex $name_rect_area 0]]} {
-                  if {[dbget top.nets.name [lindex $name_rect_area 0] -e] == ""} {
+                  if {[dbget top.nets.name [lindex $name_rect_area 0] -e] == ""} { ; # U002
                     set cmd_pg_no_net_createPGPin "addNet -physical -power [lindex $name_rect_area 0]"
                     puts $cmd_pg_no_net_createPGPin ; eval $cmd_pg_no_net_createPGPin
                   }

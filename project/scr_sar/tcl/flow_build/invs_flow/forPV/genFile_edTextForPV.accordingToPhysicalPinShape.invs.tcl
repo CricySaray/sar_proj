@@ -47,6 +47,9 @@ proc genFile_edTextForLVS_forSelectedPhysicalPin {args} {
     lassign $temp_pin_centerpt temp_pin temp_centerpt
     set temp_cmd "add_gui_marker -color $colorOfMarkerForVerify -type $typeOfMarkerForVerify -name edText_autoGen_forVerify_$temp_pin -pt \{$temp_centerpt\}"
   }]
+  if {$suffixOfOutputFileName ne ""} {
+    set outputFileName [string cat $outputFileName "_" $suffixOfOutputFileName]
+  }
   set fo [open $outputFileName w]
   puts $fo [join $contentOfEdText \n]
   close $fo

@@ -9,6 +9,9 @@ alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 alias fa='perl /home/cricy/project/scr_sar/perl/file_archiver.pl'
 alias vfa='vim /home/cricy/project/scr_sar/perl/file_archiver.pl'
 
+alias ef='perl ~/project/scr_sar/perl/encrypt_perlScript.pl'
+alias vef='vim ~/project/scr_sar/perl/encrypt_perlScript.pl'
+
 function ww() {
   ca $1
   wn all_$1
@@ -80,6 +83,8 @@ alias gf='getfattr'
 # config for python3
 export PYTHON_HOME=/usr/bin/python3
 export PATH=$PYTHON_HOME/bin:$PATH
+
+export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 
 #------------------------------------------------
 # config for autojump (github : wting/autojump)

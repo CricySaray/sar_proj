@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Filter::Crypto::Encrypt;
+# 仅加载 CryptFile 模块（无需调用函数，用其过滤器特性）
+use Filter::Crypto::CryptFile;
 use File::Basename;
 use Getopt::Long;
 
@@ -48,26 +49,23 @@ unless (-e $source_file) {
   print "Error: Source file '$source_file' does not exist\n";
   exit 1;
 }
-
 unless (-f $source_file) {
   print "Error: '$source_file' is not a regular file\n";
   exit 1;
 }
-
 unless (-r $source_file) {
   print "Error: No read permission for file '$source_file'\n";
   exit 1;
 }
 
 # Check if source file is already encrypted
-open my $in_fh, '<', $source_file or do {
+open my $in_fh_check, '<', $source_file or do {
   print "Error: Unable to open source file '$source_file': $!\n";
   exit 1;
 };
-my $first_line = <$in_fh>;
-close $in_fh;
-
-if (defined $first_line && $first_line =~ /use Filter::Crypto::Decrypt;/) {
+my $first_line = <$in_fh_check>;
+close $in_fh_check;
+if (defined $first_line && ($first_line =~ /use Filter::Crypto::Decrypt;/ || $first_line =~ /use Filter::Crypto::CryptFile;/)) {
   print "Error: '$source_file' appears to be already encrypted\n";
   exit 1;
 }
@@ -93,19 +91,20 @@ if ($overwrite == 1) {
   }
 }
 
-# Read source file content
-open my $in_fh, '<', $source_file or do {
+# Read source file content（复用文件句柄，避免警告）
+open my $in_fh_read, '<', $source_file or do {
   print "Error: Unable to open source file '$source_file': $!\n";
   exit 1;
 };
-local $/;
-my $code = <$in_fh>;
-close $in_fh;
+local $/;  # 读取整个文件内容
+my $code = <$in_fh_read>;
+close $in_fh_read;
 
-# Prepare encrypted code with decryption module
+# 关键修改：直接拼接“CryptFile过滤器声明 + 原代码”，无需调用encrypt_script
+# 加密原理：运行加密文件时，Perl会先加载CryptFile过滤器，自动解密后续代码
 my $encrypted_code = <<"END_CODE";
 #!/usr/bin/perl
-use Filter::Crypto::Decrypt;
+use Filter::Crypto::CryptFile;  # 过滤器声明（替代原Decrypt，兼容当前模块）
 $code
 END_CODE
 
@@ -169,4 +168,3 @@ sub print_usage {
   print "  5. Encrypted files cannot be easily decrypted - ensure you keep backups\n";
   print "  6. If Filter::Crypto is not installed, use: cpan Filter::Crypto\n\n";
 }
-

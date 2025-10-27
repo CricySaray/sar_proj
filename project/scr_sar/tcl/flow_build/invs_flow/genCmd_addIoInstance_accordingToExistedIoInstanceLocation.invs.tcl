@@ -17,7 +17,7 @@ proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation {args} {
   set instsToRef                    [list] ; # If there are several referenced insts, then several new io instances will be assumed.
   set celltypeToAdd                 ""
   set pstatusOfNewInst              "fixed"
-  set ifUsePhysicalOption           true
+  set ifUsePhysicalOption           false
   set matchListOfOrientAndDirection {{MX top} {MY90 right} {MY bottom}} ; # Determine the direction of the io instance you need to obtain for reference based on this orient, which can help determine how to move and offset.
   set prefixOfNewIoInstance         "_bondpad"
   set typeToChangeOfDirection       "inner" ; # inner|outer|left|right|top|bottom

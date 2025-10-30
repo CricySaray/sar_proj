@@ -17,11 +17,12 @@ proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation {args} {
   set instsToRef                    [list] ; # If there are several referenced insts, then several new io instances will be assumed.
   set celltypeToAdd                 ""
   set pstatusOfNewInst              "fixed"
-  set ifUsePhysicalOption           false
+  set ifUsePhysicalOption           false ; # It is not recommended to use the -physical option to addInst.
   set matchListOfOrientAndDirection {{MX top} {MY90 right} {MY bottom}} ; # Determine the direction of the io instance you need to obtain for reference based on this orient, which can help determine how to move and offset.
   set prefixOfNewIoInstance         "_bondpad"
-  set typeToChangeOfDirection       "inner" ; # inner|outer|left|right|top|bottom
+  set typeToChangeOfDirection       "outer" ; # inner|outer|left|right|top|bottom
   set offsetOfLocation              2
+  set offsetOfInnerOrOuterDirection {-5 18.175} ; # {direction_perpendicular_to_the_inner_or_outer_direction outer_or_inner_dirction } left -> - number, right -> + number, inner/outer: same dirction: + number, different dirction: - number
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -55,8 +56,8 @@ proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation {args} {
                 error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: check your input: orient of inst($temp_inst) is empty!!!" 
               }
             }
+            set temp_orientDirection [lsearch -inline -index 0 $matchListOfOrientAndDirection $temp_orient]
             if {$typeToChangeOfDirection eq "inner"} {
-              set temp_orientDirection [lsearch -inline -index 0 $matchListOfOrientAndDirection $temp_orient]
               if {$temp_orientDirection eq ""} {
                 error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: check your input : orient($temp_orient) of inst($temp_inst) is not found in \$matchListOfOrientAndDirection($matchListOfOrientAndDirection) !!!" 
               } else {
@@ -73,45 +74,20 @@ proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation {args} {
           }]
           set cmdsList [lmap temp_List $instAndLocationAndOrientAndDirectionList {
             lassign $temp_List temp_inst temp_location temp_orient temp_direction
-            if {$typeToChangeOfDirection eq "inner"} {
-              if {$temp_direction eq "left"} {
-                # Since the obtained location is the coordinates of the lower-left corner, there is no need to move in the left direction.
-                lset temp_location 0 [expr [lindex $temp_location 0] - $offsetOfLocation] 
-              } elseif {$temp_direction eq "right"} {
-                # lset temp_location 0 [expr [lindex $temp_location 0] + $offsetOfLocation]
-              } elseif {$temp_direction eq "top"} {
-                # lset temp_location 1 [expr [lindex $temp_location 1] + $offsetOfLocation]
-              } elseif {$temp_direction eq "bottom"} {
-                lset temp_location 1 [expr [lindex $temp_location 1] - $offsetOfLocation] 
-              } else {
-                error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: direction($temp_direction) of inst($temp_inst) is not valid!!!" 
-              }
-            } elseif {$typeToChangeOfDirection eq "outer"} {
-              if {$temp_direction eq "left"} {
-                # Since the obtained location is the coordinates of the lower-left corner, there is no need to move in the left direction.
-                # lset temp_location 0 [expr [lindex $temp_location 0] - $offsetOfLocation] 
-              } elseif {$temp_direction eq "right"} {
-                lset temp_location 0 [expr [lindex $temp_location 0] + $offsetOfLocation]
-              } elseif {$temp_direction eq "top"} {
-                lset temp_location 1 [expr [lindex $temp_location 1] + $offsetOfLocation]
-              } elseif {$temp_direction eq "bottom"} {
-                # lset temp_location 1 [expr [lindex $temp_location 1] - $offsetOfLocation] 
-              } else {
-                error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: direction($temp_direction) of inst($temp_inst) is not valid!!!" 
-              }
+            if {$temp_direction eq "left"} {
+              # Since the obtained location is the coordinates of the lower-left corner, there is no need to move in the left direction.
+              # lset temp_location 0 [expr [lindex $temp_location 0] - [lindex $offsetOfInnerOrOuterDirection 0]] 
+              lset temp_location 1 [expr [lindex $temp_location 1] + [lindex $offsetOfInnerOrOuterDirection 0]]
+            } elseif {$temp_direction eq "right"} {
+              lset temp_location 0 [expr [lindex $temp_location 0] + [lindex $offsetOfInnerOrOuterDirection 1]]
+              lset temp_location 1 [expr [lindex $temp_location 1] + [lindex $offsetOfInnerOrOuterDirection 0]]
+            } elseif {$temp_direction eq "top"} {
+              lset temp_location 0 [expr [lindex $temp_location 0] + [lindex $offsetOfInnerOrOuterDirection 0]]
+              lset temp_location 1 [expr [lindex $temp_location 1] + [lindex $offsetOfInnerOrOuterDirection 1]]
+            } elseif {$temp_direction eq "bottom"} {
+              lset temp_location 0 [expr [lindex $temp_location 0] + [lindex $offsetOfInnerOrOuterDirection 0]]
             } else {
-              if {$temp_direction eq "left"} {
-                lset temp_location 0 [expr [lindex $temp_location 0] - $offsetOfLocation] 
-              } elseif {$temp_direction eq "right"} {
-                lset temp_location 0 [expr [lindex $temp_location 0] + $offsetOfLocation]
-              } elseif {$temp_direction eq "top"} {
-                lset temp_location 1 [expr [lindex $temp_location 1] + $offsetOfLocation]
-              } elseif {$temp_direction eq "bottom"} {
-                lset temp_location 1 [expr [lindex $temp_location 1] - $offsetOfLocation] 
-              } else {
-                error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: direction($temp_direction) of inst($temp_inst) is not valid!!!" 
-              }
-             
+              error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: direction($temp_direction) of inst($temp_inst) is not valid!!!" 
             }
             if {$celltypeToAdd eq ""} {
               error "proc genCmd_addIoInstance_accordingToExistedIoInstanceLocation: check your input: \$celltypeToAdd is invalid!!!" 
@@ -146,4 +122,5 @@ define_proc_arguments genCmd_addIoInstance_accordingToExistedIoInstanceLocation 
     {-prefixOfNewIoInstance "specify the prefix of new io instance" AString string optional}
     {-typeToChangeOfDirection "specify the type of changing location" oneOfString one_of_string {optional value_type {values {inner outer left right top bottom}}}}
     {-offsetOfLocation "specify the offset value of location to change" AFloat float optional}
+    {-offsetOfInnerOrOuterDirection "specify the offset of inner or outer dirction" AList list optional}
   }

@@ -7,12 +7,14 @@
 #   perl -> (format_sub|misc_sub)
 # descrip   : A Perl script enabling team members to share text messages through sequentially numbered files in a shared directory using --push (to add) 
 #             and --pop (to retrieve) commands, with automatic cycling after reaching ID 999 and tracking the latest ID via a .latest_id file.
+#             Added note feature for path annotations and search scope control for --find.
 # usage     : Write the following two lines into .cshrc or .bashrc, and then you can conveniently use this Perl script with push or pop:
 #               alias push "perl ($script_dir)/teamshare.pl --push"
 #               alias pop  "perl ($script_dir)/teamshare.pl --pop"
 #             then source .cshrc/.bashrc
 #             you can run: push "this is a message", to get a id to retrieve message.
 #             run: pop 231, to get message combined with this id.
+#             run: push "path" --note "annotation" to add path with note.
 # ref       : link url
 # --------------------------
 use strict;
@@ -27,6 +29,7 @@ our $fh;
 # Initialize variables (configurable by user)
 my $help = 0;                  # Trigger help page (-h/--help)
 my $msg = "";                  # Message content for --push
+my $note = "";                 # Annotation content for --note (attached to --push) 新增
 my $id;                        # Temporary ID variable
 my $popid = "x";               # Target ID for --pop
 my $line_limit = 20;           # Max lines to display in --pop (truncates beyond this)
@@ -34,14 +37,17 @@ my $dir = "/home/cricy/.teamshare";  # Shared directory path
 my $latest_id_file = "$dir/.latest_id";  # File to track latest message ID
 my $debug = 0;                 # Debug mode (0=disabled, 1=enabled; user can modify default here)
 my $list = 0;                  # Trigger --list function (compact mode: ID: content)
-my $find_pattern = "";         # Regex pattern for --find (search message content) 新增
+my $find_pattern = "";         # Regex pattern for --find (search message content)
+my $search_scope = "both";     # Search scope for --find: content-only/note-only/both (default: both) 新增
 
 # Parse command line options
 GetOptions(
   "push=s" => \$msg,           # Push a new message (required: quoted string)
+  "note=s" => \$note,          # Annotation for --push (optional: quoted string) 新增
   "pop=s" => \$popid,          # Pop a message by 3-digit ID
   "list" => \$list,            # List all stored messages (compact mode: ID: content)
-  "find=s" => \$find_pattern,  # Search messages by regex (compact mode, sorted by ID) 新增
+  "find=s" => \$find_pattern,  # Search messages by regex (compact mode, sorted by ID)
+  "search-scope=s" => \$search_scope,  # Search scope for --find (content-only/note-only/both) 新增
   "help" => \$help,            # Show detailed help (long option)
   "h" => \$help,               # Show detailed help (short option)
   "debug" => \$debug           # Enable debug mode (flag, no value needed)
@@ -50,53 +56,67 @@ GetOptions(
 # Display detailed help page if -h/--help is triggered
 if ($help) {
   print "=============================================================\n";
-  print "Teamshare Perl Script - Share Text Messages Among Team Members\n";
+  print "Teamshare Perl Script - Share Text Messages/Paths Among Team Members\n";
   print "=============================================================\n";
   print "\nUSAGE: $0 [OPTIONS]\n";
   print "\nOPTIONS:\n";
-  print "  --push \"MESSAGE\"   Add a new message to the shared directory.\n";
-  print "                      - MESSAGE: Quoted string (supports multi-line via \\n).\n";
+  print "  --push \"CONTENT\"   Add new content (path/message) to the shared directory.\n";
+  print "                      - CONTENT: Quoted string (supports multi-line via \\n).\n";
   print "                      - Auto-generates a 3-digit ID (000-999) for retrieval.\n";
-  print "\n  --pop ID           Retrieve and display a message by its 3-digit ID.\n";
+  print "                      - Optional: Use --note to add annotation (see --note below).\n";
+  print "\n  --note \"ANNOTATION\"  Add annotation for --push (attached to content, optional).\n";  # 新增
+  print "                      - ANNOTATION: Quoted string (brief description for path/content).\n";  # 新增
+  print "                      - Only valid with --push (ignored with other options).\n";  # 新增
+  print "                      - Stored as \"NOTE:ANNOTATION\" in the file (auto-added to last line).\n";  # 新增
+  print "\n  --pop ID           Retrieve and display content + annotation (if exists) by 3-digit ID.\n";
   print "                      - ID: Exact 3-digit number (e.g., 005, 123, 999; no quotes).\n";
-  print "                      - Truncates output to $line_limit lines (shows total lines if truncated).\n";
-  print "\n  --list             List all stored messages (compact mode, sorted by ID ascending).\n";
-  print "                      - Format: [3-digit ID]: [message content] (one entry per line).\n";
-  print "                      - Multi-line messages are merged into one line (\\n replaced with space).\n";
+  print "                      - Truncates content to $line_limit lines (shows total lines if truncated).\n";
+  print "                      - Annotations are always displayed (never truncated) after content.\n";  # 新增
+  print "\n  --list             List all stored entries (compact mode, sorted by ID ascending).\n";
+  print "                      - No annotation: [3-digit ID]: [content] (one line per entry).\n";
+  print "                      - With annotation: [3-digit ID]: NOTE: [annotation]\n";  # 新增
+  print "                                          [indented content] (two lines per entry).\n";  # 新增
+  print "                      - Multi-line content is merged into one line (\\n replaced with space).\n";
   print "                      - Skips unreadable files and shows a warning for each.\n";
-  print "                      - Shows total message count at the end.\n";
-  print "\n  --find PATTERN      Search messages by Perl-compatible regex pattern (compact mode).\n";  # 新增
-  print "                      - PATTERN: Quoted regex string (follows Perl regex syntax).\n";  # 新增
-  print "                      - Matches message content (multi-line merged to single line).\n";  # 新增
-  print "                      - Case-sensitive by default (add '(?i)' modifier for case-insensitive).\n";  # 新增
-  print "                      - Results sorted by ID ascending (same compact format as --list).\n";  # 新增
+  print "                      - Shows total entry count at the end.\n";
+  print "\n  --find PATTERN      Search entries by Perl-compatible regex pattern (compact mode).\n";
+  print "                      - PATTERN: Quoted regex string (follows Perl regex syntax).\n";
+  print "                      - Results sorted by ID ascending (same format as --list).\n";
+  print "                      - Use --search-scope to control matching range (default: both).\n";  # 新增
+  print "\n  --search-scope SCOPE  Define search range for --find (only valid with --find).\n";  # 新增
+  print "                      - SCOPE options:\n";  # 新增
+  print "                        content-only: Match only the main content (excludes annotations).\n";  # 新增
+  print "                        note-only: Match only annotations (excludes main content).\n";  # 新增
+  print "                        both: Match both content and annotations (default).\n";  # 新增
   print "\n  -h / --help        Show this help page (you're viewing it now).\n";
   print "\n  --debug            Enable debug mode (prints detailed runtime info).\n";
   print "                      - Default: Disabled (set \$debug=1 in script to enable by default).\n";
   print "\n=============================================================\n";
   print "EXAMPLES:\n";
   print "=============================================================\n";
-  print "1. Push a simple message:\n";
-  print "   \$ perl teamshare.pl --push \"Weekly sync: Tomorrow 10 AM (Conference Room B)\"\n";
-  print "   # Output: Message pushed successfully + 3-digit ID (e.g., 042)\n";
-  print "   # Use 'perl teamshare.pl --pop 042' to retrieve later.\n";
-  print "\n2. Push a multi-line message (use \\n for line breaks):\n";
-  print "   \$ perl teamshare.pl --push \"Task Update:\\n- Finish report by EOD\\n- Review PR #123\"\n";
-  print "\n3. Pop a message by ID (e.g., retrieve ID 042) with debug mode:\n";
-  print "   \$ perl teamshare.pl --pop 042 --debug\n";
-  print "   # Output: Debug logs (e.g., file path checks) + full message (truncated if >20 lines).\n";
-  print "\n4. List all messages (compact mode) with debug mode:\n";
-  print "   \$ perl teamshare.pl --list --debug\n";
-  print "   # Output: Debug logs + compact entries (e.g., 042: Weekly sync: Tomorrow 10 AM...).\n";
-  print "\n5. Search messages starting with '/test/path' (regex: ^/test/path):\n";  # 新增
-  print "   \$ perl teamshare.pl --find '^/test/path'\n";
-  print "   # Output: Matched entries (e.g., 056: /test/path/file.txt - urgent review).\n";
-  print "\n6. Case-insensitive search for 'task' (regex modifier (?i)):\n";  # 新增
-  print "   \$ perl teamshare.pl --find '(?i)task'\n";
-  print "   # Output: Matches 'Task', 'TASK', 'task' in any message content.\n";
-  print "\n7. Search messages with PR numbers (regex: PR #\\d+):\n";  # 新增
-  print "   \$ perl teamshare.pl --find 'PR #\\d+' --debug\n";
-  print "   # Output: Debug logs + messages containing 'PR #123', 'PR #45' etc.\n";
+  print "1. Push content without annotation:\n";
+  print "   \$ perl teamshare.pl --push /test/path/file.tcl\n";
+  print "\n2. Push content with annotation (path + note):\n";  # 新增
+  print "   \$ perl teamshare.pl --push /test/path/file.tcl --note \"Urgent fix for PR #123\"\n";
+  print "\n3. Pop entry with annotation (ID 002):\n";  # 新增
+  print "   \$ perl teamshare.pl --pop 002\n";
+  print "   # Output:\n";
+  print "   # /test/path/file.tcl\n";
+  print "   # note: Urgent fix for PR #123\n";
+  print "\n4. List entries (with/without annotations):\n";  # 新增
+  print "   \$ perl teamshare.pl --list\n";
+  print "   # Output:\n";
+  print "   # 001: /test/path/old.tcl\n";
+  print "   # 002: NOTE: Urgent fix for PR #123\n";
+  print "   #         /test/path/file.tcl\n";
+  print "   # 003: NOTE: Weekly backup script\n";
+  print "   #         /home/user/backup.sh\n";
+  print "\n5. Find entries matching content (path starts with /test):\n";
+  print "   \$ perl teamshare.pl --find '^/test' --search-scope content-only\n";
+  print "\n6. Find entries with annotation containing 'PR':\n";  # 新增
+  print "   \$ perl teamshare.pl --find 'PR' --search-scope note-only\n";
+  print "\n7. Find entries matching either content or annotation (default scope):\n";  # 新增
+  print "   \$ perl teamshare.pl --find 'urgent' --search-scope both\n";
   print "\n=============================================================\n";
   print "IMPORTANT NOTES:\n";
   print "=============================================================\n";
@@ -106,16 +126,35 @@ if ($help) {
   print "   leading to failed permission setup (chmod) or unnecessary warnings.\n";
   print "4. Permission Control: Only the script's original owner can set 0777 permissions for pushed files. Other users skip this step to avoid errors.\n";
   print "5. ID Recovery: If \$latest_id_file is corrupted/lost, the script auto-recovers by scanning 3-digit files in \$dir to find the latest ID.\n";
-  print "6. Line Truncation: --pop truncates output to $line_limit lines. A warning is shown if the message has more lines.\n";
-  print "7. Regex Search (--find): Follows Perl regex syntax. Escape special characters (., *, ?, +) with backslash (e.g., \\.txt\$ for .txt ending).\n";  # 新增
-  print "   - Modifiers: Use '(?i)' for case-insensitive, '(?s)' for dotall (dot matches newlines), '(?m)' for multi-line mode.\n";  # 新增
+  print "6. Line Truncation: --pop truncates content to $line_limit lines (annotations are never truncated).\n";
+  print "7. Regex Search (--find): Follows Perl regex syntax. Escape special characters (., *, ?, +) with backslash (e.g., \\.txt\$ for .txt ending).\n";
+  print "   - Modifiers: Use '(?i)' for case-insensitive, '(?s)' for dotall (dot matches newlines), '(?m)' for multi-line mode.\n";
+  print "8. Annotation Rules: --note only works with --push (ignored with other options). Annotations are stored as \"NOTE:ANNOTATION\" in the file's last line.\n";  # 新增
+  print "   - Avoid using \"NOTE:\" as the first 5 characters of your content's last line (may be misidentified as annotation).\n";  # 新增
   exit 0;
 }
 
-# Check mutual exclusivity of --push, --pop, --list, and --find (only one allowed at once) 优化互斥检查
-if ( ($popid ne "x" || $list || length($find_pattern)) && $msg ne "" ) {
-  die "perl teamshare: Error: --push cannot be used with --pop, --list, or --find. Use only one option.\n";
+# --------------------------
+# Validation: Option Dependencies & Mutual Exclusivity
+# --------------------------
+# 1. --note only valid with --push
+if (length($note) && $msg eq "") {
+  die "perl teamshare: Error: --note can only be used with --push (provide content via --push).\n";
 }
+# 2. --search-scope only valid with --find
+if (length($search_scope) && $find_pattern eq "") {
+  die "perl teamshare: Error: --search-scope can only be used with --find (provide pattern via --find).\n";
+}
+# 3. Validate --search-scope values
+my %valid_scopes = ( "content-only" => 1, "note-only" => 1, "both" => 1 );
+if (length($find_pattern) && !exists $valid_scopes{$search_scope}) {
+  die "perl teamshare: Error: Invalid --search-scope value. Use 'content-only', 'note-only', or 'both'.\n";
+}
+# 4. Mutual exclusivity: --push (with optional --note) vs --pop/--list/--find
+if ( ($popid ne "x" || $list || length($find_pattern)) && $msg ne "" ) {
+  die "perl teamshare: Error: --push (with optional --note) cannot be used with --pop, --list, or --find. Use only one option.\n";
+}
+# 5. Mutual exclusivity: --pop/--list/--find
 my $active_options = 0;
 $active_options++ if $popid ne "x";
 $active_options++ if $list;
@@ -132,6 +171,34 @@ unless (-d $dir) {
   } else {
     die "perl teamshare: Error: Teamshare directory $dir does not exist and could not be created: $!\n";
   }
+}
+
+# --------------------------
+# Helper Sub: Parse Content + Note from File
+# Input: Raw file content (string)
+# Output: Hashref { original => main content (arrayref of lines), note => annotation (string/undef) }
+# --------------------------
+sub parse_content_note {  # 新增
+  my ($raw_content) = @_;
+  my @lines = split(/\n/, $raw_content);
+  my $note = undef;
+  my @original;
+
+  # Check if last line is annotation (starts with "NOTE:")
+  if (@lines && $lines[-1] =~ /^NOTE:(.*)/) {
+    $note = $1;
+    $note =~ s/^\s+|\s+$//g;  # Trim whitespace
+    @original = @lines[0 .. $#lines - 1];  # All lines except last (note)
+    print "[DEBUG] Found annotation: '$note'\n" if $debug;
+  } else {
+    @original = @lines;  # No note: all lines are original content
+    print "[DEBUG] No annotation found in content\n" if $debug;
+  }
+
+  return {
+    original => \@original,
+    note => $note
+  };
 }
 
 # Get current latest ID (auto-initialize/recover if .latest_id is missing/corrupted)
@@ -211,40 +278,40 @@ sub update_latest_id {
 }
 
 # --------------------------
-# Push Function: Add new message to shared directory
+# Push Function: Add content + optional note to shared directory
 # --------------------------
 if (length($msg)) {
   my $current_id = get_current_id();
   my $new_id = $current_id + 1;
-  # Cycle ID back to 000 after 999
-  $new_id = 0 if $new_id > 999;
-  my $new_id_str = sprintf("%03d", $new_id);  # Format to 3-digit string (e.g., 5 → 005)
+  $new_id = 0 if $new_id > 999;  # Cycle ID after 999
+  my $new_id_str = sprintf("%03d", $new_id);
   my $file_path = "$dir/$new_id_str";
   
-  print "[DEBUG] Preparing to push message to: $file_path\n" if $debug;
-  # Write message to new file (overwrites if ID is recycled)
+  print "[DEBUG] Preparing to push content to: $file_path\n" if $debug;
+  print "[DEBUG] Push content: '$msg'\n" if $debug;
+  print "[DEBUG] Optional note: " . (length($note) ? "'$note'" : "none") . "\n" if $debug;  # 新增
+  
+  # Write content + optional note (note added as last line with "NOTE:" prefix)
   unless (open $fh, '>', $file_path) {
     die "perl teamshare: Error: Could not open $file_path for writing: $!\n";
   }
   print $fh "$msg";
+  if (length($note)) {
+    print $fh "\nNOTE:$note";  # Add note to last line (newline ensures separation)
+  }
   close $fh;
-  print "[DEBUG] Message written to $file_path successfully\n" if $debug;
+  print "[DEBUG] Content (with optional note) written to $file_path successfully\n" if $debug;
   
-  # --------------------------
-  # Permission Setup: Only allow script owner to set 0777 permissions
-  # WARNING: Do NOT manually copy this script to local paths! This causes UID mismatch between
-  # the script's original owner and the executor, leading to permission warnings or failures.
-  # --------------------------
-  my $current_script_path = $0;  # Path of the currently running script
+  # Permission Setup (unchanged)
+  my $current_script_path = $0;
   my $script_file_stat = stat($current_script_path) or do {
     warn "[WARNING] Failed to get status of script $current_script_path: $!\n" if $debug;
     warn "Warning: Failed to get status of script $current_script_path: $!\n";
-    goto SKIP_PERMISSION_SETUP;  # Skip permission setup if script status is unreadable
+    goto SKIP_PERMISSION_SETUP;
   };
-  my $script_owner_uid = $script_file_stat->uid;  # UID of the script's original owner
-  my $current_executor_uid = $<;  # UID of the current user (Perl built-in variable)
+  my $script_owner_uid = $script_file_stat->uid;
+  my $current_executor_uid = $<;
 
-  # Only execute chmod if current user is the script owner
   if ($current_executor_uid == $script_owner_uid) {
     print "[DEBUG] Current user is script owner. Setting 0777 permissions on $file_path\n" if $debug;
     unless (chmod 0777, $file_path) {
@@ -253,209 +320,245 @@ if (length($msg)) {
   } else {
     print "[DEBUG] Current user is not script owner. Skipping permission setup for $file_path\n" if $debug;
   }
-SKIP_PERMISSION_SETUP:  # Label to skip permission setup safely
+SKIP_PERMISSION_SETUP:
   
-  # Update latest ID after push
+  # Update latest ID
   update_latest_id($new_id);
   
-  # Print success message
-  print "\nMessage pushed successfully:\n";
+  # Print success message (include note if exists)
+  print "\nContent pushed successfully:\n";
   print "---------------------------\n";
   print "$msg\n";
+  if (length($note)) {
+    print "NOTE: $note\n";  # 新增
+  }
   print "---------------------------\n";
   print "Retrieve with: perl $0 --pop $new_id_str\n\n";
 }
 
 # --------------------------
-# Pop Function: Retrieve message by 3-digit ID
+# Pop Function: Retrieve content + note (if exists) by ID
 # --------------------------
 if ($popid ne "x") {
-  # Validate ID format (must be 3 digits)
+  # Validate ID format
   unless ($popid =~ /^\d{3}$/) {
     die "perl teamshare: Error: Invalid ID format. Use a 3-digit number (e.g., 005, 123).\n";
   }
   
   my $file_path = "$dir/$popid";
-  print "[DEBUG] Attempting to pop message from: $file_path\n" if $debug;
+  print "[DEBUG] Attempting to pop entry from: $file_path\n" if $debug;
   
-  # Check if target file exists
+  # Check file existence and read permission
   unless (-e $file_path) {
     die "perl teamshare: Error: ID $popid does not exist in teamshare directory ($dir).\n";
   }
-  
-  # Check if current user has read permission
   unless (-r $file_path) {
     die "perl teamshare: Error: No permission to read ID $popid (file: $file_path).\n";
   }
   
-  # Count total lines in the message file (for truncation warning)
-  my $total_lines = 0;
-  if (open $fh, '<', $file_path) {
-    $total_lines++ while <$fh>;
-    close $fh;
-  } else {
-    die "perl teamshare: Error: Could not read $file_path to count lines: $!\n";
-  }
-  print "[DEBUG] Total lines in $file_path: $total_lines\n" if $debug;
+  # Read raw content and parse into content + note
+  open $fh, '<', $file_path or die "perl teamshare: Error: Could not open $file_path for reading: $!\n";
+  my $raw_content = do { local $/; <$fh> };
+  close $fh;
+  my $parsed = parse_content_note($raw_content);  # 新增：解析内容和标注
+  my $original_ref = $parsed->{original};
+  my $note = $parsed->{note};
+  my $total_lines = scalar(@$original_ref);
   
-  # Read and display message (truncate if over line_limit)
-  print "\nMessage for ID $popid:\n";
+  print "[DEBUG] Total lines in content (excluding note): $total_lines\n" if $debug;
+  
+  # Display content (with truncation)
+  print "\nContent for ID $popid:\n";
   print "---------------------------\n";
   my $displayed_lines = 0;
-  open $fh, '<', $file_path or die "perl teamshare: Error: Could not open $file_path for reading: $!\n";
-  while (my $line = <$fh>) {
-    chomp $line;
+  foreach my $line (@$original_ref) {
     print "$line\n";
     $displayed_lines++;
-    
-    # Stop if line limit is reached
     if ($displayed_lines >= $line_limit) {
       print "[WARNING] Truncated at $line_limit lines (total lines: $total_lines)\n";
       last;
     }
   }
-  close $fh;
+  
+  # Display note if exists (新增)
+  if (defined $note) {
+    print "note: $note\n";
+  }
+  
   print "---------------------------\n\n";
-  print "[DEBUG] Finished displaying message for ID $popid\n" if $debug;
+  print "[DEBUG] Finished displaying entry for ID $popid\n" if $debug;
 }
 
 # --------------------------
-# List Function: Compact mode (ID: content, one line per entry)
+# List Function: Compact mode (supports content + note)
 # --------------------------
 if ($list) {
-  print "[DEBUG] Starting --list function (compact mode): Scanning $dir for 3-digit message files...\n" if $debug;
+  print "[DEBUG] Starting --list function (compact mode): Scanning $dir for 3-digit files...\n" if $debug;
   
-  # Step 1: Scan shared directory for valid 3-digit message files
+  # Scan and collect valid IDs
   my @files = glob("$dir/[0-9][0-9][0-9]");
   my @ids;
   foreach my $file (@files) {
     my $basename = basename($file);
-    if ($basename =~ /^(\d{3})$/) {  # Only keep strict 3-digit files
+    if ($basename =~ /^(\d{3})$/) {
       push @ids, int($1);
-      print "[DEBUG] Found valid message file: $file (ID: $1)\n" if $debug;
+      print "[DEBUG] Found valid entry file: $file (ID: $1)\n" if $debug;
     }
   }
   
-  # Step 2: Sort IDs in numerical ascending order (000 → 001 → ... → 999)
+  # Sort IDs ascending
   @ids = sort { $a <=> $b } @ids;
-  print "[DEBUG] Sorted message IDs: " . (join(", ", @ids) || "None") . "\n" if $debug;
+  print "[DEBUG] Sorted entry IDs: " . (join(", ", @ids) || "None") . "\n" if $debug;
   
-  # Step 3: Handle case with no stored messages
+  # Handle no entries
   unless (@ids) {
-    print "No stored messages found in shared directory ($dir)\n";
-    print "[DEBUG] --list completed: No messages available\n" if $debug;
+    print "No stored entries found in shared directory ($dir)\n";
+    print "[DEBUG] --list completed: No entries available\n" if $debug;
     exit 0;
   }
   
-  # Step 4: Compact display (one line per ID: ID: content)
-  print "\n[Compact Message List (sorted by ID)]\n";
+  # Compact display (supports note)
+  print "\n[Compact Entry List (sorted by ID)]\n";
   foreach my $id (@ids) {
-    my $id_str = sprintf("%03d", $id);  # Format to 3-digit string (e.g., 5 → 005)
+    my $id_str = sprintf("%03d", $id);
     my $file_path = "$dir/$id_str";
     
-    # Skip unreadable files (show warning)
+    # Skip unreadable files
     unless (-r $file_path) {
-      print "[WARNING] No permission to read message ID $id_str (file: $file_path)\n";
+      print "[WARNING] No permission to read entry ID $id_str (file: $file_path)\n";
       print "[DEBUG] Skipping unreadable file: $file_path\n" if $debug;
       next;
     }
     
-    # Read message content and merge into one line (replace \n with space)
+    # Read and parse content + note
     open $fh, '<', $file_path or do {
-      print "[WARNING] Failed to open message ID $id_str: $!\n";
+      print "[WARNING] Failed to open entry ID $id_str: $!\n";
       print "[DEBUG] Failed to open $file_path: $!\n" if $debug;
       next;
     };
-    my $content = do { local $/; <$fh> };  # Read entire file at once
+    my $raw_content = do { local $/; <$fh> };
     close $fh;
+    my $parsed = parse_content_note($raw_content);
+    my $original_ref = $parsed->{original};
+    my $note = $parsed->{note};
     
-    # Clean content: replace newlines with space, remove extra whitespace
-    $content =~ s/\n/ /g;  # Multi-line → single line
-    $content =~ s/\s+/ /g;  # Collapse multiple spaces
-    $content =~ s/^\s+|\s+$//g;  # Trim leading/trailing spaces
+    # Merge original content to single line (same as before)
+    my $content = join(" ", @$original_ref);
+    $content =~ s/\s+/ /g;
+    $content =~ s/^\s+|\s+$//g;
     
-    # Compact output format
-    print "$id_str: $content\n";
+    # Display with/without note (新增格式)
+    if (defined $note) {
+      print "$id_str: NOTE: $note\n";
+      print "        $content\n";  # 8 spaces for indentation (aligned with NOTE content)
+    } else {
+      print "$id_str: $content\n";  # Original format
+    }
   }
   
-  # Step 5: Summary
-  print "\nTotal stored messages: " . scalar(@ids) . "\n";
+  # Summary
+  print "\nTotal stored entries: " . scalar(@ids) . "\n";
   print "[DEBUG] --list function (compact mode) completed successfully\n" if $debug;
   exit 0;
 }
 
 # --------------------------
-# Find Function: Search messages by regex (compact mode, sorted by ID) 新增
+# Find Function: Search with scope control (content/note/both)
 # --------------------------
 if (length($find_pattern)) {
-  print "[DEBUG] Starting --find function (compact mode): Search pattern = '$find_pattern', Scanning $dir for 3-digit message files...\n" if $debug;
+  print "[DEBUG] Starting --find function: Pattern='$find_pattern', Scope='$search_scope', Scanning $dir...\n" if $debug;
   
-  # Validate regex pattern syntax (avoid script crash from invalid regex)
+  # Validate regex pattern
   eval { "" =~ /$find_pattern/ };
   if ($@) {
     die "perl teamshare: Error: Invalid regex pattern '$find_pattern': $@\n";
   }
   
-  # Step 1: Scan and match messages
+  # Scan and match entries
   my @files = glob("$dir/[0-9][0-9][0-9]");
-  my @matched_entries;  # Store { id, id_str, content } for matched messages
+  my @matched_entries;
   
   foreach my $file (@files) {
     my $basename = basename($file);
     if ($basename =~ /^(\d{3})$/) {
       my $id = int($1);
       my $id_str = $basename;
-      print "[DEBUG] Checking message ID $id_str (file: $file)\n" if $debug;
+      print "[DEBUG] Checking entry ID $id_str (file: $file)\n" if $debug;
       
-      # Skip unreadable files (same as --list)
+      # Skip unreadable files
       unless (-r $file) {
-        print "[WARNING] No permission to read message ID $id_str (file: $file)\n";
+        print "[WARNING] No permission to read entry ID $id_str (file: $file)\n";
         print "[DEBUG] Skipping unreadable file: $file\n" if $debug;
         next;
       }
       
-      # Read and clean content (same compact processing as --list)
+      # Read and parse content + note
       open $fh, '<', $file or do {
-        print "[WARNING] Failed to open message ID $id_str: $!\n";
+        print "[WARNING] Failed to open entry ID $id_str: $!\n";
         print "[DEBUG] Failed to open $file: $!\n" if $debug;
         next;
       };
-      my $content = do { local $/; <$fh> };  # Read entire file
+      my $raw_content = do { local $/; <$fh> };
       close $fh;
+      my $parsed = parse_content_note($raw_content);
+      my $original_ref = $parsed->{original};
+      my $note = $parsed->{note};
       
-      $content =~ s/\n/ /g;    # Merge multi-line to single line
-      $content =~ s/\s+/ /g;   # Collapse extra spaces
-      $content =~ s/^\s+|\s+$//g;  # Trim whitespace
+      # Prepare content for matching (merge to single line)
+      my $content = join(" ", @$original_ref);
+      $content =~ s/\s+/ /g;
+      $content =~ s/^\s+|\s+$//g;
       
-      # Regex match (case-sensitive by default)
-      if ($content =~ /$find_pattern/) {
-        push @matched_entries, { id => $id, id_str => $id_str, content => $content };
-        print "[DEBUG] Matched ID $id_str: Content matches pattern '$find_pattern'\n" if $debug;
-      } else {
-        print "[DEBUG] No match for ID $id_str: Content does not match pattern '$find_pattern'\n" if $debug;
+      # Match based on search scope (新增逻辑)
+      my $is_match = 0;
+      if ($search_scope eq "content-only") {
+        $is_match = 1 if $content =~ /$find_pattern/;
+        print "[DEBUG] ID $id_str: Content match check: " . ($is_match ? "yes" : "no") . "\n" if $debug;
+      } elsif ($search_scope eq "note-only") {
+        $is_match = 1 if (defined $note && $note =~ /$find_pattern/);
+        print "[DEBUG] ID $id_str: Note match check: " . ($is_match ? "yes" : "no") . "\n" if $debug;
+      } elsif ($search_scope eq "both") {
+        $is_match = 1 if ($content =~ /$find_pattern/) || (defined $note && $note =~ /$find_pattern/);
+        print "[DEBUG] ID $id_str: Content/note match check: " . ($is_match ? "yes" : "no") . "\n" if $debug;
+      }
+      
+      # Collect matched entry
+      if ($is_match) {
+        push @matched_entries, {
+          id => $id,
+          id_str => $id_str,
+          content => $content,
+          note => $note
+        };
+        print "[DEBUG] ID $id_str: Added to matched entries\n" if $debug;
       }
     }
   }
   
-  # Step 2: Sort matched entries by ID ascending
+  # Sort matched entries by ID
   @matched_entries = sort { $a->{id} <=> $b->{id} } @matched_entries;
   print "[DEBUG] Sorted matched IDs: " . (join(", ", map { $_->{id_str} } @matched_entries) || "None") . "\n" if $debug;
   
-  # Step 3: Handle no matching messages
+  # Handle no matches
   unless (@matched_entries) {
-    print "No messages matched regex pattern '$find_pattern' in shared directory ($dir)\n";
-    print "[DEBUG] --find completed: No matching messages\n" if $debug;
+    print "No entries matched regex pattern '$find_pattern' (scope: $search_scope) in shared directory ($dir)\n";
+    print "[DEBUG] --find completed: No matching entries\n" if $debug;
     exit 0;
   }
   
-  # Step 4: Compact display of matched results (same format as --list)
-  print "\n[Matched Messages (regex: '$find_pattern', sorted by ID)]\n";
+  # Display matched entries (same format as --list)
+  print "\n[Matched Entries (Pattern: '$find_pattern', Scope: '$search_scope', sorted by ID)]\n";
   foreach my $entry (@matched_entries) {
-    print "$entry->{id_str}: $entry->{content}\n";
+    if (defined $entry->{note}) {
+      print "$entry->{id_str}: NOTE: $entry->{note}\n";
+      print "        $entry->{content}\n";
+    } else {
+      print "$entry->{id_str}: $entry->{content}\n";
+    }
   }
   
-  # Step 5: Summary
-  print "\nTotal matched messages: " . scalar(@matched_entries) . "\n";
-  print "[DEBUG] --find function (compact mode) completed successfully\n" if $debug;
+  # Summary
+  print "\nTotal matched entries: " . scalar(@matched_entries) . "\n";
+  print "[DEBUG] --find function completed successfully\n" if $debug;
   exit 0;
 }

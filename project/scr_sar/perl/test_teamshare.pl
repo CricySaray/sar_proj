@@ -38,7 +38,8 @@ my $latest_id_file = "$dir/.latest_id";  # File to track latest message ID
 my $debug = 0;                 # Debug mode (0=disabled, 1=enabled; user can modify default here)
 my $list = 0;                  # Trigger --list function (compact mode: ID: content)
 my $find_pattern = "";         # Regex pattern for --find (search message content)
-my $search_scope = "both";     # Search scope for --find: content-only/note-only/both (default: both) 新增
+my $search_scope;              # 初始值设为undef，不预设默认值
+my $search_scope_specified = 0;# 标记用户是否主动指定了--search-scope 新增
 
 # Parse command line options
 GetOptions(
@@ -47,11 +48,21 @@ GetOptions(
   "pop=s" => \$popid,          # Pop a message by 3-digit ID
   "list" => \$list,            # List all stored messages (compact mode: ID: content)
   "find=s" => \$find_pattern,  # Search messages by regex (compact mode, sorted by ID)
-  "search-scope=s" => \$search_scope,  # Search scope for --find (content-only/note-only/both) 新增
+  # 新增回调函数：标记用户是否主动指定--search-scope
+  "search-scope=s" => sub { 
+    $search_scope = $_[1]; 
+    $search_scope_specified = 1; 
+  },
   "help" => \$help,            # Show detailed help (long option)
   "h" => \$help,               # Show detailed help (short option)
   "debug" => \$debug           # Enable debug mode (flag, no value needed)
 ) or die "perl teamshare: Error in command line arguments. Use -h or --help for usage.\n";
+
+# 设置--search-scope默认值：仅当用户未指定且使用--find时生效
+if (length($find_pattern) && !defined $search_scope) {
+  $search_scope = "both";
+  print "[DEBUG] --search-scope not specified, using default: $search_scope\n" if $debug;
+}
 
 # Display detailed help page if -h/--help is triggered
 if ($help) {
@@ -64,30 +75,31 @@ if ($help) {
   print "                      - CONTENT: Quoted string (supports multi-line via \\n).\n";
   print "                      - Auto-generates a 3-digit ID (000-999) for retrieval.\n";
   print "                      - Optional: Use --note to add annotation (see --note below).\n";
-  print "\n  --note \"ANNOTATION\"  Add annotation for --push (attached to content, optional).\n";  # 新增
-  print "                      - ANNOTATION: Quoted string (brief description for path/content).\n";  # 新增
-  print "                      - Only valid with --push (ignored with other options).\n";  # 新增
-  print "                      - Stored as \"NOTE:ANNOTATION\" in the file (auto-added to last line).\n";  # 新增
+  print "\n  --note \"ANNOTATION\"  Add annotation for --push (attached to content, optional).\n";
+  print "                      - ANNOTATION: Quoted string (brief description for path/content).\n";
+  print "                      - Only valid with --push (ignored with other options).\n";
+  print "                      - Stored as \"NOTE:ANNOTATION\" in the file (auto-added to last line).\n";
   print "\n  --pop ID           Retrieve and display content + annotation (if exists) by 3-digit ID.\n";
   print "                      - ID: Exact 3-digit number (e.g., 005, 123, 999; no quotes).\n";
   print "                      - Truncates content to $line_limit lines (shows total lines if truncated).\n";
-  print "                      - Annotations are always displayed (never truncated) after content.\n";  # 新增
+  print "                      - Annotations are always displayed (never truncated) after content.\n";
   print "\n  --list             List all stored entries (compact mode, sorted by ID ascending).\n";
   print "                      - No annotation: [3-digit ID]: [content] (one line per entry).\n";
-  print "                      - With annotation: [3-digit ID]: NOTE: [annotation]\n";  # 新增
-  print "                                          [indented content] (two lines per entry).\n";  # 新增
+  print "                      - With annotation: [3-digit ID]: NOTE: [annotation]\n";
+  print "                                          [indented content] (two lines per entry).\n";
   print "                      - Multi-line content is merged into one line (\\n replaced with space).\n";
   print "                      - Skips unreadable files and shows a warning for each.\n";
   print "                      - Shows total entry count at the end.\n";
   print "\n  --find PATTERN      Search entries by Perl-compatible regex pattern (compact mode).\n";
   print "                      - PATTERN: Quoted regex string (follows Perl regex syntax).\n";
   print "                      - Results sorted by ID ascending (same format as --list).\n";
-  print "                      - Use --search-scope to control matching range (default: both).\n";  # 新增
-  print "\n  --search-scope SCOPE  Define search range for --find (only valid with --find).\n";  # 新增
-  print "                      - SCOPE options:\n";  # 新增
-  print "                        content-only: Match only the main content (excludes annotations).\n";  # 新增
-  print "                        note-only: Match only annotations (excludes main content).\n";  # 新增
-  print "                        both: Match both content and annotations (default).\n";  # 新增
+  print "                      - Use --search-scope to control matching range (default: both).\n";
+  print "\n  --search-scope SCOPE  Define search range for --find (only valid with --find).\n";
+  print "                      - SCOPE options:\n";
+  print "                        content-only: Match only the main content (excludes annotations).\n";
+  print "                        note-only: Match only annotations (excludes main content).\n";
+  print "                        both: Match both content and annotations (default).\n";
+  print "                      - Ignored if --find is not used.\n";  # 新增说明：未使用--find时忽略
   print "\n  -h / --help        Show this help page (you're viewing it now).\n";
   print "\n  --debug            Enable debug mode (prints detailed runtime info).\n";
   print "                      - Default: Disabled (set \$debug=1 in script to enable by default).\n";
@@ -96,14 +108,14 @@ if ($help) {
   print "=============================================================\n";
   print "1. Push content without annotation:\n";
   print "   \$ perl teamshare.pl --push /test/path/file.tcl\n";
-  print "\n2. Push content with annotation (path + note):\n";  # 新增
+  print "\n2. Push content with annotation (path + note):\n";
   print "   \$ perl teamshare.pl --push /test/path/file.tcl --note \"Urgent fix for PR #123\"\n";
-  print "\n3. Pop entry with annotation (ID 002):\n";  # 新增
+  print "\n3. Pop entry with annotation (ID 002):\n";
   print "   \$ perl teamshare.pl --pop 002\n";
   print "   # Output:\n";
   print "   # /test/path/file.tcl\n";
   print "   # note: Urgent fix for PR #123\n";
-  print "\n4. List entries (with/without annotations):\n";  # 新增
+  print "\n4. List entries (with/without annotations):\n";
   print "   \$ perl teamshare.pl --list\n";
   print "   # Output:\n";
   print "   # 001: /test/path/old.tcl\n";
@@ -113,10 +125,10 @@ if ($help) {
   print "   #         /home/user/backup.sh\n";
   print "\n5. Find entries matching content (path starts with /test):\n";
   print "   \$ perl teamshare.pl --find '^/test' --search-scope content-only\n";
-  print "\n6. Find entries with annotation containing 'PR':\n";  # 新增
+  print "\n6. Find entries with annotation containing 'PR':\n";
   print "   \$ perl teamshare.pl --find 'PR' --search-scope note-only\n";
-  print "\n7. Find entries matching either content or annotation (default scope):\n";  # 新增
-  print "   \$ perl teamshare.pl --find 'urgent' --search-scope both\n";
+  print "\n7. Find entries matching either content or annotation (default scope):\n";
+  print "   \$ perl teamshare.pl --find 'urgent'\n";  # 省略--search-scope，使用默认both
   print "\n=============================================================\n";
   print "IMPORTANT NOTES:\n";
   print "=============================================================\n";
@@ -129,8 +141,9 @@ if ($help) {
   print "6. Line Truncation: --pop truncates content to $line_limit lines (annotations are never truncated).\n";
   print "7. Regex Search (--find): Follows Perl regex syntax. Escape special characters (., *, ?, +) with backslash (e.g., \\.txt\$ for .txt ending).\n";
   print "   - Modifiers: Use '(?i)' for case-insensitive, '(?s)' for dotall (dot matches newlines), '(?m)' for multi-line mode.\n";
-  print "8. Annotation Rules: --note only works with --push (ignored with other options). Annotations are stored as \"NOTE:ANNOTATION\" in the file's last line.\n";  # 新增
-  print "   - Avoid using \"NOTE:\" as the first 5 characters of your content's last line (may be misidentified as annotation).\n";  # 新增
+  print "8. Annotation Rules: --note only works with --push (ignored with other options). Annotations are stored as \"NOTE:ANNOTATION\" in the file's last line.\n";
+  print "   - Avoid using \"NOTE:\" as the first 5 characters of your content's last line (may be misidentified as annotation).\n";
+  print "9. --search-scope: Only takes effect with --find (ignored by other options). Uses 'both' as default if not specified.\n";  # 新增说明
   exit 0;
 }
 
@@ -141,11 +154,11 @@ if ($help) {
 if (length($note) && $msg eq "") {
   die "perl teamshare: Error: --note can only be used with --push (provide content via --push).\n";
 }
-# 2. --search-scope only valid with --find
-if (length($search_scope) && $find_pattern eq "") {
+# 2. --search-scope only valid with --find (仅当用户主动指定时才校验) 核心修改
+if ($search_scope_specified && $find_pattern eq "") {
   die "perl teamshare: Error: --search-scope can only be used with --find (provide pattern via --find).\n";
 }
-# 3. Validate --search-scope values
+# 3. Validate --search-scope values (仅当使用--find时才校验) 核心修改
 my %valid_scopes = ( "content-only" => 1, "note-only" => 1, "both" => 1 );
 if (length($find_pattern) && !exists $valid_scopes{$search_scope}) {
   die "perl teamshare: Error: Invalid --search-scope value. Use 'content-only', 'note-only', or 'both'.\n";
@@ -178,7 +191,7 @@ unless (-d $dir) {
 # Input: Raw file content (string)
 # Output: Hashref { original => main content (arrayref of lines), note => annotation (string/undef) }
 # --------------------------
-sub parse_content_note {  # 新增
+sub parse_content_note {
   my ($raw_content) = @_;
   my @lines = split(/\n/, $raw_content);
   my $note = undef;
@@ -289,7 +302,7 @@ if (length($msg)) {
   
   print "[DEBUG] Preparing to push content to: $file_path\n" if $debug;
   print "[DEBUG] Push content: '$msg'\n" if $debug;
-  print "[DEBUG] Optional note: " . (length($note) ? "'$note'" : "none") . "\n" if $debug;  # 新增
+  print "[DEBUG] Optional note: " . (length($note) ? "'$note'" : "none") . "\n" if $debug;
   
   # Write content + optional note (note added as last line with "NOTE:" prefix)
   unless (open $fh, '>', $file_path) {
@@ -330,7 +343,7 @@ SKIP_PERMISSION_SETUP:
   print "---------------------------\n";
   print "$msg\n";
   if (length($note)) {
-    print "NOTE: $note\n";  # 新增
+    print "NOTE: $note\n";
   }
   print "---------------------------\n";
   print "Retrieve with: perl $0 --pop $new_id_str\n\n";
@@ -360,7 +373,7 @@ if ($popid ne "x") {
   open $fh, '<', $file_path or die "perl teamshare: Error: Could not open $file_path for reading: $!\n";
   my $raw_content = do { local $/; <$fh> };
   close $fh;
-  my $parsed = parse_content_note($raw_content);  # 新增：解析内容和标注
+  my $parsed = parse_content_note($raw_content);
   my $original_ref = $parsed->{original};
   my $note = $parsed->{note};
   my $total_lines = scalar(@$original_ref);
@@ -380,7 +393,7 @@ if ($popid ne "x") {
     }
   }
   
-  # Display note if exists (新增)
+  # Display note if exists
   if (defined $note) {
     print "note: $note\n";
   }
@@ -447,7 +460,7 @@ if ($list) {
     $content =~ s/\s+/ /g;
     $content =~ s/^\s+|\s+$//g;
     
-    # Display with/without note (新增格式)
+    # Display with/without note
     if (defined $note) {
       print "$id_str: NOTE: $note\n";
       print "        $content\n";  # 8 spaces for indentation (aligned with NOTE content)
@@ -509,7 +522,7 @@ if (length($find_pattern)) {
       $content =~ s/\s+/ /g;
       $content =~ s/^\s+|\s+$//g;
       
-      # Match based on search scope (新增逻辑)
+      # Match based on search scope
       my $is_match = 0;
       if ($search_scope eq "content-only") {
         $is_match = 1 if $content =~ /$find_pattern/;

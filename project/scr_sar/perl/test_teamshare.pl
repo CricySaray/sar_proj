@@ -33,13 +33,15 @@ my $line_limit = 20;           # Max lines to display in --pop (truncates beyond
 my $dir = "/home/cricy/.teamshare";  # Shared directory path
 my $latest_id_file = "$dir/.latest_id";  # File to track latest message ID
 my $debug = 0;                 # Debug mode (0=disabled, 1=enabled; user can modify default here)
+my $list = 0;                  # Trigger --list function (show all messages sorted by ID)
 
 # Parse command line options
 GetOptions(
   "push=s" => \$msg,           # Push a new message (required: quoted string)
   "pop=s" => \$popid,          # Pop a message by 3-digit ID
+  "list" => \$list,            # List all stored messages (sorted by ID ascending)
   "help" => \$help,            # Show detailed help (long option)
-  "h" => \$help,               # Show detailed help (short option,新增)
+  "h" => \$help,               # Show detailed help (short option)
   "debug" => \$debug           # Enable debug mode (flag, no value needed)
 ) or die "perl teamshare: Error in command line arguments. Use -h or --help for usage.\n";
 
@@ -56,6 +58,10 @@ if ($help) {
   print "\n  --pop ID           Retrieve and display a message by its 3-digit ID.\n";
   print "                      - ID: Exact 3-digit number (e.g., 005, 123, 999; no quotes).\n";
   print "                      - Truncates output to $line_limit lines (shows total lines if truncated).\n";
+  print "\n  --list             List all stored messages sorted by 3-digit ID (ascending).\n";
+  print "                      - Displays full content of each message (no line truncation).\n";
+  print "                      - Skips unreadable files and shows a warning for each.\n";
+  print "                      - Shows total message count at the end.\n";
   print "\n  -h / --help        Show this help page (you're viewing it now).\n";
   print "\n  --debug            Enable debug mode (prints detailed runtime info).\n";
   print "                      - Default: Disabled (set \$debug=1 in script to enable by default).\n";
@@ -71,6 +77,9 @@ if ($help) {
   print "\n3. Pop a message by ID (e.g., retrieve ID 042) with debug mode:\n";
   print "   \$ perl teamshare.pl --pop 042 --debug\n";
   print "   # Output: Debug logs (e.g., file path checks) + full message (truncated if >20 lines).\n";
+  print "\n4. List all stored messages (sorted by ID) with debug mode:\n";
+  print "   \$ perl teamshare.pl --list --debug\n";
+  print "   # Output: Debug logs (file scan, ID sorting) + all messages (ID 000 → 999 order).\n";
   print "\n=============================================================\n";
   print "IMPORTANT NOTES:\n";
   print "=============================================================\n";
@@ -84,9 +93,12 @@ if ($help) {
   exit 0;
 }
 
-# Check mutual exclusivity of --push and --pop (cannot use both at once)
-if ($popid ne "x" && $msg ne "") {
-  die "perl teamshare: Error: --push and --pop are mutually exclusive. Use only one option.\n";
+# Check mutual exclusivity of --push, --pop, and --list (only one allowed at once)
+if ( ($popid ne "x" || $list) && $msg ne "" ) {
+  die "perl teamshare: Error: --push cannot be used with --pop or --list. Use only one option.\n";
+}
+if ( $popid ne "x" && $list ) {
+  die "perl teamshare: Error: --pop and --list are mutually exclusive. Use only one option.\n";
 }
 
 # Validate shared directory (create if missing)
@@ -282,4 +294,74 @@ if ($popid ne "x") {
   close $fh;
   print "---------------------------\n\n";
   print "[DEBUG] Finished displaying message for ID $popid\n" if $debug;
+}
+
+# --------------------------
+# List Function: Show all stored messages sorted by 3-digit ID (ascending)
+# --------------------------
+if ($list) {
+  print "[DEBUG] Starting --list function: Scanning $dir for 3-digit message files...\n" if $debug;
+  
+  # Step 1: Scan shared directory for valid 3-digit message files
+  my @files = glob("$dir/[0-9][0-9][0-9]");
+  my @ids;
+  foreach my $file (@files) {
+    my $basename = basename($file);
+    if ($basename =~ /^(\d{3})$/) {  # Only keep strict 3-digit files
+      push @ids, int($1);
+      print "[DEBUG] Found valid message file: $file (ID: $1)\n" if $debug;
+    }
+  }
+  
+  # Step 2: Sort IDs in numerical ascending order (000 → 001 → ... → 999)
+  @ids = sort { $a <=> $b } @ids;
+  print "[DEBUG] Sorted message IDs: " . (join(", ", @ids) || "None") . "\n" if $debug;
+  
+  # Step 3: Handle case with no stored messages
+  unless (@ids) {
+    print "No stored messages found in shared directory ($dir)\n";
+    print "[DEBUG] --list completed: No messages available\n" if $debug;
+    exit 0;
+  }
+  
+  # Step 4: Display all messages with ID sorting
+  print "\n=============================================================\n";
+  print "All Stored Messages (Sorted by ID Ascending)\n";
+  print "=============================================================\n";
+  
+  foreach my $id (@ids) {
+    my $id_str = sprintf("%03d", $id);  # Format to 3-digit string (e.g., 5 → 005)
+    my $file_path = "$dir/$id_str";
+    
+    # Print ID separator
+    print "\n[Message ID: $id_str]\n";
+    print "---------------------------\n";
+    
+    # Skip unreadable files (show warning)
+    unless (-r $file_path) {
+      print "[WARNING] No permission to read message ID $id_str (file: $file_path)\n";
+      print "[DEBUG] Skipping unreadable file: $file_path\n" if $debug;
+      next;
+    }
+    
+    # Read and display full message (no line truncation)
+    open $fh, '<', $file_path or do {
+      print "[WARNING] Failed to open message ID $id_str: $!\n";
+      print "[DEBUG] Failed to open $file_path: $!\n" if $debug;
+      next;
+    };
+    while (my $line = <$fh>) {
+      chomp $line;
+      print "$line\n";
+    }
+    close $fh;
+    print "---------------------------\n";
+  }
+  
+  # Print summary
+  print "\n=============================================================\n";
+  print "Total stored messages: " . scalar(@ids) . "\n";
+  print "=============================================================\n\n";
+  print "[DEBUG] --list function completed successfully\n" if $debug;
+  exit 0;
 }

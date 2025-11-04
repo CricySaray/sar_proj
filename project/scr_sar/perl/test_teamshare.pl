@@ -39,7 +39,7 @@ my $list = 0;                  # Trigger --list function (show all messages sort
 GetOptions(
   "push=s" => \$msg,           # Push a new message (required: quoted string)
   "pop=s" => \$popid,          # Pop a message by 3-digit ID
-  "list" => \$list,            # List all stored messages (sorted by ID ascending)
+  "list" => \$list,            # List all stored messages (compact mode: ID: content)
   "help" => \$help,            # Show detailed help (long option)
   "h" => \$help,               # Show detailed help (short option)
   "debug" => \$debug           # Enable debug mode (flag, no value needed)
@@ -58,8 +58,9 @@ if ($help) {
   print "\n  --pop ID           Retrieve and display a message by its 3-digit ID.\n";
   print "                      - ID: Exact 3-digit number (e.g., 005, 123, 999; no quotes).\n";
   print "                      - Truncates output to $line_limit lines (shows total lines if truncated).\n";
-  print "\n  --list             List all stored messages sorted by 3-digit ID (ascending).\n";
-  print "                      - Displays full content of each message (no line truncation).\n";
+  print "\n  --list             List all stored messages (compact mode, sorted by ID ascending).\n";
+  print "                      - Format: [3-digit ID]: [message content] (one entry per line).\n";
+  print "                      - Multi-line messages are merged into one line (\\n replaced with space).\n";
   print "                      - Skips unreadable files and shows a warning for each.\n";
   print "                      - Shows total message count at the end.\n";
   print "\n  -h / --help        Show this help page (you're viewing it now).\n";
@@ -77,9 +78,9 @@ if ($help) {
   print "\n3. Pop a message by ID (e.g., retrieve ID 042) with debug mode:\n";
   print "   \$ perl teamshare.pl --pop 042 --debug\n";
   print "   # Output: Debug logs (e.g., file path checks) + full message (truncated if >20 lines).\n";
-  print "\n4. List all stored messages (sorted by ID) with debug mode:\n";
+  print "\n4. List all messages (compact mode) with debug mode:\n";
   print "   \$ perl teamshare.pl --list --debug\n";
-  print "   # Output: Debug logs (file scan, ID sorting) + all messages (ID 000 → 999 order).\n";
+  print "   # Output: Debug logs + compact entries (e.g., 042: Weekly sync: Tomorrow 10 AM...).\n";
   print "\n=============================================================\n";
   print "IMPORTANT NOTES:\n";
   print "=============================================================\n";
@@ -297,10 +298,10 @@ if ($popid ne "x") {
 }
 
 # --------------------------
-# List Function: Show all stored messages sorted by 3-digit ID (ascending)
+# List Function: Compact mode (ID: content, one line per entry)
 # --------------------------
 if ($list) {
-  print "[DEBUG] Starting --list function: Scanning $dir for 3-digit message files...\n" if $debug;
+  print "[DEBUG] Starting --list function (compact mode): Scanning $dir for 3-digit message files...\n" if $debug;
   
   # Step 1: Scan shared directory for valid 3-digit message files
   my @files = glob("$dir/[0-9][0-9][0-9]");
@@ -324,18 +325,11 @@ if ($list) {
     exit 0;
   }
   
-  # Step 4: Display all messages with ID sorting
-  print "\n=============================================================\n";
-  print "All Stored Messages (Sorted by ID Ascending)\n";
-  print "=============================================================\n";
-  
+  # Step 4: Compact display (one line per ID: ID: content)
+  print "\n[Compact Message List (sorted by ID)]\n";
   foreach my $id (@ids) {
     my $id_str = sprintf("%03d", $id);  # Format to 3-digit string (e.g., 5 → 005)
     my $file_path = "$dir/$id_str";
-    
-    # Print ID separator
-    print "\n[Message ID: $id_str]\n";
-    print "---------------------------\n";
     
     # Skip unreadable files (show warning)
     unless (-r $file_path) {
@@ -344,24 +338,26 @@ if ($list) {
       next;
     }
     
-    # Read and display full message (no line truncation)
+    # Read message content and merge into one line (replace \n with space)
     open $fh, '<', $file_path or do {
       print "[WARNING] Failed to open message ID $id_str: $!\n";
       print "[DEBUG] Failed to open $file_path: $!\n" if $debug;
       next;
     };
-    while (my $line = <$fh>) {
-      chomp $line;
-      print "$line\n";
-    }
+    my $content = do { local $/; <$fh> };  # Read entire file at once
     close $fh;
-    print "---------------------------\n";
+    
+    # Clean content: replace newlines with space, remove extra whitespace
+    $content =~ s/\n/ /g;  # Multi-line → single line
+    $content =~ s/\s+/ /g;  # Collapse multiple spaces
+    $content =~ s/^\s+|\s+$//g;  # Trim leading/trailing spaces
+    
+    # Compact output format
+    print "$id_str: $content\n";
   }
   
-  # Print summary
-  print "\n=============================================================\n";
-  print "Total stored messages: " . scalar(@ids) . "\n";
-  print "=============================================================\n\n";
-  print "[DEBUG] --list function completed successfully\n" if $debug;
+  # Step 5: Summary
+  print "\nTotal stored messages: " . scalar(@ids) . "\n";
+  print "[DEBUG] --list function (compact mode) completed successfully\n" if $debug;
   exit 0;
 }

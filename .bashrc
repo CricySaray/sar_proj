@@ -73,6 +73,9 @@ alias ....='cd ../../../../'
 
 alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
 alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
+alias plist='perl ~/project/scr_sar/perl/teamshare.pl -list'
+alias pfind='perl ~/project/scr_sar/perl/teamshare.pl -find'
+alias phelp='perl ~/project/scr_sar/perl/teamshare.pl -h'
 
 #------------------------------------------------
 # config for attr (manage filesystem, add attribute info for files)

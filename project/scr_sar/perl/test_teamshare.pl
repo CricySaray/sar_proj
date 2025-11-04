@@ -33,13 +33,15 @@ my $line_limit = 20;           # Max lines to display in --pop (truncates beyond
 my $dir = "/home/cricy/.teamshare";  # Shared directory path
 my $latest_id_file = "$dir/.latest_id";  # File to track latest message ID
 my $debug = 0;                 # Debug mode (0=disabled, 1=enabled; user can modify default here)
-my $list = 0;                  # Trigger --list function (show all messages sorted by ID)
+my $list = 0;                  # Trigger --list function (compact mode: ID: content)
+my $find_pattern = "";         # Regex pattern for --find (search message content) 新增
 
 # Parse command line options
 GetOptions(
   "push=s" => \$msg,           # Push a new message (required: quoted string)
   "pop=s" => \$popid,          # Pop a message by 3-digit ID
   "list" => \$list,            # List all stored messages (compact mode: ID: content)
+  "find=s" => \$find_pattern,  # Search messages by regex (compact mode, sorted by ID) 新增
   "help" => \$help,            # Show detailed help (long option)
   "h" => \$help,               # Show detailed help (short option)
   "debug" => \$debug           # Enable debug mode (flag, no value needed)
@@ -63,6 +65,11 @@ if ($help) {
   print "                      - Multi-line messages are merged into one line (\\n replaced with space).\n";
   print "                      - Skips unreadable files and shows a warning for each.\n";
   print "                      - Shows total message count at the end.\n";
+  print "\n  --find PATTERN      Search messages by Perl-compatible regex pattern (compact mode).\n";  # 新增
+  print "                      - PATTERN: Quoted regex string (follows Perl regex syntax).\n";  # 新增
+  print "                      - Matches message content (multi-line merged to single line).\n";  # 新增
+  print "                      - Case-sensitive by default (add '(?i)' modifier for case-insensitive).\n";  # 新增
+  print "                      - Results sorted by ID ascending (same compact format as --list).\n";  # 新增
   print "\n  -h / --help        Show this help page (you're viewing it now).\n";
   print "\n  --debug            Enable debug mode (prints detailed runtime info).\n";
   print "                      - Default: Disabled (set \$debug=1 in script to enable by default).\n";
@@ -81,6 +88,15 @@ if ($help) {
   print "\n4. List all messages (compact mode) with debug mode:\n";
   print "   \$ perl teamshare.pl --list --debug\n";
   print "   # Output: Debug logs + compact entries (e.g., 042: Weekly sync: Tomorrow 10 AM...).\n";
+  print "\n5. Search messages starting with '/test/path' (regex: ^/test/path):\n";  # 新增
+  print "   \$ perl teamshare.pl --find '^/test/path'\n";
+  print "   # Output: Matched entries (e.g., 056: /test/path/file.txt - urgent review).\n";
+  print "\n6. Case-insensitive search for 'task' (regex modifier (?i)):\n";  # 新增
+  print "   \$ perl teamshare.pl --find '(?i)task'\n";
+  print "   # Output: Matches 'Task', 'TASK', 'task' in any message content.\n";
+  print "\n7. Search messages with PR numbers (regex: PR #\\d+):\n";  # 新增
+  print "   \$ perl teamshare.pl --find 'PR #\\d+' --debug\n";
+  print "   # Output: Debug logs + messages containing 'PR #123', 'PR #45' etc.\n";
   print "\n=============================================================\n";
   print "IMPORTANT NOTES:\n";
   print "=============================================================\n";
@@ -91,15 +107,21 @@ if ($help) {
   print "4. Permission Control: Only the script's original owner can set 0777 permissions for pushed files. Other users skip this step to avoid errors.\n";
   print "5. ID Recovery: If \$latest_id_file is corrupted/lost, the script auto-recovers by scanning 3-digit files in \$dir to find the latest ID.\n";
   print "6. Line Truncation: --pop truncates output to $line_limit lines. A warning is shown if the message has more lines.\n";
+  print "7. Regex Search (--find): Follows Perl regex syntax. Escape special characters (., *, ?, +) with backslash (e.g., \\.txt\$ for .txt ending).\n";  # 新增
+  print "   - Modifiers: Use '(?i)' for case-insensitive, '(?s)' for dotall (dot matches newlines), '(?m)' for multi-line mode.\n";  # 新增
   exit 0;
 }
 
-# Check mutual exclusivity of --push, --pop, and --list (only one allowed at once)
-if ( ($popid ne "x" || $list) && $msg ne "" ) {
-  die "perl teamshare: Error: --push cannot be used with --pop or --list. Use only one option.\n";
+# Check mutual exclusivity of --push, --pop, --list, and --find (only one allowed at once) 优化互斥检查
+if ( ($popid ne "x" || $list || length($find_pattern)) && $msg ne "" ) {
+  die "perl teamshare: Error: --push cannot be used with --pop, --list, or --find. Use only one option.\n";
 }
-if ( $popid ne "x" && $list ) {
-  die "perl teamshare: Error: --pop and --list are mutually exclusive. Use only one option.\n";
+my $active_options = 0;
+$active_options++ if $popid ne "x";
+$active_options++ if $list;
+$active_options++ if length($find_pattern);
+if ($active_options > 1) {
+  die "perl teamshare: Error: --pop, --list, and --find are mutually exclusive. Use only one option.\n";
 }
 
 # Validate shared directory (create if missing)
@@ -359,5 +381,81 @@ if ($list) {
   # Step 5: Summary
   print "\nTotal stored messages: " . scalar(@ids) . "\n";
   print "[DEBUG] --list function (compact mode) completed successfully\n" if $debug;
+  exit 0;
+}
+
+# --------------------------
+# Find Function: Search messages by regex (compact mode, sorted by ID) 新增
+# --------------------------
+if (length($find_pattern)) {
+  print "[DEBUG] Starting --find function (compact mode): Search pattern = '$find_pattern', Scanning $dir for 3-digit message files...\n" if $debug;
+  
+  # Validate regex pattern syntax (avoid script crash from invalid regex)
+  eval { "" =~ /$find_pattern/ };
+  if ($@) {
+    die "perl teamshare: Error: Invalid regex pattern '$find_pattern': $@\n";
+  }
+  
+  # Step 1: Scan and match messages
+  my @files = glob("$dir/[0-9][0-9][0-9]");
+  my @matched_entries;  # Store { id, id_str, content } for matched messages
+  
+  foreach my $file (@files) {
+    my $basename = basename($file);
+    if ($basename =~ /^(\d{3})$/) {
+      my $id = int($1);
+      my $id_str = $basename;
+      print "[DEBUG] Checking message ID $id_str (file: $file)\n" if $debug;
+      
+      # Skip unreadable files (same as --list)
+      unless (-r $file) {
+        print "[WARNING] No permission to read message ID $id_str (file: $file)\n";
+        print "[DEBUG] Skipping unreadable file: $file\n" if $debug;
+        next;
+      }
+      
+      # Read and clean content (same compact processing as --list)
+      open $fh, '<', $file or do {
+        print "[WARNING] Failed to open message ID $id_str: $!\n";
+        print "[DEBUG] Failed to open $file: $!\n" if $debug;
+        next;
+      };
+      my $content = do { local $/; <$fh> };  # Read entire file
+      close $fh;
+      
+      $content =~ s/\n/ /g;    # Merge multi-line to single line
+      $content =~ s/\s+/ /g;   # Collapse extra spaces
+      $content =~ s/^\s+|\s+$//g;  # Trim whitespace
+      
+      # Regex match (case-sensitive by default)
+      if ($content =~ /$find_pattern/) {
+        push @matched_entries, { id => $id, id_str => $id_str, content => $content };
+        print "[DEBUG] Matched ID $id_str: Content matches pattern '$find_pattern'\n" if $debug;
+      } else {
+        print "[DEBUG] No match for ID $id_str: Content does not match pattern '$find_pattern'\n" if $debug;
+      }
+    }
+  }
+  
+  # Step 2: Sort matched entries by ID ascending
+  @matched_entries = sort { $a->{id} <=> $b->{id} } @matched_entries;
+  print "[DEBUG] Sorted matched IDs: " . (join(", ", map { $_->{id_str} } @matched_entries) || "None") . "\n" if $debug;
+  
+  # Step 3: Handle no matching messages
+  unless (@matched_entries) {
+    print "No messages matched regex pattern '$find_pattern' in shared directory ($dir)\n";
+    print "[DEBUG] --find completed: No matching messages\n" if $debug;
+    exit 0;
+  }
+  
+  # Step 4: Compact display of matched results (same format as --list)
+  print "\n[Matched Messages (regex: '$find_pattern', sorted by ID)]\n";
+  foreach my $entry (@matched_entries) {
+    print "$entry->{id_str}: $entry->{content}\n";
+  }
+  
+  # Step 5: Summary
+  print "\nTotal matched messages: " . scalar(@matched_entries) . "\n";
+  print "[DEBUG] --find function (compact mode) completed successfully\n" if $debug;
   exit 0;
 }

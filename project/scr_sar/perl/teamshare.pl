@@ -11,11 +11,16 @@
 # usage     : Write the following two lines into .cshrc or .bashrc, and then you can conveniently use this Perl script with push or pop:
 #               alias push "perl ($script_dir)/teamshare.pl --push"
 #               alias pop  "perl ($script_dir)/teamshare.pl --pop"
+#               alias plist  "perl ($script_dir)/teamshare.pl --list"
+#               alias pfind  "perl ($script_dir)/teamshare.pl --find"
+#               alias phelp  "perl ($script_dir)/teamshare.pl -h"
 #             then source .cshrc/.bashrc
 #             you can run: push "this is a message", to get a id to retrieve message.
 #             run: pop 231, to get message combined with this id.
 #             run: push "path" --note "annotation" to add path with note.
-#             run: list --range ',10' to show first 10 entries; find 'test' --range '-5,' to search last 5 entries.
+#             run: plist to list all content of ids
+#             run: pfind "regexp" to find the matched expression from content of ids.
+#             run: plist --range ',10' to show first 10 entries; find 'test' --range '-5,' to search last 5 entries.
 # ref       : link url
 # --------------------------
 use strict;

@@ -17,7 +17,6 @@ DEFAULT_REPO_ALIAS = "flow"
 DEFAULT_PROCESS_BRANCH = "smic40ll"
 DEFAULT_OUTPUT_DIR = os.path.expanduser("./")
 CONFIG_FILE_PATH = os.path.expanduser("~/.gvs.conf")
-VALID_SCRIPT_TYPES = ["flow", "signoff"]  # Kept for backward compatibility, not used in validation
 DEFAULT_DEBUG_MODE = False
 DEFAULT_SHALLOW_CLONE = 0  # Default: pull all version history (0=full, 1=shallow)
 

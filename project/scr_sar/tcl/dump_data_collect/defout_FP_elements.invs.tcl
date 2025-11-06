@@ -16,8 +16,9 @@ source ../packages/every_any.package.tcl; # any
 proc defout_FP_elements {args} {
   set testOrRun         "test"
   set path              "./"
+  set optionByUser      "-noCoreCells -noSpecialNet -noStdCells -noTracks"
   set suffix            ""
-  set types             {pd physicalPin term rblkg pblkg endcap welltap   block pad padSpacer cornerBottomRight}
+  set types             {pd physicalPin term rblkg pblkg endcap welltap block pad padSpacer cornerBottomRight iopin}
   set netNamesList      {DVSS DVDD_ONO DVDD_AON}
   set objectTypeForNets {Wire Via} ; # Wire|Via
   set endcapPrefix      "ENDCAP"
@@ -56,6 +57,10 @@ proc defout_FP_elements {args} {
     select_obj [dbget top.fplan.pblkgs.]
     set types [lsearch -not -regexp -all -inline $types {^pblkgs?$}]
   }
+  if {[lsearch -regexp $types {^iopins?$}] > -1 && [dbget top.terms. -e] != ""} {
+    selectPin [dbget top.terms.] 
+    set types [lsearch -not -regexp -all -inline $types {^iopins?$}]
+  }
   if {[lsearch -regexp $types {^endcaps?$}] > -1 && [expr {[dbget top.insts.name */${endcapPrefix}* -e] != "" || [dbget top.insts.name ${endcapPrefix}* -e] != ""}]} {
     select_obj [dbget top.insts.name */${endcapPrefix}* -p]
     select_obj [dbget top.insts.name ${endcapPrefix}* -p]
@@ -80,7 +85,14 @@ proc defout_FP_elements {args} {
     set defLefDefOutVersion 5.8
     set dbgDefOutFixedViasShape 1
     set gdsUnit [dbget head.dbUnits]
-    defOut -selected -routing $path/FP_[clock format [clock second] -format "%Y%m%d_%H%M"]_$suffix.def.gz
+    set allAvailableOptions "-addHalfWireExtensionOnPin -allLayers -bumpAsPin -cutRow -cut_pg_rail -earlyGlobalRoute -flatten_via_pillar -floorplan -ioRow -netlist -noCoreCells -noPrintWildCard -noSpecialNet -noStdCells -noTracks -no_virtual_trim -scanChain -skip_trimmetal_layers -trimmetal_gap_fill -unplaced -useEEQCellWithLibertyInfo -usedVia -verilog_from_def_netlist_flow -withShield -routing -routing_to_specialnet -wrongway_routing_as_specialroute" 
+    if {$optionByUser ne "" && [every x $optionByUser { expr {$x in $allAvailableOptions} }]} {
+      defOut -selected -routing {*}$optionByUser $path/FP_[clock format [clock second] -format "%Y%m%d_%H%M"]_$suffix.def.gz
+    } elseif {$optionByUser ne "" [any x $optionByUser { expr {$x ni $allAvailableOptions} }]} {
+      error "proc defout_FP_elements: check your input of \$optionByUser($optionByUser) which has invalid option!!!"
+    } else {
+      defOut -selected -routing $path/FP_[clock format [clock second] -format "%Y%m%d_%H%M"]_$suffix.def.gz
+    }
   } else {
     puts "testing..." 
   }
@@ -90,6 +102,7 @@ define_proc_arguments defout_FP_elements \
   -define_args {
     {-testOrRun "test or run" oneOfString one_of_string {required value_type {values {test run}}}}
     {-path "specify path for generated def file (default: ./)" AString string optional}
+    {-optionByUser "specify the list of options provided by user" AList list optional}
     {-suffix "specify the suffix name for def file" AString string optional}
     {-types "specify the types of insts" AList list optional}
     {-netNamesList "specify the list of net name" AList list optional}

@@ -3,7 +3,8 @@ alias tt 'tree'
 # open newest file
 alias vn 'vi `ls -t * | head -1`'
 # change newest dir
-alias lc 'cd`ls -dt */ | head -1`'
+alias lc 'cd `ls -dt */ | head -1`'
+alias cl 'cd `ls -dt */ | head -1`'
 
 setenv sort_big_perlfile "~/scr_sar/perl/sort_big.pl"
 setenv icc2ToinvsFile_fix_timing "/simulation/.../pteco2invs.pl"

@@ -18,7 +18,7 @@ function ww() {
 }
 function ca() {
   filename="$1"
-  tclsh ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl $filename || return 
+  tclsh ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl $filename || return 0
   if [[ "$filename" == *.tcl ]]; then 
     target_file="all_$filename"
     sed -i 's/;$//g' $target_file
@@ -73,6 +73,9 @@ alias ....='cd ../../../../'
 
 alias pop='perl ~/project/scr_sar/perl/teamshare.pl -pop'
 alias push='perl ~/project/scr_sar/perl/teamshare.pl -push'
+alias plist='perl ~/project/scr_sar/perl/teamshare.pl -list'
+alias pfind='perl ~/project/scr_sar/perl/teamshare.pl -find'
+alias phelp='perl ~/project/scr_sar/perl/teamshare.pl -h'
 
 #------------------------------------------------
 # config for attr (manage filesystem, add attribute info for files)
@@ -126,7 +129,7 @@ function cdf() {
   local selected_dir=$(fdfind --type d ${search_term:+~} -H -E '.git' "$search_term" "$search_dir" 2>/dev/null | \
                       fzf --preview 'tree -L 2 {} 2>/dev/null' --height=35%)
   if [[ -n "$selected_dir" ]]; then
-    cd "$selected_dir" || return
+    cd "$selected_dir"
     pwd  # 可选：显示当前目录
   fi
   # 检查 autojump 是否可用
@@ -197,7 +200,7 @@ lc() {
   # 如果未找到任何子目录，输出提示
   if ! $found; then
     echo "No subdirectories found!" >&2
-    cd "$current_dir" || return 1
+    cd "$current_dir" 
     return 1
   fi
 }
@@ -293,10 +296,10 @@ _fzf_compgen_dir() {
 # for examples
 
 # If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-      *) return;;
-esac
+# case $- in
+#     *i*) ;;
+#       *) return;;
+# esac
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -413,7 +416,7 @@ source "$HOME/.cargo/env"
 function parse_git_status() {
     # 检查是否在 Git 仓库中
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        return ""
+        return 0
     fi
     local GIT_STATUS=""
     local BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
@@ -448,7 +451,7 @@ precmd() {
         STATUS_COLOR="\[\e[31m\]"  # 红色（失败）
     fi
     # 设置PS1（包含命令计数、时间和执行状态颜色）
-    PS1="${STATUS_COLOR}[\#]\u \[\e[1m\]\D{%Y/%m/%d} \A\[\e[0m\]$(parse_git_status) \[\e[34m\]\[\e[1m\]\w\[\e[0m\] \$ "
+    PS1="${STATUS_COLOR}[\#]\u@\H \[\e[1m\]\D{%Y/%m/%d} \A\[\e[0m\]$(parse_git_status) \[\e[34m\]\[\e[1m\]\w\[\e[0m\] \$ "
 }
 PROMPT_COMMAND=precmd
 export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND ;} history -a"

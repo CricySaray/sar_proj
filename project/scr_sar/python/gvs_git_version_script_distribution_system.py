@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# --------------------------
+# author    : sar song
+# date      : 2025/11/11 12:37:12 Tuesday
+# label     : python
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : This Python script simplifies managing and downloading scripts from local or remote Git repositories, supporting both 
+#             full version history and shallow clones (latest version only) with automatic conflict detection. It preserves the 
+#             original file permissions and Git status of cloned/pulled content, requiring no modifications to repository data 
+#             while ensuring seamless updates.
+# return    : downloaded files or dirs
+# ref       : link url
+# --------------------------
 import argparse
 import subprocess
 import sys

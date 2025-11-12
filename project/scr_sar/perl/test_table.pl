@@ -13,4 +13,13 @@
 use strict;
 use warnings;
 require ./sub_gen_table.pl; # gen_table
-my 
+my @table_meta_data = (
+  ['perl', 'teamshare', 'sar song', '2025/11/12 19:56:58 Wednesday', 'push, pop, plist, pfind and phelp'],
+  ['tcl', '', '', '', '']
+)
+my $table_content = gen_table(
+  "misc procs list",
+  @table_meta_data,
+  "center",
+  
+)

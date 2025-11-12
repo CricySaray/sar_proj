@@ -10,6 +10,8 @@
 #             (U001) update method to get core inner boundary rects!!! simple and efficient!!! using proc:findCoreRectsInsideBoundary
 # update    : 2025/09/02 09:39:54 Tuesday
 #             (U002) Perform adaptation for the TSMC_arm_cln40lp process
+# update    : 2025/11/12 19:31:46 Wednesday
+#             (U003) Perform adaptation for the TSMC_cln22ull process of M3KL_22nm from clourneysemi
 # return    : tcl script to create dict database(it is convenient for searching. it can save permently and source it whenever you need it.)
 #             dict database include:
 #             dictName: $LUT_filename

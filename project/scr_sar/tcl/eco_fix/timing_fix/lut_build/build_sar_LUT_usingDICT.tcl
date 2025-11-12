@@ -29,7 +29,7 @@ source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBound
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
-  set process                                   {TSMC_tcbn40lpbwp} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp
+  set process                                   {TSM} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp|TSMC_cln22ull
   set promptPrefix                              "# song"
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"

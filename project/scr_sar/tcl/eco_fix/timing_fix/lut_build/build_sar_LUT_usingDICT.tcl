@@ -29,7 +29,7 @@ source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBound
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
-  set process                                   {TSM} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp|TSMC_cln22ull
+  set process                                   {TSMC_cln22ull} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp|TSMC_cln22ull
   set promptPrefix                              "# song"
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"
@@ -64,6 +64,10 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell}
   } elseif {$process in {TSMC_tcbn40lpbwp}} {
     set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
+    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
+    set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
+  } elseif {$process in {TSMC_cln22ull}} {
+    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP\d+T\d+P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } else {

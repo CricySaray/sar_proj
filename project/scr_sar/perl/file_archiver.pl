@@ -7,7 +7,7 @@
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : This Perl script archives multiple files and directories (including subdirectories) into a single archive file while 
 #             preserving their directory structure. It can also extract the archive to reconstruct the original files and folder 
-#             hierarchy exactly as they were.
+#             hierarchy exactly as they were. Supports merge mode for extraction to existing directories.
 # return    : output file or output dir
 # ref       : link url
 # --------------------------
@@ -22,13 +22,13 @@ use Getopt::Long;
 
 # Configuration and variable initialization
 my $debug = 1;
-my $archive_file = 'song_vim_config.dat';  # Default archive file
+my $archive_file = '';  # Default archive file
 my @source_paths;                  # Multiple source paths
-my $target_dir = 'song_vim_config.dat';# Default target directory
+my $target_dir = './';# Default target directory
 my $mode = 'a';                          # 'archive' (or 'a') or 'extract' (or 'e')
-my $overwrite = 0;                 # Overwrite existing files/directories?
+my $overwrite = 'merge';            # Overwrite mode: 'none'|'replace'|'merge' (default: 'none')
 my $help = 0;                      # Show help?
-my $VERSION = '2.1.2';
+my $VERSION = '2.1.3';
 my $MAGIC_HEADER = "FILE_ARCHIVER_V2";
 
 # Parse command line options with short forms
@@ -38,9 +38,24 @@ GetOptions(
   'source|s=s' => \@source_paths,  # Allows multiple -s options
   'target|t=s' => \$target_dir,
   'mode|m=s' => \$mode,
-  'overwrite|o' => \$overwrite,
+  'overwrite|o:s' => \$overwrite,  # Accepts optional value (none/replace/merge)
   'help|h' => \$help,              # Help option with short form
 ) or die "Error in command line arguments. Use --help for usage information.\n";
+
+# Handle overwrite option defaults and validation
+if (!defined $overwrite) {
+  # If -o is used without value, set to 'replace' (backward compatibility)
+  $overwrite = 'replace';
+} elsif ($overwrite eq '') {
+  # Handle case where -o is specified with empty value (same as 'replace')
+  $overwrite = 'replace';
+} else {
+  # Validate overwrite mode
+  unless ($overwrite =~ /^(none|replace|merge)$/i) {
+    die "Invalid overwrite mode '$overwrite'. Valid options: none, replace, merge\n";
+  }
+  $overwrite = lc($overwrite);  # Normalize to lowercase
+}
 
 # Show help and exit if requested
 if ($help) {
@@ -53,11 +68,11 @@ validate_arguments();
 
 # Execute appropriate operation based on mode
 if ($mode eq 'archive' || $mode eq 'a') {
-  debug_print("Starting archiving process...");
+  debug_print("Starting archiving process... (overwrite mode: $overwrite)");
   archive_paths();
   debug_print("Archiving completed successfully");
 } elsif ($mode eq 'extract' || $mode eq 'e') {
-  debug_print("Starting extraction process...");
+  debug_print("Starting extraction process... (overwrite mode: $overwrite)");
   extract_archive();
   debug_print("Extraction completed successfully");
 }
@@ -85,7 +100,10 @@ Options by Mode:
     -a, --archive   Archive file path (default: $archive_file)
     -d, --debug     Enable debug output
     -h, --help      Show this help message
-    -o, --overwrite Overwrite existing files/directories
+    -o, --overwrite Overwrite mode (optional value, default: none):
+                    'none'    - Abort if target exists (default)
+                    'replace' - Delete and recreate target directory (backward compatible with -o)
+                    'merge'   - Preserve existing content, overwrite conflicting files
 
   Archive mode only:
     -s, --source    Source file/directory path (can specify multiple times)
@@ -98,11 +116,17 @@ Examples:
   Archive current directory to default archive:
     file_archiver.pl -m a
   
-  Archive multiple sources:
-    file_archiver.pl -m archive -s docs/ -s images/ -s data.csv -a backup.dat
+  Archive multiple sources with overwrite:
+    file_archiver.pl -m archive -s docs/ -s images/ -a backup.dat -o replace
   
-  Extract with overwriting:
+  Extract with merging (preserve existing content):
+    file_archiver.pl -m e -a backup.dat -t ./ -o merge
+  
+  Extract with full replacement (delete existing target first):
     file_archiver.pl -m e -a backup.dat -t restore_dir -o
+  
+  Extract without overwriting (abort if target exists):
+    file_archiver.pl -m e -a backup.dat -t restore_dir
 HELP
 }
 
@@ -112,12 +136,21 @@ sub validate_arguments {
   unless (defined $mode && ($mode eq 'archive' || $mode eq 'a' || $mode eq 'extract' || $mode eq 'e')) {
     die "You must specify mode as 'archive' (or 'a') or 'extract' (or 'e') (use -m option)\n";
   }
+  unless ($archive_file ne "") {
+    die "You must specify option 'archive_file', (now this is empty)!!! \n" 
+  }
   
   # Validate archive file
   if ($mode eq 'archive' || $mode eq 'a') {
     # Check if archive exists and overwrite is not enabled
-    if (-e $archive_file && !$overwrite) {
-      die "Archive file '$archive_file' already exists. Use -o to overwrite.\n";
+    if (-e $archive_file) {
+      if ($overwrite eq 'none') {
+        die "Archive file '$archive_file' already exists. Use --overwrite=replace to overwrite.\n";
+      } elsif ($overwrite eq 'replace') {
+        debug_print("Overwriting existing archive file: $archive_file");
+      } elsif ($overwrite eq 'merge') {
+        die "Merge mode is not supported for archive creation. Use --overwrite=replace instead.\n";
+      }
     }
     
     # Set default source if none provided
@@ -137,16 +170,23 @@ sub validate_arguments {
     
     # Check target directory
     if (-e $target_dir) {
-      unless ($overwrite) {
-        die "Target directory '$target_dir' already exists. Use -o to overwrite.\n";
-      }
-      # Remove existing target if overwrite is enabled
-      if (-d $target_dir) {
-        debug_print("Removing existing target directory: $target_dir");
-        remove_tree($target_dir) or die "Failed to remove existing target directory '$target_dir': $!\n";
-      } else {
-        debug_print("Removing existing file with target name: $target_dir");
-        unlink($target_dir) or die "Failed to remove existing file '$target_dir': $!\n";
+      if ($overwrite eq 'none') {
+        die "Target directory '$target_dir' already exists. Use --overwrite=replace or --overwrite=merge\n";
+      } elsif ($overwrite eq 'replace') {
+        # Remove existing target if replace mode is enabled
+        if (-d $target_dir) {
+          debug_print("Removing existing target directory (replace mode): $target_dir");
+          remove_tree($target_dir) or die "Failed to remove existing target directory '$target_dir': $!\n";
+        } else {
+          debug_print("Removing existing file with target name (replace mode): $target_dir");
+          unlink($target_dir) or die "Failed to remove existing file '$target_dir': $!\n";
+        }
+      } elsif ($overwrite eq 'merge') {
+        # Merge mode: preserve existing content, just verify target is a directory
+        unless (-d $target_dir) {
+          die "Target '$target_dir' exists but is not a directory. Cannot use merge mode.\n";
+        }
+        debug_print("Using merge mode - preserving existing content in: $target_dir");
       }
     }
   }
@@ -269,9 +309,11 @@ sub extract_archive {
   my $file_count = $1;
   debug_print("Found $file_count files in archive");
   
-  # Create target directory
-  debug_print("Creating target directory: $target_dir");
-  make_path($target_dir) or die "Cannot create target directory '$target_dir': $!";
+  # Create target directory if it doesn't exist
+  unless (-d $target_dir) {
+    debug_print("Creating target directory: $target_dir");
+    make_path($target_dir) or die "Cannot create target directory '$target_dir': $!";
+  }
   
   # Process each file
   for (my $i = 0; $i < $file_count; $i++) {
@@ -335,10 +377,14 @@ sub extract_archive {
       };
     }
     
-    # Check if file exists and handle overwrite
-    if (-e $full_path && !$overwrite) {
-      warn "Warning: File '$full_path' already exists. Use -o to overwrite - skipping\n";
-      next;
+    # Check if file exists and handle based on overwrite mode
+    if (-e $full_path) {
+      if ($overwrite eq 'none') {
+        warn "Warning: File '$full_path' already exists - skipping (overwrite mode: none)\n";
+        next;
+      } elsif ($overwrite eq 'replace' || $overwrite eq 'merge') {
+        debug_print("Overwriting existing file: $full_path (overwrite mode: $overwrite)");
+      }
     }
     
     # Write file
@@ -363,4 +409,3 @@ sub debug_print {
 }
 
 exit 0;
-

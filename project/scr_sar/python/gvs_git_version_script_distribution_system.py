@@ -6,10 +6,10 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : This Python script simplifies managing and downloading scripts from local or remote Git repositories, supporting both 
-#             full version history and shallow clones (latest version only) with automatic conflict detection. It preserves the 
-#             original file permissions and Git status of cloned/pulled content, requiring no modifications to repository data 
-#             while ensuring seamless updates.
+# descrip   : This Python script manages and downloads scripts from local/remote Git repositories (supporting full/shallow clones with 
+#             conflict detection) and runs user-defined shell commands via an intuitive `exec` mode. It preserves repository integrity, 
+#             offers clear help text with automatic line wrapping for long descriptions, and features short/long command aliases for 
+#             streamlined workflow.
 # return    : downloaded files or dirs
 # ref       : link url
 # --------------------------
@@ -20,19 +20,36 @@ import os
 from datetime import datetime
 import configparser
 import shutil
+import textwrap  # Added for help text line wrapping
 
 # ============================== DEFAULT CONFIGURATION ==============================
 # User-modifiable default values (auto-synced to help text)
 DEFAULT_REPO_ALIASES = {
-  "flow": "/eda-tools/gvs/flow/flow_test.git",
-  "signoff": "/eda-tools/gvs/signoff/signoff_test.git"
+  "prod": "https://github.com/your-org/production-scripts.git",
+  "test": "https://github.com/your-org/test-scripts.git"
 }
-DEFAULT_REPO_ALIAS = "flow"
-DEFAULT_PROCESS_BRANCH = "smic40ll"
+DEFAULT_REPO_ALIAS = "prod"
+DEFAULT_PROCESS_BRANCH = "main"
 DEFAULT_OUTPUT_DIR = os.path.expanduser("./")
 CONFIG_FILE_PATH = os.path.expanduser("~/.gvs.conf")
+VALID_SCRIPT_TYPES = ["flow", "signoff"]  # Kept for backward compatibility, not used in validation
 DEFAULT_DEBUG_MODE = False
 DEFAULT_SHALLOW_CLONE = 0  # Default: pull all version history (0=full, 1=shallow)
+
+# User-defined commands (modify this list to add/remove commands)
+# Structure: [{"alias": "command-alias", "command": "shell-command", "help": "command-description"}]
+USER_DEFINED_COMMANDS = [
+  {
+    "alias": "source-env",
+    "command": "source ./env.sh",
+    "help": "Source environment configuration from env.sh in current directory. This loads all required environment variables, path configurations, and dependency settings needed for subsequent script execution."
+  },
+  {
+    "alias": "run-flow",
+    "command": "bash ./flow_scripts/run.sh",
+    "help": "Execute flow script runner (requires flow_scripts/ directory). Automatically triggers the main workflow pipeline, including pre-processing, validation, and execution of sequential tasks defined in the flow configuration."
+  }
+]
 
 # ============================== GLOBAL VARIABLES ==============================
 DEBUG_MODE = DEFAULT_DEBUG_MODE
@@ -372,8 +389,91 @@ def handle_list(debug):
     
     print()  # Add blank line between repos
 
+def handle_exec(cmd_alias, debug):
+  global DEBUG_MODE
+  DEBUG_MODE = debug
+  
+  # List all available commands if no alias is provided
+  if not cmd_alias:
+    print("=== Available User-Defined Commands ===")
+    # Calculate max alias length for aligned formatting
+    max_alias_len = max(len(cmd["alias"]) for cmd in USER_DEFINED_COMMANDS)
+    # Define wrap width for help text (adjust based on terminal width, 60 = 80 - indentation)
+    help_wrap_width = 60
+    
+    for cmd in USER_DEFINED_COMMANDS:
+      # Left-align alias with fixed width for readability
+      formatted_alias = cmd["alias"].ljust(max_alias_len)
+      print(f"\n  Alias:   {formatted_alias}")
+      print(f"  Command: {cmd['command']}")
+      
+      # Wrap long help text into multiple lines with consistent indentation
+      wrapped_help = textwrap.wrap(cmd["help"], width=help_wrap_width, break_long_words=False)
+      print(f"  Help:    {wrapped_help[0]}")  # First line with "Help:    " prefix
+      # Subsequent lines with same indentation (8 spaces)
+      for line in wrapped_help[1:]:
+        print(f"           {line}")
+    
+    print("\nUsage:")
+    print("  1. List commands: python script.py exec (or 'e')")
+    print("  2. Run command:   python script.py exec <alias> (or 'e <alias>')")
+    sys.exit(0)
+  
+  # Find target command by alias
+  target_cmd = next((cmd for cmd in USER_DEFINED_COMMANDS if cmd["alias"] == cmd_alias), None)
+  if not target_cmd:
+    print(f"ERROR: Command alias '{cmd_alias}' not found!", file=sys.stderr)
+    print("Available aliases:", ", ".join(cmd["alias"] for cmd in USER_DEFINED_COMMANDS), file=sys.stderr)
+    sys.exit(1)
+  
+  # Execute the shell command
+  debug_log(f"Executing command (alias: {cmd_alias}): {target_cmd['command']}")
+  print(f"Running command: {target_cmd['command']}\n")
+  
+  try:
+    # Use shell=True to support shell features (e.g., source, pipes)
+    result = subprocess.run(
+      target_cmd["command"],
+      shell=True,
+      check=True,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      text=True
+    )
+    # Print command output (stdout + stderr)
+    if result.stdout:
+      print("Command Output:\n", result.stdout)
+    if result.stderr:
+      print("Command Stderr:\n", result.stderr, file=sys.stderr)
+    print(f"\nSUCCESS: Command '{cmd_alias}' executed successfully")
+  except subprocess.CalledProcessError as e:
+    print(f"ERROR: Command '{cmd_alias}' failed (exit code {e.returncode})", file=sys.stderr)
+    if e.stdout:
+      print("Command Output:\n", e.stdout, file=sys.stderr)
+    if e.stderr:
+      print("Command Stderr:\n", e.stderr, file=sys.stderr)
+    sys.exit(1)
+  except Exception as e:
+    print(f"ERROR: Failed to execute command '{cmd_alias}': {str(e)}", file=sys.stderr)
+    sys.exit(1)
+
 # ============================== MAIN ARGUMENT PARSER ==============================
 def main():
+  # Generate formatted command list for epilog (with line wrapping for help)
+  epilog_command_list = []
+  epilog_help_wrap_width = 55  # Wrap width for epilog help text (adjust based on terminal)
+  for cmd in USER_DEFINED_COMMANDS:
+    # Wrap help text for epilog
+    wrapped_epilog_help = textwrap.wrap(cmd["help"], width=epilog_help_wrap_width, break_long_words=False)
+    # First line: alias + command
+    epilog_command_list.append(f"{cmd['alias']:<12} {cmd['command']}")
+    # Subsequent lines: help text with indentation
+    for i, help_line in enumerate(wrapped_epilog_help):
+      if i == 0:
+        epilog_command_list.append(f"{'':<14} {help_line}")  # Align with command
+      else:
+        epilog_command_list.append(f"{'':<14} {help_line}")
+  
   # Top-level parser
   parser = argparse.ArgumentParser(
     description="Script Distributor - Manage/download flow/signoff scripts from Git (local/remote repos)",
@@ -391,6 +491,7 @@ IMPORTANT NOTES:
      - Handles conflicts with clear resolution steps
   7. No modification to repo contents: Preserves original file permissions and Git status
   8. Shallow clone option: Use --shallow-clone 1 to download only latest version history (faster, less disk space)
+  9. Exec mode: Run user-defined shell commands (use 'exec'/'e' command to list all available commands)
     """
   )
   
@@ -406,7 +507,7 @@ IMPORTANT NOTES:
   subparsers = parser.add_subparsers(
     dest="cmd",
     required=True,
-    help="Commands (use <cmd> -h for details): c=config, d=download, l=list"
+    help="Commands (use <cmd> -h for details): c=config, d=download, l=list, e=exec"
   )
   
   # ------------------------------ Config Command (c/config) ------------------------------
@@ -505,6 +606,35 @@ Examples:
   )
   list_parser.set_defaults(func=lambda args: handle_list(args.debug))
   
+  # ------------------------------ Exec Command (e/exec) ------------------------------
+  exec_parser = subparsers.add_parser(
+    "exec",
+    aliases=["e"],
+    help="Run user-defined shell commands (short: e)",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog=f"""
+Available Commands (alias -> command -> help):
+  {chr(10).join(epilog_command_list)}\n
+Examples:
+  1. List all available commands:
+     %(prog)s
+  2. Execute command by alias:
+     %(prog)s source-env
+  3. Execute with debug logs:
+     %(prog)s run-flow -d
+  4. Silent execution (check dependencies):
+     %(prog)s check-deps
+    """
+  )
+  exec_parser.add_argument(
+    "cmd_alias",
+    nargs="?",  # Optional: omit to list commands
+    help="Alias of the user-defined command to execute (leave blank to list all commands)"
+  )
+  exec_parser.set_defaults(func=lambda args: handle_exec(
+    args.cmd_alias, args.debug
+  ))
+  
   # ------------------------------ Parse and Validate ------------------------------
   args = parser.parse_args()
   
@@ -515,7 +645,9 @@ Examples:
     "d": {"allowed": {"cmd", "debug", "type", "branch", "output", "shallow_clone"}, "desc": "-t/--type, -b/--branch, -o/--output, --shallow-clone, -d"},
     "download": {"allowed": {"cmd", "debug", "type", "branch", "output", "shallow_clone"}, "desc": "-t/--type, -b/--branch, -o/--output, --shallow-clone, -d"},
     "l": {"allowed": {"cmd", "debug"}, "desc": "-d/--debug only"},
-    "list": {"allowed": {"cmd", "debug"}, "desc": "-d/--debug only"}
+    "list": {"allowed": {"cmd", "debug"}, "desc": "-d/--debug only"},
+    "e": {"allowed": {"cmd", "debug", "cmd_alias"}, "desc": "<command-alias> (optional), -d/--debug"},
+    "exec": {"allowed": {"cmd", "debug", "cmd_alias"}, "desc": "<command-alias> (optional), -d/--debug"}
   }
   
   provided = set([k for k, v in vars(args).items() if v is not None and k != "func" and k != "cmd"])

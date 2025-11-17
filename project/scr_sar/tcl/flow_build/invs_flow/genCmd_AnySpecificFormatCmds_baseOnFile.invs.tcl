@@ -42,7 +42,7 @@ proc genCmd_AnySpecificFormatCmds_baseOnFile {} {
   set format "highlight -index <value> <target>"
   set cmdPrefixSegments ""
   set cmdSuffixSegments ""
-  set ifAddOriginContentAsComment 1
+  set ifAddOriginContentAsComment 0
   set output_file ""
   set regex ""
   set debug 0

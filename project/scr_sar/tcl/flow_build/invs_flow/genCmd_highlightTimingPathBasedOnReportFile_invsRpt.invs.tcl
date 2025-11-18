@@ -296,7 +296,7 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems \
 # label     : misc_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
-# descrip   : Obtain the path pins that need to be highlighted from the report_timing (rpt) file of PT, and different paths can be automatically split based on keywords.
+# descrip   : Obtain the path pins that need to be highlighted from the report_timing (rpt) file of invs, and different paths can be automatically split based on keywords.
 # return    : lists of even pins
 # ref       : link url
 # --------------------------
@@ -308,7 +308,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   set indexOfPureNumberOnLine           "end-1"
   set indexOfAfterSplitOriginalLineList "0"
   set lineExpToSplitPath                {^TE} ; # used to regexp
-  set startOfPath                       {Point\s+} ; # end expression of launch timing path
+  set startOfPath                       {^\s*Timing Path:\s+} ; # end expression of launch timing path
   set endOfPath                         {data arrival time} ; # end expression of launch timing path
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {

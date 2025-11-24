@@ -138,7 +138,7 @@ proc genCmd_addTextOfNetLengthOnBottomOfDriverInst {args} {
       set net1 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_1 0] -p].net.name -e] 
       set net2 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_2 0] -p].net.name -e] 
       if {$net1 == $net2 && $net1 != ""} {
-        set outNetLen [dict get [reportWirePath -start [lindex $pin_celltype_net_1 0] -end $pin2 -tcl -no_output] total_length]
+        set outNetLen [dict get [reportWirePath -start [lindex $pin_celltype_net_1 0] -end [lindex $pin_celltype_net_2 0] -tcl -no_output] total_length]
         set inst1_rect {*}[dbget [dbget top.insts.name [join [lrange [split [lindex $pin_celltype_net_1 0] "/"] 0 end-1] "/"] -p].box -e]
         set inst1_rect_3_3 [lset inst1_rect end [expr {([lindex $inst1_rect 3] - [lindex $inst1_rect 1]) / 3 + [lindex $inst1_rect 1]}]]
         lappend cmdsList "add_gui_text -layer $layerOfText -box \{$inst1_rect_3_3\} -no_bbox -label \"outLen:[format "%.1f" $outNetLen]\""
@@ -146,7 +146,7 @@ proc genCmd_addTextOfNetLengthOnBottomOfDriverInst {args} {
           lappend cmdsList "add_gui_marker -name net_longer_than_$netLenThreshold -color $markerColor -type $markerType -pt \{[lindex $inst1_rect_3_3 2] [lindex $inst1_rect_3_3 1]\}"
         }
       } else {
-        error "proc genCmd_addTextOfNetLengthOnBottomOfDriverInst: check your input : pin1([lindex $pin_celltype_net_1 0]) and pin2($pin2) of evenNumberList is not on same net!!!" 
+        error "proc genCmd_addTextOfNetLengthOnBottomOfDriverInst: check your input : pin1([lindex $pin_celltype_net_1 0]) and pin2([lindex $pin_celltype_net_2 0]) of evenNumberList is not on same net!!!" 
       }
     }
     return $cmdsList
@@ -185,8 +185,8 @@ proc genCmd_addCellTypeOnTopOfInstRect {args} {
     set $var $opt($arg)
   }
   if {[llength evenNumberList]} {
-    set uniqueInstNameList [lsort -unique [lmap temp_pin $evenNumberList {
-      set temp_inst [join [lrange [split $temp_pin "/"] 0 end-1] "/"]
+    set uniqueInstNameList [lsort -unique [lmap temp_pin_celltype_net $evenNumberList {
+      set temp_inst [join [lrange [split $temp_pin_celltype_net "/"] 0 end-1] "/"]
     }]]
     set inst_celltype_box_list [lmap temp_inst $uniqueInstNameList {
       set temp_celltype [dbget [dbget top.insts.name $temp_inst -p].cell.name -e]
@@ -258,15 +258,15 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
         } else {
           set netColor [lindex $colorsIndexLoopListsForNet $indexOfColorsForNetInst]
           set instColor [lindex $colorsIndexLoopListsForInst $indexOfColorsForNetInst]
-          lappend hiliteCmdsList "highlight_pin_connection -from_pin [lindex $pin_celltype_net_1 0] -to_pin $pin2 -mode $modeOfConnect [eo $ifWithArrow "-with_arrow" ""] -net_color_index $netColor -inst_color_index $instColor"
+          lappend hiliteCmdsList "highlight_pin_connection -from_pin [lindex $pin_celltype_net_1 0] -to_pin [lindex $pin_celltype_net_2 0] -mode $modeOfConnect [eo $ifWithArrow "-with_arrow" ""] -net_color_index $netColor -inst_color_index $instColor"
         }
       }
     }
   } elseif {$modeOfConnect == "flight_line"} {
-    set pinsList [lmap pin1 [lrange $evenNumberList 0 end-1] {
-      set pt1 [dbget [dbget top.insts.instTerms.name $pin1 -p].pt -e]
+    set pinsList [lmap pin_celltype_net_1 [lrange $evenNumberList 0 end-1] {
+      set pt1 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_1 0] -p].pt -e]
       if {$pt1 == ""} {
-        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your input : the pin($pin1) have no location!!!"
+        error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your input : the pin([lindex $pin_celltype_net_1 0]) have no location!!!"
       } else {
         set pt1 {*}$pt1
       }

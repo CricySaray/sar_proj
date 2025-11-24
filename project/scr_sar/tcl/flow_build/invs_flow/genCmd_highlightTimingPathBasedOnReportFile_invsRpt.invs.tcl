@@ -367,7 +367,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
       }
     }
     if {$temp_pin ne "" && $temp_celltype ne "" && $temp_net ne ""} {
-      set temp_blockInfo [list $temp_pin $temp_celltype]
+      set temp_blockInfo [list $temp_pin $temp_celltype $temp_net]
       set temp_blockInfo_originalLine [list $temp_pin $temp_celltype $temp_net]
       lappend pinInfoBlocks $temp_blockInfo
       set temp_pin "" ; set temp_net "" ; set temp_celltype ""

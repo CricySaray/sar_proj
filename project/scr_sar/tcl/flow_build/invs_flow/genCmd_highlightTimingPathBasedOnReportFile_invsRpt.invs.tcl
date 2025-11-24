@@ -345,9 +345,9 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   foreach tempLine_ofCutOutContent $cutOutContent { ; # now: only collect [list pin celltype net]  U001: adapted for invs report_timing rpt
     if {[regexp $lineExpToSplitPath|$startOfPath|$endOfPath $tempLine_ofCutOutContent]} { 
       lappend pinInfoBlocks $temp_blockInfo
-      lappend pinInfoBlocks "START"
+      lappend pinInfoBlocks "SPLIT"
       set originalLineListWithSplitLine [list]
-      set originalLineListWithSplitLine "START"
+      set originalLineListWithSplitLine "SPLIT"
       set temp_blockInfo [list ]
       set temp_blockInfo_originalLine [list ]
     }

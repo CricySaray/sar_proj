@@ -9,6 +9,7 @@
 #             sublists using "SPLIT" (or "END" if no "SPLIT" exists), then extracting valid content from each sublist (via the first valid "START"-"END" pair, 
 #             content before the first "END" without "START", or content after the last "START" without "END"), filtering out empty results, and returning the 
 #             final list of non-empty processed sublists.
+# notice    : The highest priority is given to SPLIT.
 # return    : 
 # ref       : link url
 # --------------------------

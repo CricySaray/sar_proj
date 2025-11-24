@@ -20,7 +20,7 @@ proc genCmd_highlightTimingPathBasedOnReportFile_invsRpt {args} {
   set reportTimingFile                    ""
   set startLineExpOfReportTimingFile      {^START} ; # U001: handle with reportFile - > regexp for start line
   set endLineExpOfReportTimingFile        {^END} ; # U001: handle with reportFile - > regexp for end line
-  set ifAddMarkersAndText                 1 ; # 1|0
+  set ifAddMarkersAndText                 0 ; # 1|0
   set ifAddCellTypeOnTopOfInstRect        1
   set ifAddNetLengthOnBottomOfDriverInst  1
   set lineExpToSplitPath                  {^TE} ; # used to regexp
@@ -310,8 +310,8 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   set indexOfPureNumberOnLine           "end-1"
   set indexOfAfterSplitOriginalLineList "0"
   set lineExpToSplitPath                {^TE} ; # used to regexp
-  set startOfPath                       {^\s+---+\s*$} ; # start expression of launch timing path
-  set endOfPath                         {^\s+---+\s*$} ; # end expression of launch timing path
+  set startOfPath                       {^\s*---+\s*$} ; # start expression of launch timing path
+  set endOfPath                         {^\s*---+\s*$} ; # end expression of launch timing path
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -335,102 +335,68 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   set all_celltypes [dbget head.libCells.name -u -e]
 
   set pinInfoBlocks [list]
+  set originalLineListWithSplitLine [list]
   set flagOfInBlock 0
   set temp_blockInfo [list ]
-  set temp_incrIndex_inLine 0
-  set flagOfFoundCelltypeInSameLine 0
-  foreach tempLine_ofCutOutContent $cutOutContent {
+  set temp_blockInfo_originalLine [list ]
+  set temp_pin "" ; set temp_net "" ; set temp_celltype ""
+  set temp_pin_originalLine "" ; set temp_net_originalLine "" ; set temp_celltype_originalLine "" ; # TODO: test
+  foreach tempLine_ofCutOutContent $cutOutContent { ; # now: only collect [list pin celltype net]  U001: adapted for invs report_timing rpt
     if {[regexp $lineExpToSplitPath|$startOfPath|$endOfPath $tempLine_ofCutOutContent]} { 
       lappend pinInfoBlocks $temp_blockInfo
+      lappend pinInfoBlocks "START"
+      set originalLineListWithSplitLine [list]
+      set originalLineListWithSplitLine "START"
       set temp_blockInfo [list ]
+      set temp_blockInfo_originalLine [list ]
     }
-    set temp_pin "" ; set temp_net "" ; set temp_celltype ""
     if {[regexp {\S+/\S+} $tempLine_ofCutOutContent temp_pinOrNet]} {
       if {[dbget top.insts.instTerms.name $temp_pinOrNet -e] ne ""} {
         set temp_pin $temp_pinOrNet
-      } elseif {[dbget top.nets.name $temp_pinOrNet -e] ne ""} {
-        set temp_net $temp_pinOrNet
+        set temp_pin_originalLine [regexp {^\s*} [regsub {\s*\n} $tempLine_ofCutOutContent ""] ""]
       }
-    }
-    if {[regexp {[A-Z0-9_]{3,}} $tempLine_ofCutOutContent temp_celltype_inLine]} {
-      if {$temp_celltype_inLine in $all_celltypes} {
-        set temp_celltype $temp_celltype_inLine
-        set flagOfFoundCelltypeInSameLine 1
-      } else {
-        set flagOfFoundCelltypeInSameLine 0
-      }
-    }
-    if {!$flagOfFoundCelltypeInSameLine} {
-      incr temp_incrIndex_inLine
-      if {$temp_pin ne "" && [regexp {[A-Z0-9_{3,}] [lindex $cutOutContent $temp_incrIndex_inLine]}]} {
-        # TODO
+      if {$temp_pinOrNet ne ""} {
+        set temp_net [dbget [dbget top.insts.instTerms.name $temp_pin -p].net.name -e]
+        if {$temp_pin_originalLine ne ""} {
+          set temp_net_originalLine ""
+        } else {
+          set temp_net_originalLine [regexp {^\s*} [regsub {\s*\n} $tempLine_ofCutOutContent ""] ""]
+        }
+        set temp_celltype [dbget [dbget top.insts.instTerms.name $temp_pin -p2].cell.name -e]
       }
     }
     if {$temp_pin ne "" && $temp_celltype ne "" && $temp_net ne ""} {
-      set temp_blockInfo [list $temp_pin $temp_celltype $temp_net]
+      set temp_blockInfo [list $temp_pin $temp_celltype]
+      set temp_blockInfo_originalLine [list $temp_pin $temp_celltype $temp_net]
       lappend pinInfoBlocks $temp_blockInfo
-    } else {
-
+      set temp_pin "" ; set temp_net "" ; set temp_celltype ""
+      set temp_pin_originalLine "" ; set temp_net_originalLine "" ; set temp_celltype_originalLine ""
     }
   }
 
-
-  set pinInfoBlocks [lmap templine $cutOutContent {
-    catch {regexp {.*\((.*)\).*} $templine wholename temp_celltype}
-    set ifMatchCelltype [expr {[info exists temp_celltype] && $temp_celltype in $all_celltypes}]
-    if {[regexp $lineExpToSplitPath|$startOfPath|$endOfPath $templine] || $ifMatchCelltype} {
-      set temp $templine 
-    }
-    
-  }]
-
-
-  set originalLineListWithSplitLine [list]
-  set purePinListWithSplitLine [lmap templine $pinInfoBlocks {
-    if {[regexp {^\s*$} $templine]} { continue }
-    set temp_celltype ""
-    regexp {.*\((.*)\).*} $templine wholename temp_celltype
-    if {$temp_celltype ni $all_celltypes} { 
-      if {[regexp $startOfPath $templine]} { 
-        lappend originalLineListWithSplitLine "START"
-        set temp "START" 
-      } elseif {[regexp $endOfPath $templine]} {
-        lappend originalLineListWithSplitLine "START" ; # U001: used for special situation of invs report_timing rpt
-        set temp "END" 
-      } elseif {[regexp $lineExpToSplitPath $templine]} {
-        lappend originalLineListWithSplitLine "SPLIT"
-        set temp "SPLIT"
-      } else {
-        continue
-      }
-    } else {
-      set indexOfStdCell [lsearch -exact $templine ($temp_celltype)]
-      lappend originalLineListWithSplitLine $templine
-      set pinName [lindex $templine [expr {$indexOfStdCell - 1}]]
-    }
-  }]
-  set splitedPinList [split_timing_path -input_list $purePinListWithSplitLine -split_exp {SPLIT} -start_exp {START} -end_exp {END}]
+  set purePinCelltypeNetListWithSplitLine $pinInfoBlocks
+  set splitedPinList [split_timing_path -input_list $purePinCelltypeNetListWithSplitLine -split_exp {SPLIT} -start_exp {START} -end_exp {END}]
   set splitedOriginalList [split_timing_path -input_list $originalLineListWithSplitLine -split_exp {SPLIT} -start_exp {START} -end_exp {END}]
   set filteredPinList [lmap tempList $splitedPinList {
     if {[llength $tempList] == 1} { continue } else {
-      if {[join [lrange [split [lindex $tempList 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1] "/"] 0 end-1] "/"]} {
+      if {[join [lrange [split [lindex $tempList 0 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList 1 0] "/"] 0 end-1] "/"]} {
         set tempList [lrange $tempList 1 end] 
       }
       if {[expr {[llength $tempList] % 2}]} {
-        if {[join [lrange [split [lindex $tempList end] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList end-1] "/"] 0 end-1] "/"]} {
+        if {[join [lrange [split [lindex $tempList end 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList end-1 0] "/"] 0 end-1] "/"]} {
           set tempList [lrange $tempList 0 end-1]
         } else {
-          error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
+          error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join [lmap temp_item $tempList { lindex $temp_item 0 }] " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
         }
       }
-      foreach {pin1 pin2} $tempList {
-        set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e]
-        set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
+      foreach {pin_celltype_net_1 pin_celltype_net_2} $tempList {
+        set net1 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_1 0] -p].net.name -e]
+        set net2 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_2 0] -p].net.name -e]
         if {$net1 == "" || $net2 == ""} {
-          error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: check your pinname($pin1 or $pin2) in rpt file($reportTimingFile), not found net!!! (in filteredPinList)" 
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: check your pinname([lindex $pin_celltype_net_1 0] or [lindex $pin_celltype_net_2 0]) in rpt file($reportTimingFile), not found net!!! (in filteredPinList)" 
         }
         if {$net1 != $net2} {
-          error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: both pins($pin1 and $pin2) are not on same net(net1: $net1 , net2: $net2)!!! (in filteredPinList)"
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: both pins([lindex $pin_celltype_net_1 0] and [lindex $pin_celltype_net_2 0]) are not on same net(net1: $net1 , net2: $net2)!!! (in filteredPinList)"
         }
       }
     }
@@ -443,29 +409,33 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   }]
   set instName_instBox2_3_incrCellDelay [list]
   set j 0
-  foreach temp_sub_list $filteredPinList {
-    foreach {pin1 pin2} $temp_sub_list {
-      set temp_line [lsearch -regexp -inline [lindex $filteredOriginalList $j] [subst -nocommands -nobackslashes {.*$pin1.*}]]
-      if {$temp_line == ""} {
-        error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: check your input : pin1($pin1) can't find matched line in ([lindex $splitedOriginalList $j])!!!"
-      }
-      set pureNumberLineList [lmap temp_item $temp_line {
-        if {[string is double $temp_item]} {
-          set temp $temp_item
-        } else {
-          continue
+  if {0} {
+    foreach temp_sub_list $filteredPinList {
+      foreach {pin_celltype_net_1 pin_celltype_net_2} $temp_sub_list {
+        set temp_line [lsearch -regexp -inline [lindex $filteredOriginalList $j] [subst -nocommands -nobackslashes {.*[lindex $pin_celltype_net_1 0].*}]]
+        if {$temp_line == ""} {
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: check your input : pin1([lindex $pin_celltype_net_1 0]) can't find matched line in ([lindex $splitedOriginalList $j])!!!"
         }
-      }]
-      set incr_delay [lindex $pureNumberLineList $indexOfPureNumberOnLine]
-      set temp_inst [join [lrange [split $pin1 "/"] 0 end-1] "/"]
-      set temp_inst_box {*}[dbget [dbget top.insts.name $temp_inst -p].box -e]
-      set temp_inst_box_2_3 [lset temp_inst_box 1 [expr {([lindex $temp_inst_box end] - [lindex $temp_inst_box 1]) / 3 + [lindex $temp_inst_box 1]}]]
-      set temp_inst_box_2_3 [lset temp_inst_box_2_3 end [expr {([lindex $temp_inst_box end] - [lindex $temp_inst_box 1]) / 3 + [lindex $temp_inst_box 1]}]]
-      lappend instName_instBox2_3_incrCellDelay [list $temp_inst $temp_inst_box_2_3 $incr_delay]
+        set pureNumberLineList [lmap temp_item $temp_line {
+          if {[string is double $temp_item]} {
+            set temp $temp_item
+          } else {
+            continue
+          }
+        }]
+        set incr_delay [lindex $pureNumberLineList $indexOfPureNumberOnLine]
+        set temp_inst [join [lrange [split [lindex $pin_celltype_net_1 0] "/"] 0 end-1] "/"]
+        set temp_inst_box {*}[dbget [dbget top.insts.name $temp_inst -p].box -e]
+        set temp_inst_box_2_3 [lset temp_inst_box 1 [expr {([lindex $temp_inst_box end] - [lindex $temp_inst_box 1]) / 3 + [lindex $temp_inst_box 1]}]]
+        set temp_inst_box_2_3 [lset temp_inst_box_2_3 end [expr {([lindex $temp_inst_box end] - [lindex $temp_inst_box 1]) / 3 + [lindex $temp_inst_box 1]}]]
+        lappend instName_instBox2_3_incrCellDelay [list $temp_inst $temp_inst_box_2_3 $incr_delay]
+      }
+      incr j
     }
-    incr j
+   
   }
-  return [list $filteredPinList $instName_instBox2_3_incrCellDelay]
+  #return [list $filteredPinList $instName_instBox2_3_incrCellDelay]
+  return [list $filteredPinList]
 }
 
 define_proc_arguments genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt \

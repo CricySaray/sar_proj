@@ -410,7 +410,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   }]
   set instName_instBox2_3_incrCellDelay [list]
   set j 0
-  if {0} {
+  if {0} { ; # holdon
     foreach temp_sub_list $filteredPinList {
       foreach {pin_celltype_net_1 pin_celltype_net_2} $temp_sub_list {
         set temp_line [lsearch -regexp -inline [lindex $filteredOriginalList $j] [subst -nocommands -nobackslashes {.*[lindex $pin_celltype_net_1 0].*}]]

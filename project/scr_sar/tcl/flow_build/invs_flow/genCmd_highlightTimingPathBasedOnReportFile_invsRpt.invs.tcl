@@ -322,17 +322,16 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   }
   set fi [open $reportTimingFile r]
   set content [split [read $fi] \n]
+  set content [lsearch -not -regexp -all -inline $content {^#.*|^Path \d+:|^Endpoint:|^Beginpoint:}]
   if {[lsearch -regexp $content $startLineExp] != -1 || [lsearch -regexp $content $endLineExp] != -1} {
     set endIndex [lindex [lsearch -regexp -all $content $endLineExp] end] ; # if there are several flag of endLineExp, it selects the last one.
     if {$endIndex ne ""} {
       set content [lrange $content 0 $endIndex]
-      set content [lsearch -not -regexp -all -inline $content {^#.*|^Path \d+:|^Endpoint:|^BeginPoint}]
     }
     set filterReportFileContontFirst [split_timing_path -input_list $content -split_exp "xxxSPLIT" -start_exp $startLineExp -end_exp $endLineExp]
     set cutOutContent [concat {*}$filterReportFileContontFirst]
   } else {
     set cutOutContent $content 
-    set cutOutContent [lsearch -not -regexp -all -inline $content {^#.*}]
   }
   set all_celltypes [dbget head.libCells.name -u -e]
 

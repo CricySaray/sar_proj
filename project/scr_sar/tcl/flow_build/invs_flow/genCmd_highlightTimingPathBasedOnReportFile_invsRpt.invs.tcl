@@ -134,19 +134,19 @@ proc genCmd_addTextOfNetLengthOnBottomOfDriverInst {args} {
   }
   if {[llength $evenNumberList] && ![expr {[llength $evenNumberList] % 2}]} {
     set cmdsList [list]
-    foreach {pin1 pin2} $evenNumberList {
-      set net1 [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e] 
-      set net2 [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e] 
+    foreach {pin_celltype_net_1 pin_celltype_net_2} $evenNumberList {
+      set net1 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_1 0] -p].net.name -e] 
+      set net2 [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_2 0] -p].net.name -e] 
       if {$net1 == $net2 && $net1 != ""} {
-        set outNetLen [dict get [reportWirePath -start $pin1 -end $pin2 -tcl -no_output] total_length]
-        set inst1_rect {*}[dbget [dbget top.insts.name [join [lrange [split $pin1 "/"] 0 end-1] "/"] -p].box -e]
+        set outNetLen [dict get [reportWirePath -start [lindex $pin_celltype_net_1 0] -end $pin2 -tcl -no_output] total_length]
+        set inst1_rect {*}[dbget [dbget top.insts.name [join [lrange [split [lindex $pin_celltype_net_1 0] "/"] 0 end-1] "/"] -p].box -e]
         set inst1_rect_3_3 [lset inst1_rect end [expr {([lindex $inst1_rect 3] - [lindex $inst1_rect 1]) / 3 + [lindex $inst1_rect 1]}]]
         lappend cmdsList "add_gui_text -layer $layerOfText -box \{$inst1_rect_3_3\} -no_bbox -label \"outLen:[format "%.1f" $outNetLen]\""
         if {$outNetLen > $netLenThreshold} {
           lappend cmdsList "add_gui_marker -name net_longer_than_$netLenThreshold -color $markerColor -type $markerType -pt \{[lindex $inst1_rect_3_3 2] [lindex $inst1_rect_3_3 1]\}"
         }
       } else {
-        error "proc genCmd_addTextOfNetLengthOnBottomOfDriverInst: check your input : pin1($pin1) and pin2($pin2) of evenNumberList is not on same net!!!" 
+        error "proc genCmd_addTextOfNetLengthOnBottomOfDriverInst: check your input : pin1([lindex $pin_celltype_net_1 0]) and pin2($pin2) of evenNumberList is not on same net!!!" 
       }
     }
     return $cmdsList
@@ -247,9 +247,9 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
   }
   set hiliteCmdsList [list ]
   if {$modeOfConnect == "whole_net"} {
-    foreach {pin1 pin2} $evenNumberList {
-      set pin1_net [dbget [dbget top.insts.instTerms.name $pin1 -p].net.name -e] 
-      set pin2_net [dbget [dbget top.insts.instTerms.name $pin2 -p].net.name -e]
+    foreach {pin_celltype_net_1 pin_celltype_net_2} $evenNumberList {
+      set pin1_net [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_1 0] -p].net.name -e] 
+      set pin2_net [dbget [dbget top.insts.instTerms.name [lindex $pin_celltype_net_2 0] -p].net.name -e]
       if {$pin1_net == "" || $pin2_net == ""} {
         error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your input: pin($pin1_net or $pin2_net) is not net to connect!!!" 
       } else {
@@ -258,7 +258,7 @@ proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems {args} {
         } else {
           set netColor [lindex $colorsIndexLoopListsForNet $indexOfColorsForNetInst]
           set instColor [lindex $colorsIndexLoopListsForInst $indexOfColorsForNetInst]
-          lappend hiliteCmdsList "highlight_pin_connection -from_pin $pin1 -to_pin $pin2 -mode $modeOfConnect [eo $ifWithArrow "-with_arrow" ""] -net_color_index $netColor -inst_color_index $instColor"
+          lappend hiliteCmdsList "highlight_pin_connection -from_pin [lindex $pin_celltype_net_1 0] -to_pin $pin2 -mode $modeOfConnect [eo $ifWithArrow "-with_arrow" ""] -net_color_index $netColor -inst_color_index $instColor"
         }
       }
     }
@@ -324,7 +324,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   set content [split [read $fi] \n]
   if {[lsearch -regexp $content $startLineExp] != -1 || [lsearch -regexp $content $endLineExp] != -1} {
     set endIndex [lindex [lsearch -regexp -all $content $endLineExp] end] ; # if there are several flag of endLineExp, it selects the last one.
-    if {$endIndex != -1} {
+    if {$endIndex ne ""} {
       set content [lrange $content 0 $endIndex]
     }
     set filterReportFileContontFirst [split_timing_path -input_list $content -split_exp "xxxSPLIT" -start_exp $startLineExp -end_exp $endLineExp]

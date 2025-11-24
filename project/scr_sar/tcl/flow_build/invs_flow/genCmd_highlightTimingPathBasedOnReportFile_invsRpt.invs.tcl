@@ -186,7 +186,7 @@ proc genCmd_addCellTypeOnTopOfInstRect {args} {
   }
   if {[llength evenNumberList]} {
     set uniqueInstNameList [lsort -unique [lmap temp_pin_celltype_net $evenNumberList {
-      set temp_inst [join [lrange [split $temp_pin_celltype_net "/"] 0 end-1] "/"]
+      set temp_inst [join [lrange [split [lindex $temp_pin_celltype_net 0] "/"] 0 end-1] "/"]
     }]]
     set inst_celltype_box_list [lmap temp_inst $uniqueInstNameList {
       set temp_celltype [dbget [dbget top.insts.name $temp_inst -p].cell.name -e]

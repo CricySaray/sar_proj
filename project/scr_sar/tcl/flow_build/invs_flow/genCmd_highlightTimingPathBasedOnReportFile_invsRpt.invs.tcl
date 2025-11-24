@@ -310,8 +310,8 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
   set indexOfPureNumberOnLine           "end-1"
   set indexOfAfterSplitOriginalLineList "0"
   set lineExpToSplitPath                {^TE} ; # used to regexp
-  set startOfPath                       {^\s*---+\s*$} ; # start expression of launch timing path
-  set endOfPath                         {^\s*---+\s*$} ; # end expression of launch timing path
+  set startOfPath                       {^\s*---+\s*} ; # start expression of launch timing path
+  set endOfPath                         {^\s*---+\s*} ; # end expression of launch timing path
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

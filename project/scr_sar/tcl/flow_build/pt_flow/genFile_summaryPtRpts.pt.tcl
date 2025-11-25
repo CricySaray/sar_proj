@@ -87,8 +87,6 @@ source ../common/generate_combinations.common.tcl; # generate_combinations
 source ../common/parse_constraint_report.common.tcl; # parse_constraint_report 
 source ../../packages/table_format_with_title.package.tcl; # table_format_with_title 
 proc runCmd_summarize_pt_rpts {args} {
-  set searchDir                   "./" ; # for example: /simulation/arsong/SC5019/PT/run/V0926_S0926_FP0926_0926_100_dft_v3_eco1
-  set outputFileOfSummary         "$searchDir/<scenario>/sum.csv" ; # if have '<scenario>' in this path, this will write output for every scenario dir
   set scenarios                   "auto" ; # auto (will search ) or [list ...], for example: func_hold_1p21v_rcbest_125c
   set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # format instance like: func_setup_0p99v_rcworst_m40c
   set modesOfFormatExp            {func scan}
@@ -96,12 +94,6 @@ proc runCmd_summarize_pt_rpts {args} {
   set voltageOfFormatExp          {0p99v 1p1v 1p21v}
   set rcCornerOfFormatExp         {cworst cbest rcworst rcbest typical}
   set temperatureOfFormatExp      {25c m40c 125c}
-  set designName                  "SC5019_TOP" ; # only consisted of reportConstraintFileName
-  set reportConstraintFileName    "report_constraint_$designName.rpt"
-  set globalTimingCsvFileName     "${designName}.global_timing.csv" ; # please using command: report_global_timing -format csv -ouput .../$designName.global_timing.csv
-  set annotatedParasiticsFileName "report_annotated_parasitics.rpt"
-  set outputDirOfViolList         "$searchDir/<scenario>/"
-  set prefixOutPutFile            "sor_${designName}_"
   set waive_list_file             "" ; # please provided it by yourself
   set waive_prefix_prompt_list    {{max_delay SETUP} {min_delay HOLD} {max_transition TRAN} {max_capacitance CAP} {max_fanout FANOUT} {min_pulse_width PULSE} {min_period PERIOD}}
   parse_proc_arguments -args $args opt
@@ -109,6 +101,33 @@ proc runCmd_summarize_pt_rpts {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  # below is default value setting
+  if {![info exists searchDir]} {
+    set searchDir                   "./" ; # for example: /simulation/arsong/SC5019/PT/run/V0926_S0926_FP0926_0926_100_dft_v3_eco1
+  }
+  if {![info exists outputFileOfSummary]} {
+    set outputFileOfSummary         "$searchDir/<scenario>/sum.csv" ; # if have '<scenario>' in this path, this will write output for every scenario dir
+  }
+  if {![info exists outputDirOfViolList]} {
+    set outputDirOfViolList         "$searchDir/<scenario>/"
+  }
+  if {![info exists designName]} {
+    set designName                  "SC5019_TOP" ; # only consisted of reportConstraintFileName
+   
+  }
+  if {![info exists reportConstraintFileName]} {
+    set reportConstraintFileName    "report_constraint_$designName.rpt"
+  }
+  if {![info exists globalTimingCsvFileName]} {
+    set globalTimingCsvFileName     "${designName}.global_timing.csv" ; # please using command: report_global_timing -format csv -ouput .../$designName.global_timing.csv
+  }
+  if {![info exists annotatedParasiticsFileName]} {
+    set annotatedParasiticsFileName "report_annotated_parasitics.rpt"
+  }
+  if {![info exists prefixOutPutFile]} {
+    set prefixOutPutFile            "sor_${designName}_"
+  }
+
   if {$scenarios == "auto"} {
     set optionsOfFormatOfScenarios [list "<mode>" "<type>" "<voltage>" "<rcCorner>" "<temperature>"] ; # you only select options inside these
     set mode $modesOfFormatExp ; set type $typeToCheckOfFormatExp ; set voltage $voltageOfFormatExp ; set rcCorner $rcCornerOfFormatExp ; set temperature $temperatureOfFormatExp

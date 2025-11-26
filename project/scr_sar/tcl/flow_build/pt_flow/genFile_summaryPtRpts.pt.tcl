@@ -58,6 +58,9 @@ proc collect_sum_csv_file {args} {
     }
   }
   set all_content [lsort -index 0 -ascii $all_content]
+  set all_content_setup [lsearch -all -regexp -inline $all_content setup]
+  set all_content_hold [lsearch -all -regexp -inline $all_content hold]
+  set all_content [concat $all_content_setup $all_content_hold]
   # M = max, m = min, MfanW = max fanout WNS, mPrdN = min period NUM, mPulW = min pulse width WNS, Nanno = not annotated pin to pin nets
   set infoOfAllScenarios [linsert [list] 0 [list scenario wns num tns r2r_w r2r_n r2r_t tranW tranN MfanW MfanN MCapW MCapN mPrdW mPrdN mPulW mPulN Nanno]]
   set alignMethodsList [list left right center right right center right right center right center right center right center right center center]

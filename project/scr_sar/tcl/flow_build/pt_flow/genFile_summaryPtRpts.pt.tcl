@@ -49,12 +49,12 @@ proc collect_sum_csv_file {args} {
   if {$scenarioDirs == ""} { error "proc collect_sum_csv_file: check your input: scenarios dir on searching directory is empty!!!" }
   set all_content [list ]
   foreach temp_scenario $scenarioDirs {
-    if {[file isfile "$temp_scenario/sum.csv"]} {
-      set temp_fi [open "$temp_scenario/sum.csv" r] ; set temp_content [split [read $temp_fi] "\n"] ; close $temp_fi
+    if {[file isfile "$searchDir/$temp_scenario/sum.csv"]} {
+      set temp_fi [open "$searchDir/$temp_scenario/sum.csv" r] ; set temp_content [split [read $temp_fi] "\n"] ; close $temp_fi
       set final_title [lindex $temp_content 0]
       lappend all_content [lindex $temp_content 1]
     } else {
-      puts "Notice : dir: $temp_scenario have no sum.csv file!!!"
+      puts "Notice : dir: $searchDir/$temp_scenario have no sum.csv file!!!"
     }
   }
   set all_content [lsort -index 0 -ascii $all_content]

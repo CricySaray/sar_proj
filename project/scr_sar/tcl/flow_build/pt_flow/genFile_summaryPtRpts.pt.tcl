@@ -24,6 +24,53 @@ source ../../packages/table_format_with_title.package.tcl; # table_format_with_t
 #            each sor_* file, convert it into data in the list format used in Tcl, then sort and remove duplicates. After processing, re-tabulate the data and create 
 #            summary files (such as trans, cap, noise, fanout files) in the directory at the same level as the scenario. Keep the files as simple as possible to 
 #            facilitate opening with Vim and minimize the number of keystrokes required.
+
+# without define_proc_arguments cmd
+proc collect_sum_csv_file_pure {{searchDir "./"} {formatOfScenarios ""} {modesOfFormatExp {}} {typeToCheckOfFormatExp {}} {voltageOfFormatExp {}} {rcCornerOfFormatExp {}} {temperatureOfFormatExp {}}} {
+  set optionsOfFormatOfScenarios [list "<mode>" "<type>" "<voltage>" "<rcCorner>" "<temperature>"] ; # you only select options inside these
+  set mode $modesOfFormatExp ; set type $typeToCheckOfFormatExp ; set voltage $voltageOfFormatExp ; set rcCorner $rcCornerOfFormatExp ; set temperature $temperatureOfFormatExp
+  set allCasesOfScenarios [generate_combinations -connector "_" {*}[lmap temp_var [regsub -all {>|<} $optionsOfFormatOfScenarios ""] { if {![llength [subst \${$temp_var}]]} {error "proc collect_sum_csv_file_pure: check your input: the $temp_var is empty!!!"} else {set $temp_var}}]]
+  if {![file isdirectory $searchDir]} {
+    error "proc collect_sum_csv_file_pure: check your input: searchDir($searchDir) does not exist!!!" 
+  }
+  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain $searchDir/*] { file tail $temp_path }]
+  set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
+  if {$scenarioDirs == ""} { error "proc collect_sum_csv_file_pure: check your input: scenarios dir on searching directory is empty!!!" }
+  set all_content [list ]
+  foreach temp_scenario $scenarioDirs {
+    if {[file isfile "$searchDir/$temp_scenario/sum.csv"]} {
+      set temp_fi [open "$searchDir/$temp_scenario/sum.csv" r] ; set temp_content [split [read $temp_fi] "\n"] ; close $temp_fi
+      set final_title [lindex $temp_content 0]
+      lappend all_content [lindex $temp_content 1]
+    } else {
+      puts "Notice : dir: $searchDir/$temp_scenario have no sum.csv file!!!"
+    }
+  }
+  set all_content [lsort -index 0 -ascii $all_content]
+  set all_content_setup [lsearch -all -regexp -inline $all_content setup]
+  set all_content_hold [lsearch -all -regexp -inline $all_content hold]
+  set all_content [concat $all_content_setup $all_content_hold]
+  # M = max, m = min, MfanW = max fanout WNS, mPrdN = min period NUM, mPulW = min pulse width WNS, Nanno = not annotated pin to pin nets
+  set infoOfAllScenarios [linsert [list] 0 [list scenario wns num tns r2r_w r2r_n r2r_t tranW tranN MfanW MfanN MCapW MCapN mPrdW mPrdN mPulW mPulN Nanno]]
+  set alignMethodsList [list left right center right right center right right center right center right center right center right center center]
+  set table_of_whole_sum_csv [join [table_format_with_title [concat [list $final_title] $all_content] 0 $alignMethodsList "" 0] \n]
+  set fo [open "$searchDir/sum.csv" w]
+  puts $fo $table_of_whole_sum_csv
+  close $fo
+}
+if {1} {
+  # set default value for proc without define_proc_arguments cmd
+  set searchDir              "./"
+  set formatOfScenarios      "<mode>_<type>_<voltage>_<rcCorner>_<temperature>"
+  set modesOfFormatExp       {func scan}
+  set typeToCheckOfFormatExp {setup hold}
+  set voltageOfFormatExp     {0p99v 1p1v 1p21v}
+  set rcCornerOfFormatExp    {cworst cbest rcworst rcbest typical}
+  set temperatureOfFormatExp {25c m40c 125c}
+  collect_sum_csv_file_pure $searchDir $formatOfScenarios $modesOfFormatExp $typeToCheckOfFormatExp $voltageOfFormatExp $rcCornerOfFormatExp $temperatureOfFormatExp
+}
+
+# with define_proc_arguments cmd
 proc collect_sum_csv_file {args} {
   set searchDir              "./"
   set formatOfScenarios      "<mode>_<type>_<voltage>_<rcCorner>_<temperature>"
@@ -116,16 +163,15 @@ proc runCmd_summarize_pt_rpts {args} {
   }
   if {![info exists designName]} {
     set designName                  "SC5019_TOP" ; # only consisted of reportConstraintFileName
-   
   }
   if {![info exists reportConstraintFileName]} {
-    set reportConstraintFileName    "report_constraint_$designName.rpt"
+    set reportConstraintFileName    "$designName.constraint.rpt"
   }
   if {![info exists globalTimingCsvFileName]} {
     set globalTimingCsvFileName     "${designName}.global_timing.csv" ; # please using command: report_global_timing -format csv -ouput .../$designName.global_timing.csv
   }
   if {![info exists annotatedParasiticsFileName]} {
-    set annotatedParasiticsFileName "report_annotated_parasitics.rpt"
+    set annotatedParasiticsFileName "${designName}.annotated_parasitics.rpt"
   }
   if {![info exists prefixOutPutFile]} {
     set prefixOutPutFile            "sor_${designName}_"
@@ -176,6 +222,7 @@ proc runCmd_summarize_pt_rpts {args} {
       set reg2regWNS [lindex $valueList [lsearch -exact $titleList "reg2reg_WNS"]]
       set reg2regTNS [lindex $valueList [lsearch -exact $titleList "reg2reg_TNS"]]
       set reg2regNUM [lindex $valueList [lsearch -exact $titleList "reg2reg_NUM"]]
+      set fo_temp [open "$searchDir/$temp_scenario_dir/[file rootname $globalTimingCsvFileName].tbl" w] ; puts $fo_temp [join [table_format_with_title [list $titleList $valueList] 0 center "" 0] \n] ; close $fo_temp
     }
     set fi_annotated [open "$searchDir/$temp_scenario_dir/$annotatedParasiticsFileName" r] ; set annotatedParasiticsContent [split [read $fi_annotated] "\n"] ; close $fi_annotated
     set pin_to_pin_line [lsearch -inline -regexp $annotatedParasiticsContent {^\s+- Pin to pin nets .*}]

@@ -117,7 +117,7 @@ proc table_format_with_title {inputData {width_spec 0} {align_spec "left"} {titl
     set corner_char "+"
     set inter_col_spacing 0  ;# No extra space between columns (border handles separation)
   } else {
-    set col_sep "  "         ;# Use two spaces for column separation in borderless mode
+    set col_sep ""         ;# Use two spaces for column separation in borderless mode
     set line_char ""
     set corner_char ""
     set inter_col_spacing 2  ;# Explicit spacing for visual separation

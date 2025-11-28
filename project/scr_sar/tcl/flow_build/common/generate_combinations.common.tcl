@@ -124,7 +124,7 @@ if {0} {
   puts "on debug mode:"
   puts [join [generate_combinations $one $tow -connector "-_+_-" $th -debug] \n]
 }
-if {1} {
+if {0} {
   set mode {func scan}
   set type {setup hold}
   set volt {0p99v 1p21v 1p1v}

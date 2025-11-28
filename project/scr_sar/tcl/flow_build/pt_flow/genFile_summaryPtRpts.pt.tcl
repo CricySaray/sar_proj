@@ -16,35 +16,96 @@
 # return    : csv summary file
 # ref       : link url
 # --------------------------
-proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir} {
-  if {$searchDir ne ""} {
+proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir typeOfPathGroupOfLongOrShort} {
+  if {$searchDir eq ""} {
     error "proc genSum_forEveryPathGroupDetailedRpt: \$searchDir is empty!!! check it!!" 
   }
-  if {$scenariosMatchExp ne ""} {
+  if {$scenariosMatchExp eq ""} {
     error "proc genSum_forEveryPathGroupDetailedRpt: please check your input: \$scenariosMatchExp is empty!!!" 
   }
-  if {$subDirOfScenarioDir ne "" } {
+  if {$subDirOfScenarioDir eq "" } {
     error "proc genSum_forEveryPathGroupDetailedRpt: \$subDirOfScenarioDir is empty!!! if needn't have this subDir, please input './'" 
   }
-  set allScenariosDir [lmap temp_dirname [glob -nocomplain -directory $searchDir/$scenariosMatchExp] { file tail $temp_dirname }]
-  
+  set allScenariosName [lmap temp_dirname [glob -nocomplain -types d $searchDir/$scenariosMatchExp] { file tail $temp_dirname }]
+  set allScenariosDir [glob -nocomplain -types d $searchDir/$scenariosMatchExp]
+  set groupExp_short [list i2r r2o i2o r2r r2g r2m m2g m2r m2m r2p p2r p2p]
+  set groupExp_long [list in2reg reg2out in2out reg2reg reg2gate reg2mem mem2gate mem2reg mem2mem reg2ip ip2reg ip2ip]
+  if {$typeOfPathGroupOfLongOrShort eq "short"} { set groupExp_ref $groupExp_short } elseif {$typeOfPathGroupOfLongOrShort eq "long"} { set groupExp_ref $groupExp_long }
+  set all_scenario_group_endpointSlack_list [list]
+  foreach temp_scenario_dir $allScenariosDir {
+    set allrptdir [lmap temp_dir [glob -nocomplain -types f $temp_scenario_dir/$subDirOfScenarioDir/*] { file tail $temp_dir }]
+    set availableRptDir [lmap temp_rptdir $allrptdir { regexp {.*([a-z]+2[a-z]+).*} $temp_rptdir -> temp_pathgroup ; if {$temp_pathgroup in $groupExp_ref} { set temp_rptdir } else { continue }}]
+    set scenario_group_endpointSlack_list [list]
+    foreach temp_available_rptdir $availableRptDir {
+      regexp {.*([a-z]+2[a-z]+).*} $temp_available_rptdir -> temp_pathgroup
+      set temp_endpointSlack [_get_endpointAndSlack_fromPtRpt "$temp_scenario_dir/$subDirOfScenarioDir/$temp_available_rptdir"]
+      set temp_num [llength $temp_endpointSlack]
+      if {$temp_num == 0} { set temp_wns 0.0 } else {
+        set temp_wns [format "%.4f" [lindex [lsort -real -increasing -index 1 $temp_endpointSlack] 0 1]]
+      }
+      set temp_allViolatedSlack [lmap temp_endpoint_slack $temp_endpointSlack { lindex $temp_endpoint_slack 1 }]
+      set temp_tns_onlyCalculateEndpointSlack 0.0
+      foreach temp_violatedslack $temp_allViolatedSlack { set temp_tns_onlyCalculateEndpointSlack [expr $temp_tns_onlyCalculateEndpointSlack + $temp_violatedslack] }
+      set temp_tns_onlyCalculateEndpointSlack [format "%.3f" $temp_tns_onlyCalculateEndpointSlack]
+      #lappend scenario_group_endpointSlack_list [list $temp_pathgroup [list $temp_wns $temp_num $temp_tns_onlyCalculateEndpointSlack]]
+      lappend scenario_group_endpointSlack_list [list ${temp_pathgroup}_w $temp_wns] [list ${temp_pathgroup}_n $temp_num] [list ${temp_pathgroup}_t $temp_tns_onlyCalculateEndpointSlack]
+    }
+    set scenario_group_endpointSlack_list [linsert $scenario_group_endpointSlack_list 0 [list scenario [file tail $temp_scenario_dir]]]
+    set formated_scenario_group_endpointSlack_list [list [lmap temp_1 $scenario_group_endpointSlack_list { lindex $temp_1 0 }] [lmap temp_2 $scenario_group_endpointSlack_list { lindex $temp_2 1 }]]
+    set scenario_group_endpointSlack_table [table_format_with_title $formated_scenario_group_endpointSlack_list 0 center "" 0]
+    set fo_temp [open $temp_scenario_dir/$subDirOfScenarioDir/sum_pathgroup.csv w]
+    puts $fo_temp [join $scenario_group_endpointSlack_table \n]
+    close $fo_temp
+    lappend all_scenario_group_endpointSlack_list {*}$formated_scenario_group_endpointSlack_list
+  }
+  set uniqueScenario_group_endpointSlack_wholeList [lsort -unique -ascii -increasing $all_scenario_group_endpointSlack_list]
+  set uniqueScenario_group_endpointSlack_wholeList_setup [lsearch -all -inline -regexp $uniqueScenario_group_endpointSlack_wholeList setup]
+  set uniqueScenario_group_endpointSlack_wholeList_hold [lsearch -all -inline -regexp $uniqueScenario_group_endpointSlack_wholeList hold]
+  set title_ofWholeList [lsearch -inline -regexp $uniqueScenario_group_endpointSlack_wholeList scenario]
+  set finalScenario_group_endpointSlack_wholeList [list $title_ofWholeList {*}$uniqueScenario_group_endpointSlack_wholeList_setup {*}$uniqueScenario_group_endpointSlack_wholeList_hold]
+  set fo_temp_wholesum [open $searchDir/sum_pathgroup.csv w]
+  set len_oneRow [llength [lindex $finalScenario_group_endpointSlack_wholeList 0]]
+  puts $fo_temp_wholesum [join [table_format_with_title $finalScenario_group_endpointSlack_wholeList 0 [list left {*}[lrepeat [expr $len_oneRow - 1] "center"]] "" 0] \n]
+  close $fo_temp_wholesum
 }
 # instance invoked proc: genSum_forEveryPathGroupDetailedRpt
 if {1} {
   set searchDir "./"
   set scenariosMatchExp {STA*} ; # match scenarios name dir, for glob
   set subDirOfScenarioDir "detail_timing_rpt_song"
-  genSum_forEveryPathGroupDetailedRpt $searchDir $scenariosMatchExp $subDirOfScenarioDir
-}
-proc _get_endpointAndSlack_fromPtRpt {} {
-  
-}
-# instance invoked proc: _get_endpointAndSlack_fromPtRpt
-if {1} {
-  set rptFile "./N900_TOP.max.r2r.rpt"
-  # TODO
+  set typeOfPathGroupOfLongOrShort "short"
+  genSum_forEveryPathGroupDetailedRpt $searchDir $scenariosMatchExp $subDirOfScenarioDir $typeOfPathGroupOfLongOrShort
 }
 
+# sub proc of genSum_forEveryPathGroupDetailedRpt
+proc _get_endpointAndSlack_fromPtRpt {{rptFile ""}} {
+  if {$rptFile eq ""} {
+    error "proc _get_endpointAndSlack_fromPtRpt: check your input: rptFile is empty!!!"
+  } elseif {![file exists $rptFile]} {
+    error "proc _get_endpointAndSlack_fromPtRpt: check your input: rptFile($rptFile) is not found!!! check it." 
+  } else {
+    set fi_temp [open $rptFile r] ; set content [split [read $fi_temp] \n] ; close $fi_temp
+    set endpoint_exp "Endpoint:"
+    set allEndpointSlackList [list]
+    set i 0
+    foreach temp_line $content {
+      if {$endpoint_exp in $temp_line} {
+        set tempPin_endpoint [lindex $temp_line end]
+        set indexOfNextEndpointLine [lsearch -regexp [lrange $content [expr $i + 1] end] {^\s*Endpoint:\s*\S+\s*$}]
+        set indexOfNextSlackLine [lsearch -regexp [lrange $content [expr $i + 1] end] {^\s*slack \(VIOLATED\) \s*-\d+(\.\d+)?\s*$}]
+        if {$indexOfNextEndpointLine != -1 && $indexOfNextSlackLine != -1 && $indexOfNextEndpointLine < $indexOfNextSlackLine} {
+          error "proc _get_endpointAndSlack_fromPtRpt: have line: continuous endpoint line(line:$i and line:$indexOfNextEndpointLine), this is forbidden!!! check it" 
+        } elseif {$indexOfNextSlackLine != -1} {
+          set temp_slack [lindex [lrange $content [expr $i + 1] end] $indexOfNextSlackLine end]
+          lappend allEndpointSlackList [list $tempPin_endpoint $temp_slack]
+        }
+      }
+    incr i
+    }
+    set uniqueEndpointSlackList [lsort -unique -index 0 $allEndpointSlackList]
+    return $uniqueEndpointSlackList
+  }
+}
 
 
 # small tool to collect these csv file of summary generated by proc: runCmd_summarize_pt_rpts, you can run this seperately
@@ -64,7 +125,7 @@ proc collect_sum_csv_file_pure_withoutDefineArgumentCmd {{searchDir "./"} {forma
   if {![file isdirectory $searchDir]} {
     error "proc collect_sum_csv_file_pure_withoutDefineArgumentCmd: check your input: searchDir($searchDir) does not exist!!!" 
   }
-  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -directory $searchDir/*] { file tail $temp_path }]
+  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -types d $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
   if {$scenarioDirs == ""} { error "proc collect_sum_csv_file_pure_withoutDefineArgumentCmd: check your input: scenarios dir on searching directory is empty!!!" }
   set all_content [list ]
@@ -123,7 +184,7 @@ proc collect_sum_csv_file_withDefineArgumentCmd {args} {
   if {![file isdirectory $searchDir]} {
     error "proc collect_sum_csv_file_withDefineArgumentCmd: check your input: searchDir($searchDir) does not exist!!!" 
   }
-  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -directory $searchDir/*] { file tail $temp_path }]
+  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -types d $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
   if {$scenarioDirs == ""} { error "proc collect_sum_csv_file_withDefineArgumentCmd: check your input: scenarios dir on searching directory is empty!!!" }
   set all_content [list ]
@@ -219,7 +280,7 @@ proc runCmd_summarize_pt_rpts {args} {
   if {![file isdirectory $searchDir]} {
     error "proc runCmd_summarize_pt_rpts: check your input: searchDir($searchDir) does not exist!!!" 
   }
-  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -directory $searchDir/*] { file tail $temp_path }]
+  set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -types d $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
   if {$scenarioDirs == ""} { error "proc runCmd_summarize_pt_rpts: check your input: scenarios dir on searching directory is empty!!!" }
   set allConstraintNameList [list min_delay max_delay max_capacitance max_transition max_fanout min_pulse_width min_period]

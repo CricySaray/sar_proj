@@ -320,6 +320,8 @@ define_proc_arguments genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems \
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task)
 # descrip   : Obtain the path pins that need to be highlighted from the report_timing (rpt) file of PT, and different paths can be automatically split based on keywords.
+# update    : 2025/11/28 12:42:06 Friday
+#             U004: Adapt to pin names in the format of /inst/to/pin[10]
 # return    : lists of even pins
 # ref       : link url
 # --------------------------
@@ -421,8 +423,8 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
   set j 0
   foreach temp_sub_list $filteredPinList {
     foreach {pin1 pin2} $temp_sub_list {
-      set temp_line [lsearch -regexp -inline [lindex $filteredOriginalList $j] [subst -nocommands -nobackslashes {.*$pin1.*}]]
-      if {$temp_line == ""} {
+      set temp_line [lindex [lmap temp_originalline [lindex $filteredOriginalList $j] { if {$pin1 in $temp_originalline } { set temp_originalline } else { continue } }] 0] ; # U004
+      if {$temp_line eq ""} {
         error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your input : pin1($pin1) can't find matched line in ([lindex $splitedOriginalList $j])!!!"
       }
       set pureNumberLineList [lmap temp_item $temp_line {

@@ -16,6 +16,7 @@
 # return    : csv summary file
 # ref       : link url
 # --------------------------
+source ../common/sort_list_by_referencelist.common.tcl; # sort_list_byReferenceList
 proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir typeOfPathGroupOfLongOrShort} {
   if {$searchDir eq ""} {
     error "proc genSum_forEveryPathGroupDetailedRpt: \$searchDir is empty!!! check it!!" 
@@ -28,14 +29,15 @@ proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfSc
   }
   set allScenariosName [lmap temp_dirname [glob -nocomplain -types d $searchDir/$scenariosMatchExp] { file tail $temp_dirname }]
   set allScenariosDir [glob -nocomplain -types d $searchDir/$scenariosMatchExp]
-  set groupExp_short [list i2r r2o i2o r2r r2g r2m m2g m2r m2m r2p p2r p2p]
-  set groupExp_long [list in2reg reg2out in2out reg2reg reg2gate reg2mem mem2gate mem2reg mem2mem reg2ip ip2reg ip2ip]
+  set groupExp_short [list r2r r2g r2m m2r m2g m2m r2p p2r p2p i2r r2o i2o]
+  set groupExp_long [list reg2reg reg2gate reg2mem mem2reg mem2gate mem2mem reg2ip ip2reg ip2ip in2reg reg2out in2out]
   if {$typeOfPathGroupOfLongOrShort eq "short"} { set groupExp_ref $groupExp_short } elseif {$typeOfPathGroupOfLongOrShort eq "long"} { set groupExp_ref $groupExp_long }
   set all_scenario_group_endpointSlack_list [list]
   foreach temp_scenario_dir $allScenariosDir {
     set allrptdir [lmap temp_dir [glob -nocomplain -types f $temp_scenario_dir/$subDirOfScenarioDir/*] { file tail $temp_dir }]
     set availableRptDir [lmap temp_rptdir $allrptdir { regexp {.*([a-z]+2[a-z]+).*} $temp_rptdir -> temp_pathgroup ; if {$temp_pathgroup in $groupExp_ref} { set temp_rptdir } else { continue }}]
     set availableRptDir [lsort -ascii -increasing $availableRptDir]
+    set availableRptDir [sort_list_byReferenceList $groupExp_ref $availableRptDir 0]
     set scenario_group_endpointSlack_list [list]
     foreach temp_available_rptdir $availableRptDir {
       regexp {.*([a-z]+2[a-z]+).*} $temp_available_rptdir -> temp_pathgroup

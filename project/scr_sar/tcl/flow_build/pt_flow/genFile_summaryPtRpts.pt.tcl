@@ -35,6 +35,7 @@ proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfSc
   foreach temp_scenario_dir $allScenariosDir {
     set allrptdir [lmap temp_dir [glob -nocomplain -types f $temp_scenario_dir/$subDirOfScenarioDir/*] { file tail $temp_dir }]
     set availableRptDir [lmap temp_rptdir $allrptdir { regexp {.*([a-z]+2[a-z]+).*} $temp_rptdir -> temp_pathgroup ; if {$temp_pathgroup in $groupExp_ref} { set temp_rptdir } else { continue }}]
+    set availableRptDir [lsort -ascii -increasing $availableRptDir]
     set scenario_group_endpointSlack_list [list]
     foreach temp_available_rptdir $availableRptDir {
       regexp {.*([a-z]+2[a-z]+).*} $temp_available_rptdir -> temp_pathgroup

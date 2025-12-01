@@ -13,11 +13,15 @@
 # NOTICE    : 1) please generate constraint report file using command: report_constraint -pba_mode $pba_mode -sinificant_digits 3 -all_violator -path_type end|slack_only -nos -max_delay -min_delay -max_transition -max_capacitance -max_fanout -min_period -min_pulse_width -pba_path path|exhaustive
 #             2) generate annotated report file using report_annotated_parasitics -check -pin_to_pin_nets
 #             3) generate global timing csv file using report_global_timing -pab_mode $pba_mode -significant_digits 3 -format csv -output outputfile.name
+# update    : 2025/12/01 12:30:16 Monday
+#             U003: add proc:genSum_forEveryPathGroupDetailedRpt for summarize table for every path group timing
+#                   You need to set the path group according to the ./setConfig_pathGroup.pt.tcl script to perfectly adapt to this proc. It is recommended to place the generated path group detail rpt 
+#                   in a separate subfolder, which will make reading the files more convenient and easier.
 # return    : csv summary file
 # ref       : link url
 # --------------------------
 source ../common/sort_list_by_referencelist.common.tcl; # sort_list_byReferenceList
-proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir typeOfPathGroupOfLongOrShort} {
+proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir typeOfPathGroupOfLongOrShort} { ; # U003
   if {$searchDir eq ""} {
     error "proc genSum_forEveryPathGroupDetailedRpt: \$searchDir is empty!!! check it!!" 
   }
@@ -37,10 +41,14 @@ proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfSc
     set allrptdir [lmap temp_dir [glob -nocomplain -types f $temp_scenario_dir/$subDirOfScenarioDir/*] { file tail $temp_dir }]
     set availableRptDir [lmap temp_rptdir $allrptdir { regexp {.*([a-z]+2[a-z]+).*} $temp_rptdir -> temp_pathgroup ; if {$temp_pathgroup in $groupExp_ref} { set temp_rptdir } else { continue }}]
     set availableRptDir [lsort -ascii -increasing $availableRptDir]
-    set availableRptDir [sort_list_byReferenceList $groupExp_ref $availableRptDir 0]
-    set scenario_group_endpointSlack_list [list]
-    foreach temp_available_rptdir $availableRptDir {
+    set availableRptDir_2 [lmap temp_available_rptdir $availableRptDir { 
       regexp {.*([a-z]+2[a-z]+).*} $temp_available_rptdir -> temp_pathgroup
+      list $temp_available_rptdir $temp_pathgroup
+    }]
+    set availableRptDir_2 [sort_list_byReferenceList $groupExp_ref $availableRptDir_2 1 0]
+    set scenario_group_endpointSlack_list [list]
+    foreach temp_available_rptdir_2 $availableRptDir_2 {
+      lassign $temp_available_rptdir_2 temp_available_rptdir temp_pathgroup
       set temp_endpointSlack [_get_endpointAndSlack_fromPtRpt "$temp_scenario_dir/$subDirOfScenarioDir/$temp_available_rptdir"]
       set temp_num [llength $temp_endpointSlack]
       if {$temp_num == 0} { set temp_wns 0.0 } else {

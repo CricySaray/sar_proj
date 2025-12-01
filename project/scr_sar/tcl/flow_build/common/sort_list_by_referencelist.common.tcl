@@ -10,17 +10,20 @@
 # return    : sorted list
 # ref       : link url
 # --------------------------
-proc sort_list_byReferenceList {refList targetList debug} {
+proc sort_list_byReferenceList {refList targetList index debug} {
   # Validate input types
   if {![llength $refList]} {
-    error "proc sort_list_byReferenceList: Reference list cannot be empty"
+    error "Reference list cannot be empty"
   }
   if {![llength $targetList]} {
     if {$debug} {puts "Debug: Target list is empty, returning empty list"}
     return {}
   }
   if {$debug ni {0 1}} {
-    error "proc sort_list_byReferenceList: Debug parameter must be 0 or 1"
+    error "Debug parameter must be 0 or 1"
+  }
+  if {![string is integer -strict $index] || $index < -1} {
+    error "Index parameter must be -1 or non-negative integer"
   }
 
   # Create position mapping from reference list
@@ -37,19 +40,36 @@ proc sort_list_byReferenceList {refList targetList debug} {
   # Collect all invalid elements in target list
   set invalidElems {}
   foreach elem $targetList {
-    if {![info exists refPos($elem)]} {
+    # Get comparison element based on index
+    set compElem [expr {$index == -1 ? $elem : [lindex $elem $index]}]
+    if {![info exists refPos($compElem)]} {
       lappend invalidElems $elem
     }
   }
   if {[llength $invalidElems] > 0} {
-    error "proc sort_list_byReferenceList: Elements in target list not found in reference list: [join $invalidElems {, }]"
+    error "Elements in target list not found in reference list: [join $invalidElems {, }]"
   }
 
-  # Sort target list based on reference positions
-  set sortedList [lsort -integer -command {apply {{a b} {
-    upvar refPos refPos
-    set diff [expr {$refPos($a) - $refPos($b)}]
-    return $diff
+  # Prepare comparison data for sorting
+  set sortIndex $index
+  array set sortRefPos {}
+  foreach {k v} [array get refPos] {
+    set sortRefPos($k) $v
+  }
+
+  # Sort target list with 2-parameter comparison function
+  set sortedList [lsort -command {apply {{a b} {
+    upvar sortIndex sortIndex sortRefPos sortRefPos
+    set aComp [expr {$sortIndex == -1 ? $a : [lindex $a $sortIndex]}]
+    set bComp [expr {$sortIndex == -1 ? $b : [lindex $b $sortIndex]}]
+    set diff [expr {$sortRefPos($aComp) - $sortRefPos($bComp)}]
+    if {$diff < 0} {
+      return -1
+    } elseif {$diff > 0} {
+      return 1
+    } else {
+      return 0
+    }
   }}} $targetList]
 
   if {$debug} {
@@ -61,48 +81,88 @@ proc sort_list_byReferenceList {refList targetList debug} {
 }
 
 if {0} {
-  # Test Case 1: Normal sorting with debug enabled
-  set refList {apple banana cherry date elderberry}
-  set targetList {cherry apple date banana}
-  set debug 1
-  puts "Test Case 1:"
-  if {[catch {sort_list_byReferenceList $refList $targetList $debug} result]} {
-    puts "Error: $result"
-  } else {
-    puts "Final Result: $result\n"
-  }
+	# Test Case 1: Basic sorting with index=-1 (normal mode)
+	set refList {apple banana cherry date}
+	set targetList {cherry apple banana}
+	set debug 0
+	set index -1
+	puts "Test Case 1: Basic sorting (index=-1)"
+	if {[catch {sort_list_byReferenceList $refList $targetList $index $debug} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
 
-  # Test Case 2: Target list with invalid element and debug disabled
-  set refList {red green blue yellow}
-  set targetList {green purple blue}
-  set debug 0
-  puts "Test Case 2:"
-  if {[catch {sort_list_byReferenceList $refList $targetList $debug} result]} {
-    puts "Error: $result"
-  } else {
-    puts "Final Result: $result\n"
-  }
+	# Test Case 2: Sorting sublists with index=0
+	set refList {fruit vegetable meat dairy}
+	set targetList {{vegetable carrot} {dairy milk} {fruit apple}}
+	set debug 0
+	set index 0
+	puts "Test Case 2: Sublist sorting (index=0)"
+	if {[catch {sort_list_byReferenceList $refList $targetList $index $debug} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
 
-  # Test Case 3: Empty target list with debug enabled
-  set refList {a b c d}
-  set targetList {}
-  set debug 1
-  puts "Test Case 3:"
-  if {[catch {sort_list_byReferenceList $refList $targetList $debug} result]} {
-    puts "Error: $result"
-  } else {
-    puts "Final Result: $result\n"
-  }
+	# Test Case 3: Sorting sublists with index=1
+	set refList {red green blue yellow}
+	set targetList {{apple green} {banana yellow} {cherry red}}
+	set debug 0
+	set index 1
+	puts "Test Case 3: Sublist sorting (index=1)"
+	if {[catch {sort_list_byReferenceList $refList $targetList $index $debug} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
 
-  # Test Case 4: Reference list with duplicate elements
-  set refList {x y x z y}
-  set targetList {y x z}
-  set debug 1
-  puts "Test Case 4:"
-  if {[catch {sort_list_byReferenceList $refList $targetList $debug} result]} {
-    puts "Error: $result"
-  } else {
-    puts "Final Result: $result\n"
-  }
+	# Test Case 4: Invalid element in target list (sublist mode)
+	set refList {cat dog bird}
+	set targetList {{pet cat} {pet fish} {pet dog}}
+	set debug 0
+	set index 1
+	puts "Test Case 4: Invalid element in sublist"
+	if {[catch {sort_list_byReferenceList $refList $targetList $index $debug} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
+
+	# Test Case 5: Empty target list
+	set refList {a b c}
+	set targetList {}
+	set debug 1
+	set index 0
+	puts "Test Case 5: Empty target list"
+	if {[catch {sort_list_byReferenceList $refList $targetList $index $debug} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
+
+	# Test Case 6: Invalid index parameter
+	set refList {x y z}
+	set targetList {y x z}
+	set debug 0
+	set index -2
+	puts "Test Case 6: Invalid index value"
+	if {[catch {sort_list_byReferenceList $refList $targetList $debug $index} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
+
+	# Test Case 7: Reference list with duplicates (sublist mode)
+	set refList {one two one three two}
+	set targetList {{num two} {num one} {num three}}
+	set debug 1
+	set index 1
+	puts "Test Case 7: Reference list with duplicates"
+	if {[catch {sort_list_byReferenceList $refList $targetList $debug $index} result]} {
+		puts "Error: $result"
+	} else {
+		puts "Result: $result\n"
+	}
 
 }

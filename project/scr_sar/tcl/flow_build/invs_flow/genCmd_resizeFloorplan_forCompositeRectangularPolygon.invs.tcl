@@ -16,18 +16,29 @@
 
 proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
   set typeOfInput "dieBoxes" ; # dieBoxes|coreBoxes
-  set boxes {{}} ; # boxes of die or core
-  set coreToEdge {1.4 1.4 1.4 1.4} ; # {left bottom right top}
+  set designName  [dbget top.name]
+  set boxes       {{}} ; # boxes of die or core
+  set coreToEdge  {1.4 1.4 1.4 1.4} ; # {left bottom right top}
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  set cmdsList [list]
   if {$typeOfInput in "dieBoxes coreBoxes"} {
     if {$typeOfInput eq "dieBoxes"} {
-      set bboxOfDieBoxes [dbShape -output hrect $boxes BBOX]
-      floor
+      set bboxOfDieBoxes {*}[dbShape -output hrect $boxes BBOX]
+      lappend cmdsList "floorPlan -b \{$bboxOfDieBoxes $bboxOfDieBoxes $bboxOfDieBoxes\}"
+      lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes\}"
+      lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
     } elseif {$typeOfInput eq "coreBoxes"} {
+      set boxes_offseted [lmap temp_box $boxes {
+        lassign $temp_box temp_ll_x temp_ll_y temp_ur_x temp_ur_y 
+      }]
+      set bboxOfDieBoxes {*}[dbShape -output hrect $boxes BBOX]
+      lappend cmdsList "floorPlan -b \{$bboxOfDieBoxes $bboxOfDieBoxes $bboxOfDieBoxes\}"
+      lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes\}"
+      lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
      
     }
    

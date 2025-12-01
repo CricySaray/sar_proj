@@ -28,6 +28,7 @@ proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
   if {$typeOfInput in "dieBoxes coreBoxes"} {
     if {$typeOfInput eq "dieBoxes"} {
       set bboxOfBoxes {*}[dbShape -output hrect $boxes BBOX]
+      set boxes_offseted $boxes
     } elseif {$typeOfInput eq "coreBoxes"} {
       lassign $coreToEdge temp_left temp_bottom temp_right temp_top
       set boxes_offseted [lmap temp_box $boxes {
@@ -41,7 +42,7 @@ proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
       set bboxOfBoxes {*}[dbShape -output hrect $boxes_offseted BBOX]
     }
     lappend cmdsList "floorPlan -b \{$bboxOfBoxes $bboxOfBoxes $bboxOfBoxes\}"
-    lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes\}"
+    lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes_offseted\}"
     lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
    
   } else {

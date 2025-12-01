@@ -6,7 +6,10 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : Sorts target list by reference list order, validates elements exist in reference, with debug support and error handling
+# descrip   : Sorts target list by reference list order, with support for sublist index-based sorting and full element validation; ensures all target 
+#             elements (or sublist index values) exist in reference list, returning sorted result or erroring on invalid entries with debug output option.  
+#             Implements strict input checks, comprehensive invalid element detection, and adheres to Tcl's lsort command requirements for comparison 
+#             function parameters and return values.
 # return    : sorted list
 # ref       : link url
 # --------------------------
@@ -80,6 +83,7 @@ proc sort_list_byReferenceList {refList targetList index debug} {
   return $sortedList
 }
 
+# testing example
 if {0} {
 	# Test Case 1: Basic sorting with index=-1 (normal mode)
 	set refList {apple banana cherry date}

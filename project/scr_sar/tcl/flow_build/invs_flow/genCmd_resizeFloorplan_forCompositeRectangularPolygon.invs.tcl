@@ -27,20 +27,22 @@ proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
   set cmdsList [list]
   if {$typeOfInput in "dieBoxes coreBoxes"} {
     if {$typeOfInput eq "dieBoxes"} {
-      set bboxOfDieBoxes {*}[dbShape -output hrect $boxes BBOX]
-      lappend cmdsList "floorPlan -b \{$bboxOfDieBoxes $bboxOfDieBoxes $bboxOfDieBoxes\}"
-      lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes\}"
-      lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
+      set bboxOfBoxes {*}[dbShape -output hrect $boxes BBOX]
     } elseif {$typeOfInput eq "coreBoxes"} {
+      lassign $coreToEdge temp_left temp_bottom temp_right temp_top
       set boxes_offseted [lmap temp_box $boxes {
         lassign $temp_box temp_ll_x temp_ll_y temp_ur_x temp_ur_y 
+        set temp_ll_x [expr $temp_ll_x - $temp_left]
+        set temp_ll_y [expr $temp_ll_y - $temp_bottom]
+        set temp_ur_x [expr $temp_ur_x + $temp_right]
+        set temp_ur_y [expr $temp_ur_y + $temp_top]
+        list $temp_ll_x $temp_ll_y $temp_ur_x $temp_ur_y
       }]
-      set bboxOfDieBoxes {*}[dbShape -output hrect $boxes BBOX]
-      lappend cmdsList "floorPlan -b \{$bboxOfDieBoxes $bboxOfDieBoxes $bboxOfDieBoxes\}"
-      lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes\}"
-      lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
-     
+      set bboxOfBoxes {*}[dbShape -output hrect $boxes_offseted BBOX]
     }
+    lappend cmdsList "floorPlan -b \{$bboxOfBoxes $bboxOfBoxes $bboxOfBoxes\}"
+    lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes\}"
+    lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
    
   } else {
     error "proc genCmd_resizeFloorplan_forCompositeRectangularPolygon: typeOfInput only be dieBoxes or coreBoxes" 
@@ -50,7 +52,7 @@ proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
 define_proc_arguments genCmd_resizeFloorplan_forCompositeRectangularPolygon \
   -info "gen cmd for resizing floorplan for composite rectangular polygon"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}
-    {-inst "specify inst to eco when type is add/delete" AString string require}
-    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
+    {-typeOfInput "specify the type of input" oneOfString one_of_string {optional value_type {values {dieBoxes coreBoxes}}}}
+    {-designName "specify the design name " AString string optional}
+    {-boxes "specify the boxes list for composite rectangular polygon" AList list optional}
   }

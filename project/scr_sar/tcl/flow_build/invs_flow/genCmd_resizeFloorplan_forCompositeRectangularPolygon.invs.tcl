@@ -16,10 +16,23 @@
 
 proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
   set typeOfInput "dieBoxes" ; # dieBoxes|coreBoxes
+  set boxes {{}} ; # boxes of die or core
+  set coreToEdge {1.4 1.4 1.4 1.4} ; # {left bottom right top}
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
+  }
+  if {$typeOfInput in "dieBoxes coreBoxes"} {
+    if {$typeOfInput eq "dieBoxes"} {
+      set bboxOfDieBoxes [dbShape -output hrect $boxes BBOX]
+      floor
+    } elseif {$typeOfInput eq "coreBoxes"} {
+     
+    }
+   
+  } else {
+    error "proc genCmd_resizeFloorplan_forCompositeRectangularPolygon: typeOfInput only be dieBoxes or coreBoxes" 
   }
   
 }

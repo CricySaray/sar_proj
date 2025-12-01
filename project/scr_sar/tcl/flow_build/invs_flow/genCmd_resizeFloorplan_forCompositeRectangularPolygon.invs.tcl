@@ -55,4 +55,5 @@ define_proc_arguments genCmd_resizeFloorplan_forCompositeRectangularPolygon \
     {-typeOfInput "specify the type of input" oneOfString one_of_string {optional value_type {values {dieBoxes coreBoxes}}}}
     {-designName "specify the design name " AString string optional}
     {-boxes "specify the boxes list for composite rectangular polygon" AList list optional}
+    {-coreToEdge "specify the value list of coreToEdge" AList list optional}
   }

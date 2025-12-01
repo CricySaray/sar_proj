@@ -15,7 +15,7 @@
 # --------------------------
 source ../../packages/logic_AND_OR.package.tcl; # eo
 proc runCmd_pathGroupSetting_pt {args} {
-  set memExp                    {x|X} ; # expression of memory
+  set memExp                    {\yTS} ; # expression of memory, \y: matches only at the beginning or end of a word, \m: matches only at the beginning of a word, \M: matches only at the end of a word
   set shortOrLongExpressionMode "short" ; # short|long
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {

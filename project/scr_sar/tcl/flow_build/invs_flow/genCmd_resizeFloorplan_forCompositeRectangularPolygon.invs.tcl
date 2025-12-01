@@ -41,6 +41,7 @@ proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
       }]
       set bboxOfBoxes {*}[dbShape -output hrect $boxes_offseted BBOX]
     }
+    lappend cmdsList "setFPlanMode -enableRectilinearDesign true"
     lappend cmdsList "floorPlan -b \{$bboxOfBoxes $bboxOfBoxes $bboxOfBoxes\}"
     lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes_offseted\}"
     lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"

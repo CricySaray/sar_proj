@@ -41,10 +41,13 @@ proc genCmd_resizeFloorplan_forCompositeRectangularPolygon {args} {
       }]
       set bboxOfBoxes {*}[dbShape -output hrect $boxes_offseted BBOX]
     }
+    set iofilename "io_[clock format [clock second] -format "%Y%m%d_%H%M"].io"
     lappend cmdsList "setFPlanMode -enableRectilinearDesign true"
+    lappend cmdsList "saveIoFile -relativeOrient $iofilename"
     lappend cmdsList "floorPlan -b \{$bboxOfBoxes $bboxOfBoxes $bboxOfBoxes\}"
     lappend cmdsList "setObjFPlanBoxList Cell $designName \{$boxes_offseted\}"
     lappend cmdsList "changeFloorplan -coreToEdge \{$coreToEdge\}"
+    lappend cmdsList "loadIoFile -specifiedIosOnly $iofilename"
    
   } else {
     error "proc genCmd_resizeFloorplan_forCompositeRectangularPolygon: typeOfInput only be dieBoxes or coreBoxes" 

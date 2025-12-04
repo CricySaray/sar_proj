@@ -10,12 +10,13 @@
 #             - In invs, the corresponding commands are: `define_proc_arguments` and `value_type`.  
 #             - In PT, the corresponding commands are: `define_proc_attributes` and `value_help`.  
 #             Please note the distinction.  
+# TODO      : U001: llow users to conveniently subdivide existing path group groupings, such as subdividing into groups like reg2reg_n900, reg2reg_mainPure, etc.
 # return    : /
 # ref       : link url
 # --------------------------
 source ../../packages/logic_AND_OR.package.tcl; # eo
 proc runCmd_pathGroupSetting_invs {args} {
-  set memExp                    {x|X} ; # expression of memory
+  set memExp                    {\yram_} ; # expression of memory, \y: matches only at the beginning or end of a word, \m: matches only at the beginning of a word, \M: matches only at the end of a word
   set shortOrLongExpressionMode "short" ; # short|long
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
@@ -24,12 +25,12 @@ proc runCmd_pathGroupSetting_invs {args} {
   }
   set allSeqs [all_registers]
   set macros [dbget [dbget top.insts.cell.subClass block -p2].name]
-  set mems ""; set ips ""
-  foreach m $macros {
-    if {[regexp $memExp $m]} {
-      lappend memes $m
+  set mems [list]; set ips [list]; set mems_pure [list]
+  foreach temp_mem $macros {
+    if {[regexp $memExp $temp_mem]} {
+      lappend mems_pure $temp_mem
     } else {
-      lappend ips $m
+      lappend ips $temp_mem
     }
   }
   set regs_and_icgs $allSeqs
@@ -60,11 +61,11 @@ proc runCmd_pathGroupSetting_invs {args} {
     setPathGroupOptions [eo [expr {$sl == "short"}] r2r reg2reg] -effortLevel high -targetslack 0.0
     setPathGroupOptions [eo [expr {$sl == "short"}] r2g reg2gate] -effortLevel high -targetslack 0.0
 
-    if {$memes != ""} {
-      group_path -name [eo [expr {$sl == "short"}] r2m reg2mem] -from $regs_and_icgs -to $memes
-      group_path -name [eo [expr {$sl == "short"}] m2g mem2gate] -from $memes -to $icgs
-      group_path -name [eo [expr {$sl == "short"}] m2r mem2reg] -from $memes -to $regs
-      group_path -name [eo [expr {$sl == "short"}] m2m mem2mem] -from $memes -to $memes
+    if {$mems_pure != ""} {
+      group_path -name [eo [expr {$sl == "short"}] r2m reg2mem] -from $regs_and_icgs -to $mems_pure
+      group_path -name [eo [expr {$sl == "short"}] m2g mem2gate] -from $mems_pure -to $icgs
+      group_path -name [eo [expr {$sl == "short"}] m2r mem2reg] -from $mems_pure -to $regs
+      group_path -name [eo [expr {$sl == "short"}] m2m mem2mem] -from $mems_pure -to $mems_pure
 
       setPathGroupOptions [eo [expr {$sl == "short"}] r2m reg2mem] -effortLevel high -targetslack 0.0
       setPathGroupOptions [eo [expr {$sl == "short"}] m2g mem2gate] -effortLevel high -targetslack 0.0
@@ -81,6 +82,7 @@ proc runCmd_pathGroupSetting_invs {args} {
       setPathGroupOptions [eo [expr {$sl == "short"}] p2p ip2ip] -effortLevel high -targetslack 0.0
     }
   }
+  reportPathGroupOptions
 }
 
 define_proc_arguments runCmd_pathGroupSetting \

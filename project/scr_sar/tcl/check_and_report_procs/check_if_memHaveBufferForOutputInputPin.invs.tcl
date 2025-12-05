@@ -11,6 +11,7 @@
 # ref       : link url
 # --------------------------
 proc check_if_memHaveBufferForOutputInputPin {args} {
+  set 
   set memCelltypeExp {^ram_} ; # match mem cell
   set directionToCheck "input" ; # input|output|all
   set typeToCheck "clk" ; # clk|data

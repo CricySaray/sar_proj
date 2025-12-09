@@ -6,19 +6,19 @@ use File::Basename;
 use File::Spec;
 
 # Default configuration - overridden by command line options
-our $METHOD = 'start_end';                  # Block extraction method (start/separator/end/start_end)
+our $METHOD = 'start';                  # Block extraction method (start/separator/end/start_end)
 our $INPUT_FILE = '';                       # Input file path (reads from STDIN if empty)
 our $START_PATTERN = '^Path \d+:';          # Regex for block start line (line-wise match)
-our $SEPARATOR_PATTERN = '-----+';          # Regex for block separator line (line-wise match)
-our $END_PATTERN = '^1\s*$';                # Regex for block end line (line-wise match)
-our $FILTER_PATTERN = 'ram_';               # Regex to filter blocks (any line matches)
-our $RETAIN_PATTERN = 'ram_';               # Regex to extract lines (line-wise match)
-our $OUTPUT_FILE = 'output.txt';            # Path to output file
-our $BLOCK_SEPARATOR = "=== End of Block ===";  # Separator between output blocks (auto-newline)
-our $BLOCK_PREFIX = 'song_path <id>';       # Prefix for each output block (auto-newline)
+our $SEPARATOR_PATTERN = '';          # Regex for block separator line (line-wise match)
+our $END_PATTERN = '';                # Regex for block end line (line-wise match)
+our $FILTER_PATTERN = '\bram_';               # Regex to filter blocks (any line matches)
+our $RETAIN_PATTERN = '\bram_|^Path \d+:';               # Regex to extract lines (line-wise match)
+our $OUTPUT_FILE = 'reg_mem_reg_pickup.rpt';            # Path to output file
+our $BLOCK_SEPARATOR = '';  # Separator between output blocks (auto-newline)
+our $BLOCK_PREFIX = 'song_path <id>:';       # Prefix for each output block (auto-newline)
 our $BLOCK_SUFFIX = '';                     # Suffix for each output block (auto-newline)
 our $DEBUG = 0;                             # Enable debug mode (0=disabled, 1=enabled)
-our $ALLOW_EMPTY = 0;                       # Allow empty blocks (0=disable, 1=enable)
+our $ALLOW_EMPTY = 1;                       # Allow empty blocks (0=disable, 1=enable)
 my $show_help = 0;                          # Flag for help command
 
 # Parse command line options

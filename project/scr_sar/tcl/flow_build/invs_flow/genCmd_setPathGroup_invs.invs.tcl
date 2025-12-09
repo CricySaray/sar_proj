@@ -55,16 +55,16 @@ proc genCmd_setPathGroup_invs {args} {
         first item of the header must be groupName, which needs to be filled in and set according to the requirements." 
     } elseif {$userOptionSequenceList ne "" && $userOptionSequenceList ne $temp_pathgroup_config} {
       lassign $temp_pathgroup_config {*}$userOptionSequenceList
-      set flagOfEmpty 1
+      set flagOfEmpty 0
       foreach temp_item [list from to] {
         if {[regexp {^0x[0-9a-z]{3,}$} [subst \${$temp_item}]]} { ; # must be collection data type
           if {$temp_item eq "from"} { set len_from [sizeof_collection [subst \${$temp_item}]] }
           if {$temp_item eq "to"} { set len_to [sizeof_collection [subst \${$temp_item}]] }
-          if {[sizeof_collection [subst \${$temp_item}]]} { set flagOfEmpty 0 }
         } else {
           error "proc genCmd_setPathGroup_invs: check your baseConfigList: 'from' and 'to' is not collection data type!!!" 
         }
       }
+      if {$len_from == 0 || $len_to == 0} { set flagOfEmpty 1 } else { set flagOfEmpty 0 }
       if {!$flagOfEmpty} {
         if {$debug} { puts "(already set pathgroup) groupName : $groupName  | 'from' length: $len_from  | 'to' length: $len_to" }
         lappend cmdsList "group_path -name $groupName -from $from -to $to"

@@ -1,3 +1,15 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2025/12/09 18:05:38 Tuesday
+# label     : task_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : Set the content of each group path through a more convenient interface, with multiple checking effects, and the results are returned in the form of a command list.
+# return    : cmds list
+# ref       : link url
+# --------------------------
 source ../../packages/every_any.package.tcl; # every
 proc genCmd_setPathGroup_invs {args} {
   set debug 0

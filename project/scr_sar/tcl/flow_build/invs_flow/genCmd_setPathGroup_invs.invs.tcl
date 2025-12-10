@@ -60,6 +60,7 @@ proc genCmd_setPathGroup_invs {args} {
   lappend cmdsList "reset_path_group -all"
   lappend cmdsList "resetPathGroupOptions"
   set userOptionSequenceList [list] 
+  set num_notSet 0 ; set num_haveSet 0
   foreach temp_pathgroup_config $baseConfigList {
     if {$userOptionSequenceList eq ""} { set userOptionSequenceList $temp_pathgroup_config }
     if {[lindex $userOptionSequenceList 0] ne "groupName"} {
@@ -69,7 +70,7 @@ proc genCmd_setPathGroup_invs {args} {
       lassign $temp_pathgroup_config {*}$userOptionSequenceList
       set flagOfEmpty 0
       foreach temp_item [list from to] {
-        if {[regexp {^0x[0-9a-z]{3,}$} [subst \${$temp_item}]]} { ; # must be collection data type
+        if {[regexp {^0x[0-9a-z]{1,}$} [subst \${$temp_item}]]} { ; # must be collection data type
           if {$temp_item eq "from"} { set len_from [sizeof_collection [subst \${$temp_item}]] }
           if {$temp_item eq "to"} { set len_to [sizeof_collection [subst \${$temp_item}]] }
         } else {
@@ -79,6 +80,7 @@ proc genCmd_setPathGroup_invs {args} {
       if {$len_from == 0 || $len_to == 0} { set flagOfEmpty 1 } else { set flagOfEmpty 0 }
       if {!$flagOfEmpty} {
         if {$debug} { puts "(already set pathgroup) groupName : $groupName  | 'from' length: $len_from  | 'to' length: $len_to" }
+        incr num_haveSet
         lappend cmdsList "group_path -name $groupName -from $from -to $to"
         set other_userOptionSequenceList [lsearch -regexp -not -all -inline $userOptionSequenceList {groupName|from|to}]
         set temp_setPathGroupOption_cmd_option [list]
@@ -88,9 +90,11 @@ proc genCmd_setPathGroup_invs {args} {
         lappend cmdsList "setPathGroupOptions $groupName $temp_setPathGroupOption_cmd_option"
       } else {
         if {$debug} { puts "(not set pathgroup) groupName : $groupName  | 'from' length: $len_from  | 'to' length: $len_to" } 
+        incr num_notSet
       }
     }
   }
+  if {$debug} { puts "total pathgroup that have set: $num_haveSet , total pathgroup that not set: $num_notSet" }
   lappend cmdsList "reportPathGroupOptions"
   return $cmdsList
 }

@@ -95,6 +95,7 @@ proc genCmd_setPathGroup_invs {args} {
     }
   }
   if {$debug} { puts "total pathgroup that have set: $num_haveSet , total pathgroup that not set: $num_notSet" }
+  lappend cmdsList "get_path_groups *"
   lappend cmdsList "reportPathGroupOptions"
   return $cmdsList
 }

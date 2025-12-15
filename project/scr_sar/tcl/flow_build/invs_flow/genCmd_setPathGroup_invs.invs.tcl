@@ -43,6 +43,13 @@ proc genCmd_setPathGroup_invs {args} {
     {reg2out $regs_and_icgs $out_ports      low 1 0}
     {in2reg  $in_ports      $regs_and_icgs  low 1 0}
   }]
+  # NOTICE: this title 'earlyOrLate' is fixed that is not changed!!!
+  # If the content of a certain column in your data is "/", it means that the content of this column will not set any value in the command.
+  # The groupName in extraOptionsList must have appeared in baseConfigList.
+  set extraOptionsList [subst -nobackslashes {
+    {groupName skewingSlackConstraint slackAdjustment slackAdjustmentPriority earlyOrLate view} 
+    {in2out 0.03  "/" "/" "/" "/" }
+  }]
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -61,6 +68,7 @@ proc genCmd_setPathGroup_invs {args} {
   lappend cmdsList "resetPathGroupOptions"
   set userOptionSequenceList [list] 
   set num_notSet 0 ; set num_haveSet 0
+  set groupnames_from_to_list [list]
   foreach temp_pathgroup_config $baseConfigList {
     if {$userOptionSequenceList eq ""} { set userOptionSequenceList $temp_pathgroup_config }
     if {[lindex $userOptionSequenceList 0] ne "groupName"} {
@@ -79,7 +87,7 @@ proc genCmd_setPathGroup_invs {args} {
       }
       if {$len_from == 0 || $len_to == 0} { set flagOfEmpty 1 } else { set flagOfEmpty 0 }
       if {!$flagOfEmpty} {
-        if {$debug} { puts "(already set pathgroup) groupName : $groupName  | 'from' length: $len_from  | 'to' length: $len_to" }
+        lappend groupnames_from_to_list [list haveset $groupName $len_from $len_to]
         incr num_haveSet
         lappend cmdsList "group_path -name $groupName -from $from -to $to"
         set other_userOptionSequenceList [lsearch -regexp -not -all -inline $userOptionSequenceList {groupName|from|to}]
@@ -89,8 +97,20 @@ proc genCmd_setPathGroup_invs {args} {
         }
         lappend cmdsList "setPathGroupOptions $groupName $temp_setPathGroupOption_cmd_option"
       } else {
-        if {$debug} { puts "(not set pathgroup) groupName : $groupName  | 'from' length: $len_from  | 'to' length: $len_to" } 
+        lappend groupnames_from_to_list [list notset $groupName $len_from $len_to]
         incr num_notSet
+      }
+    }
+  }
+  if {$debug} { 
+    foreach temp_groupname_from_to $groupnames_from_to_list {
+      lassign $temp_groupname_from_to ifSet temp_groupname len_from len_to
+      if {$ifSet eq "haveset"} { 
+        puts "(already set pathgroup) groupName : $temp_groupname  | 'from' length: $len_from  | 'to' length: $len_to"
+      } elseif {$ifSet eq "notset"} { 
+        puts "(not set pathgroup) groupName : $temp_groupname  | 'from' length: $len_from  | 'to' length: $len_to" 
+      } else {
+        error "proc genCmd_setPathGroup_invs: check your script: internal value of var \$ifSet($ifSet) is not valid!!!" 
       }
     }
   }

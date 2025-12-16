@@ -22,13 +22,15 @@ proc add_physicalPin_for_selectedPGNet {{testOrRun test} {layer ""} {priorityPos
   } elseif {![llength $nets] && [dbget selected.objType -u -e] != "sWire"} {
     return "0x0:2"; # not specify $nets, but selected other objects instead of special nets(pg nets)
   } elseif {[llength $nets]} {
-    if {![llength $searchRect]} { set searchRect [lindex [dbget top.fplan.boxes] 0]}
+    if {![llength $searchRect]} { set searchRect [lindex [dbget top.fplan.box] 0]}
     set net_box_D2List ""
     foreach net $nets {
       if {[dbget top.pgNets.name $net -e] == ""} {
         return "0x0:3"; # can't find net from $nets
       } 
-      set boxes [dbget [dbget [dbQuery -areas $searchRect -objType sWire -layer $layer].net.name $net -p2].box -e]
+      deselectAll
+      editSelect -area $searchRect -layer $layer -nets $net -shape STRIPE -type Special -use POWER -object_type Wire
+      set boxes [dbget selected.box -e]
       if {$boxes == ""} {
         puts "$promptERROR : don't search specified net $net"
         return "0x0:4"; # don't have specified net $net 

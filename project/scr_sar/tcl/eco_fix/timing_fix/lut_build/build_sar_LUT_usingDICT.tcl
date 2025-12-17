@@ -36,7 +36,7 @@ proc build_sar_LUT_usingDICT {args} {
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"
   set selectSmallOrMuchRowSiteSizeAsMainCore    "small" ; # small|much
-  set boundaryOrEndCapCellName                  "ENDCAP"
+  set boundaryOrEndCapCellName                  {ENDCAP|WELLTAP}
   set removeStdCellExp                          {} ; # can remove std cell names that want not to exists at lutDict
   set removeRegionOfSiteNameExp_from_coreRect   {IOSITE_.*} ; # site name Exp that need be removed when calculating coreRect
   set shrinkOff                                 "-1"  ; # -1: using mainCoreRowHeight, >=0: will using value of this var
@@ -187,7 +187,7 @@ proc build_sar_LUT_usingDICT {args} {
   }
   flush $fo
   debug_msg "# --- get core_inner_boundary_rects ..."
-  set allBoundaryCellRects [dbget [dbget top.insts.name *$boundaryOrEndCapCellName* -p].box -e]
+  set allBoundaryCellRects [dbget [dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -p].box -e]
   if {$allBoundaryCellRects == ""} {
     puts $fo "$promptERROR: calculating core_inner_boundary_rects: Please add the endcap cells and enclose them into several closed loops; only in this way can the area of the inner core be calculated." 
   } else {

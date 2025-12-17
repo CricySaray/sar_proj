@@ -3,6 +3,9 @@
 alias cr='cd ~/project/backend/run'
 alias ct='cd ~/project/test_temp/'
 
+alias ttt='perl ~/project/scr_sar/perl/tree.pl'
+alias vttt='vim ~/project/scr_sar/perl/tree.pl'
+
 alias te='perl ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 

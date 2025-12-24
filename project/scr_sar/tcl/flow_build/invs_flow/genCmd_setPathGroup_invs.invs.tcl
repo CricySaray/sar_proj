@@ -89,7 +89,7 @@ proc genCmd_setPathGroup_invs {args} {
       if {!$flagOfEmpty} {
         lappend groupnames_from_to_list [list haveset $groupName $len_from $len_to]
         incr num_haveSet
-        lappend cmdsList "group_path -name $groupName -from $from -to $to"
+        lappend cmdsList "group_path -name $groupName -from \{[get_object_name $from]\} -to \{[get_object_name $to]\}"
         set other_userOptionSequenceList [lsearch -regexp -not -all -inline $userOptionSequenceList {groupName|from|to}]
         set temp_setPathGroupOption_cmd_option [list]
         foreach temp_user_option $other_userOptionSequenceList {
@@ -115,7 +115,7 @@ proc genCmd_setPathGroup_invs {args} {
     }
   }
   if {$debug} { puts "total pathgroup that have set: $num_haveSet , total pathgroup that not set: $num_notSet" }
-  lappend cmdsList "get_path_groups *"
+  lappend cmdsList "get_object_name \[get_path_groups *\]"
   lappend cmdsList "reportPathGroupOptions"
   return $cmdsList
 }

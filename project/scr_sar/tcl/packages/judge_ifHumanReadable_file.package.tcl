@@ -6,15 +6,13 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : This TCL script robustly detects if a file is compressed by first checking case-insensitive file extensions then verifying 
-#             magic numbers, supporting mainstream compression formats and resolving symbolic links to real paths; the core proc is_compressed_file 
-#             returns 1 (compressed) or 0 (non-compressed) and throws specific errors for abnormal cases like non-existent files or non-regular files; 
-#             an optional debug mode provides detailed output, and a test proc enables batch verification of detection results.
-#             Main function: detect if file is compressed (robust method)
-# return    : 1 = compressed file, 0 = non-compressed file
+# descrip   : This TCL procedure determines if a file is human-readable (readable via Vim without binary garble) by first detecting 
+#             compressed formats and then validating ASCII-only content.
+#             Abnormal scenarios (e.g., non-existent files, non-regular files) throw specific error messages instead of returning 0/1.
+# return    : It returns 1 for human-readable files (non-compressed + ASCII-only) and 0 for non-readable files (compressed/non-ASCII binary content).
 # ref       : link url
 # --------------------------
-proc is_compressed_file {file_path {debug 0}} {
+proc is_human_readable_file {file_path {debug 0}} {
   # Define compression detection constants (no global variables)
   set compress_extensions {
     .zip .gz .gzip .bz2 .bzip2 .7z .rar .xz .lzma 
@@ -37,7 +35,7 @@ proc is_compressed_file {file_path {debug 0}} {
 
   # Debug print initial info
   if {$debug} {
-    puts "\n=== Debug Mode: Checking file '$file_path' ==="
+    puts "\n=== Debug Mode: Checking file '$file_path' (human-readable status) ==="
   }
 
   # Step 1: Resolve real path (handle symbolic links)
@@ -54,20 +52,17 @@ proc is_compressed_file {file_path {debug 0}} {
     puts "Debug: Resolved real path - '$real_path'"
   }
   
-  # Step 2: Quick check by extension first (pass constants as arguments)
+  # Step 2: First check if file is compressed (compressed = non-readable)
+  # 2.1 Check by extension
   set ext_result [_check_compress_by_ext $real_path $compress_extensions]
   if {[lindex $ext_result 0] eq "success"} {
     set format [lindex $ext_result 1]
     if {$debug} {
-      puts "Debug: Detected as compressed file (Format: $format, Method: extension)"
+      puts "Debug: File is compressed (Format: $format, Method: extension) → NON-READABLE"
     }
-    return 1
+    return 0
   }
-  if {$debug} {
-    puts "Debug: No compression extension matched"
-  }
-  
-  # Step 3: Fallback to magic number check (pass constants as arguments)
+  # 2.2 Fallback to magic number check if extension check fails
   set magic_result [_check_compress_by_magic $real_path $compress_magic]
   if {[lindex $magic_result 0] eq "error"} {
     set err_msg [lindex $magic_result 1]
@@ -76,20 +71,42 @@ proc is_compressed_file {file_path {debug 0}} {
     }
     error $err_msg
   }
-  
   if {[lindex $magic_result 0] eq "success"} {
     set format [lindex $magic_result 1]
     if {$debug} {
-      puts "Debug: Detected as compressed file (Format: $format, Method: magic number)"
+      puts "Debug: File is compressed (Format: $format, Method: magic number) → NON-READABLE"
     }
-    return 1
+    return 0
+  }
+  if {$debug} {
+    puts "Debug: File is not compressed (neither extension nor magic number matched)"
   }
   
-  # Step 4: Not a compressed file
-  if {$debug} {
-    puts "Debug: Not a compressed file (neither extension nor magic number matched)"
+  # Step 3: Check if non-compressed file is ASCII-only (human-readable)
+  # 3.1 Read sample bytes (10KB for performance)
+  set sample_result [_read_file_sample_bytes $real_path 10240]
+  if {[lindex $sample_result 0] eq "error"} {
+    set err_msg [lindex $sample_result 1]
+    if {$debug} {
+      puts "Debug Error: $err_msg"
+    }
+    error $err_msg
   }
-  return 0
+  set file_bytes [lindex $sample_result 1]
+  
+  # 3.2 Validate ASCII characters
+  set ascii_check [_is_ascii_only $file_bytes]
+  if {$ascii_check} {
+    if {$debug} {
+      puts "Debug: File is human-readable (ASCII-only, non-compressed)"
+    }
+    return 1
+  } else {
+    if {$debug} {
+      puts "Debug: File is NON-READABLE (non-ASCII characters found)"
+    }
+    return 0
+  }
 }
 
 # Resolve real file path (follow symbolic links recursively)
@@ -157,6 +174,30 @@ proc _read_file_magic_bytes {file_path max_bytes} {
   }
 }
 
+# Read sample bytes for human-readable check (reuse magic byte read logic)
+proc _read_file_sample_bytes {file_path sample_size} {
+  return [_read_file_magic_bytes $file_path $sample_size]
+}
+
+# Check if byte list contains only human-readable ASCII characters
+# Allowed range:
+# - Printable ASCII: 0x20 (space) - 0x7E (~)
+# - Common control chars: 0x09 (Tab), 0x0A (Newline), 0x0D (CR), 0x07 (Bell), 0x08 (Backspace)
+proc _is_ascii_only {byte_list} {
+  set allowed_control_chars {9 10 13 7 8}
+  foreach byte $byte_list {
+    # Reject non-ASCII bytes (> 127)
+    if {$byte > 127} {
+      return 0
+    }
+    # Reject control chars (0-31) not in allowed list
+    if {$byte < 32 && [lsearch -exact $allowed_control_chars $byte] == -1} {
+      return 0
+    }
+  }
+  return 1
+}
+
 # Check compression by file extension (case-insensitive)
 # Arguments:
 #   file_path - Real path of the file to check
@@ -222,17 +263,17 @@ proc _check_compress_by_magic {file_path magic_map} {
   return [list "not_found" "No compression magic number matched"]
 }
 
-# Test function (for batch verification, reuse debug output logic)
-proc _test_compression_detection {test_files} {
-  puts "=== Compression Detection Test ==="
+# Test function: batch verify human-readable detection
+proc _test_human_readable_detection {test_files} {
+  puts "=== Human-Readable Detection Test ==="
   foreach file $test_files {
     puts "\nChecking file: $file"
     try {
-      set result [is_compressed_file $file 1] ;# Enable debug for test
-      if {$result} {
-        puts "  Result: COMPRESSED (return value: 1)"
+      set result [is_human_readable_file $file 1]
+      if {$result == 1} {
+        puts "  Result: HUMAN-READABLE (return value: 1)"
       } else {
-        puts "  Result: NOT COMPRESSED (return value: 0)"
+        puts "  Result: NON-READABLE (return value: 0)"
       }
     } on error {e} {
       puts "  Result: ERROR - $e"
@@ -240,20 +281,19 @@ proc _test_compression_detection {test_files} {
   }
 }
 
-if {0} {
-  # Replace with your actual test files
-  set test_files {
-    "/tmp/test.txt"
-    "/tmp/data.tar.gz"
-    "/tmp/archive.7z"
-    "/tmp/backup.lz4"
-    "/tmp/symlink_to_zip"
-    "/tmp/non_exist.file"
-    "/tmp/test_dir"
-    "/tmp/temp" ;# Renamed .gz file (no extension)
-  }
-
-  # Run test (comment out if not needed)
-  _test_compression_detection $test_files
-  
+# Test files (replace with your actual paths)
+set test_files {
+  "/tmp/test.txt"
+  "/tmp/data.tar.gz"
+  "/tmp/archive.7z"
+  "/tmp/backup.lz4"
+  "/tmp/symlink_to_zip"
+  "/tmp/non_exist.file"
+  "/tmp/test_dir"
+  "/tmp/temp" 
+  "/tmp/image.png" 
+  "/tmp/script.sh"
 }
+
+# Run test (comment out if not needed)
+# _test_human_readable_detection $test_files

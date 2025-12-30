@@ -281,19 +281,22 @@ proc _test_human_readable_detection {test_files} {
   }
 }
 
-# Test files (replace with your actual paths)
-set test_files {
-  "/tmp/test.txt"
-  "/tmp/data.tar.gz"
-  "/tmp/archive.7z"
-  "/tmp/backup.lz4"
-  "/tmp/symlink_to_zip"
-  "/tmp/non_exist.file"
-  "/tmp/test_dir"
-  "/tmp/temp" 
-  "/tmp/image.png" 
-  "/tmp/script.sh"
-}
+if {1} {
+  # Test files (replace with your actual paths)
+  set test_files {
+    "/tmp/test.txt"
+    "/tmp/data.tar.gz"
+    "/tmp/archive.7z"
+    "/tmp/backup.lz4"
+    "/tmp/symlink_to_zip"
+    "/tmp/non_exist.file"
+    "/tmp/test_dir"
+    "/tmp/temp" 
+    "/tmp/image.png" 
+    "/tmp/script.sh"
+  }
 
-# Run test (comment out if not needed)
-# _test_human_readable_detection $test_files
+  # Run test (comment out if not needed)
+   _test_human_readable_detection $test_files
+  
+}

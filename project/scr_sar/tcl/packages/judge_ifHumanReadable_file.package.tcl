@@ -281,7 +281,7 @@ proc _test_human_readable_detection {test_files} {
   }
 }
 
-if {1} {
+if {0} {
   # Test files (replace with your actual paths)
   set test_files {
     "/tmp/test.txt"

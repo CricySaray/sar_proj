@@ -1,6 +1,22 @@
 #!/bin/tclsh
 # --------------------------
 # author    : sar song
+# date      : 2025/12/31 09:46:31 Wednesday
+# label     : group of procs
+# Usage method :
+#               This is a group of procs, divided into multiple usage scenarios. You need to split different procs into multiple files for use. Some need to be used in PT, such 
+#               as the genFile_summarizeWholeStaRpts proc, so the define_proc_attributes command is used. However, some procs (such as collect_sum_csv_file_pure_withoutDefineArgumentCmd 
+#               and genFile_summarizeforEveryPathGroupDetailedRpt) need to be directly sourced and used in tclsh, so the define command cannot be recognized, and thus only the 
+#               method of fixed positional parameters can be used.
+#               In addition, you need to include the auxiliary procs called by each proc in their respective files to prevent call failures. The auxiliary procs that each proc will 
+#               call are defined before the definition of each proc, and you can check them yourself.
+# --------------------------
+
+
+
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
 # date      : 2025/09/28 11:18:19 Sunday
 # label     : flow_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|cross_lang_proc|misc_proc)
@@ -21,15 +37,15 @@
 # ref       : link url
 # --------------------------
 source ../common/sort_list_by_referencelist.common.tcl; # sort_list_byReferenceList
-proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir typeOfPathGroupOfLongOrShort} { ; # U003
+proc genFile_summarizeforEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfScenarioDir typeOfPathGroupOfLongOrShort} { ; # U003
   if {$searchDir eq ""} {
-    error "proc genSum_forEveryPathGroupDetailedRpt: \$searchDir is empty!!! check it!!" 
+    error "proc genFile_summarizeforEveryPathGroupDetailedRpt: \$searchDir is empty!!! check it!!" 
   }
   if {$scenariosMatchExp eq ""} {
-    error "proc genSum_forEveryPathGroupDetailedRpt: please check your input: \$scenariosMatchExp is empty!!!" 
+    error "proc genFile_summarizeforEveryPathGroupDetailedRpt: please check your input: \$scenariosMatchExp is empty!!!" 
   }
   if {$subDirOfScenarioDir eq "" } {
-    error "proc genSum_forEveryPathGroupDetailedRpt: \$subDirOfScenarioDir is empty!!! if needn't have this subDir, please input './'" 
+    error "proc genFile_summarizeforEveryPathGroupDetailedRpt: \$subDirOfScenarioDir is empty!!! if needn't have this subDir, please input './'" 
   }
   set allScenariosName [lmap temp_dirname [glob -nocomplain -types d $searchDir/$scenariosMatchExp] { file tail $temp_dirname }]
   set allScenariosDir [glob -nocomplain -types d $searchDir/$scenariosMatchExp]
@@ -79,16 +95,16 @@ proc genSum_forEveryPathGroupDetailedRpt {searchDir scenariosMatchExp subDirOfSc
   puts $fo_temp_wholesum [join [table_format_with_title $finalScenario_group_endpointSlack_wholeList 0 [list left {*}[lrepeat [expr $len_oneRow - 1] "center"]] "" 0] \n]
   close $fo_temp_wholesum
 }
-# instance invoked proc: genSum_forEveryPathGroupDetailedRpt
+# instance invoked proc: genFile_summarizeforEveryPathGroupDetailedRpt
 if {1} {
   set searchDir "./"
   set scenariosMatchExp {STA*} ; # match scenarios name dir, for glob
   set subDirOfScenarioDir "detail_timing_rpt_song"
   set typeOfPathGroupOfLongOrShort "short"
-  genSum_forEveryPathGroupDetailedRpt $searchDir $scenariosMatchExp $subDirOfScenarioDir $typeOfPathGroupOfLongOrShort
+  genFile_summarizeforEveryPathGroupDetailedRpt $searchDir $scenariosMatchExp $subDirOfScenarioDir $typeOfPathGroupOfLongOrShort
 }
 
-# sub proc of genSum_forEveryPathGroupDetailedRpt
+# sub proc of genFile_summarizeforEveryPathGroupDetailedRpt
 proc _get_endpointAndSlack_fromPtRpt {{rptFile ""}} {
   if {$rptFile eq ""} {
     error "proc _get_endpointAndSlack_fromPtRpt: check your input: rptFile is empty!!!"
@@ -105,7 +121,7 @@ proc _get_endpointAndSlack_fromPtRpt {{rptFile ""}} {
         set indexOfNextEndpointLine [lsearch -regexp [lrange $content [expr $i + 1] end] {^\s*Endpoint:\s*\S+\s*$}]
         set indexOfNextSlackLine [lsearch -regexp [lrange $content [expr $i + 1] end] {^\s*slack \(VIOLATED\) \s*-\d+(\.\d+)?\s*$}]
         if {$indexOfNextEndpointLine != -1 && $indexOfNextSlackLine != -1 && $indexOfNextEndpointLine < $indexOfNextSlackLine} {
-          error "proc _get_endpointAndSlack_fromPtRpt: have line: continuous endpoint line(line:$i and line:$indexOfNextEndpointLine), this is forbidden!!! check it" 
+          error "proc _get_endpointAndSlack_fromPtRpt: have line: continuous endpoint line(line:$i and line:$indexOfNextEndpointLine) in file: $rptFile, this is forbidden!!! check it" 
         } elseif {$indexOfNextSlackLine != -1} {
           set temp_slack [lindex [lrange $content [expr $i + 1] end] $indexOfNextSlackLine end]
           lappend allEndpointSlackList [list $tempPin_endpoint $temp_slack]
@@ -119,7 +135,7 @@ proc _get_endpointAndSlack_fromPtRpt {{rptFile ""}} {
 }
 
 
-# small tool to collect these csv file of summary generated by proc: runCmd_summarize_pt_rpts, you can run this seperately
+# small tool to collect these csv file of summary generated by proc: genFile_summarizeWholeStaRpts, you can run this seperately
 source ../common/generate_combinations.common.tcl; # generate_combinations
 source ../../packages/table_format_with_title.package.tcl; # table_format_with_title
 # NOTICE: you may need this proc: lmap implementation proc in tcl 8.5 when your tcl version is lower than tcl 8.6 : ../packages/lmap_implementation_on_Tcl8.5.package.tcl
@@ -240,7 +256,7 @@ define_proc_arguments collect_sum_csv_file_withDefineArgumentCmd \
 source ../common/generate_combinations.common.tcl; # generate_combinations
 source ../common/parse_constraint_report.common.tcl; # parse_constraint_report 
 source ../../packages/table_format_with_title.package.tcl; # table_format_with_title 
-proc runCmd_summarize_pt_rpts {args} {
+proc genFile_summarizeWholeStaRpts {args} {
   set scenarios                   "auto" ; # auto (will search ) or [list ...], for example: func_hold_1p21v_rcbest_125c
   set formatOfScenarios           "<mode>_<type>_<voltage>_<rcCorner>_<temperature>" ; # format instance like: func_setup_0p99v_rcworst_m40c
   set modesOfFormatExp            {func scan}
@@ -284,16 +300,16 @@ proc runCmd_summarize_pt_rpts {args} {
   if {$scenarios == "auto"} {
     set optionsOfFormatOfScenarios [list "<mode>" "<type>" "<voltage>" "<rcCorner>" "<temperature>"] ; # you only select options inside these
     set mode $modesOfFormatExp ; set type $typeToCheckOfFormatExp ; set voltage $voltageOfFormatExp ; set rcCorner $rcCornerOfFormatExp ; set temperature $temperatureOfFormatExp
-    set allCasesOfScenarios [generate_combinations -connector "_" {*}[lmap temp_var [regsub -all {>|<} $optionsOfFormatOfScenarios ""] { if {![llength [subst \${$temp_var}]]} {error "proc runCmd_summarize_pt_rpts: check your input: the $temp_var is empty!!!"} else {set $temp_var}}]]
+    set allCasesOfScenarios [generate_combinations -connector "_" {*}[lmap temp_var [regsub -all {>|<} $optionsOfFormatOfScenarios ""] { if {![llength [subst \${$temp_var}]]} {error "proc genFile_summarizeWholeStaRpts: check your input: the $temp_var is empty!!!"} else {set $temp_var}}]]
   } else {
     set allCasesOfScenarios $scenarios 
   }
   if {![file isdirectory $searchDir]} {
-    error "proc runCmd_summarize_pt_rpts: check your input: searchDir($searchDir) does not exist!!!" 
+    error "proc genFile_summarizeWholeStaRpts: check your input: searchDir($searchDir) does not exist!!!" 
   }
   set allDirNameOnSearchDir [lmap temp_path [glob -nocomplain -types d $searchDir/*] { file tail $temp_path }]
   set scenarioDirs [lmap temp_dirname $allDirNameOnSearchDir { if {$temp_dirname in $allCasesOfScenarios} {set temp_dirname} else {continue} }]
-  if {$scenarioDirs == ""} { error "proc runCmd_summarize_pt_rpts: check your input: scenarios dir on searching directory is empty!!!" }
+  if {$scenarioDirs == ""} { error "proc genFile_summarizeWholeStaRpts: check your input: scenarios dir on searching directory is empty!!!" }
   set allConstraintNameList [list min_delay max_delay max_capacitance max_transition max_fanout min_pulse_width min_period]
 
   set infoOfAllScenarios [lmap temp_scenario_dir $scenarioDirs {
@@ -313,7 +329,7 @@ proc runCmd_summarize_pt_rpts {args} {
     } elseif {$typeOfScenario == "hold"} {
       set wns_type_delay $wns_min_delay ; set num_type_delay $num_min_delay ; set expOfGlobalTimingCsv {^min,}
     } else {
-      error "proc runCmd_summarize_pt_rpts: check your formatOfScenarios($formatOfScenarios), not find 'setup' or 'hold' !!!"
+      error "proc genFile_summarizeWholeStaRpts: check your formatOfScenarios($formatOfScenarios), not find 'setup' or 'hold' !!!"
     }
     set fi_temp [open "$searchDir/$temp_scenario_dir/$globalTimingCsvFileName" r] ; set globalTimingContent [split [read $fi_temp] "\n"] ; close $fi_temp
     set titleList [split [lindex $globalTimingContent 0] ","]
@@ -340,14 +356,14 @@ proc runCmd_summarize_pt_rpts {args} {
     set allOutputFileOfSummary [lmap temp_scenario $allCasesOfScenarios { 
       set temp_output_file_of_summary [string map [list <scenario> $temp_scenario] $outputFileOfSummary]
       if {![file isdirectory [file dirname $temp_output_file_of_summary]]} {
-        error "proc runCmd_summarize_pt_rpts: check your input : dir name of outputFileOfSummary($outputFileOfSummary) is not found!!!" 
+        error "proc genFile_summarizeWholeStaRpts: check your input : dir name of outputFileOfSummary($outputFileOfSummary) is not found!!!" 
       } else {
         set temp_output_file_of_summary 
       }
     }]
   } else {
     if {![file isdirectory [file dirname $outputFileOfSummary]]} {
-      error "proc runCmd_summarize_pt_rpts: check your input : dir name of outputFileOfSummary($outputFileOfSummary) is not found!!!" 
+      error "proc genFile_summarizeWholeStaRpts: check your input : dir name of outputFileOfSummary($outputFileOfSummary) is not found!!!" 
     }
     set allOutputFileOfSummary $outputFileOfSummary
   }
@@ -358,7 +374,7 @@ proc runCmd_summarize_pt_rpts {args} {
   }
 }
 
-define_proc_attributes runCmd_summarize_pt_rpts \
+define_proc_attributes genFile_summarizeWholeStaRpts \
   -info "run cmd of summarizing pt rpts"\
   -define_args {
     {-searchDir "specify the dir to search" AString string optional}

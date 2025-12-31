@@ -25,7 +25,11 @@ proc genFile_scriptForMemIpLocation {args} {
       set temp_pt {*}[dbget $temp_memip_ptr.pt -e] 
       set temp_memip_name [dbget $temp_memip_ptr.name -e]
       set temp_orient [dbget $temp_memip_ptr.orient -e]
-      set temp "placeInstance $temp_memip_name \{$temp_pt\} $temp_orient -fixed"
+      set temp_halo_top [dbget $temp_memip_ptr.pHaloTop -e]
+      set temp_halo_bottom [dbget $temp_memip_ptr.pHaloBot -e]
+      set temp_halo_left [dbget $temp_memip_ptr.pHaloLeft -e]
+      set temp_halo_right [dbget $temp_memip_ptr.pHaloRight -e]
+      set temp "placeInstance $temp_memip_name \{$temp_pt\} $temp_orient -fixed\naddHaloToBlock -snapToSite -ori $temp_orient $temp_halo_left $temp_halo_bottom $temp_halo_right $temp_halo_top $temp_memip_name"
     }]
     set fo_temp [open $outputfilename w]
     puts $fo_temp [join $cmdsList \n]

@@ -164,8 +164,11 @@ endif
 
 
 """ MAPPINGS --------------------------------------------------------------------
-
-nnoremap <leader>w :set nowrap<CR>
+set sidescrolloff=10
+set sidescroll=1
+command! ToggleWrap execute 'set ' . (&wrap ? 'no' : '') . 'wrap'
+nnoremap <leader>w :ToggleWrap<CR>
+vnoremap <leader>w :ToggleWrap<CR>
 
 " .vimrc config
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>

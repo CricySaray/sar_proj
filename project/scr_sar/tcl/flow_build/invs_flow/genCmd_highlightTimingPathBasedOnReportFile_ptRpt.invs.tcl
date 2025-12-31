@@ -37,6 +37,7 @@ proc delete_all_gui_object_and_highlight {} {
   delete_gui_object -all
   dehighlight -all
 }
+source ../../packages/judge_ifHumanReadable_file.package.tcl; # is_human_readable_file
 proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   # for genCmd_getPurePinOfPath_fromTimingPathReport
   set reportTimingFile                    ""
@@ -67,6 +68,9 @@ proc genCmd_highlightTimingPathBasedOnReportFile {args} {
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
+  }
+  if {![is_human_readable_file $reportTimingFile]} {
+    error "proc genCmd_getPurePinOfPath_fromTimingPathReport: invalid report file type(not human readable file): $reportTimingFile !!!" 
   }
   set evenNumberLists_instName_instBox2_3_incrCellDelay [genCmd_getPurePinOfPath_fromTimingPathReport -reportTimingFile $reportTimingFile -lineExpToSplitPath $lineExpToSplitPath \
                         -startOfPath $startOfPath -endOfPath $endOfPath -indexOfPureNumberOnLine $indexOfPureNumberOnLine \

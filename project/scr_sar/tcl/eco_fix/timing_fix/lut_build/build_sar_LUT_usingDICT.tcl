@@ -27,7 +27,9 @@ source ../../../eco_fix/timing_fix/trans_fix/proc_findMostFrequentElementOfList.
 source ../trans_fix/proc_get_cell_class.invs.tcl; # get_cell_class ; get_class_of_celltype
 source ../trans_fix/proc_getDriveCapacity_ofCelltype.pt.tcl; # get_driveCapacityAndVTtype_of_celltype_spcifyingStdCellLib | get_driveCapacity_of_celltype_returnCapacityAndVTtype
 # source ./proc_getRect_innerAreaEnclosedByEndcap.invsGUI.tcl; # getRect_innerAreaEnclosedByEndcap
-source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary (used to replace proc:getRect_innerAreaEnclosedByEndcap)
+# source ./proc_findCoreRectInsideBoundary.invsGUI.tcl; # findCoreRectsInsideBoundary (used to replace proc:getRect_innerAreaEnclosedByEndcap)
+source ../../../dump_data_collect/genFile_scriptForMemIpLocation_usingPlaceInstanceCmd.invs.tcl; # genFile_scriptForMemIpLocation
+source ./proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages.invsGUI.tcl; # proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
@@ -69,7 +71,7 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_cln22ull}} {
-    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP\d+T\d+P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
+    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP\d+(T\d+)?P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } else {
@@ -188,15 +190,26 @@ proc build_sar_LUT_usingDICT {args} {
   flush $fo
   debug_msg "# --- get core_inner_boundary_rects ..."
   set allBoundaryCellRects [dbget [dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -p].box -e]
-  if {$allBoundaryCellRects == ""} {
-    puts $fo "$promptERROR: calculating core_inner_boundary_rects: Please add the endcap cells and enclose them into several closed loops; only in this way can the area of the inner core be calculated." 
+  genFile_scriptForMemIpLocation -outputfilename ./temp_addHaloToBlock_withSnapToSite_whenRunningBuildLut.tcl
+  set temp_cmd "source ./temp_addHaloToBlock_withSnapToSite_whenRunningBuildLut.tcl"
+  eval $temp_cmd
+
+  set coreRects_innerBoundary_withBoundaryRects [proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages_withBoundaryRects]
+  if {$coreRects_innerBoundary_withBoundaryRects ne ""} {
+    puts $fo "dict set $lutDictName core_inner_boundary_rects_with_boundary \{$coreRects_innerBoundary_withBoundaryRects\}"
   } else {
-    set coreRects_innerBoundary [findCoreRectsInsideBoundary $allBoundaryCellRects] ; # U001
-    if {$coreRects_innerBoundary == ""} {
-      puts $fo "$promptWARN: can't calculate core inner boundary rects (std cell rects) correctly, check whether there are disconnected boundary cells in your fplan."
-    } else {
+    puts $fo "$promptERROR: calculating core_inner_boundary_rects_with_boundary: empty!!! check your invs gui db!!!"
+  }
+
+  if {$allBoundaryCellRects ne ""} {
+    set coreRects_innerBoundary [proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages $allBoundaryCellRects]
+    if {$coreRects_innerBoundary ne ""} {
       puts $fo "dict set $lutDictName core_inner_boundary_rects \{$coreRects_innerBoundary\}"
+    } else {
+      puts $fo "$promptERROR: calculating core_inner_boundary_rects: empty!!! check your invs gui db!!!"
     }
+  } else {
+    puts $fo "$promptERROR: calculating core_inner_boundary_rects: There are no rects of endcap or other boundary cells in the invs gui db, so the value of the variable core_inner_boundary_rects cannot be calculated." 
   }
   #puts "# Begin source $LUT_filename, and then continue add some other info\n" ; 
   set fs [open $LUT_filename r]
@@ -298,7 +311,7 @@ define_proc_arguments build_sar_LUT_usingDICT \
     {-LUT_filename "specify the lut filename(output filename)" AString string optional}
     {-lutDictName "specify the dict variable name(global var), you will also modify in proc operateLUT" AString string optional}
     {-selectSmallOrMuchRowSiteSizeAsMainCore "specify the item to compare as core main row/site" oneOfString one_of_string {optional value_type {values {small much}}}}
-    {-boundaryOrEndCapCellName "specify the boundary cell name used for input of proc findCoreRectsInsideBoundary" AString string optional}
+    {-boundaryOrEndCapCellName "specify the boundary cell name used for input of proc proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages" AString string optional}
     {-removeStdCellExp "can remove std cell names that want not to exists at lutDict" AString string optional}
     {-removeRegionOfSiteNameExp_from_coreRect "specify the region of site name expression from core_rects" AString string optional}
     {-shrinkOff "specify the value to off when calculate the core_inner_boundary_rects" AFloat float optional}

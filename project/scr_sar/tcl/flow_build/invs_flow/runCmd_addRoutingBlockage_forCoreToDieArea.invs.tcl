@@ -12,6 +12,8 @@
 # --------------------------
 proc runCmd_addRoutingBlockage_forCoreToDieArea {args} {
   set nameOfRoutingBlockage "boundary_rblkg"
+  set layersOfTerms "M4 M5 M6"
+  set layersToAddRoutingBlockage
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -19,6 +21,14 @@ proc runCmd_addRoutingBlockage_forCoreToDieArea {args} {
   }
   catch {deleteRouteBlk -name $nameOfRoutingBlockage}
   set pin_lists [dbget top.terms.name]
+  deselectAll
+  foreach temp_layer $layersToAddRoutingBlockage {
+    selectPhyPin -net $pin_lists -layer $temp_layer 
+  }
+  set boxes [dbShape -output hrect [dbget top.fplan.boxes] ANDNOT [dbShape [dbget top.fplan.boxes] SIZE -0.25] ANDNOT [dbShape [dbget selected.box] SIZE 0.01]]
+  foreach box $boxes {
+    createRouteBlk -box $box -layer {} 
+  }
   
 }
 define_proc_arguments PROC_NAME \

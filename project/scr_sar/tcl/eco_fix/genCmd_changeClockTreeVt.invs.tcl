@@ -2,12 +2,13 @@
 # --------------------------
 # author    : sar song
 # date      : 2026/01/04 14:06:04 Sunday
-# label     : 
+# label     : eco_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : what?
-# return    : 
+# descrip   : To unify the vt and channel types on the clock tree, a specific vt type can be designated. This proc can automatically 
+#             generate executable commands to directly replace the instances that need their cell types changed with a unified type.
+# return    : cmds list
 # ref       : link url
 # --------------------------
 alias sus "subst -nocommands -nobackslashes"

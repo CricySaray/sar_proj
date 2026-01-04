@@ -39,7 +39,7 @@ proc genCmd_changeClockTreeVt {args} {
     set target_celltype_exp_list [lsearch -index 0 -inline $allVtCelltypeExp $typeOfTargetCelltype]
     if {[llength $target_celltype_exp_list] == 2} {
       set temp_target_celltype_exp [lindex $target_celltype_exp_list 1]
-      set otherVtCelltypeExp [lsearch -index 0 -all -inline $allVtCelltypeExp $typeOfTargetCelltype]
+      set otherVtCelltypeExp [lsearch -not -index 0 -all -inline $allVtCelltypeExp $typeOfTargetCelltype]
       foreach temp_vt_celltype_exp $otherVtCelltypeExp {
         set temp_other_celltype_exp [lindex $temp_vt_celltype_exp 1]
         set new_celltype [regsub [sus {^($commonCelltypeExp)$temp_other_celltype_exp$}] $old_celltype [sus {\1$temp_target_celltype_exp}]]
@@ -63,5 +63,5 @@ define_proc_arguments genCmd_changeClockTreeVt \
     {-typeOfCell "specify the type of cell of clock tree" oneOfString one_of_string {optional value_type {values {logic buffer inverter clock_gate source generator all}}}}
     {-commonCelltypeExp "specify common celltype expression for allVtCelltypeExp" AString string optional}
     {-allVtCelltypeExp "specify all vt celltype expression for selection of typeOfTargetCelltype" AString string optional}
-    {-typeOfTargetCelltype "specify the index of target vt celltype of allVtCelltypeExp" AInt int optional}
+    {-typeOfTargetCelltype "specify the index of target vt celltype of allVtCelltypeExp" AString string optional}
   }

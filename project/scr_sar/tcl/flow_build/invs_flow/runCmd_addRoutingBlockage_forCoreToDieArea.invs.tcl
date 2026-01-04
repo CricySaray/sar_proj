@@ -2,18 +2,18 @@
 # --------------------------
 # author    : sar song
 # date      : 2026/01/04 18:12:08 Sunday
-# label     : 
+# label     : flow_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : what?
-# return    : 
+# descrip   : Add a routing blockage to the position of coreToDie, considering the physical pin shape of the port
+# return    : cmds list
 # ref       : link url
 # --------------------------
 proc runCmd_addRoutingBlockage_forCoreToDieArea {args} {
   set nameOfRoutingBlockage "boundary_rblkg"
   set layersOfTerms "M4 M5 M6"
-  set layersToAddRoutingBlockage
+  set layersToAddRoutingBlockage "M2 VIA2 M3 VIA3 M4 VIA4 M5 VIA5 M6"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -22,19 +22,19 @@ proc runCmd_addRoutingBlockage_forCoreToDieArea {args} {
   catch {deleteRouteBlk -name $nameOfRoutingBlockage}
   set pin_lists [dbget top.terms.name]
   deselectAll
-  foreach temp_layer $layersToAddRoutingBlockage {
+  foreach temp_layer $layersOfTerms {
     selectPhyPin -net $pin_lists -layer $temp_layer 
   }
   set boxes [dbShape -output hrect [dbget top.fplan.boxes] ANDNOT [dbShape [dbget top.fplan.boxes] SIZE -0.25] ANDNOT [dbShape [dbget selected.box] SIZE 0.01]]
   foreach box $boxes {
-    createRouteBlk -box $box -layer {} 
+    createRouteBlk -box $box -layer $layersToAddRoutingBlockage -name $nameOfRoutingBlockage
   }
-  
+  deselectAll
 }
-define_proc_arguments PROC_NAME \
-  -info "whatFunction"\
+define_proc_arguments runCmd_addRoutingBlockage_forCoreToDieArea \
+  -info "run cmd to add routing blockage for area of core to die"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}
-    {-inst "specify inst to eco when type is add/delete" AString string require}
-    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
+    {-nameOfRoutingBlockage "specify the name of routing blockage" AString string optional}
+    {-layersOfTerms "specify layers of terms" AString string optional}
+    {-layersToAddRoutingBlockage "specify layers to add routing blockage" AString string optional}
   }

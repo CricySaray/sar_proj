@@ -66,6 +66,8 @@ if {[is_common_ui_mode]} {
   alias dg "get_db"
 
 } else {
+  alias setpin "setPinAssignMode -pinEditInBatch true"
+  alias resetpin "setPinAssignMode -reset"
   set restore_db_file_check 0
   alias dim "gui_dim_foreground -lightness_level medium"
   alias li "dbget head.libCells.name"

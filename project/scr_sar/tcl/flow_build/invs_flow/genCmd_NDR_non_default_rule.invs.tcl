@@ -10,6 +10,7 @@
 # return    : 
 # ref       : link url
 # --------------------------
+# TO_WRITE
 proc genCmd_NDR_non_default_rule {args} {
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
@@ -30,10 +31,12 @@ proc genCmd_NDR_non_default_rule {args} {
   }
   create_ccopt_clock_tree_spec -file ./rpts/cts.spec
   source ./rpts/cts.spec
+
+  create_route_type -name 
   
 }
 
-define_proc_arguments PROC_NAME \
+define_proc_arguments genCmd_NDR_non_default_rule \
   -info "whatFunction"\
   -define_args {
     {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}

@@ -19,7 +19,8 @@ proc genCmd_NDR_non_default_rule {args} {
   set_ccopt_property target_max_trans 0.12
   set_ccopt_property target_insertion_delay 0.0
   set_ccopt_property max_fanout 32
-  set_ccopt_property -cts_target_skew 0.04
+  set_ccopt_mode -cts_target_skew 0.04
+  set_ccopt_property -route_override_settings "setRouteMode -earlyGlobalSpecialModelingForN12 1"
   
 }
 

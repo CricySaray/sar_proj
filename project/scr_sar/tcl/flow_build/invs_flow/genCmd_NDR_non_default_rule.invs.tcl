@@ -22,6 +22,15 @@ proc genCmd_NDR_non_default_rule {args} {
   set_ccopt_mode -cts_target_skew 0.04
   set_ccopt_property -route_override_settings "setRouteMode -earlyGlobalSpecialModelingForN12 1"
   
+  set occRegClkPins [get_pins -quiet -hier -leaf -of [get_cells -q -hier -filter "is_sequential && full_name ~= *occ* && full_name !~ *u_scan_icg* && ref_name !~ *LN* && full_name =~ *CRG*"] -filter "name =~ CP*"]
+  if {$occRegClkPins != ""} {
+    foreach pin [get_object_name $occRegClkPins] {
+      set_ccopt_property sink_type ignore -pin $pin 
+    }
+  }
+  create_ccopt_clock_tree_spec -file ./rpts/cts.spec
+  source ./rpts/cts.spec
+  
 }
 
 define_proc_arguments PROC_NAME \

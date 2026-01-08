@@ -52,6 +52,13 @@ proc genCmd_NDR_non_default_rule {args} {
     set_ccopt_property cts_add_wire_delay_in_detailed_balancer false 
     set_ccopt_property cts_balance_wire_delay false 
   }
+  if {0} {
+    # clock mesh
+    foreach net [dbget [dbget [dbget top.insts.cell.name *mesh* -p2].instTerms.isOutput 1 -p].net.name] {
+      setAttribute -net $net -skip_routing true
+      set_dont_touch $net true
+    }
+  }
 }
 
 define_proc_arguments genCmd_NDR_non_default_rule \

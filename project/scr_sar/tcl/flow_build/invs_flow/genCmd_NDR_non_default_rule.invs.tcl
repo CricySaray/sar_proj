@@ -17,6 +17,7 @@ proc genCmd_NDR_non_default_rule {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  set_ccopt_property routing_top_min_fanout 1000
   set_ccopt_property target_max_trans 0.12
   set_ccopt_property target_insertion_delay 0.0
   set_ccopt_property max_fanout 32
@@ -32,8 +33,25 @@ proc genCmd_NDR_non_default_rule {args} {
   create_ccopt_clock_tree_spec -file ./rpts/cts.spec
   source ./rpts/cts.spec
 
-  create_route_type -name 
+  create_route_type -name ndr2w2s_clock_hard -top_preferred_layer 6 -bottom_preferred_layer 4 -mask 0 -non_default_rule ndr_2w2s
+  create_route_type -name ndr2w2s_clock_leaf -top_preferred_layer 6 -bottom_preferred_layer 3 -mask 0 -non_default_rule ndr_2w2s
+
+  create_route_type -name ndr2w3s_clock_leaf -top_preferred_layer 6 -bottom_preferred_layer 3 -mask 0 -non_default_rule ndr_2w3s
+  create_route_type -name ndr2w3s_clock_leaf -top_preferred_layer 6 -bottom_preferred_layer 3 -mask 0 -non_default_rule ndr_2w3s
   
+  create_route_type -name ndr2w2s_clock_hard_shield -top_preferred_layer 6 -bottom_preferred_layer 4 -mask 0 -non_default_rule ndr_2w2s -shield_net VSS -shield_side both_side 
+  create_route_type -name ndr2w2s_clock_leaf_shield -top_preferred_layer 6 -bottom_preferred_layer 3 -mask 0 -non_default_rule ndr_2w2s -shield_net VSS -shield_side both_side
+
+  create_route_type -name ndr2w3s_clock_leaf_shield -top_preferred_layer 6 -bottom_preferred_layer 3 -mask 0 -non_default_rule ndr_2w3 -shield_net VSS -shield_side both_sides
+  create_route_type -name ndr2w3s_clock_leaf_shield -top_preferred_layer 6 -bottom_preferred_layer 3 -mask 0 -non_default_rule ndr_2w3 -shield_net VSS -shield_side both_sides
+  
+  set_ccopt_property route_type ndr2w2s_clock_hard_shield -net_type top
+  set_ccopt_property route_type ndr2w2s_clock_hard        -net_type trunk
+  set_ccopt_property route_type ndr2w2s_clock_leaf_shield -net_type leaf
+  if {0} {
+    set_ccopt_property cts_add_wire_delay_in_detailed_balancer false 
+    set_ccopt_property cts_balance_wire_delay false 
+  }
 }
 
 define_proc_arguments genCmd_NDR_non_default_rule \

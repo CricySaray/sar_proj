@@ -392,6 +392,7 @@ if {[is_common_ui_mode]} {
   
 } elseif {![is_common_ui_mode]} {
 
+  # description : By entering the name of the inst, then obtain all the clock names of all its clock pins, as well as their frequencies and periods in all active views.
   alias getf "get_frequency_of_clock_of_registerClkPin"
   proc get_frequency_of_clock_of_registerClkPin {{regOrMemOrIpInsts ""}} {
     set numOfInst [llength $regOrMemOrIpInsts]
@@ -432,8 +433,11 @@ if {[is_common_ui_mode]} {
           } 
         }
       } 
-      set resultList [linsert $resultList 0 [list clockName clockPeriod clockFreq PinName instName]]
-      puts "NOTICE:  If there is a '/' symbol, it indicates that the relevant information cannot be obtained. \n\tIt is necessary to check whether the inst has CLK, CP pins or whether the clock has relevant period settings, etc."
+      set resultList [linsert $resultList 0 [list clockName clockPeriods clockFreqs PinName instName]]
+      puts "NOTICE:  If there is a '/' symbol, it indicates that the relevant information cannot be obtained. \n
+                  \tIt is necessary to check whether the inst has CLK, CP pins or whether the clock has relevant period settings, etc.\n
+                  \tThere can be multiple clockPeriods and clockFreqs, representing periods or frequencies in different views. \n
+                  \tYou need to check the sdc or different modes for specific details."
       puts "----------------------------"
       puts [join [table_format_with_title $resultList 0 left "" 0] \n]
     }

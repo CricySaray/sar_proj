@@ -391,6 +391,7 @@ if {[is_common_ui_mode]} {
   }
   
 } elseif {![is_common_ui_mode]} {
+  proc add {a b} {expr $a + $b}
 
   # description : By entering the name of the inst, then obtain all the clock names of all its clock pins, as well as their frequencies and periods in all active views.
   alias getf "get_frequency_of_clock_of_registerClkPin"

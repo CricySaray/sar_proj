@@ -419,14 +419,14 @@ if {[is_common_ui_mode]} {
                   set frequenciesOfClock [lmap temp_period $periodsOfClock { 
                     set temp_freq [format "%.6f" [expr 1.000 / double($temp_period)]]
                     if {$temp_freq >= 1.000000} {
-                      set temp_freq [format "%.3f" $temp_freq] 
+                      set temp_freq [string cat [format "%.3f" $temp_freq] G]
                     } else {
-                      set temp_freq [format "%.3f" [expr double($temp_freq) * 1000]] 
+                      set temp_freq [string cat [format "%.3f" [expr double($temp_freq) * 1000]] M]
                     }
                   }]
                   set periodsString [join $periodsOfClock "/"]
                   set freqsString [join $frequenciesOfClock "/"]
-                  lappend resultList [list $temp_clockname $periodsString $freqsString $temp_pin $temp_inst]
+                  lappend resultList [list $temp_clockname "${periodsString}ns" $freqsString $temp_pin $temp_inst]
                 } 
               } 
             }

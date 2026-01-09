@@ -128,7 +128,7 @@ if {[is_common_ui_mode]} {
 }
 # common
 alias s "source"
-alias sa "source /home/pd_sar/.invs_alias.tcl"
+alias sa "source ~/.invs_alias.tcl"
 alias g "gvim"
 alias c "cd"
 alias m "man"

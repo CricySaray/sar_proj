@@ -393,6 +393,12 @@ if {[is_common_ui_mode]} {
 } elseif {![is_common_ui_mode]} {
   proc add {a b} {expr $a + $b}
 
+  # setting for report_timing of invs
+  proc setreport {} {
+    set_table_style -name report_timing -no_frame -indent 0
+    set_global report_timing_format {hpin cell load fanout pin_location user_derate socv_derate total_derate delay_mean delay_sigma slew incr_delay delay arrival}
+  }
+
   # description : By entering the name of the inst, then obtain all the clock names of all its clock pins, as well as their frequencies and periods in all active views.
   alias getf "get_frequency_of_clock_of_registerClkPin"
   proc get_frequency_of_clock_of_registerClkPin {{regOrMemOrIpInsts ""}} {

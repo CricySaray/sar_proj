@@ -55,6 +55,10 @@ alias md 'mkdir'
 alias c 'cd'
 alias cl 'ls -td */ >/dev/null && cd "`ls -td */ | head -n 1`" || echo No non-hidden subdirectories available'
 alias lc 'cl'
+
+alias ww 'mkdir -p work ; cd work'
+
+
 alias setPrompt 'set prompt="%{\e[32m%}%{\e[1m%}[%h]%{\e[0m%} %{\e[31m%}%{\e[1m%}%W/%D %T%{\e[0m%} [%n@%m %{\e[34m%}%/%{\e[0m%}]$ "'
 alias cd 'chdir \!* && setPrompt'
 setPrompt

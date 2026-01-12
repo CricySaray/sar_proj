@@ -22,6 +22,7 @@ proc delete_all_gui_object_and_highlight {} {
   dehighlight -all
 }
 source ../../packages/judge_ifHumanReadable_file.package.tcl; # is_human_readable_file
+alias hi "genCmd_highlightTimingPathBasedOnReportFile_invsRpt"
 proc genCmd_highlightTimingPathBasedOnReportFile_invsRpt {args} {
   # for genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt
   set reportTimingFile                    ""

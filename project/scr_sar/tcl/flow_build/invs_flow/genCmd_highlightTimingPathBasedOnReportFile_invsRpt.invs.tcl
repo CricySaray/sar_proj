@@ -398,7 +398,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt {args} {
         if {[join [lrange [split [lindex $tempList end 0] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList end-1 0] "/"] 0 end-1] "/"]} {
           set tempList [lrange $tempList 0 end-1]
         } else {
-          error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join [lmap temp_item $tempList { lindex $temp_item 0 }] " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinCelltypeNetList)" 
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport_invsRpt: check your path([join [lmap temp_item $tempList { lindex $temp_item 0 }] " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinCelltypeNetList)" 
         }
       }
       foreach {pin_celltype_net_1 pin_celltype_net_2} $tempList {

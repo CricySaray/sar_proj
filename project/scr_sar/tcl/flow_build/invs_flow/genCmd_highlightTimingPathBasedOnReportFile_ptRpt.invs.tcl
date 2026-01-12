@@ -403,7 +403,7 @@ proc genCmd_getPurePinOfPath_fromTimingPathReport {args} {
         if {[join [lrange [split [lindex $tempList end] "/"] 0 end-1] "/"] eq [join [lrange [split [lindex $tempList end-1] "/"] 0 end-1] "/"]} {
           set tempList [lrange $tempList 0 end-1]
         } else {
-          error "proc genCmd_highlightTimingPathBasedOnListOfEvenNumberedItems: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
+          error "proc genCmd_getPurePinOfPath_fromTimingPathReport: check your path([join $tempList " - > "]) need be even number list(length: [llength $tempList]) !!!(in filteredPinList)" 
         }
       }
       foreach {pin1 pin2} $tempList {

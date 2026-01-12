@@ -12,24 +12,24 @@
 # --------------------------
 proc proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages_withBoundaryRects {} {
   set coreBoxes [dbShape [dbget top.fplan.rows.box -e] -output hrect]
-  set memOrIps_ptrs [dbget top.insts.pstatus {^placed|^fixed} -regexp -p]
+  set memOrIps_ptrs [dbget [dbget top.insts.cell.subClass block -p2].pstatus {^placed|^fixed} -regexp -p -e]
   set memOrIpsRects [lmap temp_inst_ptr $memOrIps_ptrs {
     set temp_rect [dbShape -output hrect [dbget $temp_inst_ptr.pHaloPoly -e]]
   }]
   set valideMemOrIpsRects [dbShape -output hrect $memOrIpsRects]
-  set hardBlkgRects [dbShape -output hrect [dbget [dbget top.fplan.pBlkgs.type hard -p].boxes]]
+  set hardBlkgRects [dbShape -output hrect [dbget [dbget top.fplan.pBlkgs.type hard -p].boxes -e]]
   set memOrIpsOrHardBlkgsRects [dbShape -output hrect $valideMemOrIpsRects OR $hardBlkgRects]
   set coreRectsWithOutMemIpHardblkgs [dbShape -output hrect $coreBoxes ANDNOT $memOrIpsOrHardBlkgsRects]
   return $coreRectsWithOutMemIpHardblkgs
 }
-proc proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages {rects_of_boundary_cells} {
+proc proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages {{rects_of_boundary_cells {}}} {
   set coreBoxes [dbShape [dbget top.fplan.rows.box -e] -output hrect]
-  set memOrIps_ptrs [dbget top.insts.pstatus {^placed|^fixed} -regexp -p]
+  set memOrIps_ptrs [dbget [dbget top.insts.cell.subClass block -p2].pstatus {^placed|^fixed} -regexp -p -e]
   set memOrIpsRects [lmap temp_inst_ptr $memOrIps_ptrs {
     set temp_rect [dbShape -output hrect [dbget $temp_inst_ptr.pHaloPoly -e]]
   }]
   set valideMemOrIpsRects [dbShape -output hrect $memOrIpsRects]
-  set hardBlkgRects [dbShape -output hrect [dbget [dbget top.fplan.pBlkgs.type hard -p].boxes]]
+  set hardBlkgRects [dbShape -output hrect [dbget [dbget top.fplan.pBlkgs.type hard -p].boxes -e]]
   set memOrIpsOrHardBlkgsRects [dbShape -output hrect $valideMemOrIpsRects OR $hardBlkgRects]
   set coreRectsWithOutMemIpHardblkgs [dbShape -output hrect $coreBoxes ANDNOT $memOrIpsOrHardBlkgsRects]
   set coreRectsWithOutMemIpHardblkgsBoundaryCells [dbShape -output hrect $coreRectsWithOutMemIpHardblkgs ANDNOT $rects_of_boundary_cells]

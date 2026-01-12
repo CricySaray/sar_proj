@@ -189,7 +189,11 @@ proc build_sar_LUT_usingDICT {args} {
   }
   flush $fo
   debug_msg "# --- get core_inner_boundary_rects ..."
-  set allBoundaryCellRects [dbget [dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -p].box -e]
+  if {[dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -e] eq ""} {
+    set allBoundaryCellRects ""
+  } else {
+    set allBoundaryCellRects [dbget [dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -p].box -e]
+  }
   genFile_scriptForMemIpLocation -outputfilename ./temp_addHaloToBlock_withSnapToSite_whenRunningBuildLut.tcl
   set temp_cmd "source ./temp_addHaloToBlock_withSnapToSite_whenRunningBuildLut.tcl"
   eval $temp_cmd
@@ -212,9 +216,8 @@ proc build_sar_LUT_usingDICT {args} {
     puts $fo "$promptERROR: calculating core_inner_boundary_rects: There are no rects of endcap or other boundary cells in the invs gui db, so the value of the variable core_inner_boundary_rects cannot be calculated." 
   }
   #puts "# Begin source $LUT_filename, and then continue add some other info\n" ; 
-  set fs [open $LUT_filename r]
-  while {[gets $fs line] > -1} { eval $line }
-  close $fs
+  set temp_cmd "source $LUT_filename"
+  eval $temp_cmd
   #puts "# End source ."
   debug_msg "# --- get all info of celltype ..."
   set expandedMapList [expandMapList [operateLUT -type read -attr process]]

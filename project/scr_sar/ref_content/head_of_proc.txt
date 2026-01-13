@@ -4,7 +4,7 @@
 # date      : DATE
 # label     : 
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
-#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet)
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
 # descrip   : what?
 # return    : 
@@ -34,6 +34,8 @@
 #   -> cross_lang_proc : retrieves data from other languages (like Perl), converts it to Tcl-compatible types, and enables collaborative functionality by leveraging each language's strengths.
 #   -> eco_proc : specifically for ECO phase
 #   -> misc_proc  : some other uses of procs
+#   -> snippet   : Code snippets taken from various places, mainly recording convenient coding techniques
+#   -> signoff_check : It is the inspection that needs to be done in the chipfinish stage obtained from the flow of clourneysemi company.
 # perl sub:
 #   -> format_sub : processes data and outputs it in specific formats
 #   -> getInfo_sub : A subroutine specifically used to obtain specific information or data

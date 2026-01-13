@@ -21,6 +21,7 @@ proc check_delayCellLevel {args} {
   set all_delay_cells [lsort -u -ascii -increasing [dbget [dbget top.insts.cell.name DEL* -p2].name -e]]
   foreach temp_delay_cell $all_delay_cells {
      
+
   }
   
 }

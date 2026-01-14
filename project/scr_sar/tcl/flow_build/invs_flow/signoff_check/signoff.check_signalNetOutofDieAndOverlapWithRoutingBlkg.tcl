@@ -37,6 +37,7 @@ proc check_signalNetOutofDieAndOverlapWithRoutingBlkg {args} {
   set fo [open $rptName w] 
   puts $fo [join $finalList \n]
   puts $fo "TOTALNUM: $totalNum"
+  puts $fo "signalNetOut $totalNum"
   close $fo
   return [list signalNetOut $totalNum]
 }

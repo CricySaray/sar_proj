@@ -34,6 +34,7 @@ proc check_inputTermsFloating {args} {
   set fo [open $rptName w]
   puts $fo [join $floatingInputTermsList \n]
   puts $fo "TOTALNUM: $totalNum"
+  puts $fo "inputTermFloat $totalNum"
   close $fo
   return [list inputTermFloat $totalNum]
 }

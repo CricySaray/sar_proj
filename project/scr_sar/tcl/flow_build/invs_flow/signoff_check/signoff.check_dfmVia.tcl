@@ -34,6 +34,7 @@ proc check_dfmVia {args} {
     set DFM_ratio [lindex [regsub {\(|\)} [lsearch -regexp -inline -all $total_row {\d+\.\d+%}] ""] end]
   }
   puts $fo "DFM_RATIO: $DFM_ratio"
+  puts $fo "dfmVia $DFM_ratio"
   close $fo
   return [list dfmVia $DFM_ratio]
 }

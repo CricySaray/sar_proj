@@ -33,6 +33,7 @@ proc check_decapDensity {args} {
   }
   set decap_density [format "%.2f" [expr {$decap_area / double($alloc_area)}]]
   puts $fo "DECAP_DENSITY: $decap_density"
+  puts $fo "decapDensity $decap_density"
   close $fo
   # dump out gif of decap
   set decapInstList [dbget [dbget top.insts.cell.name DCAP* -p2].name -e]

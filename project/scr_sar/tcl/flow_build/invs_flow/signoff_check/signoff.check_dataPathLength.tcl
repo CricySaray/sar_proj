@@ -35,6 +35,7 @@ proc check_dataPathLength {args} {
   set fo [open $rptName w]
   puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
   puts $fo "TOTALNUM: $totalNum"
+  puts $fo "dataLength $totalNum"
   close $fo
   return [list dataLength $totalNum]
 }

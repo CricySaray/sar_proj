@@ -35,6 +35,7 @@ proc check_clockPathLength {args} {
   set fo [open $rptName w]
   puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
   puts $fo "TOTALNUM: $totalNum"
+  puts $fo "clockLength $totalNum"
   close $fo
   return [list clockLength $totalNum]
 }

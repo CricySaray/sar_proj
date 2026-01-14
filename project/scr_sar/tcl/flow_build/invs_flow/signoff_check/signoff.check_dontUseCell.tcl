@@ -43,6 +43,7 @@ proc check_dontUseCell {args} {
       puts $fo ""
     }
     puts $fo "TOTALNUM: $totalNum"
+    puts $fo "dontUseNum $totalNum"
     close $fo
     return [list dontUseNum $totalNum]
   }

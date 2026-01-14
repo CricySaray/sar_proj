@@ -13,6 +13,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Pod::Usage;
+use File::Basename;
 
 # Initialize option variables
 my $changedInstColor = 36;
@@ -31,7 +32,13 @@ pod2usage(1) if $help;
 
 # Check positional arguments
 my $input_file = shift @ARGV || pod2usage("Input filename is required for conversion\n");
-my $output_file = shift @ARGV || "so_instAndPins_from_${input_file}";
+my ($file, $dir, $suffix) = fileparse($input_file, qr/\.[^.]*/);
+my $pure_basename = $file;
+$pure_basename =~ s/$suffix$//;
+my $new_pure_basename = "so_instAndPins_from_${pure_basename}";
+my $new_filename = $new_pure_basename . $suffix;
+my $new_path = $dir . $new_filename;
+my $output_file = shift @ARGV || $new_path;
 
 # Output option values
 print "Changed Instance Color: $changedInstColor\n";

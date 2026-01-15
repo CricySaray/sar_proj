@@ -19,8 +19,10 @@ proc check_missingVia {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set extensionOfRptName [lindex [split $rptName "."] end]
-  set basenameOfRptName [lrange [split $rptName "."] 0 end-1]
+  set rootdir [lrange [split $rptName "/"] 0 end-1]
+  set temp_filename [lindex [split $rptName "/"] end]
+  set extensionOfRptName [lindex [split $temp_filename "."] end]
+  set basenameOfRptName [lrange [split $temp_filename "."] 0 end-1]
   deselectAll
   delete_gui_object -all
   fit
@@ -33,20 +35,20 @@ proc check_missingVia {args} {
     clearDrc
     deselectAll
     select_obj [dbget -v top.nets.swires.shape notype -p]
-    verifyPowerVia -report middleFile_${basenameOfRptName}_$downLayer$upLayer.$extensionOfRptName -layerRange [list $upLayer $downLayer] -nonOrthogonalCheck -error 1000000 -checkWirePinOverlap -selected
+    verifyPowerVia -report [join [concat $rootdir middleFile_${basenameOfRptName}_$downLayer$upLayer.$extensionOfRptName] "/"] -layerRange [list $upLayer $downLayer] -nonOrthogonalCheck -error 1000000 -checkWirePinOverlap -selected
     deselectAll
-    gui_dump_picture gif_${basenameOfRptName}_$downLayer$upLayer.gif -format GIF
-    saveDrc drc_${basenameOfRptName}_$downLayer$upLayer.drc
+    gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_$downLayer$upLayer.gif] "/"] -format GIF
+    saveDrc [join [concat $rootdir drc_${basenameOfRptName}_$downLayer$upLayer.drc] "/"]
   }
   # for MAIN_SUB
   set pgGap 6
   clearDrc
   deselectAll
   editSelect -type Special -shape {FOLLOWPIN STRIPE} -layer {M2 M5}
-  verifyPowerVia -report middleFile_${basenameOfRptName}_stackM2M5.$extensionOfRptName -layer_rail M2 -layer_stripe M5 -stackedVia -stripe_rule $pgGap -layerRange {M2 M5} -selected -error 1000000
+  verifyPowerVia -report [join [concat $rootdir middleFile_${basenameOfRptName}_stackM2M5.$extensionOfRptName] "/"] -layer_rail M2 -layer_stripe M5 -stackedVia -stripe_rule $pgGap -layerRange {M2 M5} -selected -error 1000000
   deselectAll
-  gui_dump_picture gif_${basenameOfRptName}_stackM2M5.gif -format GIF
-  saveDrc drc_${basenameOfRptName}_stackM2M5.drc
+  gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_stackM2M5.gif -format GIF] "/"]
+  saveDrc [join [concat $rootdir drc_${basenameOfRptName}_stackM2M5.drc] "/"]
 
   return
 }

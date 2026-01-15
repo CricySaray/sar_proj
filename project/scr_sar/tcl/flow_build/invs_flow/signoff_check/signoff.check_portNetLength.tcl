@@ -12,7 +12,8 @@
 # --------------------------
 source ../../../eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl; # get_net_length
 proc check_portNetLength {args} {
-  set rptName "signoff_check_portNetLength.rpt"
+  set lengthThreshold 100
+  set rptName         "signoff_check_portNetLength.rpt"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -23,7 +24,9 @@ proc check_portNetLength {args} {
   foreach temp_port $ports {
     set temp_netname [get_object_name [get_nets -of $temp_port]]
     set temp_netlength [get_net_length $temp_netname]
-    if 
+    if {$temp_netlength > $lengthThreshold} {
+      lappend finalList [list $temp_netlength $temp_netname] 
+    }
   }
   set finalList [lsort -real -index 0 -decreasing $finalList]
   set totalNum [llength $finalList]

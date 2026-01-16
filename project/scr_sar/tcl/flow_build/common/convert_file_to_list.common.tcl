@@ -10,6 +10,7 @@
 # NOTICE    : This proc cannot use the try command, as the PT software fails to recognize the try command and will report an error.
 # ref       : link url
 # --------------------------
+alias fl "convert_file_to_list"
 proc convert_file_to_list {filename {trim_whitespace 1} {skip_empty 1} {verbose 0} {remove_comments 1}} {
   # Initialize the result list
   set result [list]

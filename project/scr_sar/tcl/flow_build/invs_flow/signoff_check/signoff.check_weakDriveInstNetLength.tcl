@@ -35,11 +35,13 @@ proc check_weakDriveInstNetLength {args} {
     set weakInsts [dbget [dbget top.insts.cell.name $temp_celltype -p2].name -e] 
     foreach temp_inst $weakInsts {
       set temp_outputTerms [dbget [dbget [dbget top.insts.name $temp_inst -p].instTerms.isOutput 1 -p].name] 
-      set temp_netname [dbget [dbget top.insts.instTerms.name $temp_outputTerms -p].net.name -e]
-      if {$temp_netname eq ""} { continue } else {
-        set temp_length [get_net_length $temp_netname] 
-        if {$temp_length > $lengthThreshold} {
-          lappend netLengthLIST [list $temp_driveCapacity $temp_celltype $temp_length $temp_netname $temp_outputTerms] 
+      foreach temp_outputterm $temp_outputTerms {
+        set temp_netname [dbget [dbget top.insts.instTerms.name $temp_outputterm -p].net.name -e]
+        if {$temp_netname eq ""} { continue } else {
+          set temp_length [get_net_length $temp_netname] 
+          if {$temp_length > $lengthThreshold} {
+            lappend netLengthLIST [list $temp_driveCapacity $temp_celltype $temp_length $temp_netname $temp_outputTerms] 
+          }
         }
       }
     }

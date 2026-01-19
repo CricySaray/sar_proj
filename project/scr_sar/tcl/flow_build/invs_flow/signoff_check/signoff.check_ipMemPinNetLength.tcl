@@ -13,7 +13,7 @@
 source ../../../eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl; # get_net_length
 source ../../../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc check_ipBuffNetLength {args} {
-  set memCelltypeExp_toIgnore {^ram_} ; # (using lsearch) if it is empty, it will get all celltype which of subClass is block
+  set memCelltypeExp_toIgnore {^ram_} ; # (using lsearch) if it is empty, it will get all celltype which of subClass is block, e.g. {^ram_}
   set ipExpOrNameListToMatch {} ; # if it is empty, it will using \$memCelltypeExp_toIgnore
   set lengthThreshold 50
   set rptName "signoff_check_ipBuffNetLength.rpt"

@@ -12,11 +12,11 @@
 # --------------------------
 source ../../../eco_fix/timing_fix/trans_fix/proc_get_net_lenth.invs.tcl; # get_net_length
 source ../../../packages/table_format_with_title.package.tcl; # table_format_with_title
-proc check_ipBuffNetLength {args} {
+proc check_ipMemPinNetLength {args} {
   set memCelltypeExp_toIgnore {^ram_} ; # (using lsearch) if it is empty, it will get all celltype which of subClass is block, e.g. {^ram_}
   set ipExpOrNameListToMatch {} ; # if it is empty, it will using \$memCelltypeExp_toIgnore
   set lengthThreshold 50
-  set rptName "signoff_check_ipBuffNetLength.rpt"
+  set rptName "signoff_check_ipMemPinNetLength.rpt"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -61,7 +61,7 @@ proc check_ipBuffNetLength {args} {
   
 }
 
-define_proc_arguments check_ipBuffNetLength \
+define_proc_arguments check_ipMemPinNetLength \
   -info "check ip buffer net length"\
   -define_args {
     {-memCelltypeExp_toIgnore "specify the mem celltype expression to ignore" AString string optional}

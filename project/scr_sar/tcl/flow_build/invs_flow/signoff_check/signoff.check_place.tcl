@@ -32,12 +32,12 @@ proc check_place {args} {
     set fillerGapNum [expr $fillerGapNum + int($temp_fillernum)]
   }
   set unplacedInstNum [lindex [lsearch -regexp -inline $temp_content "\\*info: Unplaced ="] end]
-  set densityRatio [lindex [regexp -inline -expanded {\d+(\.\d+)?%} [lsearch -regexp -inline $temp_content "^Placement Density:"]] 0]
+  set densityRatio [lindex [regexp -inline -expanded {\d+(\.\d+)?%} [lsearch -regexp -inline $temp_content "^Placement Density:"]] 0] ; # not exactly, so dont use this statistics
   if {$overlapNum eq ""} { set overlapNum 0 }
   set fo [open $rptName w]
-  puts $fo "overlapNum $overlapNum fillerGapNum $fillerGapNum unplacedInstNum $unplacedInstNum densityRatio $densityRatio"
+  puts $fo "overlapNum $overlapNum fillerGapNum $fillerGapNum unplacedInstNum $unplacedInstNum"
   close $fo
-  return [list overlapNum $overlapNum fillerGapNum $fillerGapNum unplacedInstNum $unplacedInstNum densityRatio $densityRatio]
+  return [list overlapNum $overlapNum fillerGapNum $fillerGapNum unplacedInstNum $unplacedInstNum]
 }
 
 define_proc_arguments check_place \

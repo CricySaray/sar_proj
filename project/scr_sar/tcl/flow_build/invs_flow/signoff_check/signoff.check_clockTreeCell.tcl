@@ -18,32 +18,31 @@ source ../../../packages/print_formattedTable_D2withCategory.package.tcl; # prin
 source ../../../packages/count_items.package.tcl; # count_items
 source ../../../packages/pw_puts_message_to_file_and_window.package.tcl; # pw
 source ../../../eco_fix/timing_fix/lut_build/operateLUT.tcl; # operateLUT
-proc check_CTScelltype {{filter_list {RCLIB_PLB DEL}} {specify_VT "ULVT"} {promptERROR "songERROR"}} {
+proc check_CTScelltype {{filter_list {RCLIB_PLB DEL}} {specify_VT "ULVT"} {celltypeRegExp {.*D(\d+)BWP.*140([(UL)LH]VT)?$}} {availableVT {HVT SVT LVT ULVT}} {clkFlag {^DCCK|^CK}} {promptERROR "songERROR"}} {
   # $specify_VT : ULVT|AR9
-  set allCTSinstname_collection [get_clock_network_objects -type cell -include_clock_gating_network]
+  set allCTSinstname_collection [get_clock_network_objects -type cell ]
   set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
   # deal with and categorize collection
   set error_driveCapacity [add_to_collection "" ""]
   set error_VTtype [add_to_collection "" ""]
   set error_CLKcelltype [add_to_collection "" ""]
-  set process [operateLUT -type read -attr process]
-  set regExp [operateLUT -type read -attr celltype_regexp]
-  set availableVT [operateLUT -type read -attr vtrange]
-  set clkFlag [operateLUT -type read -attr clkflag]
-  if {$process == "" || $regExp == "" || $availableVT == "" || $clkFlag == ""} {
-    error "proc check_CTScelltype: check your lutDict info: process($process) , regExp($regExp) , availableVT($availableVT) , clkFlag($clkFlag). check it!!!" 
+  if {$celltypeRegExp eq ""} {
+    return [list] 
+  }
+  if {$celltypeRegExp == "" || $availableVT == "" || $clkFlag == ""} {
+    error "proc check_CTScelltype: check your lutDict info: celltypeRegExp($celltypeRegExp) , availableVT($availableVT) , clkFlag($clkFlag). check it!!!" 
   }
   set filterExp [join $filter_list "\|"]
   foreach_in_collection instname_itr $allCTSinstname_collection {
-    set driveCapacity [get_driveCapacity_of_celltype [get_attribute $instname_itr ref_name] $regExp]
+    set driveCapacity [get_driveCapacity_of_celltype [get_attribute $instname_itr ref_name] $celltypeRegExp]
     if {[regexp $filterExp [get_attribute $instname_itr ref_name]]} { continue }
     if {$driveCapacity < 4} {
       set error_driveCapacity [add_to_collection $error_driveCapacity $instname_itr] ; # drive capacity
     }
-    if {$specify_VT in $availableVT && [lindex [get_cellDriveLevel_and_VTtype_of_inst [get_object_name $instname_itr] $regExp] end] != $specify_VT} {
+    if {$specify_VT in $availableVT && [lindex [get_cellDriveLevel_and_VTtype_of_inst [get_object_name $instname_itr] $celltypeRegExp] end] != $specify_VT} {
       set error_VTtype [add_to_collection $error_VTtype $instname_itr] ; # VT type
     } elseif {$specify_VT ni $availableVT} {
-      error "proc check_CTScelltype: \$specify_VT can't in availableVT list from process $process"
+      error "proc check_CTScelltype: \$specify_VT can't in availableVT list"
     }
     if {![regexp $clkFlag [get_attribute $instname_itr ref_name]]} {
       set error_CLKcelltype [add_to_collection $error_CLKcelltype $instname_itr] ; # CLK cell type

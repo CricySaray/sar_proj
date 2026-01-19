@@ -8,6 +8,7 @@
 # descrip   : A Perl script enabling team members to share text messages through sequentially numbered files in a shared directory using --push (to add) 
 #             and --pop (to retrieve) commands, with automatic cycling after reaching ID 999 and tracking the latest ID via a .latest_id file.
 #             Added note feature for path annotations, search scope control for --find, and ID range filter for --list/--find.
+#             Extended with metadata display (time/owner/permission) for --pop/--list/--find.
 # usage     : Write the following two lines into .cshrc or .bashrc, and then you can conveniently use this Perl script with push or pop:
 #               alias push "perl ($script_dir)/teamshare.pl --push"
 #               alias pop  "perl ($script_dir)/teamshare.pl --pop"
@@ -21,6 +22,8 @@
 #             run: plist to list all content of ids
 #             run: pfind "regexp" to find the matched expression from content of ids.
 #             run: plist --range ',10' to show first 10 entries; find 'test' --range '-5,' to search last 5 entries.
+# update    : 2026/01/19 12:55:43 Monday
+#             run: plist --time --owner --permission to show metadata for entries.
 # ref       : link url
 # --------------------------
 use strict;
@@ -28,6 +31,7 @@ use Cwd;
 use Getopt::Long;
 use File::Basename;
 use File::stat;  # For checking script owner UID
+use POSIX qw(strftime); # For time formatting (added for metadata)
 
 # State global file handle
 our $fh;
@@ -47,6 +51,9 @@ my $find_pattern = "";         # Regex pattern for --find (-f)
 my $search_scope = "both";     # Default search scope: both (only effective for --find)
 my $search_scope_specified = 0;# Mark if user actively specified --search-scope (-s)
 my $range = ',';               # Default range: all entries (equivalent to '^,$') (-r/--range)
+my $show_time = 0;             # Show file modification time (-t/--time)
+my $show_owner = 0;            # Show file owner (-u/--owner)
+my $show_permission = 0;       # Show file permission (-m/--permission)
 
 # Parse command line options (add short format aliases)
 GetOptions(
@@ -61,7 +68,10 @@ GetOptions(
   },
   "range|r=s" => \$range,
   "help|h" => \$help,  # Keep existing -h as short for --help
-  "debug|d" => \$debug
+  "debug|d" => \$debug,
+  "time|t" => \$show_time,
+  "owner|u" => \$show_owner,
+  "permission|m" => \$show_permission
 ) or die "perl teamshare: Error in command line arguments. Use -h or --help for usage.\n";
 
 # Display detailed help page if -h/--help is triggered
@@ -106,7 +116,7 @@ if ($help) {
   print "                        Positive number: 1-based index from start (e.g., 3 = 3rd entry)\n";
   print "                        Negative number: 1-based index from end (e.g., -1 = last entry)\n";
   print "                      - Valid formats:\n";
-  print "                        ','        : All entries (default, equivalent to '^,\$')\n";
+  print "                        ','        : All entries (default, equivalent to '^,$')\n";
   print "                        ',10'      : First to 10th entry (omitted ^ → '^,10')\n";
   print "                        '30,'      : 30th entry to last (omitted \$ → '30,\$')\n";
   print "                        '^,10'     : First to 10th entry (explicit start)\n";
@@ -116,6 +126,9 @@ if ($help) {
   print "\n  -h / --help              Show this help page.\n";
   print "\n  --debug (-d)            Enable debug mode (prints detailed runtime info).\n";
   print "                      - Default: Disabled (set \$debug=1 to enable by default).\n";
+  print "\n  --time (-t)             Show file modification time (valid with --pop/--list/--find).\n";
+  print "  --owner (-u)            Show file owner (valid with --pop/--list/--find).\n";
+  print "  --permission (-m)       Show file permission (e.g., -rwxrwxrwx) (valid with --pop/--list/--find).\n";
   print "\n=============================================================\n";
   print "EXAMPLES:\n";
   print "=============================================================\n";
@@ -156,6 +169,15 @@ if ($help) {
   print "\n11. Enable debug mode with any command (long/short option):\n";
   print "    \$ perl teamshare.pl -l -r ',5' --debug\n";
   print "    \$ perl teamshare.pl -f 'test' -d\n";
+  print "\n12. List first 5 entries with permission and owner info (long/short option):\n";
+  print "    \$ perl teamshare.pl --list --range ',5' --permission --owner\n";
+  print "    \$ perl teamshare.pl -l -r ',5' -m -u\n";
+  print "\n13. Pop entry 002 with modification time (long/short option):\n";
+  print "    \$ perl teamshare.pl --pop 002 --time\n";
+  print "    \$ perl teamshare.pl -o 002 -t\n";
+  print "\n14. Find 'test' with all metadata (permission/owner/time) in last 5 entries:\n";
+  print "    \$ perl teamshare.pl --find 'test' --range '-5,' --permission --owner --time\n";
+  print "    \$ perl teamshare.pl -f 'test' -r '-5,' -m -u -t\n";
   print "\n=============================================================\n";
   print "IMPORTANT NOTES:\n";
   print "=============================================================\n";
@@ -171,6 +193,7 @@ if ($help) {
   print "10. --range (-r): Only effective with --list (-l)/--find (-f). Uses 1-based indexing; out-of-bounds values auto-adjust to valid range.\n";
   print "11. --range (-r) Format: Comma is mandatory. Invalid formats (e.g., '10-20', 'abc') will throw errors.\n";
   print "12. Short/Long Options: All short options are aliases for long options; functionality is identical.\n";
+  print "13. Metadata Options: --time (-t), --owner (-u), --permission (-m) only take effect with --pop/--list/--find (ignored with --push).\n";
   exit 0;
 }
 
@@ -305,6 +328,44 @@ sub parse_range {
   my @filtered_ids = @sorted_ids[$start_idx .. $end_idx];
   print "[DEBUG] Parsed --range (-r) '$range_str' → start_idx=$start_idx, end_idx=$end_idx, filtered_ids=" . join(",", @filtered_ids) . "\n" if $debug;
   return @filtered_ids;
+}
+
+# --------------------------
+# Helper Sub: Get File Metadata (permission, owner, modification time)
+# Input: file path
+# Output: hash ref with perm, owner, mtime (formatted)
+# --------------------------
+sub get_file_metadata {
+  my ($file_path) = @_;
+  my $stat = stat($file_path) or do {
+    warn "[WARNING] Failed to get metadata for $file_path: $!\n" if $debug;
+    return { perm => 'unknown', owner => 'unknown', mtime => 'unknown' };
+  };
+
+  # Get permission string (e.g., -rwxrwxrwx)
+  my $perm = '-';
+  $perm .= ($stat->mode & 0400) ? 'r' : '-';
+  $perm .= ($stat->mode & 0200) ? 'w' : '-';
+  $perm .= ($stat->mode & 0100) ? 'x' : '-';
+  $perm .= ($stat->mode & 0040) ? 'r' : '-';
+  $perm .= ($stat->mode & 0020) ? 'w' : '-';
+  $perm .= ($stat->mode & 0010) ? 'x' : '-';
+  $perm .= ($stat->mode & 0004) ? 'r' : '-';
+  $perm .= ($stat->mode & 0002) ? 'w' : '-';
+  $perm .= ($stat->mode & 0001) ? 'x' : '-';
+
+  # Get owner username (convert UID to name; fallback to UID if name not found)
+  my $owner_uid = $stat->uid;
+  my $owner = getpwuid($owner_uid) // $owner_uid;
+
+  # Get formatted modification time (YYYY-MM-DD HH:MM:SS)
+  my $mtime = strftime("%Y-%m-%d %H:%M:%S", localtime($stat->mtime));
+
+  return {
+    perm => $perm,
+    owner => $owner,
+    mtime => $mtime
+  };
 }
 
 # --------------------------
@@ -464,6 +525,17 @@ if ($popid ne "x") {
   
   # Optimized output: no empty lines, no horizontal lines
   print "Content for ID $popid:\n";
+  
+  # Show metadata if enabled
+  if ($show_time || $show_owner || $show_permission) {
+    my $metadata = get_file_metadata($file_path);
+    my @meta_lines;
+    push @meta_lines, "Permission: $metadata->{perm}" if $show_permission;
+    push @meta_lines, "Owner: $metadata->{owner}" if $show_owner;
+    push @meta_lines, "Modified Time: $metadata->{mtime}" if $show_time;
+    print join("\n", @meta_lines) . "\n" if @meta_lines;
+  }
+  
   my $displayed_lines = 0;
   foreach my $line (@$original_ref) {
     print "$line\n";
@@ -533,11 +605,23 @@ if ($list) {
     $content =~ s/\s+/ /g;
     $content =~ s/^\s+|\s+$//g;
     
+    # Get and format metadata if enabled
+    my $meta_str = "";
+    if ($show_time || $show_owner || $show_permission) {
+      my $metadata = get_file_metadata($file_path);
+      my @meta_parts;
+      push @meta_parts, "[Perm: $metadata->{perm}]" if $show_permission;
+      push @meta_parts, "[Owner: $metadata->{owner}]" if $show_owner;
+      push @meta_parts, "[Modified: $metadata->{mtime}]" if $show_time;
+      $meta_str = ' ' . join(' ', @meta_parts) if @meta_parts;
+    }
+    
+    # Print entry with metadata
     if (defined $note) {
-      print "$id_str: NOTE: $note\n";
+      print "$id_str:$meta_str NOTE: $note\n";
       print "        $content\n";
     } else {
-      print "$id_str: $content\n";
+      print "$id_str:$meta_str $content\n";
     }
   }
   
@@ -641,11 +725,24 @@ if (length($find_pattern)) {
   
   print "\n[Matched Entries (Pattern: '$find_pattern', Scope: '$search_scope', Range: '$range', sorted by ID)]\n";
   foreach my $entry (@matched_entries) {
+    my $file_path = "$dir/$entry->{id_str}";
+    # Get and format metadata if enabled
+    my $meta_str = "";
+    if ($show_time || $show_owner || $show_permission) {
+      my $metadata = get_file_metadata($file_path);
+      my @meta_parts;
+      push @meta_parts, "[Perm: $metadata->{perm}]" if $show_permission;
+      push @meta_parts, "[Owner: $metadata->{owner}]" if $show_owner;
+      push @meta_parts, "[Modified: $metadata->{mtime}]" if $show_time;
+      $meta_str = ' ' . join(' ', @meta_parts) if @meta_parts;
+    }
+    
+    # Print matched entry with metadata
     if (defined $entry->{note}) {
-      print "$entry->{id_str}: NOTE: $entry->{note}\n";
+      print "$entry->{id_str}:$meta_str NOTE: $entry->{note}\n";
       print "        $entry->{content}\n";
     } else {
-      print "$entry->{id_str}: $entry->{content}\n";
+      print "$entry->{id_str}:$meta_str $entry->{content}\n";
     }
   }
   

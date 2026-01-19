@@ -12,8 +12,10 @@
 # usage     : Write the following two lines into .cshrc or .bashrc, and then you can conveniently use this Perl script with push or pop:
 #               alias push "perl ($script_dir)/teamshare.pl --push"
 #               alias pop  "perl ($script_dir)/teamshare.pl --pop"
+#             or alias pop "perl ($script_dir)/teamshare.pl --time --owner --permission -pop"
 #               alias plist  "perl ($script_dir)/teamshare.pl --list"
 #               alias pfind  "perl ($script_dir)/teamshare.pl --find"
+#             or alias pfind "perl ($script_dir)/teamshare.pl --time --owner --permission -find"
 #               alias phelp  "perl ($script_dir)/teamshare.pl -h"
 #             then source .cshrc/.bashrc
 #             you can run: push "this is a message", to get a id to retrieve message.

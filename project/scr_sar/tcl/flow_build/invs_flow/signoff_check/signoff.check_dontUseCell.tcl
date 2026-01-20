@@ -12,9 +12,9 @@
 # --------------------------
 source ./utils/util_wildcardList_to_regexpList.tcl; # util_wildcardList_to_regexpList
 proc check_dontUseCell {args} {
-  set dontUseExpressionList       {G* K* CLK*}
+  set dontUseExpressionList    {G* K* CLK*}
   set ignoreCellExpressionList {G* CK* DCCK* TIE* FILL* DCAP* *SYNC* DEL*}
-  set rptName                     "signoff_check_dontUseCell.rpt"
+  set rptName                  "signoff_check_dontUseCell.rpt"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

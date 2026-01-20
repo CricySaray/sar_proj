@@ -16,15 +16,21 @@ proc genSum_usingTable {} {
   set allResultFilenam [glob -nocomplain $targetDir/$prefixOfFilename*]
   if {$allResultFilenam ne ""} {
     foreach temp_resultfile $allResultFilenam {
-       
+      set endline [_get_endLineOfFile $temp_resultfile]
+      if {[expr {[llength $endline] % 2 == 1}]}
     }
   } else {
     error "proc genSum_usingTable: check your input: targetDir($targetDir) have on matched result file." 
   }
 }
 
-proc _process_file_tailLine {{filename ""}} {
+proc _get_endLineOfFile {{filename ""}} {
   if {$filename eq ""} {
-    error "proc _process_file_tailLine: check your input filename, it is empty!!!" 
+    error "proc _get_endLineOfFile: check your input filename, it is empty!!!" 
+  } elseif {![file exists $filename]} {
+    error "proc _get_endLineOfFile: check your input filename(not exists): $filename"
+  } else {
+    set endline [lindex [split [exec cat $filename | grep -v "^\s*$"] "\n"] end]
+    return $endline
   }
 }

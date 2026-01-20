@@ -33,7 +33,7 @@ proc check_clockTreeCells {args} {
   set temp_allCTSinstname_collection [get_ccopt_clock_tree_cells]
   set allCTSinstname_collection [get_cells [lindex $temp_allCTSinstname_collection 0]]
   foreach temp_inst $temp_allCTSinstname_collection { set allCTSinstname_collection [add_to_collection -u $allCTSinstname_collection [get_cells $temp_inst]] }
-  set allCTSinstname_collection [remove_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
+  set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
   # deal with and categorize collection
   set error_driveCapacity [add_to_collection "" ""]
   set error_VTtype [add_to_collection "" ""]

@@ -56,7 +56,7 @@ proc check_clockCellFixed {args} {
     set temp_inst_name [get_object_name $temp_inst_itr]
     if {![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatusCTS]] && ![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatus]]} {
       highlight $temp_inst_name -color yellow
-      puts $fo $temp_inst_name
+      puts $fo "notFixedOrCTSFixed: $temp_inst_name"
       incr totalNum
     }
   }
@@ -126,7 +126,7 @@ proc check_clockTreeCells {args} {
   set temp_allCTSinstname_collection [get_ccopt_clock_tree_cells]
   set allCTSinstname_collection [get_cells [lindex $temp_allCTSinstname_collection 0]]
   foreach temp_inst $temp_allCTSinstname_collection { set allCTSinstname_collection [add_to_collection -u $allCTSinstname_collection [get_cells $temp_inst]] }
-  set allCTSinstname_collection [remove_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
+  set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
   set error_driveCapacity [add_to_collection "" ""]
   set error_VTtype [add_to_collection "" ""]
   set error_CLKcelltype [add_to_collection "" ""]

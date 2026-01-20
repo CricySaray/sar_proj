@@ -24,7 +24,7 @@ proc check_clockCellFixed {args} {
     set temp_inst_name [get_object_name $temp_inst_itr] 
     if {![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatusCTS]] && ![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatus]]} {
       highlight $temp_inst_name -color yellow
-      puts $fo $temp_inst_name
+      puts $fo "notFixedOrCTSFixed: $temp_inst_name"
       incr totalNum
     }
   }

@@ -21,13 +21,17 @@ proc check_stdUtilization {args} {
   set coreRects_withBoundary [proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages_withBoundaryRects]
   set coreArea_withBoundary [dbShape -output area $coreRects_withBoundary]
   proc _add {a b} {expr $a + $b}
-  set stdCellArea [struct::list::Lfold [dbget [dbget [dbget top.insts.cell.subClass core -p2].isPhysOnly 0 -p].area -e] 0 _add]
-  set stdUtilization "[format "%.2f" [expr {double($stdCellArea) / double($coreArea_withBoundary) * 100}]]%"
+  set stdCellAreaWoPhys [struct::list::Lfold [dbget [dbget [dbget top.insts.cell.subClass core -p2].isPhysOnly 0 -p].area -e] 0 _add]
+  set stdCellAreaWiPhys [struct::list::Lfold [dbget [dbget top.insts.cell.subClass core -p2].area -e] 0 _add]
+  set stdUtilization "[format "%.2f" [expr {double($stdCellAreaWoPhys) / double($coreArea_withBoundary) * 100}]]%"
   set fo [open $rptName w]
   puts $fo "coreRects_withBoundary: \{$coreRects_withBoundary\}"
+  puts $fo ""
+  puts $fo ""
   puts $fo "coreArea_withBoundary: $coreArea_withBoundary um^2"
-  puts $fo "stdCellArea(withoutPhysicalCell): $stdCellArea um^2"
-  puts $fo "stdUtilization: $stdUtilization  (\$coreArea_withBoundary / \$stdCellArea * 100)%"
+  puts $fo "stdCellArea(withoutPhysicalCell): $stdCellAreaWoPhys um^2"
+  puts $fo "stdCellArea(withPhysicalCell): $stdCellAreaWiPhys um^2"
+  puts $fo "stdUtilization: $stdUtilization  (\$coreArea_withBoundary / \$stdCellAreaWoPhys * 100)%"
   puts $fo ""
   puts $fo "stdUtilization $stdUtilization"
   close $fo

@@ -123,9 +123,7 @@ proc check_clockTreeCells {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set temp_allCTSinstname_collection [get_ccopt_clock_tree_cells]
-  set allCTSinstname_collection [get_cells [lindex $temp_allCTSinstname_collection 0]]
-  foreach temp_inst $temp_allCTSinstname_collection { set allCTSinstname_collection [add_to_collection -u $allCTSinstname_collection [get_cells $temp_inst]] }
+  set allCTSinstname_collection [get_clock_network_objects -type cell]
   set allCTSinstname_collection [filter_collection $allCTSinstname_collection "ref_name !~ ANT* && is_black_box == false && is_pad_cell == false"]
   set error_driveCapacity [add_to_collection "" ""]
   set error_VTtype [add_to_collection "" ""]
@@ -262,13 +260,13 @@ proc check_decapDensity {args} {
     return [list decapDensity -1]
   }
   set decap_density [format "%.2f" [expr {$decap_area / double($alloc_area)}]]
+  puts $fo ""
   puts $fo "DECAP_DENSITY: $decap_density"
   puts $fo "decapDensity $decap_density"
   close $fo
-  set decapInstList [dbget [dbget top.insts.cell.name DCAP* -p2].name -e]
   fit
   deselectAll
-  highlight $decapInstList
+  highlight [get_cells -hier * -filter "ref_name =~ DCAP*"]
   setLayerPreference violation -isVisible 0
   setLayerPreference node_route -isVisible 0
   setLayerPreference node_blockage -isVisible 0
@@ -278,7 +276,7 @@ proc check_decapDensity {args} {
   return [list decapDensity $decap_density]
 }
 define_proc_arguments check_decapDensity \
-  -info "whatFunction"\
+  -info "check decap density"\
   -define_args {
     {-rptName "specify output file name" AString string optional}
   }

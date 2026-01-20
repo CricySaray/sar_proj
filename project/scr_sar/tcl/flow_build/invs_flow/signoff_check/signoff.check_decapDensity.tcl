@@ -32,14 +32,14 @@ proc check_decapDensity {args} {
     return [list decapDensity -1]
   }
   set decap_density [format "%.2f" [expr {$decap_area / double($alloc_area)}]]
+  puts $fo ""
   puts $fo "DECAP_DENSITY: $decap_density"
   puts $fo "decapDensity $decap_density"
   close $fo
   # dump out gif of decap
-  set decapInstList [dbget [dbget top.insts.cell.name DCAP* -p2].name -e]
   fit
   deselectAll
-  highlight $decapInstList
+  highlight [get_cells -hier * -filter "ref_name =~ DCAP*"]
   setLayerPreference violation -isVisible 0
   setLayerPreference node_route -isVisible 0
   setLayerPreference node_blockage -isVisible 0
@@ -50,7 +50,7 @@ proc check_decapDensity {args} {
 }
 
 define_proc_arguments check_decapDensity \
-  -info "whatFunction"\
+  -info "check decap density"\
   -define_args {
     {-rptName "specify output file name" AString string optional}
   }

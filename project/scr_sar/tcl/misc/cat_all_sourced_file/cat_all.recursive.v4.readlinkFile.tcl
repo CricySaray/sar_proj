@@ -471,7 +471,7 @@ proc cat_all {filename {output ""} {verbose 0} {max_depth 10} {exclude ""} {incl
     set output_path [file join $execution_dir $output]
   } else {
     # 如果输出路径是相对路径，则基于执行目录解析；如果是绝对路径，则直接使用
-    if {[file isabsolute $output]} {
+    if {[file pathtype $output] eq "absolute"} {
       set output_path $output
     } else {
       set output_path [file join $execution_dir $output]

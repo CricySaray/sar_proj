@@ -17,7 +17,11 @@ proc genSum_usingTable {} {
   if {$allResultFilenam ne ""} {
     foreach temp_resultfile $allResultFilenam {
       set endline [_get_endLineOfFile $temp_resultfile]
-      if {[expr {[llength $endline] % 2 == 1}]}
+      if {[expr {[llength $endline] % 2}] == 1} {
+        error "proc genSum_usingTable: check your end line of file(not even item): $temp_resultfile" 
+      } else {
+         
+      }
     }
   } else {
     error "proc genSum_usingTable: check your input: targetDir($targetDir) have on matched result file." 

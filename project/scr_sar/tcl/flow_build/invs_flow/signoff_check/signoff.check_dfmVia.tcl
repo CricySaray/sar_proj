@@ -31,7 +31,7 @@ proc check_dfmVia {args} {
   if {$total_row eq ""} {
     set DFM_ratio "-1%" 
   } else {
-    set DFM_ratio [lindex [regsub {\(|\)} [lsearch -regexp -inline -all $total_row {\d+\.\d+%}] ""] end]
+    set DFM_ratio [lindex [regsub -all {\(|\)} [lsearch -regexp -inline -all $total_row {\d+\.\d+%}] ""] end]
   }
   puts $fo "DFM_RATIO: $DFM_ratio"
   puts $fo "dfmVia $DFM_ratio"

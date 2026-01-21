@@ -69,6 +69,7 @@ proc check_dontTouchCell {args} {
   set sizeOkList [lsort -u $sizeOkList]
   set dontTouchList [lsort -u $dontTouchList]
   set boundaryHierPinDontTouchMoudleNameList [lsort -u $boundaryHierPinDontTouchMoudleNameList]
+  set allObjToDealWithNum [expr {[llength $sizeOkList] + [llength $dontTouchList]}]
   puts $fo "--------------"
   set noFoundSizeOkInstList [list]
   set failedSetSizkOkInstList [list]
@@ -107,6 +108,7 @@ proc check_dontTouchCell {args} {
     select_obj [get_pins -of $temp_moduleName -q]
     set hierPins_ptr [dbget selected.]
     foreach temp_hierpin_ptr $hierPins_ptr {
+      incr allObjToDealWithNum
       if {[dbget $temp_hierpin_ptr.dontTouch] eq "true"} {
         puts $fo "success(set dontTouchHierPin true): [dbget $temp_hierpin_ptr.name]"
         incr dontTouchHierPinSuccessNum  
@@ -139,6 +141,7 @@ proc check_dontTouchCell {args} {
       puts $fo ""
     }
   }
+  puts $fo "num of all object to deal with : $allObjToDealWithNum"
   puts $fo ""
   puts $fo "success sizeOk num: $sizeOkSuccessNum"
   puts $fo "success dontTouch num: $dontTouchSuccessNum"

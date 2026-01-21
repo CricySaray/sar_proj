@@ -32,6 +32,7 @@ proc check_clockCellFixed {args} {
   set temp_filename [lindex [split $rptName "/"] end]
   set basenameFile [join [lrange [split $temp_filename "."] 0 end-1] "."]
   deselectAll
+  fit
   gui_dump_picture [join [concat $rootdir gif_$basenameFile.gif] "/"] -format GIF
   dehighlight
   puts $fo ""

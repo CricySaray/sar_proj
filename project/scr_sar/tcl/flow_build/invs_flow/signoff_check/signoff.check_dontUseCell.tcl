@@ -49,9 +49,9 @@ proc check_dontUseCell {args} {
   }
 }
 define_proc_arguments check_dontUseCell \
-  -info "whatFunction"\
+  -info "check dont use cell"\
   -define_args {
     {-dontUseExpressionList "specify the dont use cell regExpression list" AList list optional}
-    {-ignoreCellListRegExpression "specify the cell regExpression to ignore check" AString string optional}
+    {-ignoreCellExpressionList "specify the cell regExpression to ignore check" AString string optional}
     {-rptName "specify the output file name" AString string optional}
   }

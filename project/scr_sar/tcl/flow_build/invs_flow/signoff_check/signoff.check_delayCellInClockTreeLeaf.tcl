@@ -21,10 +21,12 @@ proc check_delayCellInClockTreeLeaf {args} {
   set finalList [list]
   set totalNum 0
   set nets [get_nets *CTS*]
+  set instsNumToDealWith 0
   foreach_in_collection temp_net_itr $nets {
     set temp_insts_col [get_cells -of $temp_net_itr -leaf]
     foreach_in_collection temp_inst_itr $temp_insts_col {
       set temp_celltype [get_property $temp_inst_itr ref_name] 
+      incr instsNumToDealWith
       if {[regexp "DEL" $temp_celltype]} {
         lappend finalList [list [get_object_name $temp_net_itr] $temp_celltype [get_object_name $temp_inst_itr]]
         incr totalNum
@@ -35,7 +37,12 @@ proc check_delayCellInClockTreeLeaf {args} {
     set finalList [linsert $finalList 0 [list rootNetName celltypeName instName]]
   }
   set fo [open $rptName w]
-  puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  if {$finalList ne ""} {
+    puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  } else {
+    puts $fo "have deal with $instsNumToDealWith insts, but have no DEL cell in clock tree." 
+  }
+  puts $fo ""
   puts $fo "TOTALNUM: $totalNum"
   puts $fo "dlyCellInTree $totalNum"
   close $fo

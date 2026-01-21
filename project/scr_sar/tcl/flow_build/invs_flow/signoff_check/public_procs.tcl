@@ -64,6 +64,7 @@ proc check_clockCellFixed {args} {
   set temp_filename [lindex [split $rptName "/"] end]
   set basenameFile [join [lrange [split $temp_filename "."] 0 end-1] "."]
   deselectAll
+  fit
   gui_dump_picture [join [concat $rootdir gif_$basenameFile.gif] "/"] -format GIF
   dehighlight
   puts $fo ""
@@ -266,7 +267,7 @@ proc check_decapDensity {args} {
   close $fo
   fit
   deselectAll
-  highlight [get_cells -hier * -filter "ref_name =~ DCAP*"]
+  highlight [dbget top.insts.cell.name DCAP* -p2]
   setLayerPreference violation -isVisible 0
   setLayerPreference node_route -isVisible 0
   setLayerPreference node_blockage -isVisible 0
@@ -290,10 +291,12 @@ proc check_delayCellInClockTreeLeaf {args} {
   set finalList [list]
   set totalNum 0
   set nets [get_nets *CTS*]
+  set instsNumToDealWith 0
   foreach_in_collection temp_net_itr $nets {
     set temp_insts_col [get_cells -of $temp_net_itr -leaf]
     foreach_in_collection temp_inst_itr $temp_insts_col {
       set temp_celltype [get_property $temp_inst_itr ref_name]
+      incr instsNumToDealWith
       if {[regexp "DEL" $temp_celltype]} {
         lappend finalList [list [get_object_name $temp_net_itr] $temp_celltype [get_object_name $temp_inst_itr]]
         incr totalNum
@@ -304,7 +307,12 @@ proc check_delayCellInClockTreeLeaf {args} {
     set finalList [linsert $finalList 0 [list rootNetName celltypeName instName]]
   }
   set fo [open $rptName w]
-  puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  if {$finalList ne ""} {
+    puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  } else {
+    puts $fo "have deal with $instsNumToDealWith insts, but have no DEL cell in clock tree."
+  }
+  puts $fo ""
   puts $fo "TOTALNUM: $totalNum"
   puts $fo "dlyCellInTree $totalNum"
   close $fo
@@ -354,7 +362,7 @@ proc check_dfmVia {args} {
   if {$total_row eq ""} {
     set DFM_ratio "-1%"
   } else {
-    set DFM_ratio [lindex [regsub {\(|\)} [lsearch -regexp -inline -all $total_row {\d+\.\d+%}] ""] end]
+    set DFM_ratio [lindex [regsub -all {\(|\)} [lsearch -regexp -inline -all $total_row {\d+\.\d+%}] ""] end]
   }
   puts $fo "DFM_RATIO: $DFM_ratio"
   puts $fo "dfmVia $DFM_ratio"
@@ -422,6 +430,7 @@ proc check_dontTouchCell {args} {
   set sizeOkList [lsort -u $sizeOkList]
   set dontTouchList [lsort -u $dontTouchList]
   set boundaryHierPinDontTouchMoudleNameList [lsort -u $boundaryHierPinDontTouchMoudleNameList]
+  set allObjToDealWithNum [expr {[llength $sizeOkList] + [llength $dontTouchList] + [llength $boundaryHierPinDontTouchMoudleNameList]}]
   puts $fo "--------------"
   set noFoundSizeOkInstList [list]
   set failedSetSizkOkInstList [list]
@@ -492,6 +501,7 @@ proc check_dontTouchCell {args} {
       puts $fo ""
     }
   }
+  puts $fo "num of all object to deal with : $allObjToDealWithNum"
   puts $fo ""
   puts $fo "success sizeOk num: $sizeOkSuccessNum"
   puts $fo "success dontTouch num: $dontTouchSuccessNum"
@@ -554,10 +564,10 @@ proc check_dontUseCell {args} {
   }
 }
 define_proc_arguments check_dontUseCell \
-  -info "whatFunction"\
+  -info "check dont use cell"\
   -define_args {
     {-dontUseExpressionList "specify the dont use cell regExpression list" AList list optional}
-    {-ignoreCellListRegExpression "specify the cell regExpression to ignore check" AString string optional}
+    {-ignoreCellExpressionList "specify the cell regExpression to ignore check" AString string optional}
     {-rptName "specify the output file name" AString string optional}
   }
 proc check_inputTermsFloating {args} {

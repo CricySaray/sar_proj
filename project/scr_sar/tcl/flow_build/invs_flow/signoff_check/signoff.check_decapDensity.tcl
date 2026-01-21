@@ -39,7 +39,7 @@ proc check_decapDensity {args} {
   # dump out gif of decap
   fit
   deselectAll
-  highlight [get_cells -hier * -filter "ref_name =~ DCAP*"]
+  highlight [dbget top.insts.cell.name DCAP* -p2]
   setLayerPreference violation -isVisible 0
   setLayerPreference node_route -isVisible 0
   setLayerPreference node_blockage -isVisible 0

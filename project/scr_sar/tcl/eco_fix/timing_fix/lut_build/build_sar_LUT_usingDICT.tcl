@@ -38,7 +38,7 @@ proc build_sar_LUT_usingDICT {args} {
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"
   set selectSmallOrMuchRowSiteSizeAsMainCore    "small" ; # small|much
-  set boundaryOrEndCapCellName                  {ENDCAP|WELLTAP}
+  set boundaryOrEndCapCellName                  {.*ENDCAP.*} ; # for dbget -regexp
   set removeStdCellExp                          {} ; # can remove std cell names that want not to exists at lutDict
   set removeRegionOfSiteNameExp_from_coreRect   {IOSITE_.*} ; # site name Exp that need be removed when calculating coreRect
   set shrinkOff                                 "-1"  ; # -1: using mainCoreRowHeight, >=0: will using value of this var
@@ -71,9 +71,9 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_cln22ull}} {
-    set capacityFlag "D" ; set vtFastRange {LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP\d+(T\d+)?P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
+    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\d+)BWP\d+.*P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWPLVT" ; set refClkBuffer "DCCKBD12BWPLVT"
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
-    set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
+    set VT_mapList {{{} SVT} {LVT LVT} {ULVT ULVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
   }
@@ -189,10 +189,10 @@ proc build_sar_LUT_usingDICT {args} {
   }
   flush $fo
   debug_msg "# --- get core_inner_boundary_rects ..."
-  if {[dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -e] eq ""} {
+  if {[dbget -regexp top.insts.name $boundaryOrEndCapCellName -e] eq ""} {
     set allBoundaryCellRects ""
   } else {
-    set allBoundaryCellRects [dbget [dbget -regexp top.insts.name *$boundaryOrEndCapCellName* -p].box -e]
+    set allBoundaryCellRects [dbget [dbget -regexp top.insts.name $boundaryOrEndCapCellName -p].box -e]
   }
   genFile_scriptForMemIpLocation -outputfilename ./temp_addHaloToBlock_withSnapToSite_whenRunningBuildLut.tcl
   set temp_cmd "source ./temp_addHaloToBlock_withSnapToSite_whenRunningBuildLut.tcl"

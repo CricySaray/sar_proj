@@ -21,7 +21,7 @@ proc check_maxFanout {args} {
   }
   set_interactive_constraint_modes [lsearch -regexp -all -inline [all_constraint_modes] func]
   set_max_fanout $fanoutThreshold [current_design]
-  report_constraint -drv_violation_type max_fanout -all_violaters -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
+  report_constraint -drv_violation_type max_fanout -all_violators -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
 
   set totalNum []
   return [list maxFanoutViol $totalNum]

@@ -22,6 +22,7 @@ proc proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages_with
   set coreRectsWithOutMemIpHardblkgs [dbShape -output hrect $coreBoxes ANDNOT $memOrIpsOrHardBlkgsRects]
   return $coreRectsWithOutMemIpHardblkgs
 }
+
 proc proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages {{rects_of_boundary_cells {}}} {
   set coreBoxes [dbShape [dbget top.fplan.rows.box -e] -output hrect]
   set memOrIps_ptrs [dbget [dbget top.insts.cell.subClass block -p2].pstatus {^placed|^fixed} -regexp -p -e]

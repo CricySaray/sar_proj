@@ -57,7 +57,7 @@ proc fix_trans {args} {
   # default value for all var
   set file_viol_pin                            ""
   set columnDelimiter                          {} ; # will not seperate if is {}. will sepeate or tablize using linux cmd 'column' if is not {} (empty)
-  set violValue_pin_columnIndex                {4 1}
+  set violValue_pin_columnIndex                {end-1 0}
   set canChangeVT                              1
   set canChangeDriveCapacity                   1
   set canChangeVtWhenChangeCapacity            1
@@ -107,8 +107,8 @@ proc fix_trans {args} {
     while {[gets $fi line] > -1} {
       if {$columnDelimiter != {}} { set line [lmap tmpColumn [split $line $columnDelimiter] { if {$tmpColumn == {}} { continue } else { set tmpColumn } }] } ; # remove empty item
       incr j
-      set viol_value [lindex $line [expr [lindex $violValue_pin_columnIndex 0] - 1]]
-      set viol_pin   [lindex $line [expr [lindex $violValue_pin_columnIndex 1] - 1]]
+      set viol_value [lindex $line [lindex $violValue_pin_columnIndex 0]]
+      set viol_pin   [lindex $line [lindex $violValue_pin_columnIndex 1]]
       if {![string is double $viol_value] || [dbget top.insts.instTerms.name $viol_pin -e] == ""} {
         error "column([lindex $violValue_pin_columnIndex 0]) is not number, or violPin($viol_pin) can't find"; # column([lindex $violValue_pin_columnIndex 0]) is not number
       }

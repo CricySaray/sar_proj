@@ -430,7 +430,7 @@ proc check_dontTouchCell {args} {
   set sizeOkList [lsort -u $sizeOkList]
   set dontTouchList [lsort -u $dontTouchList]
   set boundaryHierPinDontTouchMoudleNameList [lsort -u $boundaryHierPinDontTouchMoudleNameList]
-  set allObjToDealWithNum [expr {[llength $sizeOkList] + [llength $dontTouchList] + [llength $boundaryHierPinDontTouchMoudleNameList]}]
+  set allObjToDealWithNum [expr {[llength $sizeOkList] + [llength $dontTouchList]}]
   puts $fo "--------------"
   set noFoundSizeOkInstList [list]
   set failedSetSizkOkInstList [list]
@@ -469,6 +469,7 @@ proc check_dontTouchCell {args} {
     select_obj [get_pins -of $temp_moduleName -q]
     set hierPins_ptr [dbget selected.]
     foreach temp_hierpin_ptr $hierPins_ptr {
+      incr allObjToDealWithNum
       if {[dbget $temp_hierpin_ptr.dontTouch] eq "true"} {
         puts $fo "success(set dontTouchHierPin true): [dbget $temp_hierpin_ptr.name]"
         incr dontTouchHierPinSuccessNum
@@ -717,7 +718,7 @@ proc check_maxFanout {args} {
   }
   set_interactive_constraint_modes [lsearch -regexp -all -inline [all_constraint_modes] func]
   set_max_fanout $fanoutThreshold [current_design]
-  report_constraint -drv_violation_type max_fanout -all_violaters -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
+  report_constraint -drv_violation_type max_fanout -all_violators -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
   set totalNum []
   return [list maxFanoutViol $totalNum]
 }

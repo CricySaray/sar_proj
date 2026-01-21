@@ -10,16 +10,16 @@
 # return    : output file and format list
 # ref       : link url
 # --------------------------
-source ../../common/sort_list_by_referencelist.common.tcl; # sort_list_by_referencelist
+source ../../common/sort_list_by_referencelist.common.tcl; # sort_list_byReferenceList
 source ../../../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc genSum_usingTable {} {
   set targetDir "./"
   set prefixOfFilename "signoff_check_"
   set sumFilename "sum_subblock.csv"
   set allResultFilenam [glob -nocomplain $targetDir/$prefixOfFilename*]
-  set checkItemsOrder {antennaCell weakDriveInstNetLength clockCellFixed clockPathLength clockTreeCells dataPathLength decapDensity \
-    delayCellInClockTreeLeaf delayCellLevel dfmVia dontTouchCell dontUseCell inputTermsFloating ipMemInputBufCellDriveSize ipMemPinNetLength \
-    maxFanout missingVia place portNetLength signalNetOutofDieAndOverlapWithRoutingBlkg stdUtilization tieCellLoadLength tieFanout vtRatio}
+  set checkItemsOrder {clkCellFixed clockLength ctsCellNum dataLength decapDensity dfmVia dlyCellInTree dontTouchFail dontUseNum \
+    fillerGapNum inputTermFloat ipBuffNetLength ipMemInputBufSize ipMemPinNetLength lvtAreaRatio maxFanoutViol noAntCellPin overlapNum \
+    portLength signalNetOut stdUtilization tieFanout tieLengh ulvtAreaRatio unplacedInstNum weakDriveNetLength}
   set finalSumList [list]
   if {$allResultFilenam ne ""} {
     foreach temp_resultfile $allResultFilenam {
@@ -34,7 +34,7 @@ proc genSum_usingTable {} {
         }
       }
     }
-    set finalSumList [sort_list_by_referencelist $checkItemsOrder $finalSumList 0 0]
+    set finalSumList [sort_list_byReferenceList $checkItemsOrder $finalSumList 0 0]
     set finalSumTransposedList [list]
     set temp_firstRowList [list]
     set temp_secondRowList [list]

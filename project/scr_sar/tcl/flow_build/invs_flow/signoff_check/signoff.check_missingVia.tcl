@@ -50,7 +50,7 @@ proc check_missingVia {args} {
   gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_stackM2M5.gif -format GIF] "/"]
   saveDrc [join [concat $rootdir drc_${basenameOfRptName}_stackM2M5.drc] "/"]
 
-  return
+  return [list missingVia -1]
 }
 define_proc_arguments check_missingVia \
   -info "check missing via"\

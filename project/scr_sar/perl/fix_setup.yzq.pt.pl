@@ -11,7 +11,7 @@
 use strict;
 use List::Util qw(sum min max);
 
-my $promptERROR "songERROR";
+my $promptERROR = "songERROR";
 if ("" eq $ARGV[0] || "" eq $ARGV[1]) { print "$promptERROR : no <file> and <suffix> arguments specified.\nUsage: > perl $0 xxx_aon2aon_detail.rpt 121115\n";}
 my (%instHash, @pathInfo, %pathHash, $endPt);
 my ($i, $pathFlag) = (0, 0);

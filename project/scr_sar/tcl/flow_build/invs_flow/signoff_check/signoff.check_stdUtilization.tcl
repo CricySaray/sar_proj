@@ -23,7 +23,8 @@ proc check_stdUtilization {args} {
   proc _add {a b} {expr $a + $b}
   set stdCellAreaWoPhys [struct::list::Lfold [dbget [dbget [dbget top.insts.cell.subClass core -p2].isPhysOnly 0 -p].area -e] 0 _add]
   set stdCellAreaWiPhys [struct::list::Lfold [dbget [dbget top.insts.cell.subClass core -p2].area -e] 0 _add]
-  set stdUtilization "[format "%.2f" [expr {double($stdCellAreaWoPhys) / double($coreArea_withBoundary) * 100}]]%"
+  set stdUtilization_woPhys "[format "%.2f" [expr {double($stdCellAreaWoPhys) / double($coreArea_withBoundary) * 100}]]%"
+  set stdUtilization_wiPhys "[format "%.2f" [expr {double($stdCellAreaWiPhys) / double($coreArea_withBoundary) * 100}]]%"
   set fo [open $rptName w]
   puts $fo "coreRects_withBoundary: \{$coreRects_withBoundary\}"
   puts $fo ""
@@ -31,11 +32,12 @@ proc check_stdUtilization {args} {
   puts $fo "coreArea_withBoundary: $coreArea_withBoundary um^2"
   puts $fo "stdCellArea(withoutPhysicalCell): $stdCellAreaWoPhys um^2"
   puts $fo "stdCellArea(withPhysicalCell): $stdCellAreaWiPhys um^2"
-  puts $fo "stdUtilization: $stdUtilization  (\$coreArea_withBoundary / \$stdCellAreaWoPhys * 100)%"
+  puts $fo "stdUtilization_woPhys: $stdUtilization_woPhys  (\$stdCellAreaWoPhys / \$coreAreaWithBoundary * 100)%"
+  puts $fo "stdUtilization_wiPhys: $stdUtilization_wiPhys  (\$stdCellAreaWiPhys / \$coreAreaWithBoundary * 100)%"
   puts $fo ""
-  puts $fo "stdUtilization $stdUtilization"
+  puts $fo "stdUtilizationWoPhys $stdUtilization"
   close $fo
-  return [list stdUtilization $stdUtilization]
+  return [list stdUtilizationWoPhys $stdUtilization]
 }
 
 define_proc_arguments check_stdUtilization \

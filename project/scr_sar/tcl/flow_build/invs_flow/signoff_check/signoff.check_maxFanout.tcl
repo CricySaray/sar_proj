@@ -10,7 +10,7 @@
 # return    : output file and format list
 # ref       : link url
 # --------------------------
-# TO_WRITE
+source ../../../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc check_maxFanout {args} {
   set fanoutThreshold 32
   set rptName "signoff_check_maxFanout.rpt"
@@ -19,11 +19,23 @@ proc check_maxFanout {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set_interactive_constraint_modes [lsearch -regexp -all -inline [all_constraint_modes] func]
-  set_max_fanout $fanoutThreshold [current_design]
-  report_constraint -drv_violation_type max_fanout -all_violators -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
-
-  set totalNum []
+  # set_interactive_constraint_modes [lsearch -regexp -all -inline [all_constraint_modes] func]
+  # set_max_fanout $fanoutThreshold [current_design]
+  # report_constraint -drv_violation_type max_fanout -all_violators -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
+  set allNetsViol [dbget [dbget top.nets. {.numInputTerms > $fanoutThreshold}].name -e]
+  set totalNum [llength $allNetsViol]
+  set fo [open $rptName w]
+  set finalList [list]
+  foreach temp_net $allNetsViol {
+    set temp_fanoutnum [dbget [dbget top.nets.name $temp_net -p].numInputTerms]
+    lappend finalList [list $temp_fanoutnum $temp_net]
+  }
+  set finalList [linsert $finalList 0 [list fanoutNum netName]]
+  puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  puts $fo ""
+  puts $fo "TOTALNUM: $totalNum"
+  puts $fo "maxFanout $totalNum"
+  close $fo
   return [list maxFanoutViol $totalNum]
 }
 

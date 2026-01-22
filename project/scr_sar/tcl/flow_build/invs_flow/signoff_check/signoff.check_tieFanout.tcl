@@ -19,6 +19,7 @@ proc check_tieFanout {args} {
     set $var $opt($arg)
   }
   set tieCells [dbget top.insts.cell.name *TIE* -u]
+  set totalNumTieCellsInDesign [llength $tieCells]
   set finalList [list]
   foreach temp_cell $tieCells {
     set temp_tieInsts [dbget [dbget top.insts.cell.name $temp_cell -p2].name -e] 
@@ -32,6 +33,8 @@ proc check_tieFanout {args} {
   }
   set fo [open $rptName w]
   set finalList [lsort -real -decreasing -index 0 $finalList]
+  puts $fo "total find $totalNumTieCellsInDesign tie cells in design: [dbget top.name]"
+  puts $fo ""
   puts $fo [join $finalList \n]
   puts $fo ""
   set totalNum [llength $finalList]

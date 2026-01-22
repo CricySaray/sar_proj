@@ -24,7 +24,7 @@ proc check_place {args} {
   set fi [open $middle_file r]
   set temp_content [split [read $fi] "\n"]
   close $fi
-  set overlapNum [lindex [lsearch -regexp -inline $temp_content "^Overlapping with other instance: "] end]
+  set overlapNum [lindex [lsearch -regexp -inline $temp_content "^Overlapping with other instance:"] end]
   set temp_fillerGapsList [lsearch -regexp -all -inline $temp_content "^FillerGap Violation:"]
   set fillerGapNum 0
   foreach temp_fillergap $temp_fillerGapsList {

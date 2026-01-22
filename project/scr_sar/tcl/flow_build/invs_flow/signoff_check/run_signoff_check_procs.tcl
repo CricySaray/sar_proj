@@ -32,11 +32,11 @@ proc run_signoff_check_procs {} {
     {missingVia                                 1}
     {place                                      1}
     {portNetLength                              1}
-    {signalNetOutofDieAndOverlapWithRoutingBlkg 1}
     {stdUtilization                             1}
     {tieCellLoadLength                          1}
     {tieFanout                                  1}
     {vtRatio                                    1}
+    {signalNetOutofDieAndOverlapWithRoutingBlkg 1}
   }
   set simpleCheck_onlyHaveRptNameArgs {inputTermsFloating dfmVia delayCellInClockTreeLeaf decapDensity clockCellFixed place stdUtilization}
 
@@ -106,14 +106,14 @@ proc run_signoff_check_procs {} {
         check_$temp_checkname -layersToCheck $missingVia_layersToCheck
       } elseif {$temp_checkname eq "portNetLength"} {
         check_$temp_checkname -lengthThreshold $portNetLength_lengthThreshold
-      } elseif {$temp_checkname eq "signalNetOutofDieAndOverlapWithRoutingBlkg"} {
-        check_$temp_checkname -layersToCheck $signalNetOutofDieAndOverlapWithRoutingBlkg_layersToCheck
       } elseif {$temp_checkname eq "tieCellLoadLength"} {
         check_$temp_checkname -lengthThreshold $tieCellLoadLength_lengthThreshold
       } elseif {$temp_checkname eq "tieFanout"} {
         check_$temp_checkname -fanoutThreshold $tieFanout_fanoutThreshold
       } elseif {$temp_checkname eq "vtRatio"} {
         check_$temp_checkname -vtTypeExpNameList $vtRatio_vtTypeExpNameList
+      } elseif {$temp_checkname eq "signalNetOutofDieAndOverlapWithRoutingBlkg"} {
+        check_$temp_checkname -layersToCheck $signalNetOutofDieAndOverlapWithRoutingBlkg_layersToCheck
       } else {
         puts "**ERROR: check item: $temp_checkname is not valid!!! check it." 
       }

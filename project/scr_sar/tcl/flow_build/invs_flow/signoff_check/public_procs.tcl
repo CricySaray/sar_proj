@@ -716,10 +716,20 @@ proc check_maxFanout {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set_interactive_constraint_modes [lsearch -regexp -all -inline [all_constraint_modes] func]
-  set_max_fanout $fanoutThreshold [current_design]
-  report_constraint -drv_violation_type max_fanout -all_violators -view [lsearch -inline -regexp [all_analysis_views -type active] setup] > $rptName
-  set totalNum []
+  set allNetsViol [dbget [dbget top.nets. {.numInputTerms > $fanoutThreshold}].name -e]
+  set totalNum [llength $allNetsViol]
+  set fo [open $rptName w]
+  set finalList [list]
+  foreach temp_net $allNetsViol {
+    set temp_fanoutnum [dbget [dbget top.nets.name $temp_net -p].numInputTerms]
+    lappend finalList [list $temp_fanoutnum $temp_net]
+  }
+  set finalList [linsert $finalList 0 [list fanoutNum netName]]
+  puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  puts $fo ""
+  puts $fo "TOTALNUM: $totalNum"
+  puts $fo "maxFanout $totalNum"
+  close $fo
   return [list maxFanoutViol $totalNum]
 }
 define_proc_arguments check_maxFanout \
@@ -787,7 +797,7 @@ proc check_place {args} {
   set fi [open $middle_file r]
   set temp_content [split [read $fi] "\n"]
   close $fi
-  set overlapNum [lindex [lsearch -regexp -inline $temp_content "^Overlapping with other instance: "] end]
+  set overlapNum [lindex [lsearch -regexp -inline $temp_content "^Overlapping with other instance:"] end]
   set temp_fillerGapsList [lsearch -regexp -all -inline $temp_content "^FillerGap Violation:"]
   set fillerGapNum 0
   foreach temp_fillergap $temp_fillerGapsList {
@@ -837,6 +847,7 @@ proc check_portNetLength {args} {
 define_proc_arguments check_portNetLength \
   -info "check port net length"\
   -define_args {
+    {-lengthThreshold "specify the length threshold" AFloat float optional}
     {-rptName "specify output file name" AString string optional}
   }
 proc check_signalNetOutofDieAndOverlapWithRoutingBlkg {args} {
@@ -888,7 +899,8 @@ proc check_stdUtilization {args} {
   proc _add {a b} {expr $a + $b}
   set stdCellAreaWoPhys [struct::list::Lfold [dbget [dbget [dbget top.insts.cell.subClass core -p2].isPhysOnly 0 -p].area -e] 0 _add]
   set stdCellAreaWiPhys [struct::list::Lfold [dbget [dbget top.insts.cell.subClass core -p2].area -e] 0 _add]
-  set stdUtilization "[format "%.2f" [expr {double($stdCellAreaWoPhys) / double($coreArea_withBoundary) * 100}]]%"
+  set stdUtilization_woPhys "[format "%.2f" [expr {double($stdCellAreaWoPhys) / double($coreArea_withBoundary) * 100}]]%"
+  set stdUtilization_wiPhys "[format "%.2f" [expr {double($stdCellAreaWiPhys) / double($coreArea_withBoundary) * 100}]]%"
   set fo [open $rptName w]
   puts $fo "coreRects_withBoundary: \{$coreRects_withBoundary\}"
   puts $fo ""
@@ -896,11 +908,12 @@ proc check_stdUtilization {args} {
   puts $fo "coreArea_withBoundary: $coreArea_withBoundary um^2"
   puts $fo "stdCellArea(withoutPhysicalCell): $stdCellAreaWoPhys um^2"
   puts $fo "stdCellArea(withPhysicalCell): $stdCellAreaWiPhys um^2"
-  puts $fo "stdUtilization: $stdUtilization  (\$coreArea_withBoundary / \$stdCellAreaWoPhys * 100)%"
+  puts $fo "stdUtilization_woPhys: $stdUtilization_woPhys  (\$stdCellAreaWoPhys / \$coreAreaWithBoundary * 100)%"
+  puts $fo "stdUtilization_wiPhys: $stdUtilization_wiPhys  (\$stdCellAreaWiPhys / \$coreAreaWithBoundary * 100)%"
   puts $fo ""
-  puts $fo "stdUtilization $stdUtilization"
+  puts $fo "stdUtilizationWoPhys $stdUtilization"
   close $fo
-  return [list stdUtilization $stdUtilization]
+  return [list stdUtilizationWoPhys $stdUtilization]
 }
 define_proc_arguments check_stdUtilization \
   -info "check std cell utilization"\
@@ -916,6 +929,7 @@ proc check_tieCellLoadLength {args} {
     set $var $opt($arg)
   }
   set tieCells [dbget top.insts.cell.name *TIE* -u]
+  set totalNumTieCellsInDesign [llength $tieCells]
   set finalList [list]
   foreach temp_cell $tieCells {
     set temp_tieInsts [dbget [dbget top.insts.cell.name $temp_cell -p2].name -e]
@@ -929,6 +943,8 @@ proc check_tieCellLoadLength {args} {
   }
   set fo [open $rptName w]
   set finalList [lsort -real -decreasing -index 0 $finalList]
+  puts $fo "total find $totalNumTieCellsInDesign tie cells in design: [dbget top.name]."
+  puts $fo ""
   puts $fo [join $finalList \n]
   puts $fo ""
   set totalNum [llength $finalList]
@@ -952,6 +968,7 @@ proc check_tieFanout {args} {
     set $var $opt($arg)
   }
   set tieCells [dbget top.insts.cell.name *TIE* -u]
+  set totalNumTieCellsInDesign [llength $tieCells]
   set finalList [list]
   foreach temp_cell $tieCells {
     set temp_tieInsts [dbget [dbget top.insts.cell.name $temp_cell -p2].name -e]
@@ -965,6 +982,8 @@ proc check_tieFanout {args} {
   }
   set fo [open $rptName w]
   set finalList [lsort -real -decreasing -index 0 $finalList]
+  puts $fo "total find $totalNumTieCellsInDesign tie cells in design: [dbget top.name]"
+  puts $fo ""
   puts $fo [join $finalList \n]
   puts $fo ""
   set totalNum [llength $finalList]
@@ -1069,7 +1088,7 @@ proc check_vtRatio {args} {
     }
   }
   set fo [open $rptName w]
-  puts $fo [join [table_format_with_title $ratioOfVt_transposed 0 left "count and ratio of every vt type specified by user" 1] \n]
+  puts $fo [join [table_format_with_title $ratioOfVt_transposed 0 left "count and ratio of every vt type specified by user" 0] \n]
   if {[llength $suffixInfo] > 1} {
     puts $fo ""
     puts $fo [join $suffixInfo \n]

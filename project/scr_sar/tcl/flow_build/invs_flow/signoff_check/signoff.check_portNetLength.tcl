@@ -43,5 +43,6 @@ proc check_portNetLength {args} {
 define_proc_arguments check_portNetLength \
   -info "check port net length"\
   -define_args {
+    {-lengthThreshold "specify the length threshold" AFloat float optional}
     {-rptName "specify output file name" AString string optional}
   }

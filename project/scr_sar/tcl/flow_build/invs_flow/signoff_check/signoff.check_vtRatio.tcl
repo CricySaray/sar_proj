@@ -104,7 +104,7 @@ proc check_vtRatio {args} {
     }
   }
   set fo [open $rptName w]
-  puts $fo [join [table_format_with_title $ratioOfVt_transposed 0 left "count and ratio of every vt type specified by user" 1] \n]
+  puts $fo [join [table_format_with_title $ratioOfVt_transposed 0 left "count and ratio of every vt type specified by user" 0] \n]
   if {[llength $suffixInfo] > 1} {
     puts $fo ""
     puts $fo [join $suffixInfo \n]

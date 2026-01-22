@@ -47,7 +47,7 @@ proc check_missingVia {args} {
   editSelect -type Special -shape {FOLLOWPIN STRIPE} -layer {M2 M5}
   verifyPowerVia -report [join [concat $rootdir middleFile_${basenameOfRptName}_stackM2M5.$extensionOfRptName] "/"] -layer_rail M2 -layer_stripe M5 -stackedVia -stripe_rule $pgGap -layerRange {M2 M5} -selected -error 1000000
   deselectAll
-  gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_stackM2M5.gif] "/"]
+  gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_stackM2M5.gif] "/"] -format GIF
   saveDrc [join [concat $rootdir drc_${basenameOfRptName}_stackM2M5.drc] "/"]
 
   return [list missingVia -1]

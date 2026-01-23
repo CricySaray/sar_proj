@@ -34,7 +34,7 @@ proc check_maxFanout {args} {
   puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
   puts $fo ""
   puts $fo "TOTALNUM: $totalNum"
-  puts $fo "maxFanout $totalNum"
+  puts $fo "maxFanoutViol $totalNum"
   close $fo
   return [list maxFanoutViol $totalNum]
 }

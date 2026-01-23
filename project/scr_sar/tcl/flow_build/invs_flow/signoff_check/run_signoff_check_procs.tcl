@@ -36,7 +36,7 @@ proc run_signoff_check_procs {} {
     {tieCellLoadLength                          1}
     {tieFanout                                  1}
     {vtRatio                                    1}
-    {signalNetOutofDieAndOverlapWithRoutingBlkg 1}
+    {signalNetOutofDieAndOverlapWithRoutingBlkg 0}
   }
   set simpleCheck_onlyHaveRptNameArgs {inputTermsFloating dfmVia delayCellInClockTreeLeaf decapDensity clockCellFixed place stdUtilization}
 

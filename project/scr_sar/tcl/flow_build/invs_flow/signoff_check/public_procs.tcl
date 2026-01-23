@@ -728,7 +728,7 @@ proc check_maxFanout {args} {
   puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
   puts $fo ""
   puts $fo "TOTALNUM: $totalNum"
-  puts $fo "maxFanout $totalNum"
+  puts $fo "maxFanoutViol $totalNum"
   close $fo
   return [list maxFanoutViol $totalNum]
 }
@@ -775,7 +775,12 @@ proc check_missingVia {args} {
   deselectAll
   gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_stackM2M5.gif] "/"] -format GIF
   saveDrc [join [concat $rootdir drc_${basenameOfRptName}_stackM2M5.drc] "/"]
-  return [list missingVia -1]
+  set totalNum [exec cat drc_*.drc | grep violate | wc -l]
+  set fo [open $rptName w]
+  puts $fo "TOTALNUM: $totalNum"
+  puts $fo "missingViaViol $totalNum"
+  close $fo
+  return [list missingViaViol $totalNum]
 }
 define_proc_arguments check_missingVia \
   -info "check missing via"\

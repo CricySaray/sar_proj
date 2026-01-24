@@ -916,9 +916,9 @@ proc check_stdUtilization {args} {
   puts $fo "stdUtilization_woPhys: $stdUtilization_woPhys  (\$stdCellAreaWoPhys / \$coreAreaWithBoundary * 100)%"
   puts $fo "stdUtilization_wiPhys: $stdUtilization_wiPhys  (\$stdCellAreaWiPhys / \$coreAreaWithBoundary * 100)%"
   puts $fo ""
-  puts $fo "stdUtilizationWoPhys $stdUtilization"
+  puts $fo "stdUtilizationWoPhys $stdUtilization_woPhys"
   close $fo
-  return [list stdUtilizationWoPhys $stdUtilization]
+  return [list stdUtilizationWoPhys $stdUtilization_woPhys]
 }
 define_proc_arguments check_stdUtilization \
   -info "check std cell utilization"\

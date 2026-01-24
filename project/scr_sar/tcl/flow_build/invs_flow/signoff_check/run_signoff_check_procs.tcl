@@ -10,6 +10,8 @@
 # return    : output file and format list
 # ref       : link url
 # --------------------------
+source ./public_procs.tcl
+source ./private_procs.tcl
 proc run_signoff_check_procs {} {
   set targetDir "./"
   set items_check {

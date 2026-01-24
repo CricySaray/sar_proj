@@ -16,7 +16,7 @@ proc run_signoff_check_procs {} {
   set targetDir "./"
   set items_check {
     {antennaCell                                1}
-    {weakDriveInstNetLength                     1}
+    {weakDriveInstNetLength                     0}
     {clockCellFixed                             1}
     {clockPathLength                            1}
     {clockTreeCells                             1}

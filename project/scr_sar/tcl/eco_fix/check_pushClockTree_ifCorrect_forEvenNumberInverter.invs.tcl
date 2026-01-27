@@ -41,7 +41,7 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     incr linenum
     if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
     incr attachTermCmdNum
-    lassign $temp_line temp_inputinst temp_inputcellpin 
+    lassign $temp_line temp_attachTerm_cmd temp_inputinst temp_inputcellpin 
     regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_instpin
     set temp_insts_usingAllFanoutCmd [all_fanout -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
     set temp_middle_insts $temp_insts_usingAllFanoutCmd

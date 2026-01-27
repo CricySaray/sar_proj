@@ -127,7 +127,13 @@ sub process_file {
         # Mark file as processed (if duplicates are disallowed, or track for debug even if allowed)
         $processed_files{$source_file} = 1 unless exists $processed_files{$source_file};
         
+        # -------------------------- MODIFIED PART --------------------------
+        # Generate unique song number for current source file FIRST
         my $song_number = sprintf("song%03d", $song_counter);
+        # Increment counter IMMEDIATELY to ensure nested source files get new number
+        $song_counter++;
+        # -------------------------------------------------------------------
+        
         my $comment_line = "# $song_number: $original_source_cmd";
         
         # Print start comment (with current indent)
@@ -139,8 +145,10 @@ sub process_file {
         # Print end comment (same song number, with current indent)
         print $out_fh $current_indent . "# $song_number: End of $original_source_cmd" . "\n";
         
-        # Increment song counter for next source file
-        $song_counter++;
+        # -------------------------- REMOVED HERE --------------------------
+        # Original increment: after recursive processing (caused nested number reuse)
+        # $song_counter++;
+        # -------------------------------------------------------------------
       }
     } else {
       # Step 5: Print non-source lines with current indent (keep original content)

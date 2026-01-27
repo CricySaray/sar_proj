@@ -46,7 +46,9 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     set temp_middle_insts [lsearch -not -all -inline -exact $temp_middle_insts [join [lrange [split $temp_output_instpin "/"] 0 end-1] "/"]]
     set temp_inverter_middle_insts [lmap temp_inst $temp_middle_insts {
       set temp_cellname [dbget [dbget top.insts.name $temp_inst -p].cell.name -e] 
-      if {[regexp $inverterCelltypeExp $temp_cellname]}
+      if {[regexp $inverterCelltypeExp $temp_cellname]} {
+        set temp_inst
+      } else { continue }
     }]
     if {[expr {$temp_insts_usingAllFanoutCmd % 2}]} {
       lappend checkResultList "line $linenum: $temp_line"

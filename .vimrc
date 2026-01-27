@@ -80,9 +80,9 @@ cabbrev ulvte %s/CPDLVT$/CPDULVT/
 cabbrev t16 %s/T\d\dP96/T16P96/
 cabbrev ec %!awk '{print "ecoChangeCell -cell",$1,"-inst",$2}'
 cabbrev sc %!awk '{print "size_cell",$2,$1}'
-cabbrev inst %s/\(.*\)\/.*/\1/g
+cabbrev inst %s/\\(.*\\)\\/.*/\\1/g
 cabbrev vv vs ~/.vimrc
-cabbrev ess v/endpoint:\|startpoint:\|slack (/d
+cabbrev ess v/endpoint:\\|startpoint:\\|slack (/d
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
 cabbrev dp r ~/project/scr_sar/ref_content/define_proc_arguments.tcl
 cabbrev pdp r ~/project/scr_sar/ref_content/define_perl_options.txt

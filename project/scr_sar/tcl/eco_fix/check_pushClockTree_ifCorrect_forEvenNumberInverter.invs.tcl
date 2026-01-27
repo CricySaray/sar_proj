@@ -33,16 +33,20 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
 
   set linenum 0
   set checkResultList [list]
+  set checkResultList [linsert $checkResultList 0 "ERROR lines, must check it!!!:"]
   foreach temp_line $content {
     incr linenum
     if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
     lassign $temp_line temp_inputinst temp_inputcellpin 
     regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_inputpin
-    set temp_num_of_cells_middle [expr {[sizeof_collection [all_fanout -from $temp_output_inputpin -to $temp_inputinst/$temp_inputcellpin -only_cells]] - 2}]
-    if {[expr {$temp_num_of_cells_middle % 2}]} {
-      lappend checkResultList 
+    set temp_insts_usingAllFanoutCmd [all_fanout -from $temp_output_inputpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
+    set temp_middle_insts $temp_insts_usingAllFanoutCmd
+    set temp_middle_insts [lsearch -not -all -inline -exact $temp_middle_insts "$temp_inputinst"]
+    if {[expr {$temp_insts_usingAllFanoutCmd % 2}]} {
+      lappend checkResultList "line $linenum: $temp_line"
     }
   }
+  return $checkResultList
   
 }
 define_proc_arguments check_pushClockTree_ifCorrect_forEvenNumberInverter \

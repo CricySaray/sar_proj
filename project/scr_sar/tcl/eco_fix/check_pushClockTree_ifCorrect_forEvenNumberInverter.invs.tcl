@@ -83,4 +83,5 @@ define_proc_arguments check_pushClockTree_ifCorrect_forEvenNumberInverter \
   -info "whatFunction"\
   -define_args {
     {-inputFilename "specify file name to check" AString string optional}
+    {-inverterCelltypeExp "specify the inverter celltype regexp expression" AString string optional}
   }

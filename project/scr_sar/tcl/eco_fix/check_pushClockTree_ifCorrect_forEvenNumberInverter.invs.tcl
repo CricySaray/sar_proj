@@ -29,13 +29,14 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
 
   # reserved function:
   set attachTermsCmdList [lsearch -regexp -all -inline $content {^\s*attachTerm}]
-  puts [join $attachTermsCmdList \n]
+  # puts [join $attachTermsCmdList \n]
 
 
   set linenum 0
   set attachTermCmdNum 0
+  set errorCmdNum 0
+  set successCmdNum 0
   set checkResultList [list]
-  set checkResultList [linsert $checkResultList 0 "ERROR lines, must check it!!!:"]
   foreach temp_line $content {
     incr linenum
     if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
@@ -54,14 +55,27 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     }]
     set temp_num_of_middle_inverter_cell [llength $temp_inverter_middle_insts]
     if {[expr {$temp_num_of_middle_inverter_cell % 2}]} {
+      incr errorCmdNum
       lappend checkResultList "ERROR: line $linenum: $temp_line"
       foreach temp_cell_inst $temp_inverter_middle_insts {
         lappend checkResultList "ERROR:   middle inverter: $temp_cell_inst"
       }
     } else {
+      incr successCmdNum
       lappend checkResultList "SUCCESS: line $linenum: $temp_line"
+      foreach temp_cell_inst $temp_inverter_middle_insts {
+        lappend checkResultList "SUCCESS:   middle inverter: $temp_cell_inst" 
+      }
     }
   }
+  if {$errorCmdNum} {
+    set checkResultList [linsert $checkResultList 0 "ERROR lines, must check it!!!:"]
+  } else {
+    set checkResultList [linsert $checkResultList 0 "SUCCESS for all cmds!!!"]
+  }
+  set checkResultList [linsert $checkResultList 0 ""]
+  set checkResultList [linsert $checkResultList 0 "ALL attachTerm cmds num: $attachTermCmdNum"]
+
   return $checkResultList
   
 }

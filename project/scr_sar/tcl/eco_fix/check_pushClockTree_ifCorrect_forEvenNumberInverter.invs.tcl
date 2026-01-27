@@ -14,6 +14,7 @@
 # --------------------------
 proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
   set inputFilename ""
+  set inverterCelltypeExp {^(DC)?CKN.*} ; # using regexp -expanded
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -38,10 +39,15 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     incr linenum
     if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
     lassign $temp_line temp_inputinst temp_inputcellpin 
-    regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_inputpin
-    set temp_insts_usingAllFanoutCmd [all_fanout -from $temp_output_inputpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
+    regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_instpin
+    set temp_insts_usingAllFanoutCmd [all_fanout -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
     set temp_middle_insts $temp_insts_usingAllFanoutCmd
     set temp_middle_insts [lsearch -not -all -inline -exact $temp_middle_insts "$temp_inputinst"]
+    set temp_middle_insts [lsearch -not -all -inline -exact $temp_middle_insts [join [lrange [split $temp_output_instpin "/"] 0 end-1] "/"]]
+    set temp_inverter_middle_insts [lmap temp_inst $temp_middle_insts {
+      set temp_cellname [dbget [dbget top.insts.name $temp_inst -p].cell.name -e] 
+      if {[regexp $inverterCelltypeExp $temp_cellname]}
+    }]
     if {[expr {$temp_insts_usingAllFanoutCmd % 2}]} {
       lappend checkResultList "line $linenum: $temp_line"
     }

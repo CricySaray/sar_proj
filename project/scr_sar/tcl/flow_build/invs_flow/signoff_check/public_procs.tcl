@@ -775,7 +775,10 @@ proc check_missingVia {args} {
   deselectAll
   gui_dump_picture [join [concat $rootdir gif_${basenameOfRptName}_stackM2M5.gif] "/"] -format GIF
   saveDrc [join [concat $rootdir drc_${basenameOfRptName}_stackM2M5.drc] "/"]
-  set totalNum [exec cat drc_*.drc | grep violate | wc -l]
+  set totalNum 0
+  if {[glob -nocomplain drc_*.drc] ne ""} {
+    catch {set totalNum [exec grep Violate [glob -nocomplain drc_*.drc] | wc -l]}
+  }
   set fo [open $rptName w]
   puts $fo "TOTALNUM: $totalNum"
   puts $fo "missingViaViol $totalNum"

@@ -15,6 +15,7 @@
 proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
   set inputFilename ""
   set inverterCelltypeExp {^(DC)?CKN.*} ; # using regexp -expanded
+  set bufferCelltypeExp {^(DC)?CKB.*} ; # using regexp -expanded
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -41,29 +42,72 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     incr linenum
     if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
     incr attachTermCmdNum
+    if {[llength $temp_line] < 4} {
+      lappend checkResultList "ERROR(column should >= 4): line $linenum: $temp_line"
+      continue
+    }
     lassign $temp_line temp_attachTerm_cmd temp_inputinst temp_inputcellpin 
     regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_instpin
-    set temp_insts_usingAllFanoutCmd [all_fanout -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
-    set temp_middle_insts $temp_insts_usingAllFanoutCmd
-    set temp_middle_insts [lsearch -not -all -inline -exact $temp_middle_insts "$temp_inputinst"]
-    set temp_middle_insts [lsearch -not -all -inline -exact $temp_middle_insts [join [lrange [split $temp_output_instpin "/"] 0 end-1] "/"]]
-    set temp_inverter_middle_insts [lmap temp_inst $temp_middle_insts {
-      set temp_cellname [dbget [dbget top.insts.name $temp_inst -p].cell.name -e] 
-      if {[regexp $inverterCelltypeExp $temp_cellname]} {
-        set temp_cell_inst [list $temp_cellname $temp_inst]
-      } else { continue }
+    #set temp_timing_point_pins_col [all_fanout -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
+    set flagInputOutputPinError 0
+    if {[dbget top.insts.instTerms.name $temp_inputcellpin/$temp_inputcellpin -e] eq "" || ![dbget [dbget top.insts.instTerms.name $temp_inputcellpin/$temp_inputcellpin -p].isInput]} {
+      lappend checkResultList "ERROR(input pin is invalid\[$temp_inputinst/$temp_inputcellpin\]): line $linenum: $temp_line"
+      set flagInputOutputPinError 1
+    } 
+    if {[dbget top.insts.instTerms.name $temp_output_instpin -e] eq "" || ![dbget [dbget top.insts.instTerms.name $temp_output_instpin -p].isOutput]} {
+      lappend checkResultList "ERROR(output pin is invalid\[$temp_output_instpin\]): line $linenum: $temp_line"
+      set flagInputOutputPinError 1
+    } 
+    if {$flagInputOutputPinError} { continue }
+    set temp_timing_point_pins_col [get_property [get_property [report_timing -collection -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin] points] pin]
+    set temp_checkTimingPinCol $temp_timing_point_pins_col
+    set flag_startRecordCheckTimingPath 0
+    foreach_in_collection temp_pin_itr $temp_timing_point_pins_col {
+      if {[get_object_name $temp_pin_itr] eq $temp_output_instpin} {
+        set flag_startRecordCheckTimingPath 1
+        set temp_checkTimingPinCol [remove_from_collection $temp_checkTimingPinCol $temp_pin_itr]
+        continue
+      } elseif {[get_object_name $temp_pin_itr] eq $temp_inputinst/$temp_inputcellpin} {
+        set flag_startRecordCheckTimingPath 0
+        set temp_checkTimingPinCol [remove_from_collection $temp_checkTimingPinCol $temp_pin_itr]
+      } else {
+        if {$flag_startRecordCheckTimingPath} {
+          continue
+        } else {
+          set temp_checkTimingPinCol [remove_from_collection $temp_checkTimingPinCol $temp_pin_itr]
+        }
+      }
+    }
+    set temp_checkTimingInstNameList [lsort -u [get_object_name [get_property $temp_checkTimingPinCol cell_name]]]
+
+    set temp_error_notBufferOrInverter [list]
+    foreach temp_inst $temp_checkTimingInstNameList {
+      set temp_celltype [dbget [dbget top.insts.name $temp_inst -p].cell.name -e]
+      if {![regexp -expanded $bufferCelltypeExp $temp_celltype] || ![regexp -expanded $inverterCelltypeExp $temp_celltype]} {
+        lappend temp_error_notBufferOrInverter [list $temp_celltype $temp_inst]
+      }
+    }
+    if {$temp_error_notBufferOrInverter ne ""} {
+      lappend
+    }
+    set temp_checkTimingCelltypeInverter [lmap temp_inst $temp_checkTimingInstNameList {
+      set temp_celltype [dbget [dbget top.insts.name $temp_inst -p].cell.name -e]
+      if {![regexp -expanded $inverterCelltypeExp $temp_celltype]} { continue } else {
+        list $temp_celltype $temp_inst
+      }
     }]
-    set temp_num_of_middle_inverter_cell [llength $temp_inverter_middle_insts]
+
+    set temp_num_of_middle_inverter_cell [llength $temp_checkTimingCelltypeInverter]
     if {[expr {$temp_num_of_middle_inverter_cell % 2}]} {
       incr errorCmdNum
       lappend checkResultList "ERROR: line $linenum: $temp_line"
-      foreach temp_cell_inst $temp_inverter_middle_insts {
+      foreach temp_cell_inst $temp_checkTimingCelltypeInverter {
         lappend checkResultList "ERROR:   middle inverter: $temp_cell_inst"
       }
     } else {
       incr successCmdNum
       lappend checkResultList "SUCCESS: line $linenum: $temp_line"
-      foreach temp_cell_inst $temp_inverter_middle_insts {
+      foreach temp_cell_inst $temp_checkTimingCelltypeInverter {
         lappend checkResultList "SUCCESS:   middle inverter: $temp_cell_inst" 
       }
     }
@@ -84,4 +128,5 @@ define_proc_arguments check_pushClockTree_ifCorrect_forEvenNumberInverter \
   -define_args {
     {-inputFilename "specify file name to check" AString string optional}
     {-inverterCelltypeExp "specify the inverter celltype regexp expression" AString string optional}
+    {-bufferCelltypeExp "specify the buffer celltype regexp expression" AString string optional}
   }

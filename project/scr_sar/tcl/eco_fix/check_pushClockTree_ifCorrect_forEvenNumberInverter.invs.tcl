@@ -11,18 +11,23 @@
 # ref       : link url
 # --------------------------
 proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
+  set inputFilename ""
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-
-  
+  if {![file exists $inputFilename]} {
+    error "proc check_pushClockTree_ifCorrect_forEvenNumberInverter: check your input file name (not exists): $inputFilename"
+  }
+  set fi [open $inputFilename]
+  set content [split [read $fi] \n]
+  close $fi
+  set attachTermsCmdList [lsearch -index 0 -all -inline $content attachTerm]
+  puts [join $attachTermsCmdList \n]
 }
-define_proc_arguments PROC_NAME \
+define_proc_arguments check_pushClockTree_ifCorrect_forEvenNumberInverter \
   -info "whatFunction"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {required value_type {values {change add delRepeater delNet move}}}}
-    {-inst "specify inst to eco when type is add/delete" AString string require}
-    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
+    {-inputFilename "specify file name to check" AString string optional}
   }

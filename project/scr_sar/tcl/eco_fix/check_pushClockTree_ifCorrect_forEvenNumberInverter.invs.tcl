@@ -27,6 +27,10 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
   close $fi
   set attachTermsCmdList [lsearch -regexp -all -inline $content {^\s*attachTerm}]
   puts [join $attachTermsCmdList \n]
+  foreach temp_cmd $attachTermsCmdList {
+    lassign $temp_cmd temp_inputinst temp_inputcellpin 
+    regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_cmd -> temp_output_inputpin
+  }
   
 }
 define_proc_arguments check_pushClockTree_ifCorrect_forEvenNumberInverter \

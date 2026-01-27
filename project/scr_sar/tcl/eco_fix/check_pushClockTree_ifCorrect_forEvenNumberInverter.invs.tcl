@@ -25,11 +25,23 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
   set fi [open $inputFilename]
   set content [split [read $fi] \n]
   close $fi
+
+  # reserved function:
   set attachTermsCmdList [lsearch -regexp -all -inline $content {^\s*attachTerm}]
   puts [join $attachTermsCmdList \n]
-  foreach temp_cmd $attachTermsCmdList {
-    lassign $temp_cmd temp_inputinst temp_inputcellpin 
-    regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_cmd -> temp_output_inputpin
+
+
+  set linenum 0
+  set checkResultList [list]
+  foreach temp_line $content {
+    incr linenum
+    if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
+    lassign $temp_line temp_inputinst temp_inputcellpin 
+    regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_inputpin
+    set temp_num_of_cells_middle [expr {[sizeof_collection [all_fanout -from $temp_output_inputpin -to $temp_inputinst/$temp_inputcellpin -only_cells]] - 2}]
+    if {[expr {$temp_num_of_cells_middle % 2}]} {
+      lappend checkResultList 
+    }
   }
   
 }

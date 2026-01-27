@@ -42,7 +42,9 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     incr linenum
     if {![regexp -expanded {^\s*attachTerm } $temp_line]} { continue }
     incr attachTermCmdNum
+    # attachTerm inst cellpin netname
     if {[llength $temp_line] < 4} {
+      incr errorCmdNum
       lappend checkResultList "ERROR(column should >= 4): line $linenum: $temp_line"
       continue
     }
@@ -50,7 +52,7 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
     regexp {.*get_nets\s+-of\s+([0-9a-zA-Z/_]+).*} $temp_line -> temp_output_instpin
     #set temp_timing_point_pins_col [all_fanout -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin -only_cells]
     set flagInputOutputPinError 0
-    if {[dbget top.insts.instTerms.name $temp_inputcellpin/$temp_inputcellpin -e] eq "" || ![dbget [dbget top.insts.instTerms.name $temp_inputcellpin/$temp_inputcellpin -p].isInput]} {
+    if {[dbget top.insts.instTerms.name $temp_inputinst/$temp_inputcellpin -e] eq "" || ![dbget [dbget top.insts.instTerms.name $temp_inputinst/$temp_inputcellpin -p].isInput]} {
       lappend checkResultList "ERROR(input pin is invalid\[$temp_inputinst/$temp_inputcellpin\]): line $linenum: $temp_line"
       set flagInputOutputPinError 1
     } 
@@ -58,8 +60,10 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
       lappend checkResultList "ERROR(output pin is invalid\[$temp_output_instpin\]): line $linenum: $temp_line"
       set flagInputOutputPinError 1
     } 
-    if {$flagInputOutputPinError} { continue }
-    set temp_timing_point_pins_col [get_property [get_property [report_timing -collection -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin] points] pin]
+    if {$flagInputOutputPinError} { incr errorCmdNum ; continue }
+
+    # get timing path that need to check
+    set temp_timing_point_pins_col [get_property [get_property [report_timing -collection -from $temp_output_instpin -to $temp_inputinst/$temp_inputcellpin] points] pin] ; #  这里的startpoint和endpoint不是data path上的，获取不到的。需要另想办法
     set temp_checkTimingPinCol $temp_timing_point_pins_col
     set flag_startRecordCheckTimingPath 0
     foreach_in_collection temp_pin_itr $temp_timing_point_pins_col {
@@ -78,18 +82,24 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
         }
       }
     }
-    set temp_checkTimingInstNameList [lsort -u [get_object_name [get_property $temp_checkTimingPinCol cell_name]]]
+    set temp_checkTimingInstNameList [lsort -u [get_property $temp_checkTimingPinCol cell_name]]
 
+    # have non buffer or inverter cell
     set temp_error_notBufferOrInverter [list]
     foreach temp_inst $temp_checkTimingInstNameList {
       set temp_celltype [dbget [dbget top.insts.name $temp_inst -p].cell.name -e]
       if {![regexp -expanded $bufferCelltypeExp $temp_celltype] || ![regexp -expanded $inverterCelltypeExp $temp_celltype]} {
-        lappend temp_error_notBufferOrInverter [list $temp_celltype $temp_inst]
+        lappend temp_error_notBufferOrInverter "ERROR:  $temp_celltype $temp_inst"
       }
     }
     if {$temp_error_notBufferOrInverter ne ""} {
-      lappend
+      incr errorCmdNum 
+      lappend checkResultList "ERROR(have non inverter/buffer cell): line $linenum: $temp_line"
+      lappend checkResultList {*}$temp_error_notBufferOrInverter
+      continue
     }
+
+    # get inverter cell, remove buffer cell
     set temp_checkTimingCelltypeInverter [lmap temp_inst $temp_checkTimingInstNameList {
       set temp_celltype [dbget [dbget top.insts.name $temp_inst -p].cell.name -e]
       if {![regexp -expanded $inverterCelltypeExp $temp_celltype]} { continue } else {
@@ -97,7 +107,13 @@ proc check_pushClockTree_ifCorrect_forEvenNumberInverter {args} {
       }
     }]
 
+    # inverter num is not even number
     set temp_num_of_middle_inverter_cell [llength $temp_checkTimingCelltypeInverter]
+    if {!$temp_num_of_middle_inverter_cell} {
+      incr errorCmdNum
+      lappend checkResultList "ERROR(0 inverter cell): line $linenum: $temp_line"
+      continue
+    }
     if {[expr {$temp_num_of_middle_inverter_cell % 2}]} {
       incr errorCmdNum
       lappend checkResultList "ERROR: line $linenum: $temp_line"

@@ -248,7 +248,7 @@ proc build_sar_LUT_usingDICT {args} {
         if {![info exists VtMatchExp] && [info exists special_StdCellVtMatchExp_from] && [info exists special_StdCellVtMatchExp_to]} {
           set tempvtcapacityExp [regsub [string map [list <cap> $tempcapacity_raw <vt> $tempvttype_raw] $special_StdCellVtMatchExp_from] $temptypename $special_StdCellVtMatchExp_to] ; # U002
         } elseif {[info exists VtMatchExp] && ![info exists special_StdCellVtMatchExp_from] && ![info exists special_StdCellVtMatchExp_to]} {
-          set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_raw}($stdCellFlag.*)${tempvttype_raw}$}] $temptypename [sus {^\1\d+\2$VtMatchExp$}]]
+          set tempvtcapacityExp [regsub [sus {^(.*$capacityFlag)${tempcapacity_raw}($stdCellFlag.*)${tempvttype_raw}$}] $temptypename [sus {^\1\d+(P\d+)?\2$VtMatchExp$}]]
         } else {
           error "proc build_sar_LUT_usingDICT: check your vtMatchExp and special_StdCellVtMatchExp(from and to) which these don't exists currently." 
         }

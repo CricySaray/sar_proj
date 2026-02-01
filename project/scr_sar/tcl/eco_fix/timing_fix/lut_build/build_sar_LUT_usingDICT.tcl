@@ -71,7 +71,7 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_cln22ull}} {
-    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\dP?\d?)BWP\d+.*P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWP30P140" ; set refClkBuffer "DCCKBD12BWP30P140"
+    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\dP?\d?)BWP\d+.*P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWP30P140LVT" ; set refClkBuffer "DCCKBD12BWP30P140LVT"
     set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {ULVT ULVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
@@ -101,6 +101,11 @@ proc build_sar_LUT_usingDICT {args} {
   } else {
     puts $fo "dict set $lutDictName capacityflag $capacityFlag" 
   }
+  if {$VtMatchExp == ""} {
+    puts $fo "$promptWARN: have no vt match expression defination!!!"
+  } else {
+    puts $fo "dict set $lutDictName vtmatchexp $VtMatchExp"
+  }
   if {$vtFastRange == ""} {
     puts $fo "$promptWARN: have no process vt fast range defination!!!"
   } else {
@@ -117,6 +122,11 @@ proc build_sar_LUT_usingDICT {args} {
     puts $fo "dict set $lutDictName clkflag \{$clkFlag\}"
   } else {
     puts $fo "dict set $lutDictName clkflag \{$clkFlag\}"
+  }
+  if {![info exists ifDriveCapacityConvert_from_P_to_point] || !$ifDriveCapacityConvert_from_P_to_point} {
+    puts $fo "dict set $lutDictName ifDriveCapacityConvert_from_P_to_point 0"
+  } else {
+    puts $fo "dict set $lutDictName ifDriveCapacityConvert_from_P_to_point 1"
   }
   if {![info exists celltypeMatchExp] || $celltypeMatchExp == ""} {
     puts $fo "$promptWARN: have no celltype match regExp defination!!!" 

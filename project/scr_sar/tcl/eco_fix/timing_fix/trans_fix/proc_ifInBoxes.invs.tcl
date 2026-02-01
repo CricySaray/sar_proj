@@ -10,6 +10,7 @@
 # ref       : link url
 # --------------------------
 # this proc can return the exact rect from rects!
+source ../lut_build/operateLUT.tcl; # operateLUT
 proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
   if {![llength [lindex $boxes 0]]} {
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
@@ -40,7 +41,7 @@ proc ifInBox {{loc {0 0}} {box {0 0 10 10}}} {
   set yRange [list [lindex $box 1] [lindex $box 3]]
   set x [lindex $loc 0]
   set y [lindex $loc 1]
-  if {[lindex $xRange 0] < $x && $x < [lindex $xRange 1] && [lindex $yRange 0] < $y && $y < [lindex $yRange 1]} {
+  if {[lindex $xRange 0] <= $x && $x <= [lindex $xRange 1] && [lindex $yRange 0] <= $y && $y <= [lindex $yRange 1]} {
     return 1 
   } else {
     return 0 

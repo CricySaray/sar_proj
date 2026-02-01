@@ -13,19 +13,23 @@
 #             (digit group) in the regular expression. 
 #             Take the regular expression `{^.*D(\d+)BWP(U?L?H?VT)?$}` as an example: the character "D" here is the flag character. When using `regsub` to replace the drive 
 #             size, this flag character will be included in the replacement process to improve the accuracy of the replacement.
+# update    : 2026/01/31 20:37:01 Saturday
+#             change method of changing capacity and vt
 # return    : changed celltype
 # ref       : link url
 # --------------------------
+source ../lut_build/operateLUT.tcl; # operateLUT
+alias sus "subst -nocommands -nobackslashes"
 proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {debug 0}} {
   # Validate input parameters
   if {![string is boolean -strict $debug]} {
-    error "Debug must be a boolean value (0 or 1)"
+    error "proc change_driveCapacity_or_VTtype: Debug must be a boolean value (0 or 1)"
   }
   if {$pattern_type ne "cap" && $pattern_type ne "vt"} {
-    error "Pattern type must be either 'cap' or 'vt'"
+    error "proc change_driveCapacity_or_VTtype: Pattern type must be either 'cap' or 'vt'"
   }
-  if {$pattern_type eq "cap" && ![string is integer -strict $new_value]} {
-    error "New value for cap must be an integer"
+  if {$pattern_type eq "cap" && ![string is double -strict $new_value]} {
+    error "proc change_driveCapacity_or_VTtype: New value for cap must be an integer"
   }
 
   # Debug information for input parameters
@@ -45,7 +49,7 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
     if {$debug} {
       puts "Debug: No match found for the input string"
     }
-    error "Input string does not match the regular expression"
+    error "proc change_driveCapacity_or_VTtype: Input string does not match the regular expression"
   }
 
   # Debug information for matched values
@@ -53,86 +57,30 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
     puts "Debug: Matched cap value: $cap"
     puts "Debug: Matched vt value: $vt"
   }
+  set capacityFlag [operateLUT -type read -attr capacityflag]
+  lassign [get_driveCapacity_of_celltype_returnCapacityAndVTtype $input_str $regex] temp_capacity temp_vt
+  set stdCellFlag [operateLUT -type read -attr stdcellflag]
+  # set vtMatchExp [operateLUT -type read -attr vtmatchexp]
+  set ifDriveCapacityConvert_from_P_to_point [operateLUT -type read -attr ifDriveCapacityConvert_from_P_to_point]
+  set vtMapList [operateLUT -type read -attr vt_maplist]
 
-  # Perform replacement using regsub
-  set result $input_str
   if {$pattern_type eq "cap"} {
-    # Extract the leading character before the cap field (\d+)
-    if {![regexp {.*(\w)\(\\d\+\)} $regex -> leader_char]} {
-      error "Failed to extract leader character before cap in regex"
+    set temp_capExp [regsub [sus {^(.*$capacityFlag)${temp_capacity}($stdCellFlag.*)${temp_vt}$}] $input_str [sus {\1<cap>\2${temp_vt}}]]
+    if {$ifDriveCapacityConvert_from_P_to_point} {
+      set new_value [regsub {\.} $new_value P]
     }
-    # Remove possible regex metacharacters from leader character
-    set leader_char [string trimright $leader_char "*."]
-    if {$debug} {
-      puts "Debug: Extracted leader character for cap: '$leader_char'"
+    set result [regsub {<cap>} $temp_capExp $new_value]
+    if {![operateLUT -type exists -attr [list celltype $result]]} {
+      error "proc change_driveCapacity_or_VTtype: error celltype($result) after changing capacity!!! check it."
     }
-    
-    # Build matching pattern with leader character for more accurate replacement
-    set cap_pattern "${leader_char}${cap}"
-    set escaped_cap_pattern [regsub -all {\W} $cap_pattern {\\&}]
-    set new_cap_str "${leader_char}${new_value}"
-    
-#puts "point 0: cap_pattern : $cap_pattern | escaped_cap_pattern: $escaped_cap_pattern | new_cap_str: $new_cap_str"
-    if {[regsub $escaped_cap_pattern $result $new_cap_str result]} {
-      if {$debug} {
-        puts "Debug: Replaced cap pattern '$cap_pattern' with '$new_cap_str'"
-      }
-    } else {
-      error "Failed to replace cap value in the input string"
-    }
-  } else {
-    # For vt, handle empty string case
-    if {$vt eq ""} {
-      # Extract the part after cap to the end of the string (including fixed structures like BWP)
-      set cap_pos [string first $cap $result]
-      if {$cap_pos == -1} {
-        error "Failed to find cap value in the string"
-      }
-      set after_cap_pos [expr {$cap_pos + [string length $cap]}]
-      set after_cap [string range $result $after_cap_pos end]
-      
-      # Append new vt value to the end using string concatenation
-      set result "${result}${new_value}"
-      
-      if {$debug} {
-        puts "Debug: Appended vt '$new_value' to end of string"
-        puts "Debug: Cap was at position $cap_pos, followed by: '$after_cap'"
-      }
-    } else {
-      # Escape special characters in vt for safe replacement
-      set escaped_vt [regsub -all {\W} $vt {\\&}]
-      if {[regsub $escaped_vt $result $new_value result]} {
-        if {$debug} {
-          puts "Debug: Replaced vt from '$vt' to '$new_value'"
-        }
-      } else {
-        error "Failed to replace vt value in the input string"
-      }
+  } elseif {$pattern_type eq "vt"} {
+    set temp_vtExp [regsub [sus {^(.*$capacityFlag)${temp_capacity}($stdCellFlag.*)${temp_vt}$}] $input_str [sus {\1${temp_capacity}\2<vt>}]]
+    set temp_vtname [lindex [lsearch -inline -index 1 -exact $vtMapList $temp_vt] 0]
+    set result [regsub {<vt>} $temp_vtExp $temp_vtname]
+    if {![operateLUT -type exists -attr [list celltype $result]]} {
+      error "proc change_driveCapacity_or_VTtype: error celltype($result) after changing vt!!! check it."
     }
   }
-
-  # Self-validation: check if modified string still matches the regex
-  catch {unset new_cap new_vt}
-  if {![regexp $regex $result -> new_cap new_vt]} {
-    error "Self-validation failed: modified string no longer matches the regex"
-  }
-  
-  # Check if the correct part was replaced
-  if {$pattern_type eq "cap" && $new_cap ne $new_value} {
-    error "Self-validation failed: cap was not replaced correctly"
-  }
-  if {$pattern_type eq "vt" && $new_vt ne $new_value} {
-    error "Self-validation failed: vt was not replaced correctly"
-  }
-
-  # Debug information for the result
-  if {$debug} {
-    puts "Debug: Original string: $input_str"
-    puts "Debug: Modified string: $result"
-    puts "Debug: Self-validation passed"
-  }
-
   return $result
 }
 
-# puts [change_driveCapacity_or_VTtype "BUFF4D4BWPLVT" {^.*D(\d+)BWP(U?L?H?VT)?$} cap 5 1]

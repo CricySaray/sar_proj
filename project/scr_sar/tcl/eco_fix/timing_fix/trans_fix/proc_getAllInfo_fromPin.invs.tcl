@@ -37,7 +37,8 @@ source ./proc_checkRoutingLoop.invs.tcl; # checkRoutingLoop
 source ./proc_judgeIfLoop_forOne2More.invs.tcl; # judgeIfLoop_forOne2More
 source ./proc_findFarthestSinkPinAndPt_toDriverPin.invs.tcl; # find_farthest_sinkpoint_to_driver_pin
 source ../../../packages/group_points_by_distribution_and_preferFartherCenterPt.package.tcl; # group_points_by_distribution_and_preferFartherCenterPt
-source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
+# source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
+source ./proc_change_driveCapacity_or_VTtype.invs.tcl; # change_driveCapacity_or_VTtype
 source ../lut_build/operateLUT.tcl; # operateLUT
 
 alias sus "subst -nocommands -nobackslashes"
@@ -140,7 +141,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbiddenVT {AH9}} {driveCapacityRange {
       }]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
       set refBuffer [operateLUT -type read -attr {refbuffer}] ; set refBufferCapacity [operateLUT -type read -attr [list celltype $refBuffer capacity]]
-      if {$temp_mostCapacity ne "NA"} { set temp_result [changeDriveCapacity_of_celltype $refBuffer $refBufferCapacity [if {$temp_mostCapacity == 0.5} {set temp_mostCapacity 05} else {set temp_mostCapacity}]] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
+      if {$temp_mostCapacity ne "NA"} { set temp_result [change_driveCapacity_or_VTtype $refBuffer [operateLUT -type read -attr celltype_regexp] cap $temp_mostCapacity] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
         if {[operateLUT -type read -attr [list celltype $temp_type capacity]] == "NA"} { set temp $temp_type } else { continue }
       }] 0]}
     }]

@@ -64,7 +64,7 @@ proc fix_trans {args} {
   set canAddRepeater                           1
   set canChangeVtCapacityWhenAddingRepeater    1
   set maxWidthForString                        80
-  set normalNeedVtWeightList                   {{LVT 1} {SVT 3} {HVT 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
+  set normalNeedVtWeightList                   {{ULVT 0} {LVT 1} {SVT 3} {HVT 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
   set forbiddenVT                              {} ; # can be list
   set driveCapacityRange                       {1 12} ; # Please write them in the format where smaller drive numbers come first and larger drive numbers come after.
   set largerThanDriveCapacityOfChangedCelltype 1

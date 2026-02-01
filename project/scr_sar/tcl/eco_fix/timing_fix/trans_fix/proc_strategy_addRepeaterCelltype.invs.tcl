@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : sar change_driveCapacity_or_VTtype
 # date      : 2025/07/15 13:30:32 Tuesday
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)
@@ -18,6 +18,7 @@
 source ./proc_whichProcess_fromStdCellPattern.invs.tcl; # proc: whichProcess_fromStdCellPattern
 source ./proc_find_nearestNum_atIntegerList.invs.tcl; # find_nearestNum_atIntegerList list num big?
 source ./proc_changeDriveCapacity_of_celltype.invs.tcl; # changeDriveCapacity_of_celltype
+source ./proc_change_driveCapacity_or_VTtype.invs.tcl; # change_driveCapacity_or_VTtype
 proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""} {method "refDriver|refSink|auto"} {forceSpecifyDriveCapacibility 4} {driveRange {2 16}} {ifCheckDriveRangeCorrection 0} {ifGetBigDriveNumInAvaialbeDriveCapacityList 1} {refType "BUFD4BWP6T16P96CPD"}} {
   if {$driverCelltype == "" || $sinkCelltype == "" || ![operateLUT -type exists -attr [list celltype $driverCelltype]] || ![operateLUT -type exists -attr [list celltype $sinkCelltype]]} {
     error "proc strategy_addRepeaterCelltype: check your input : driverCelltype($driverCelltype) or sinkCelltype($sinkCelltype) not found!!!"; # check your input 
@@ -39,10 +40,11 @@ proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""}
       set validMaxDrive [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $maxDrive 1 1]
       set driveRangeRight [list $validMinDrive $validMaxDrive]
     }
+    set celltypeExp [operateLUT -type read -attr celltype_regexp]
     # if specify the value of drvie capacibility
     # force mode will ignore $driveRange
     if {$forceSpecifyDriveCapacibility} {
-      set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR $forceSpecifyDriveCapacibility]
+      set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap $forceSpecifyDriveCapacibility]
       if {![operateLUT -type exists -attr [list celltype $toCelltype]]} {
         error "proc strategy_addRepeaterCelltype: force specified drive capacity is not valid: $forceSpecifyDriveCapacibility"; # forceSpecifyDriveCapacibility: toCelltype is not acceptable celltype in std cell libray
       } else {
@@ -56,26 +58,26 @@ proc strategy_addRepeaterCelltype_withLUT {{driverCelltype ""} {sinkCelltype ""}
       "refDriver" {
         set toDriveNum [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $levelNumD $ifGetBigDriveNumInAvaialbeDriveCapacityList 1]
         if {$toDriveNum <  [lindex $driveRangeRight 0]} {
-          set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR [lindex $driveRangeRight 0]]
+          set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap [lindex $driveRangeRight 0]]
           return $toCelltype 
         } elseif {$toDriveNum > [lindex $driveRangeRight 1]} {
-          set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR [lindex $driveRangeRight 1]]
+          set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap [lindex $driveRangeRight 1]]
           return $toCelltype 
         } else {
-          set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR $toDriveNum]
+          set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap $toDriveNum]
           return $toCelltype 
         }
       } 
       "refSink" {
         set toDriveNum [find_nearestNum_atIntegerList $availableDriveCapacityIntegerList $levelNumS $ifGetBigDriveNumInAvaialbeDriveCapacityList 1]
         if {$toDriveNum <  [lindex $driveRangeRight 0]} {
-          set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR [lindex $driveRangeRight 0]]
+          set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap [lindex $driveRangeRight 0]]
           return $toCelltype 
         } elseif {$toDriveNum > [lindex $driveRangeRight 1]} {
-          set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR [lindex $driveRangeRight 1]]
+          set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap [lindex $driveRangeRight 1]]
           return $toCelltype 
         } else {
-          set toCelltype [changeDriveCapacity_of_celltype $refType $levelNumR $toDriveNum]
+          set toCelltype [change_driveCapacity_or_VTtype $refType $celltypeExp cap $toDriveNum]
           return $toCelltype 
         }
       }

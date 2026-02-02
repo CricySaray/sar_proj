@@ -15,6 +15,7 @@
 #             (U002) fix bug: set all refinePlaced insts to fixed after refining, it is not correct.
 #             pick out that fixed insts from overlaped insts, take it a labal and recover them after refining.
 #             and then, puts some pstatus info of refined insts.
+# TODO      : Record the moving distance of each moved inst.
 # ref       : link url
 # --------------------------
 source ../packages/print_formattedTable.package.tcl ; # print_formattedTable

@@ -47,7 +47,7 @@ use File::Basename;
 # Default values for options
 my $namespace = 'song';
 my $export = 0;
-my $prefix = 'proc_sar_';
+my $prefix = '';
 my $suffix = '';
 my $modify_aliases = 1;
 my $conditional_procs = 'init,process,get_id,get_string,clear,size,get_max_length,set_max_length,get_all';  # Procs that need conditional replacement

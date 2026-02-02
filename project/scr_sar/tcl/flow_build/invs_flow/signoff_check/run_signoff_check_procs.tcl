@@ -49,8 +49,8 @@ proc run_signoff_check_procs {} {
   set weakDriveInstDriveCapacityThreshold                          4
   set clockPathLengthThreshold                                     240
   set dataPathLengthThreshold                                      400
-  set clockTreeCells_removeCelltypeList                            [list]
-  set clockTreeCells_removeInstNameList                            [list]
+  set clockTreeCells_removeCelltypeList                            [list DF]
+  set clockTreeCells_removeInstNameList                            [list dont_touch]
   set clockTreeCells_and_ipMemInputBufCellDriveSize_celltypeRegExp {.*D(\d+)BWP.*140([(UL)LH]VT)?$}
   set clockTreeCells_availableVT                                   {HVT SVT LVT ULVT}
   set clockTreeCells_clkFlagExp                                    {^DCCK|^CK}

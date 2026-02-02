@@ -17,7 +17,7 @@ proc get_net_length {{net ""}} {
 }
 proc table_format_with_title {inputData {width_spec 0} {align_spec "left"} {title ""} {show_border 1}} {
   if {![llength $inputData]} {
-    error "proc table_format_with_title: inputData must be a non-empty nested list (each sublist is a row)"
+    return [list]
   }
   foreach row $inputData {
     if {![llength $row] && $row ne ""} {

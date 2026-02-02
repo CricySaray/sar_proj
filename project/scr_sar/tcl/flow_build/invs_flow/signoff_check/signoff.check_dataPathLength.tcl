@@ -33,7 +33,12 @@ proc check_dataPathLength {args} {
   }
   set finalList [lsort -decreasing -index 0 -real $finalList]
   set fo [open $rptName w]
-  puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  if {$finalList ne ""} {
+    puts $fo [join [table_format_with_title $finalList 0 left "" 0] \n]
+  } else {
+    puts $fo "have no viol data path length." 
+    puts $fo ""
+  }
   puts $fo "TOTALNUM: $totalNum"
   puts $fo "dataLength $totalNum"
   close $fo

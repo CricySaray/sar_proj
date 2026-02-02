@@ -17,7 +17,7 @@ source ../../../packages/print_formattedTable.package.tcl; # print_formattedTabl
 source ../../../packages/print_formattedTable_D2withCategory.package.tcl; # print_formattedTable_D2withCategory
 source ../../../packages/count_items.package.tcl; # count_items
 proc check_clockTreeCells {args} {
-  set remove_celltype_list {RCLIB_PLB DEL}
+  set remove_celltype_list {RCLIB_PLB DEL DF}
   set remove_instname_list {}
   set specify_VT           "LVT"
   set celltypeRegExp       {.*D(\d+)BWP.*140([(UL)LH]VT)?$}

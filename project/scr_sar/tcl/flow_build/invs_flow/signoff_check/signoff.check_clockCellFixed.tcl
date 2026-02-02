@@ -19,14 +19,31 @@ proc check_clockCellFixed {args} {
   }
   set fo [open $rptName w]
   set totalNum 0
-  set allTreeInsts_col [get_cells -q [get_clock_network_objects -type cell] -filter "!is_sequential"]
-  foreach_in_collection temp_inst_itr $allTreeInsts_col {
-    set temp_inst_name [get_object_name $temp_inst_itr] 
-    if {![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatusCTS]] && ![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatus]]} {
-      highlight $temp_inst_name -color yellow
-      puts $fo "notFixedOrCTSFixed: $temp_inst_name"
-      incr totalNum
+  if {![llength [get_ccopt_property sources]]} {
+    puts "warning: please source cts.spec file, it cant get ccopt property info in this invs db!!!" 
+    puts $fo "warning: please source cts.spec file, it cant get ccopt property info in this invs db!!!" 
+    set allTreeInsts_col [get_cells -q [get_clock_network_objects -type cell] -filter "!is_sequential"]
+    foreach_in_collection temp_inst_itr $allTreeInsts_col {
+      set temp_inst_name [get_object_name $temp_inst_itr] 
+      if {![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatusCTS]] && ![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatus]]} {
+        highlight $temp_inst_name -color yellow
+        puts $fo "notFixedOrCTSFixed: $temp_inst_name"
+        incr totalNum
+      }
     }
+  } else {
+    set allTreeInsts [get_ccopt_clock_tree_cells]
+    set allRegisters [get_object_name [all_registers]]
+    foreach temp_inst_name $allTreeInsts {
+      if {$temp_inst_name in $allRegisters} {continue}
+      if {[dbget [dbget top.insts.name $temp_inst_name -p].cell.subClass] ne "core"} {continue}
+      if {![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatusCTS]] && ![regexp fixed [dbget [dbget top.insts.name $temp_inst_name -p].pStatus]]} {
+        highlight $temp_inst_name -color yellow
+        puts $fo "notFixedOrCTSFixed: $temp_inst_name"
+        incr totalNum
+      }
+    }
+     
   }
   set rootdir [lrange [split $rptName "/"] 0 end-1]
   set temp_filename [lindex [split $rptName "/"] end]

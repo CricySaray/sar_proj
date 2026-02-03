@@ -21,7 +21,7 @@ proc gen_hold_path {{filepath ""} {timestamp ""}} {
     set pin [lindex $line 0]
     set vio [lindex $line 1]
     set pathObj [get_timing_paths -delay_type min -to $pin]
-    set pathVio [get_attribute $pathObj slack]
+    # set pathVio [get_attribute $pathObj slack]
     set pathPoints [list [lrange [lreverse [get_object_name [get_attribute [get_attribute $pathObj points] object]]] 0 end-1]]
     #puts $fo "$pathPoints $pathVio"
     if {$pathObj == ""} {
@@ -70,7 +70,7 @@ proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
 
     # The number of items in the two variables `VIO_level` and `DEL_cells` must be consistent.
     set VIO_level [list -0.2 -0.11 -0.04 -0.02 -0.01]
-    set DEL_cells [list DEL0N2X1AR9 DEL0N1X1AR9 DEL0N0X1AR9 BUFX1AR9 BUFX2AR9]
+    set DEL_cells [list DEL075MD1BWP35P140 DEL050MD1BWP35P140 DEL025D1BWP35P140 BUFFD1BWP35P140 BUFFD2BWP30P140]
 
     foreach point $points {
       if {[regexp {ISO|LVL} [get_attribute [get_cells -of $point] ref_name]]} {
@@ -80,7 +80,7 @@ proc gen_fix_hold_scr_advance {{filepath ""} {timestamp ""} {hier ""}} {
       set margin [get_attribute $pathObj slack]
       if {$margin == ""} {set margin 10000}
       if {$margin > $maxMargin} {set maxMargin $margin; set maxMarginPin $point}
-      if {[expr $margin + $vio * 2.5] >= 0 && $margin > 0.012} {
+      if {[expr $margin + $vio * 2.1] >= 0 && $margin > 0.012} {
         if {[regexp {U_AFE_SUB_WRAP|U_DDR_SUB_WRAP|U_CPU_SUB_WRAP} $point]} {
 
         } else {

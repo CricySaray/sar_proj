@@ -8,7 +8,6 @@
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
 # descrip   : Please use the format of 'attachTerm instname cellpinname [get_object_name [get_nets -of instpinname]]' to write valid 
 #             commands. This can also prevent situations where net names change in some ECOs.
-#
 # return    : 
 # ref       : link url
 # --------------------------

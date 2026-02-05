@@ -39,7 +39,13 @@ proc genFile_scriptForMemIpLocation {args} {
   }
 }
 
-define_proc_arguments genFile_scriptForMemIpLocation \
+if {[catch {is_common_ui_mode}]} {
+  set temp_define define_proc_attributes
+} else{
+  set temp_define define_proc_arguments
+}
+
+$temp_define genFile_scriptForMemIpLocation \
   -info "write script for mem or ip"\
   -define_args {
     {-outputfilename "specify output file of script" AString string optional}

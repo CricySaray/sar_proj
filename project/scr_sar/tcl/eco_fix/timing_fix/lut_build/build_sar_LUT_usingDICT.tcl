@@ -317,7 +317,13 @@ proc build_sar_LUT_usingDICT {args} {
   # puts [join $cantMatchList \n]
 }
 
-define_proc_arguments build_sar_LUT_usingDICT \
+if {[catch {is_common_ui_mode}]} {
+  set temp_define define_proc_attributes
+} else{
+  set temp_define define_proc_arguments
+}
+
+$temp_define build_sar_LUT_usingDICT \
   -info "build LUT using dict in tcl"\
   -define_args {
     {-process "specify the type of process" oneOfString one_of_string {optional value_type {values {TSMC_cln12ffc M31GPSC900NL040P*_40N}}}}

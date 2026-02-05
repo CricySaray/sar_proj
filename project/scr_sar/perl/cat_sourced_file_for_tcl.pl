@@ -70,93 +70,96 @@ sub process_file {
   my $current_indent = $INDENT_SPACE x $indent_level;
   
   # Open input file or die with error
-  open my $in_fh, '<', $file_path or die "Error: Cannot open input file '$file_path' - $!";
-  
-  while (my $line = <$in_fh>) {
-    chomp $line;
-    
-    # Step 1: Remove inline comments (everything after ';')
-    my $clean_line = $line;
-    $clean_line =~ s/;.*$//;
-    $clean_line =~ s/^\s+//;
-    $clean_line =~ s/\s+$//;
-    
-    # Step 2: Check if the line is a 'source' command
-    if ($clean_line =~ /^source\s+.+$/) {
-      # Parse original source command (keep full line for comment trace)
-      my $original_source_cmd = $line;
-      $original_source_cmd =~ s/;.*$//; # Remove inline comment but keep original format
-      $original_source_cmd =~ s/^\s+//;
+  if (open my $in_fh, '<', $file_path) {
+    while (my $line = <$in_fh>) {
+      chomp $line;
       
-      # Extract file path by filtering out options (-e, -v)
-      my @parts = split /\s+/, $clean_line;
-      my @file_parts = grep { !/^-(e|v)$/ } @parts; # Filter out -e and -v options
-      shift @file_parts; # Remove 'source' keyword from the list
-      my $file_pattern = join ' ', @file_parts;
+      # Step 1: Remove inline comments (everything after ';')
+      my $clean_line = $line;
+      $clean_line =~ s/;.*$//;
+      $clean_line =~ s/^\s+//;
+      $clean_line =~ s/\s+$//;
       
-      # Step 3: Resolve wildcards (e.g., *.tcl)
-      my @source_files = glob $file_pattern;
-      if (scalar @source_files == 0) {
-        warn "Warning: No files matched pattern '$file_pattern' in '$file_path'\n";
-        # Debug: Print missing file pattern
-        if ($debug) {
-          print STDOUT "[DEBUG] No files found for pattern '$file_pattern' in parent file '$file_path'\n";
-        }
-        # Print original source line if no matching files (keep trace)
-        print $out_fh $current_indent . $line . "\n";
-        next;
-      }
-      
-      # Step 4: Process each matched source file
-      foreach my $source_file (@source_files) {
-        $source_file = File::Spec->rel2abs($source_file); # Convert to absolute path for clarity and duplicate check
+      # Step 2: Check if the line is a 'source' command
+      if ($clean_line =~ /^source\s+.+$/) {
+        # Parse original source command (keep full line for comment trace)
+        my $original_source_cmd = $line;
+        $original_source_cmd =~ s/;.*$//; # Remove inline comment but keep original format
+        $original_source_cmd =~ s/^\s+//;
         
-        # Debug: Print matched file
-        if ($debug) {
-          print STDOUT "[DEBUG] Found matched file for pattern '$file_pattern': '$source_file'\n";
-        }
+        # Extract file path by filtering out options (-e, -v)
+        my @parts = split /\s+/, $clean_line;
+        my @file_parts = grep { !/^-(e|v)$/ } @parts; # Filter out -e and -v options
+        shift @file_parts; # Remove 'source' keyword from the list
+        my $file_pattern = join ' ', @file_parts;
         
-        # Step 4.1: Check for duplicates (skip if disallowed and already processed)
-        if (!$allow_duplicates && exists $processed_files{$source_file}) {
+        # Step 3: Resolve wildcards (e.g., *.tcl)
+        my @source_files = glob $file_pattern;
+        if (scalar @source_files == 0) {
+          warn "Warning: No files matched pattern '$file_pattern' in '$file_path'\n";
+          # Debug: Print missing file pattern
           if ($debug) {
-            print STDOUT "[DEBUG] Skipping duplicate file: '$source_file' (already processed, duplicates disallowed)\n";
+            print STDOUT "[DEBUG] No files found for pattern '$file_pattern' in parent file '$file_path'\n";
           }
+          # Print original source line if no matching files (keep trace)
+          print $out_fh $current_indent . $line . "\n";
           next;
         }
         
-        # Mark file as processed (if duplicates are disallowed, or track for debug even if allowed)
-        $processed_files{$source_file} = 1 unless exists $processed_files{$source_file};
-        
-        # -------------------------- MODIFIED PART --------------------------
-        # Generate unique song number for current source file FIRST
-        my $song_number = sprintf("song%03d", $song_counter);
-        # Increment counter IMMEDIATELY to ensure nested source files get new number
-        $song_counter++;
-        # -------------------------------------------------------------------
-        
-        my $comment_line = "# $song_number: $original_source_cmd";
-        
-        # Print start comment (with current indent)
-        print $out_fh $current_indent . $comment_line . "\n";
-        
-        # Print expanded content (with +1 indent level for nested files)
-        process_file($source_file, $indent_level + 1, $out_fh);
-        
-        # Print end comment (same song number, with current indent)
-        print $out_fh $current_indent . "# $song_number: End of $original_source_cmd" . "\n";
-        
-        # -------------------------- REMOVED HERE --------------------------
-        # Original increment: after recursive processing (caused nested number reuse)
-        # $song_counter++;
-        # -------------------------------------------------------------------
+        # Step 4: Process each matched source file
+        foreach my $source_file (@source_files) {
+          $source_file = File::Spec->rel2abs($source_file); # Convert to absolute path for clarity and duplicate check
+          
+          # Debug: Print matched file
+          if ($debug) {
+            print STDOUT "[DEBUG] Found matched file for pattern '$file_pattern': '$source_file'\n";
+          }
+          
+          # Step 4.1: Check for duplicates (skip if disallowed and already processed)
+          if (!$allow_duplicates && exists $processed_files{$source_file}) {
+            if ($debug) {
+              print STDOUT "[DEBUG] Skipping duplicate file: '$source_file' (already processed, duplicates disallowed)\n";
+            }
+            next;
+          }
+          
+          # Mark file as processed (if duplicates are disallowed, or track for debug even if allowed)
+          $processed_files{$source_file} = 1 unless exists $processed_files{$source_file};
+          
+          # -------------------------- MODIFIED PART --------------------------
+          # Generate unique song number for current source file FIRST
+          my $song_number = sprintf("song%03d", $song_counter);
+          # Increment counter IMMEDIATELY to ensure nested source files get new number
+          $song_counter++;
+          # -------------------------------------------------------------------
+          
+          my $comment_line = "# $song_number: $original_source_cmd";
+          
+          # Print start comment (with current indent)
+          print $out_fh $current_indent . $comment_line . "\n";
+          
+          # Print expanded content (with +1 indent level for nested files)
+          process_file($source_file, $indent_level + 1, $out_fh);
+          
+          # Print end comment (same song number, with current indent)
+          print $out_fh $current_indent . "# $song_number: End of $original_source_cmd" . "\n";
+          
+          # -------------------------- REMOVED HERE --------------------------
+          # Original increment: after recursive processing (caused nested number reuse)
+          # $song_counter++;
+          # -------------------------------------------------------------------
+        }
+      } else {
+        # Step 5: Print non-source lines with current indent (keep original content)
+        print $out_fh $current_indent . $line . "\n";
       }
-    } else {
-      # Step 5: Print non-source lines with current indent (keep original content)
-      print $out_fh $current_indent . $line . "\n";
     }
+    close $in_fh or die "Error: Cannot close input file '$file_path' - $!";
+
+  } else {
+    print $out_fh "# Error: Cannot open input file '$file_path' - $!";
   }
-  
-  close $in_fh or die "Error: Cannot close input file '$file_path' - $!";
+
 }
 
 # -----------------------------------------------------------------------------

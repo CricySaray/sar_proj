@@ -199,20 +199,22 @@ sub archive_paths {
   # Process each source path
   foreach my $source_path (@source_paths) {
     my $canonical_source = File::Spec->rel2abs($source_path);
-    debug_print("Processing source: $canonical_source");
+    my $source_basename = basename($canonical_source);  # Get the last level name of the source path
+    debug_print("Processing source: $canonical_source (basename: $source_basename)");
     
     # Check if it's a file or directory
     if (-f $canonical_source) {
-      # Handle individual file
-      push @all_files, $canonical_source;
-      debug_print("Added file: $canonical_source");
+      # Handle individual file: Store file path and source basename
+      push @all_files, [ $canonical_source, $source_basename ];
+      debug_print("Added file: $canonical_source (basename: $source_basename)");
     } elsif (-d $canonical_source) {
       # Recursively find all files in directory
       find({ wanted => sub {
         return unless -f $_;  # Only process files
         my $full_path = $File::Find::name;
-        push @all_files, $full_path;
-        debug_print("Found file: $full_path");
+        # Store file path and source basename
+        push @all_files, [ $full_path, $source_basename ];
+        debug_print("Found file: $full_path (basename: $source_basename)");
       }, no_chdir => 1 }, $canonical_source);
     } else {
       warn "Warning: '$source_path' is not a regular file or directory - skipping\n";
@@ -226,13 +228,13 @@ sub archive_paths {
   # Write magic header
   print $archive_fh "$MAGIC_HEADER\n";
   
-  # Write source count and sources
-  my $source_count = scalar @source_paths;
-  print $archive_fh "SOURCES:$source_count\n";
-  foreach my $source (@source_paths) {
-    my $rel_source = File::Spec->abs2rel($source);
-    print $archive_fh "SOURCE:$rel_source\n";
-  }
+# Write source count and sources
+	my $source_count = scalar @source_paths;
+	print $archive_fh "SOURCES:$source_count\n";
+	foreach my $source (@source_paths) {
+		my $source_basename = basename($source);  # Get the last level of the path
+		print $archive_fh "SOURCE:$source_basename\n";
+	}
   
   # Write file count
   my $file_count = scalar @all_files;
@@ -240,9 +242,17 @@ sub archive_paths {
   debug_print("Found $file_count files to archive from $source_count sources");
   
   # Process each file
-  foreach my $file_path (@all_files) {
-    # Get relative path from current working directory
-    my $relative_path = File::Spec->abs2rel($file_path);
+  foreach my $file_entry (@all_files) {
+    # Deconstruct file path and source basename
+    my ($file_path, $source_basename) = @$file_entry;
+    
+    # Find the source path (absolute path) that the current file belongs to
+    my $source_root = (grep { index($file_path, File::Spec->rel2abs($_)) == 0 } @source_paths)[0];
+    my $canonical_source_root = File::Spec->rel2abs($source_root);
+    # Calculate the relative path of the file to the source path
+    my $rel_to_source = File::Spec->abs2rel($file_path, $canonical_source_root);
+    # Construct new relative path: only keep the last level of the source + relative path inside the source
+    my $relative_path = File::Spec->catfile($source_basename, $rel_to_source);
     
     # Read file content
     open my $file_fh, '<', $file_path or do {
@@ -267,7 +277,7 @@ sub archive_paths {
     print $archive_fh "CONTENT:\n$encoded_content";
     print $archive_fh "FILE_END\n";
     
-    debug_print("Archived: $relative_path (size: $content_length bytes)");
+    debug_print("Archived: $relative_path (original: $file_path, size: $content_length bytes)");
   }
   
   close $archive_fh;

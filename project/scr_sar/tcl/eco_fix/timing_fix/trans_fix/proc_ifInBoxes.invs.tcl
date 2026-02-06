@@ -16,6 +16,20 @@ proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
     set boxes $fplanBoxes
   }
+  set temp_loc_rect [list {*}$loc [expr {[lindex $loc 0] + 0.01}]  [expr {[lindex $loc 1] + 0.01}]]
+  set result [dbShape $temp_loc_rect INSIDE $boxes]
+  if {$result ne ""} {
+    return $result
+  } else {
+    return ""
+  }
+}
+
+proc ifInBoxes_returnRect_old {{loc {0 0}} {boxes {{}}}} { ; # U001
+  if {![llength [lindex $boxes 0]]} {
+    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
+    set boxes $fplanBoxes
+  }
   foreach box $boxes {
     if {[ifInBox $loc $box]} {
       return $box 
@@ -25,6 +39,19 @@ proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
 }
 
 proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
+  if {![llength [lindex $boxes 0]]} {
+    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
+    set boxes $fplanBoxes
+  }
+  set temp_loc_rect [list {*}$loc [expr {[lindex $loc 0] + 0.01}]  [expr {[lindex $loc 1] + 0.01}]]
+  if {[dbShape $temp_loc_rect INSIDE $boxes] ne ""} {
+    return 1 
+  } else {
+    return 0
+  }
+}
+
+proc ifInBoxes_old {{loc {0 0}} {boxes {{}}}} {
   if {![llength [lindex $boxes 0]]} {
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
     set boxes $fplanBoxes

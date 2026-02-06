@@ -62,13 +62,13 @@ proc findSpaceToInsertRepeater_using_lutDict {args} {
       # set repeaterPtCenter [db_rect -center $repeaterBox]
     }
   } elseif {$testOrRun == "run"} {
-    if {[every x [concat $expandAreaWidthHeight $loc $divOfForceInsert] { string is double $x }] && [operateLUT -type exists -attr [list celltype $celltype]] && [ifInBoxes $loc]} {
-      set coreRect_innerBoundary [operateLUT -type read -attr {core_inner_boundary_rects}]
-      set validatedLoc [find_closest_point_in_rects $loc $coreRect_innerBoundary $rowHeight]
+    set coreRect_innerBoundary [operateLUT -type read -attr {core_inner_boundary_rects}]
+    set validatedLoc [find_closest_point_in_rects $loc $coreRect_innerBoundary $rowHeight]
+    if {[every x [concat $expandAreaWidthHeight $validatedLoc $divOfForceInsert] { string is double $x }] && [operateLUT -type exists -attr [list celltype $celltype]] && [ifInBoxes $validatedLoc]} {
       set repeaterPt [attachToGridOfRowSiteLeftBottomPoint $validatedLoc] ; # need validize this location to stick on left-bottom corner of row and site 
       lassign [operateLUT -type read -attr [list celltype $celltype size]] repeaterWidth repeaterHeight
     } else {
-      error "proc findSpaceToInsertRepeater_using_lutDict: now type is run, check your input of loc($loc), celltype($celltype), expandAreaWidthHeight($expandAreaWidthHeight) and divOfForceInsert($divOfForceInsert), have error!!!"
+      error "proc findSpaceToInsertRepeater_using_lutDict: now type is run, check your input of loc($validatedLoc), celltype($celltype), expandAreaWidthHeight($expandAreaWidthHeight) and divOfForceInsert($divOfForceInsert), have error!!!"
     }
   }
   set blankBoxList [lindex [get_blank_box $repeaterPt $widthOfExpand $heightOfExpand] 0]

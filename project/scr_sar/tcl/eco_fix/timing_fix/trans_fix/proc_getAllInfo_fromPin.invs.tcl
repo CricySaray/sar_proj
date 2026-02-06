@@ -141,7 +141,9 @@ proc get_allInfo_fromPin {{pinname ""} {forbiddenVT {AH9}} {driveCapacityRange {
       }]
       set temp_mostCapacity [lindex [findMostFrequentElement $temp_sameClass_celltype_capacity 30.0 1] 0]
       set refBuffer [operateLUT -type read -attr {refbuffer}] ; set refBufferCapacity [operateLUT -type read -attr [list celltype $refBuffer capacity]]
-      if {$temp_mostCapacity ne "NA"} { set temp_result [change_driveCapacity_or_VTtype $refBuffer [operateLUT -type read -attr celltype_regexp] cap $temp_mostCapacity] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
+      set refBufferCapList [operateLUT -type read -attr [list celltype $refBuffer caplist]]
+      set temp_mostCapacityAvailable [find_nearestNum_atIntegerList $refBufferCapList $temp_mostCapacity 1 1]
+      if {$temp_mostCapacity ne "NA"} { set temp_result [change_driveCapacity_or_VTtype $refBuffer [operateLUT -type read -attr celltype_regexp] cap $temp_mostCapacityAvailable] } else { set temp_result [lindex [lmap temp_type [dict get $allInfo sinksCellType] {
         if {[operateLUT -type read -attr [list celltype $temp_type capacity]] == "NA"} { set temp $temp_type } else { continue }
       }] 0]}
     }]

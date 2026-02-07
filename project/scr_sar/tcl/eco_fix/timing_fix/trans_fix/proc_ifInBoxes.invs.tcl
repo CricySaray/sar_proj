@@ -11,21 +11,8 @@
 # --------------------------
 # this proc can return the exact rect from rects!
 source ../lut_build/operateLUT.tcl; # operateLUT
-proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
-  if {![llength [lindex $boxes 0]]} {
-    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
-    set boxes $fplanBoxes
-  }
-  set temp_loc_rect [list {*}$loc [expr {[lindex $loc 0] + 0.01}] [expr {[lindex $loc 1] + 0.01}]]
-  set result {*}[dbShape $temp_loc_rect INSIDE $boxes]
-  if {$result ne ""} {
-    return $result
-  } else {
-    return 0
-  }
-}
 
-proc ifInBoxes_returnRect_old {{loc {0 0}} {boxes {{}}}} { ; # U001
+proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
   if {![llength [lindex $boxes 0]]} {
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
     set boxes $fplanBoxes
@@ -43,7 +30,7 @@ proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
     set boxes $fplanBoxes
   }
   set temp_loc_rect [list {*}$loc [expr {[lindex $loc 0] + 0.01}] [expr {[lindex $loc 1] + 0.01}]]
-  set result {*}[dbShape $temp_loc_rect INSIDE $boxes]
+  set result [dbShape $temp_loc_rect INSIDE $boxes]
   if {$result ne ""} {
     return 1
   } else {

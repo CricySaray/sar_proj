@@ -25,6 +25,18 @@ proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
   }
 }
 
+proc ifInBoxes_returnRect_old {{loc {0 0}} {boxes {{}}}} { ; # U001
+  if {![llength [lindex $boxes 0]]} {
+    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
+    set boxes $fplanBoxes
+  }
+  foreach box $boxes {
+    if {[ifInBox $loc $box]} {
+      return $box 
+    }
+  }
+}
+
 proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
   if {![llength [lindex $boxes 0]]} {
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
@@ -36,6 +48,18 @@ proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
     return 1
   } else {
     return 0
+  }
+}
+
+proc ifInBoxes_old {{loc {0 0}} {boxes {{}}}} {
+  if {![llength [lindex $boxes 0]]} {
+    set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
+    set boxes $fplanBoxes
+  }
+  foreach box $boxes {
+    if {[ifInBox $loc $box]} {
+      return 1 
+    }
   }
 }
 proc ifInBox {{loc {0 0}} {box {0 0 10 10}}} {

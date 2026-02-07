@@ -35,7 +35,11 @@ proc get_blank_box {{centerPt {}} {halfOfWidth 12.6} {halfOfHeight 12.6} {debug 
     set blankBoxArea [dbShape -output area $searchingBox ANDNOT $insts_box]
     if {$debug} { puts "blankBoxArea: $blankBoxArea" }
     if {$debug} { puts "blankBoxList: $blankBoxList" }
-    set densityOfSearchingBox "[format "%.2f" [expr (1 - ($blankBoxArea / $searchingArea)) * 100]] %"
+    if {$searchingArea == 0} {
+      set densityOfSearchingBox "100%"
+    } else {
+      set densityOfSearchingBox "[format "%.2f" [expr (1 - ($blankBoxArea / $searchingArea)) * 100]] %"
+    }
     if {$debug} { puts "densityOfSearchingBox: $densityOfSearchingBox" }
 
     return [list $blankBoxList $blankBoxArea $densityOfSearchingBox]

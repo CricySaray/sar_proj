@@ -75,7 +75,7 @@ proc change_driveCapacity_or_VTtype {input_str regex pattern_type new_value {deb
     }
   } elseif {$pattern_type eq "vt"} {
     set temp_vtExp [regsub [sus {^(.*$capacityFlag)${temp_capacity}($stdCellFlag.*)${temp_vt}$}] $input_str [sus {\1${temp_capacity}\2<vt>}]]
-    set temp_vtname [lindex [lsearch -inline -index 1 -exact $vtMapList $temp_vt] 0]
+    set temp_vtname [lindex [lsearch -inline -index 1 -exact $vtMapList $new_value] 0]
     set result [regsub {<vt>} $temp_vtExp $temp_vtname]
     if {![operateLUT -type exists -attr [list celltype $result]]} {
       error "proc change_driveCapacity_or_VTtype: error celltype($result) after changing vt!!! check it."

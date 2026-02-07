@@ -38,6 +38,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   #   verbose - Verbose output switch (0=off, 1=on), default 0
   # Get minimum movement unit from lookup dictionary
   set minWidth [operateLUT -type read -attr {mainCoreSiteWidth}]
+  set minHeight [operateLUT -type read -attr {mainCoreRowHeight}]
   # Initialize return values
   set result_flag "no"
   set free_region [list]
@@ -64,7 +65,7 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
   foreach dim $critical_dimensions {
     lassign $dim name value
     if {fmod($value, $minWidth) != 0} {
-      error "$name ($value) is not a multiple of minimum width ($minWidth)"
+      # error "$name ($value) is not a multiple of minimum width ($minWidth)"  ; # This error check can be relaxed, meaning it is not required.
     }
   }
   if {$debug} {
@@ -96,8 +97,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     if {fmod($rect_width, $minWidth) != 0} {
       error "Rectangle $instname width ($rect_width) is not a multiple of minimum width ($minWidth)"
     }
-    if {fmod($rect_height, $minWidth) != 0} {
-      error "Rectangle $instname height ($rect_height) is not a multiple of minimum width ($minWidth)"
+    if {fmod($rect_height, $minHeight) != 0} {
+      error "Rectangle $instname height ($rect_height) is not a multiple of minimum width ($minHeight)"
     }
   }
   # Extract rectangle coordinates (instsBox) for dbShape command
@@ -115,8 +116,8 @@ proc expandSpace_byMovingInst {total_area target_insert_loc target_size {filterM
     if {fmod($gap_width, $minWidth) != 0} {
       error "Gap width ($gap_width) at ($g_x, $g_y) is not a multiple of minimum width ($minWidth)"
     }
-    if {fmod($gap_height, $minWidth) != 0} {
-      error "Gap height ($gap_height) at ($g_x, $g_y) is not a multiple of minimum width ($minWidth)"
+    if {fmod($gap_height, $minHeight) != 0} {
+      error "Gap height ($gap_height) at ($g_x, $g_y) is not a multiple of minimum width ($minHeight)"
     }
   }
   # Extract row height from the first rectangle

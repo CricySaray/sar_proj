@@ -16,12 +16,13 @@ proc ifInBoxes_returnRect {{loc {0 0}} {boxes {{}}}} { ; # U001
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
     set boxes $fplanBoxes
   }
-  foreach box $boxes {
-    if {[ifInBox $loc $box]} {
-      return $box 
-    }
+  set temp_loc_rect [list {*}$loc [expr {[lindex $loc 0] + 0.01}] [expr {[lindex $loc 1] + 0.01}]]
+  set result {*}[dbShape $temp_loc_rect INSIDE $boxes]
+  if {$result ne ""} {
+    return $result
+  } else {
+    return 0
   }
-  return 0
 }
 
 proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
@@ -29,12 +30,13 @@ proc ifInBoxes {{loc {0 0}} {boxes {{}}}} {
     set fplanBoxes [lindex [dbget top.fplan.boxes] 0]
     set boxes $fplanBoxes
   }
-  foreach box $boxes {
-    if {[ifInBox $loc $box]} {
-      return 1 
-    }
+  set temp_loc_rect [list {*}$loc [expr {[lindex $loc 0] + 0.01}] [expr {[lindex $loc 1] + 0.01}]]
+  set result {*}[dbShape $temp_loc_rect INSIDE $boxes]
+  if {$result ne ""} {
+    return 1
+  } else {
+    return 0
   }
-  return 0
 }
 proc ifInBox {{loc {0 0}} {box {0 0 10 10}}} {
   set xRange [list [lindex $box 0] [lindex $box 2]]

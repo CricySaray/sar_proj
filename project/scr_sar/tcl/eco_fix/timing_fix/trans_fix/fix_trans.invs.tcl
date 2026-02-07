@@ -110,7 +110,7 @@ proc fix_trans {args} {
       set viol_value [lindex $line [lindex $violValue_pin_columnIndex 0]]
       set viol_pin   [lindex $line [lindex $violValue_pin_columnIndex 1]]
       if {![string is double $viol_value] || [dbget top.insts.instTerms.name $viol_pin -e] == ""} {
-        error "column([lindex $violValue_pin_columnIndex 0]) is not number, or violPin($viol_pin) can't find"; # column([lindex $violValue_pin_columnIndex 0]) is not number
+        error "column([lindex $violValue_pin_columnIndex 0]):([lindex $line [lindex $violValue_pin_columnIndex 0]]) is not number, or violPin($viol_pin) can't find"; # column([lindex $violValue_pin_columnIndex 0]) is not number
       }
       if {![if_driver_or_load $viol_pin]} {
         set load_pin $viol_pin 

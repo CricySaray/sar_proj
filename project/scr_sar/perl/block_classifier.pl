@@ -1,6 +1,6 @@
-\p#!/usr/bin/perl
+#!/usr/bin/perl
 use strict;
-use warnings;
+# use warnings;
 use Getopt::Long;
 use File::Basename;
 use File::Spec;

@@ -1,3 +1,18 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2026/02/08 00:28:58 Sunday
+# label     : getInfo_sub
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : This Perl script extracts text blocks from a file or STDIN using four extraction methods (start, separator, end, start_end) 
+#             and classifies these blocks based on multi-line regex rules defined in a rule file. It writes classified blocks to category-specific 
+#             output files with customizable naming and formatting options, supports case sensitivity toggling, empty block control, and provides 
+#             a statistics summary of processed blocks.
+# return    : splited files according to file of classification rules
+# ref       : link url
+# --------------------------
 #!/usr/bin/perl
 use strict;
 # use warnings;

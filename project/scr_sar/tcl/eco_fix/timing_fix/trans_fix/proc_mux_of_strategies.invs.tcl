@@ -205,7 +205,7 @@ proc sliding_rheostat_of_strategies {args} {
         if {$ifCanAddRepeater && !$ifFixedSuccessfully && [expr $netLen >= [lindex $crosspointOfChangeCapacityAndInsertBuffer 1]]} { ; # NOTICE
           er $debug { puts "\n$promptInfo : needInsertBufferToFix\n" }
           if {$numOfMostFrequentInSinksCellClass == 1} { ; # U007: this judgement is simple , you need improve it after
-            set ifInClkTree [regexp [operateLUT -type read -attr clkflag] $driverCellClass]
+            set ifInClkTree [regexp [operateLUT -type read -attr clkflag] $driverCellType]
             if {$ifInClkTree} { set refCell [operateLUT -type read -attr [list refclkbuffer]] } else { set refCell [operateLUT -type read -attr [list refbuffer]] }
             set toAdd [strategy_addRepeaterCelltype_withLUT $driverCellType $mostFrequentInSinksCellType $addMethod 0 $capacityRange 0 1 $refCell]
             if {![operateLUT -type exists -attr [list celltype $toAdd]]} {

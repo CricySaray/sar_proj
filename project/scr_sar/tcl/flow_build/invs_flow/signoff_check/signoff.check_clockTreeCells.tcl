@@ -99,7 +99,7 @@ proc check_clockTreeCells {args} {
     puts $fo ""
   }
   puts $fo "# num of total ccopt clock tree cells : $numAllCtsInsts"
-  puts $fo "# num of total removed inst: $numremoveInst"
+  puts $fo "# num of total ignored inst: $numremoveInst"
   puts $fo ""
   puts $fo "TOTALNUM: $totalNum"
   puts $fo "ctsCellNum $totalNum"

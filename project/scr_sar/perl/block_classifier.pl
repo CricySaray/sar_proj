@@ -1,4 +1,4 @@
-#!/bin/tclsh
+#!/bin/perl
 # --------------------------
 # author    : sar song
 # date      : 2026/02/08 00:28:58 Sunday
@@ -13,12 +13,12 @@
 # return    : splited files according to file of classification rules
 # ref       : link url
 # --------------------------
-#!/usr/bin/perl
 use strict;
 # use warnings;
 use Getopt::Long;
 use File::Basename;
 use File::Spec;
+use IO::Uncompress::AnyUncompress qw($AnyUncompressError);  # 新增：引入压缩文件解压模块
 
 # ==============================
 # DEFAULT CONFIGURATION (显眼的默认参数定义)
@@ -155,15 +155,18 @@ my @current_block;
 my $total_blocks_processed = 0;
 
 # ==============================
-# Open Input Stream (File/STDIN)
+# Open Input Stream (File/STDIN) - Support Compressed Files
 # ==============================
 my $in_fh;
 if ($INPUT_FILE) {
-  open $in_fh, '<', $INPUT_FILE or die "ERROR: Cannot open input file '$INPUT_FILE' - $!\n";
+  # 新增逻辑：使用AnyUncompress打开压缩/普通文件（支持gzip/tar/bzip2等主流压缩格式）
+  $in_fh = IO::Uncompress::AnyUncompress->new($INPUT_FILE) 
+    or die "ERROR: Cannot open/compress input file '$INPUT_FILE' - $AnyUncompressError\n";
 } else {
+  # 保持原有逻辑：从STDIN读取（不处理压缩的STDIN，保证兼容性）
   open $in_fh, '<', \*STDIN or die "ERROR: Cannot read from STDIN - $!\n";
 }
-$DEBUG && print "DEBUG: Started line-by-line input processing\n";
+$DEBUG && print "DEBUG: Started line-by-line input processing (compressed file support enabled)\n";
 
 # ==============================
 # Line-by-Line Block Extraction
@@ -340,7 +343,7 @@ sub match_category_rules {
     # Check each line in block for regex match
     foreach my $line (@$block_lines) {
       if ($modifier) {
-        if ($line =~ /$regex/$modifier) { $line_matched = 1; last; }
+        if ($line =~ /$regex/i) { $line_matched = 1; last; }
       } else {
         if ($line =~ /$regex/) { $line_matched = 1; last; }
       }
@@ -523,6 +526,7 @@ Core Features:
   - Beautiful statistics table with adaptive column widths
   - Input from file or STDIN
   - Cross-OS compatibility
+  - Support for compressed input files (gzip/tar/bzip2 etc.)  # 新增：帮助信息中补充压缩文件支持说明
 
 Command Line Options:
   --method|-m      Block extraction method (required)
@@ -535,7 +539,8 @@ Command Line Options:
 
   --input|-i       Input file path (reads from STDIN if empty)
                    Default: '$INPUT_FILE' (STDIN)
-                   Example: -i data.txt, --input /path/to/logs
+                   Example: -i data.txt, --input /path/to/logs.gz  # 新增：示例补充压缩文件
+                   Note: Supports compressed files (gzip/tar/bzip2 etc.)
 
   --start|-s       Regex for block start line (start/start_end methods)
                    Default: '$display_start'
@@ -633,12 +638,13 @@ Important Notes:
   10. Statistics table: Adaptive column widths, displayed in rule file order.
   11. Parameter override: Command line options (short/long) override default values.
   12. Short options: All long options have corresponding short aliases (e.g., -i = --input, -m = --method).
+  13. Compressed files: --input supports gzip/tar/bzip2 etc. (powered by IO::Uncompress::AnyUncompress)  # 新增：补充压缩文件说明
 
 Usage Examples:
 Example 1: Case-insensitive classification with custom block suffix (two empty lines)
 perl block_classifier.pl \\
   -m se \\               # Short option for --method start_end
-  -i input.txt \\        # Short option for --input
+  -i input.txt.gz \\     # 新增：示例使用压缩文件
   -s '^Path \\d+:' \\    # Short option for --start
   -e '^1\\s*$' \\        # Short option for --end
   -u my_rules.rules \\   # Short option for --rule-file
@@ -654,7 +660,7 @@ perl block_classifier.pl \\
 Example 2: Separator-based extraction with case-sensitive matching
 perl block_classifier.pl \\
   -m sep \\              # Short option for --method separator
-  -i app.log \\          # Short option for --input
+  -i app.log.tar \\      # 新增：示例使用tar压缩文件
   -r '^\\d{4}-\\d{2}-\\d{2}' \\ # Short option for --separator
   -u log_rules.rules \\  # Short option for --rule-file
   -k 'log_' \\           # Short option for --output-prefix

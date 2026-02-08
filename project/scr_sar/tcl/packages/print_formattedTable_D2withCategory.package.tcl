@@ -12,7 +12,8 @@
 proc print_formattedTable_D2withCategory {{dataList {}} {indentChar "\t"} {separator "-"}} {
   # Validate input format
   if {![llength $dataList]} {
-    error "Input list is empty or invalid"
+    return [list]
+    # error "Input list is empty or invalid"
   }
   if {![string length $indentChar]} {
     error "Indent character cannot be empty"

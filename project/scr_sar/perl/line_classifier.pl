@@ -1,4 +1,18 @@
 #!/usr/bin/perl
+# --------------------------
+# author    : sar song
+# date      : 2026/02/09 12:30:24 Monday
+# label     : getInfo_sub
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : This Perl script processes normal, gzip, or tar-compressed input files to count lines matching user-specified keywords, 
+#             with the option to split the input file into separate output files based on these keywords. It supports custom prefixes, 
+#             suffixes, and extensions for split filenames, includes robust error handling, and outputs formatted statistics of matched 
+#             lines for each keyword and unmatched lines categorized as "other".
+# return    : output file
+# ref       : link url
+# --------------------------
 use strict;
 use warnings;
 use Getopt::Long;

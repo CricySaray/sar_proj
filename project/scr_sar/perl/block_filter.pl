@@ -1,4 +1,18 @@
 #!/usr/bin/perl
+# --------------------------
+# author    : sar song
+# date      : 2026/02/09 11:16:17 Monday
+# label     : getInfo_sub
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : This lightweight Perl script parses text blocks line-by-line using four extraction methods (start/separator/end/start_end), 
+#             filtering blocks and retaining specific lines via regular expressions. It supports customizable output formatting (block 
+#             separators, prefixes, suffixes), reads input from files or STDIN, and writes processed results to a specified file with 
+#             debug and help features.
+# return    : output file
+# ref       : link url
+# --------------------------
 use strict;
 use warnings;
 use Getopt::Long;

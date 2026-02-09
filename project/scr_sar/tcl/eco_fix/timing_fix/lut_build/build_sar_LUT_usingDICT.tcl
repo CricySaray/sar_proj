@@ -71,7 +71,7 @@ proc build_sar_LUT_usingDICT {args} {
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } elseif {$process in {TSMC_cln22ull}} {
-    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\dP?\d?)BWP\d+.*P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWP30P140LVT" ; set refClkBuffer "DCCKBD12BWP30P140LVT"
+    set capacityFlag "D" ; set vtFastRange {ULVT LVT SVT HVT} ; set stdCellFlag "BWP" ; set clkFlag {^DCCK|^CK} ; set celltypeMatchExp {^.*D(\dP?\d?)BWP\d+.*P\d+(U?L?H?VT)?$} ; set VtMatchExp {(U?L?H?VT)?} ; set refBuffer "BUFFD1BWP7T30P140" ; set refClkBuffer "DCCKBD12BWP7T30P140LVT"
     set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {ULVT ULVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
@@ -319,7 +319,7 @@ proc build_sar_LUT_usingDICT {args} {
 
 if {[catch {is_common_ui_mode}]} {
   set temp_define define_proc_attributes
-} else{
+} else {
   set temp_define define_proc_arguments
 }
 

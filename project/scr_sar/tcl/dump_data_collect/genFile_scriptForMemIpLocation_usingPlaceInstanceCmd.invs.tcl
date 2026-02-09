@@ -41,7 +41,7 @@ proc genFile_scriptForMemIpLocation {args} {
 
 if {[catch {is_common_ui_mode}]} {
   set temp_define define_proc_attributes
-} else{
+} else {
   set temp_define define_proc_arguments
 }
 

@@ -8,6 +8,8 @@
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
 # descrip   : Get the chain of instance names from one inst or pin to another inst or pin, including the instance names of from and to, 
 #             sorted in the order of signal propagation.
+# NOTICE    : If there are multiple branched paths between two cells that eventually converge to the **to pin**, all instances in the 
+#             middle branches will be captured.
 # return    : list of insts chain
 # ref       : link url
 # --------------------------

@@ -394,6 +394,7 @@ if {[is_common_ui_mode]} {
   
 } elseif {![is_common_ui_mode]} {
 
+  # NOTICE: If there are multiple branched paths between two cells that eventually converge to the **to pin**, all instances in the middle branches will be captured.
   alias gc "getchain_ofInsts"
   proc getchain_ofInsts {from to} {
     if {[dbget top.insts.name $from -e] ne ""} {

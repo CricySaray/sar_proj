@@ -13,13 +13,6 @@
 # return    : output file
 # ref       : link url
 # --------------------------
-################
-# author : yzq (optimized)
-# date   : 2025/01/07
-# descrip: Deduplicate rows by specified column, keep larger/smaller value in target column,
-#         support plain/gzipped files, configurable via command line options
-#         support end/end-N column index (end = last column, end-1 = second last, etc.)
-################
 use strict;
 use warnings;
 use Getopt::Long;

@@ -39,6 +39,7 @@ our $DEBUG = 0;                         # Enable debug mode (0=disabled, 1=enabl
 our $ALLOW_EMPTY = 1;                   # Allow empty blocks (0=disable, 1=enable)
 our $DEFAULT_CATEGORY = 'other';      # Default category for unmatched blocks
 our $CASE_SENSITIVE = 0;                # Case sensitivity (1=sensitive, 0=ignore case)
+our $OUTPUT_DIR = '';                   # Output directory (current dir if empty)
 my $show_help = 0;                      # Flag for help command
 my @category_order;                     # Preserve category order from rule file (priority)
 
@@ -56,6 +57,7 @@ GetOptions(
   'output-prefix|k=s' => \$OUTPUT_PREFIX,
   'output-suffix|z=s' => \$OUTPUT_SUFFIX,
   'output-ext|c=s'    => \$OUTPUT_EXT,
+  'outputDir|o=s'     => \$OUTPUT_DIR,
   'block-sep|b=s'     => \$BLOCK_SEPARATOR,
   'block-prefix|p=s'  => \$BLOCK_PREFIX,
   'block-suffix|x=s'  => \$BLOCK_SUFFIX,
@@ -105,6 +107,25 @@ unless (-e $RULE_FILE) { die "ERROR: Rule file '$RULE_FILE' does not exist\n"; }
 unless (-r $RULE_FILE) { die "ERROR: Rule file '$RULE_FILE' is not readable\n"; }
 unless (-f $RULE_FILE) { die "ERROR: '$RULE_FILE' is not a regular file\n"; }
 $DEBUG && print "DEBUG: Rule file validated - '$RULE_FILE'\n";
+
+# ==============================
+# Validate and Prepare Output Directory
+# ==============================
+if ($OUTPUT_DIR) {
+  # Create directory if not exists (recursive)
+  unless (-d $OUTPUT_DIR) {
+    require File::Path;
+    File::Path::make_path($OUTPUT_DIR, { error => \my $err });
+    if (@$err) {
+      die "ERROR: Failed to create output directory '$OUTPUT_DIR': " . join(', ', map { "$_->{file}: $_->{message}" } @$err) . "\n";
+    }
+    $DEBUG && print "DEBUG: Created output directory '$OUTPUT_DIR'\n";
+  }
+  unless (-w $OUTPUT_DIR) {
+    die "ERROR: Output directory '$OUTPUT_DIR' is not writable\n";
+  }
+}
+$DEBUG && print "DEBUG: Output directory set to - '" . ($OUTPUT_DIR || 'current directory') . "'\n";
 
 # ==============================
 # Validate Extraction Method
@@ -447,6 +468,10 @@ sub get_category_filename {
   my ($cat) = @_;
   my $ext = $OUTPUT_EXT =~ /^\s*$/ ? '' : ($OUTPUT_EXT =~ /^\./ ? $OUTPUT_EXT : ".$OUTPUT_EXT");
   my $filename = $OUTPUT_PREFIX . $cat . $OUTPUT_SUFFIX . $ext;
+  # Prepend output directory if specified
+  if ($OUTPUT_DIR) {
+    $filename = File::Spec->catfile($OUTPUT_DIR, $filename);
+  }
   return $filename;
 }
 
@@ -500,6 +525,7 @@ sub help {
   my $display_block_sep = $BLOCK_SEPARATOR;
   my $display_block_prefix = $BLOCK_PREFIX;
   my $display_block_suffix = $BLOCK_SUFFIX;
+  my $display_output_dir = $OUTPUT_DIR;
 
   # 转义显示特殊字符，方便用户理解
   $display_block_sep =~ s/\n/\\n/g;
@@ -527,6 +553,7 @@ Core Features:
   - Input from file or STDIN
   - Cross-OS compatibility
   - Support for compressed input files (gzip/tar/bzip2 etc.)  # 新增：帮助信息中补充压缩文件支持说明
+  - Customizable output directory (auto-create if not exists)
 
 Command Line Options:
   --method|-m      Block extraction method (required)
@@ -572,6 +599,11 @@ Command Line Options:
   --output-ext|-c  Extension for category output files (no leading . needed)
                    Default: '$OUTPUT_EXT'
                    Example: -c 'txt', --output-ext 'log'
+
+  --outputDir|-o   Output directory for split files (current dir if empty)
+                   Default: '$display_output_dir' (current directory)
+                   Example: -o ./output, --outputDir /tmp/classified_blocks
+                   Note: Directory will be created recursively if it does not exist
 
   --block-sep|-b   Separator between output blocks (supports escape sequences)
                    Default: '$display_block_sep'
@@ -639,6 +671,7 @@ Important Notes:
   11. Parameter override: Command line options (short/long) override default values.
   12. Short options: All long options have corresponding short aliases (e.g., -i = --input, -m = --method).
   13. Compressed files: --input supports gzip/tar/bzip2 etc. (powered by IO::Uncompress::AnyUncompress)  # 新增：补充压缩文件说明
+  14. Output directory: --outputDir supports relative/absolute paths; auto-created recursively (cross-OS compatible via File::Spec)
 
 Usage Examples:
 Example 1: Case-insensitive classification with custom block suffix (two empty lines)
@@ -651,6 +684,7 @@ perl block_classifier.pl \\
   -k 'output_' \\        # Short option for --output-prefix
   -z '_2024' \\          # Short option for --output-suffix
   -c 'txt' \\            # Short option for --output-ext
+  -o ./classified_output \\ # Short option for --outputDir
   -b "--- Next Block ---" \\ # Short option for --block-sep
   -p "Block <id>:" \\    # Short option for --block-prefix
   -x "\\n\\n" \\         # Short option for --block-suffix
@@ -665,8 +699,9 @@ perl block_classifier.pl \\
   -u log_rules.rules \\  # Short option for --rule-file
   -k 'log_' \\           # Short option for --output-prefix
   -c 'log' \\            # Short option for --output-ext
+  -o /tmp/log_classification \\ # Short option for --outputDir
   -C \\                  # Short option for --case-sensitive
-  -a                     # Short option for --allow-empty
+  -a \\                  # Short option for --allow-empty
   -d                     # Short option for --debug
 HELP
 }

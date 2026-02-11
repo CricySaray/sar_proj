@@ -62,6 +62,7 @@ if {[is_common_ui_mode]} {
   alias ds "deselect_obj -all"
   alias so "select_obj"
   alias sr "select_routes"
+  alias dos dso
   proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
   alias dg "get_db"
 
@@ -123,6 +124,7 @@ if {[is_common_ui_mode]} {
   alias zs "zoomSelected"
   alias ds "deselectAll"
   alias so "select_obj"
+  alias dos dso
   proc dso {objs} {deselectAll ; select_obj $objs; zoomSelected}
   alias dg "dbget"
 }

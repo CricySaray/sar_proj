@@ -212,10 +212,10 @@ proc judge_ifHaveBeenFastVTinRange {{celltype ""} {forbiddenVT {AH9}}} {
     error "proc judge_ifHaveBeenFastVTinRange: check your input: celltype($celltype) not valid !!!" 
   } else {
     set VTrange [operateLUT -type read -attr {vtrange}]
+    if {$forbiddenVT != "" && [every x $forbiddenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbiddenVT($forbiddenVT) is not in VTrange($VTrange)!!!" }
     foreach temp_vt $forbiddenVT {
       set VTrange [lsearch -not -all -inline -exact $VTrange $temp_vt]
     }
-    if {$forbiddenVT != "" && [every x $forbiddenVT { expr { $x ni $VTrange }} ]} { error "proc judge_ifHaveBeenFastVTinRange: forbiddenVT($forbiddenVT) is not in VTrange($VTrange)!!!" }
     set nowVT [operateLUT -type read -attr [list celltype $celltype vt]]
     if {$nowVT eq "NA"} {return 1}
     #set availableVTrange [xor $VTrange $forbiddenVT] ; # function to improve

@@ -65,7 +65,6 @@ proc fix_trans {args} {
   set canChangeVtCapacityWhenAddingRepeater    1
   set maxWidthForString                        80
   set normalNeedVtWeightList                   {{ULVT 0} {LVT 1} {SVT 3} {HVT 0}}; # normal std cell can use AL9 and AR9, but weight of AR9 is larger
-  set forbiddenVT                              {} ; # can be list
   set driveCapacityRange                       {1 12} ; # Please write them in the format where smaller drive numbers come first and larger drive numbers come after.
   set largerThanDriveCapacityOfChangedCelltype 1
   set ecoNewInstNamePrefix                     "sar_fix_trans_clk_071615"
@@ -77,6 +76,7 @@ proc fix_trans {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
+  set forbiddenVT [lmap temp_vtweight $normalNeedVtWeightList { if {[lindex $temp_vtweight 1]} {continue} else {lindex $temp_vtweight 0} }]
   # Check if the fillers have been deleted first from the invs db. If not, you need to delete the fillers first!
   set coreInnerBoundaryRects [operateLUT -type read -attr core_inner_boundary_rects] 
   set allCoreInstBoxes [dbget top.insts.box]
@@ -314,7 +314,6 @@ define_proc_arguments fix_trans \
     {-canChangeVtCapacityWhenAddingRepeater "if can change vt and capacity when adding repeater" oneOfString one_of_string {optional value_type {values {0 1}}}}
     {-maxWidthForString "specify the max width of every string of list" AInteger int optional}
     {-normalNeedVtWeightList "specify normal(std cell need) vt weight list" AList list optional}
-    {-forbiddenVT "specify the VT that is forbidden to use" AList list optional}
     {-driveCapacityRange "specify the range of drive capacity, default: {1 12}" AList list optional}
     {-largerThanDriveCapacityOfChangedCelltype "specify drive capacity to meet rule in FIXED U001" AList list optional}
     {-ecoNewInstNamePrefix "specify a new name for inst when adding new repeater" AList list required}

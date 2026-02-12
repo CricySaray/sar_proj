@@ -269,6 +269,7 @@ proc sliding_rheostat_of_strategies {args} {
               } else {
                 set expandAreaWidthHeight {8 8}   ; set divOfForceInsert 0.6 ; set multipleOfExpandSpace 1.7
               }
+              if {$ifInFixLongNetMode} { set relativeLoc 0.5 }
               if {$ifOne2One} {
                 set fited_wiresPts [fit_path $driverPinPT {*}$sinksPinPT $wiresPts]
                 set toLoc [calculate_relative_point_at_path $driverPinPT {*}$sinksPinPT $fited_wiresPts $relativeLoc]

@@ -32,7 +32,17 @@ proc get_driverPin {{pin ""}} {
     error "proc get_driverPin: pin ($pin) can't find in invs db!!!"; # no pin
   } else {
     set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isOutput 1 -p].name ] 0]
-    return $driver
+    if {$driver eq "0x0"} {
+      set temp_net [dbget [dbget top.insts.instTerms.name $pin -p].net.name -e] 
+      set driver [get_ports -q -of [get_nets $temp_net] -filter "direction==in"]
+      if {$driver ne ""} {
+        return _isPort.songFlag 
+      } else {
+        error "proc get_driverPin: is not port, and not found driver pin name for : $pin" 
+      }
+    } else {
+      return $driver
+    }
   }
 }
 
@@ -41,9 +51,19 @@ proc get_sinkPins {{pin ""}} {
     error "proc [regsub ":" [lindex [info level 0] 0] ""]: pin ($pin) can't find in invs db!!!" 
   } else {
     set sinks [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isInput 1 -p].name ]
-    set sinks [lmap sink $sinks {
-      set temp "[lindex $sink 0]"
-    }]
-    return $sinks
+    if {$sinks eq "0x0"} {
+      set temp_net [dbget [dbget top.insts.instTerms.name $pin -p].net.name -e]
+      set sinks [get_ports -q -of [get_nets $temp_net] -filter "direction==out"] 
+      if {$sinks ne ""} {
+        return _isPort.songFlag
+      } else {
+        error "proc get_sinkPins: is not port, and not found sink pins name for : $pin" 
+      }
+    } else {
+      set sinks [lmap sink $sinks {
+        set temp "[lindex $sink 0]"
+      }]
+      return $sinks
+    }
   }
 }

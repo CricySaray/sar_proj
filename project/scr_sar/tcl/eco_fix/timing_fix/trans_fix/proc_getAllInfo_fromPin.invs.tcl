@@ -49,6 +49,7 @@ proc get_allInfo_fromPin {{pinname ""} {forbiddenVT {AH9}} {driveCapacityRange {
     set allInfo [dict create ]
     dict set allInfo driverPin [get_driverPin $pinname]
     dict set allInfo sinksPin [get_sinkPins $pinname]
+    if {[dict get $allInfo sinksPin] eq "_isPort.songFlag" || [dict get $allInfo driverPin] eq "_isPort.songFlag"} { dict set allInfo ifIsIOpath 1 } else { dict set allInfo ifIsIOpath 0 }
     dict set allInfo netName [get_object_name [get_nets -of $pinname]]
     dict set allInfo netLen [get_net_length [dict get $allInfo netName]]
     dict set allInfo wiresPts [dbget [dbget top.nets.name [dict get $allInfo netName] -p].wires.pts]
@@ -56,8 +57,13 @@ proc get_allInfo_fromPin {{pinname ""} {forbiddenVT {AH9}} {driveCapacityRange {
     dict set allInfo sinksInstname [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].name }]
     dict set allInfo driverCellType [dbget [dbget top.insts.instTerms.name [dict get $allInfo driverPin] -p2].cell.name]
     dict set allInfo sinksCellType [lmap sinkpin [dict get $allInfo sinksPin] { dbget [dbget top.insts.instTerms.name $sinkpin -p2].cell.name }]
-    dict set allInfo driverCellClass [operateLUT -type read -attr [list celltype [dict get $allInfo driverCellType] class]]
-    dict set allInfo sinksCellClass [lmap sinkcelltype [dict get $allInfo sinksCellType] { operateLUT -type read -attr [list celltype $sinkcelltype class] }]
+    if {[dict get $allInfo ifIsIOpath]} { 
+      dict set allInfo driverCellClass buffer
+      dict set allInfo sinksCellClass buffer 
+    } else {
+      dict set allInfo driverCellClass [operateLUT -type read -attr [list celltype [dict get $allInfo driverCellType] class]]
+      dict set allInfo sinksCellClass [lmap sinkcelltype [dict get $allInfo sinksCellType] { operateLUT -type read -attr [list celltype $sinkcelltype class] }]
+    }
 
     dict set allInfo driverCapacity [operateLUT -type read -attr [list celltype [dict get $allInfo driverCellType] capacity]]
     dict set allInfo sinksCapacity [lmap sinkcelltype [dict get $allInfo sinksCellType] { operateLUT -type read -attr [list celltype $sinkcelltype capacity] }]

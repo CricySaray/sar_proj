@@ -120,6 +120,7 @@ proc sliding_rheostat_of_strategies {args} {
         {expr $ifNeedReRouteNet}
         {expr $ifNotSupportCellClass}
         {expr $ifComplexOne2More}
+        {expr $ifIsIOpath}
       }
       set ifPassPreCheck [expr ![cond_met_any {*}$preCheckConds]]
       if {!$ifPassPreCheck} { ; # NOTICE: include nonConsider and dirtyCase list
@@ -131,6 +132,7 @@ proc sliding_rheostat_of_strategies {args} {
         }
         if {$ifNotSupportCellClass} { set precheckFlag_03 "S" } ; # classNotSupport
         if {$ifComplexOne2More} { set precheckFlag_04 "X" } ; # compleXMore
+        if {$ifIsIOpath} { set precheckFlag_05 "O" }
 
         set precheckFlag [string cat {*}[lmap flag [info locals precheckFlag_*] { subst \${$flag} }]]
         set notPassPreCheck_list [concat $driverSinksSymbol $precheckFlag $addedInfoToShow]

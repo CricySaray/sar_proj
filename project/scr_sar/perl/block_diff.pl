@@ -7,6 +7,18 @@
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
 # descrip   : 
+#             ### Perl Script Function Overview
+#             This Perl script compares structured blocks of text between two files (File A and File B) with flexible customization options. It extracts text 
+#             blocks using user-defined rules (e.g., start/end markers or separators), processes each block (optional custom commands), and categorizes blocks 
+#             into three groups: blocks common to both files, blocks unique to File A, and blocks unique to File B.
+#             Key features:
+#             - Extract blocks via 4 modes: `start`, `end`, `start_end`, or `separator` (empty line by default)
+#             - Simplify blocks (filter lines by regex, replace consecutive spaces with single space)
+#             - Case-sensitive block comparison (no case conversion)
+#             - Generate 8 output files (4 original blocks + 4 simplified blocks)
+#             - Create a dynamic summary report with block statistics
+#             - Configurable output paths, block formatting (prefix/suffix/separator), and debug mode
+#             In short: It helps identify differences and similarities between text blocks in two files, with flexible extraction and formatting options.
 # return    : output diff files
 # ref       : link url
 # --------------------------

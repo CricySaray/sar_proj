@@ -1,6 +1,5 @@
 proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set attachedTerms [list]
-  set attachTermFiles ""
   set newViolFilePath ""
   set pba_mode "ex"
   set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
@@ -56,9 +55,11 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       if {[sizeof_collection $temp_affected_paths_at_capture_clock_path]} {
         if {$sideOfLaunchOrCaptureClock eq "launch"} {
           lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path_slack $temp_path]
+          set affectedPath_fromLaunch [lsearch -all -inline -not -exact $affectedPath_fromLaunch [list $temp_path_slack $temp_path]]
+        } else {
+          set sideOfLaunchOrCaptureClock "capture" 
+          lappend affectedPath_fromCapture [list $temp_path_slack $temp_path]
         }
-        set sideOfLaunchOrCaptureClock "capture" 
-        lappend affectedPath_fromCapture [list $temp_path_slack $temp_path]
       }
       set sideOfLaunchOrCaptureClock ""
     }
@@ -66,22 +67,40 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     set outputfilename "$outputFileBodyName.No$i.rpt"
     set fo [open $outputfilename w]
     puts $fo "# affected by term: $temp_attachedterm"
+    if {$noticeAttachedTermExistsAtBothLaunchAndCapture ne ""} {
+      puts $fo "NOTICE: affected path by both launch and capture clock path: (slack startpoint endpoint)"
+      foreach temp_affected_path $noticeAttachedTermExistsAtBothLaunchAndCapture {
+        lassign $temp_affected_path temp_attachedterm temp_slack temp_start_end
+        puts $fo "$temp_slack $temp_start_end" 
+      }
+    }
     if {$affectedPath_fromLaunch ne ""} {
-      puts $fo "AFFECTED PATHS BY LAUNCH:"
+      puts $fo "AFFECTED PATHS BY LAUNCH: (slack startpoint endpoint)"
       foreach temp_affected_path $affectedPath_fromLaunch {
         lassign $temp_affected_path temp_slack temp_start_end
         puts $fo "$temp_slack $temp_start_end" 
       }
-     
+    }
+    if {$affectedPath_fromCapture ne ""} {
+      puts $fo "AFFECTED PATHS BY CAPTURE: (slack startpoint endpoint)"
+      foreach temp_affected_path $affectedPath_fromCapture {
+        lassign $temp_affected_path temp_slack temp_start_end
+        puts $fo "$temp_slack $temp_start_end" 
+      }
     }
     close $fo
   }
 }
+  set attachedTerms [list]
+  set newViolFilePath ""
+  set pba_mode "ex"
+  set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
+  set outputFileBodyName "affectedPathByAttachedTerm"
 
 define_proc_attribute getInfoOfFluencyOfAttachedTerm_forNewViolPath \
   -info "get info of fluency of attached terms for new viol path"\
   -define_args {
-    {-type "specify the type of eco" oneOfString one_of_string {optional value_type {values {change add delRepeater delNet move}}}}
-    {-inst "specify inst to eco when type is add/delete" AString string optional}
+    {-attachedTerms "specify attached terms" AList list optional}
+    {-inst "specify the new viol path file" AString string optional}
     {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
   }

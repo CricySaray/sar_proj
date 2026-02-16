@@ -35,6 +35,8 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   }
   close $fi
   set affectedPath_fromLaunch [list]
+  set affectedPath_fromCapture [list]
+  set noticeAttachedTermExistsAtBothLaunchAndCapture [list]
   set sideOfLaunchOrCaptureClock ""
   foreach temp_attachedterm $attachedTerms {
     foreach temp_path $pathOfStartToEndList {
@@ -49,9 +51,13 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
         lappend affectedPath_fromLaunch $temp_path
       }
       if {[sizeof_collection $temp_affected_paths_at_capture_clock_path]} {
+        if {$sideOfLaunchOrCaptureClock eq "launch"} {
+          lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path]
+        }
         set sideOfLaunchOrCaptureClock "capture" 
         lappend affectedPath_fromCapture $temp_path
       }
+      set sideOfLaunchOrCaptureClock ""
     }
   }
 }

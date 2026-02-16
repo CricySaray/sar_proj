@@ -1,3 +1,20 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2026/02/16 21:23:14 Monday
+# label     : clock_tree_relative_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : * Input a list of attachTerms (these terms must be locations on the clock tree), along with a violation path report file. 
+#             It can determine which violations are affected by these terms, or identify which new violation paths are caused by jumper 
+#             changes to terms on the clock tree.
+#             * Alternatively, you can run this script once every time you make a jumper change during the routing process to see how many 
+#             paths are affected by that single jumper adjustment.  
+#             This prevents unpredictable impacts caused by repeated jumper changes on different violations that share the same clock tree path.
+# return    : output affected path summary file and summary list
+# ref       : link url
+# --------------------------
 proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set attachedTerms [list]
   set violPathFile ""

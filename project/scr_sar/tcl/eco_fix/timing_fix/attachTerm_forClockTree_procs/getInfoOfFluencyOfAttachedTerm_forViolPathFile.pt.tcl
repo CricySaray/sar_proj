@@ -4,6 +4,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set pba_mode "ex"
   set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
   set outputFileBodyName "affectedPathByAttachedTerm"
+  set output_dir "./"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -73,7 +74,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       }
     }
     incr i
-    set outputfilename "$outputFileBodyName.No$i.rpt"
+    set outputfilename "$output_dir/$outputFileBodyName.No$i.rpt"
     set fo [open $outputfilename w]
     puts $fo "# affected by term: $temp_attachedterm"
     if {$noticeAttachedTermExistsAtBothLaunchAndCapture ne ""} {
@@ -114,8 +115,15 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     close $fo
     set noticePathNum [llength $noticeAttachedTermExistsAtBothLaunchAndCapture]
     set launchRelatedPathNum [llength $affectedPath_fromLaunch]
+    set captureRelatedPathNum [llength $affectedPath_fromCapture]
+    set noAffectedPathNum [llength $noAffectPath]
     puts "For attached term: $temp_attachedterm"
-    puts "have"
+    puts "  need notice path         : $noticePathNum"
+    puts "  launch related path num  : $launchRelatedPathNum"
+    puts "  capture related path num : $captureRelatedPathNum"
+    puts "  no affected path num     : $noAffectedPathNum"
+    puts "  output file name         : $outputfilename"
+    puts " ------ "
   }
   
 }
@@ -127,4 +135,5 @@ define_proc_attributes getInfoOfFluencyOfAttachedTerm_forNewViolPath \
     {-pba_mode "specify the pba mode for get_timing path" AString string optional}
     {-tmp_dir_name "specify the tmp dir name" AString string optional}
     {-outputFileBodyName "specify the output file body name" AString string optional}
+    {-output_dir "specify the output directory" AString string optional}
   }

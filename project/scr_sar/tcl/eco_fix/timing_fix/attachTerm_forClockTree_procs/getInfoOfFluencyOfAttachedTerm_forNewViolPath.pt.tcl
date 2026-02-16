@@ -4,7 +4,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set newViolFilePath ""
   set pba_mode "ex"
   set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
-  set outputFileBodyname "affectedPath"
+  set outputFileBodyName "affectedPathByAttachedTerm"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -39,6 +39,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set affectedPath_fromCapture [list]
   set noticeAttachedTermExistsAtBothLaunchAndCapture [list]
   set sideOfLaunchOrCaptureClock ""
+  set i 0
   foreach temp_attachedterm $attachedTerms {
     foreach temp_path $pathOfStartToEndList {
       lassign $temp_path temp_start temp_end 
@@ -61,8 +62,20 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       }
       set sideOfLaunchOrCaptureClock ""
     }
+    incr i
+    set outputfilename "$outputFileBodyName.No$i.rpt"
+    set fo [open $outputfilename w]
+    puts $fo "# affected by term: $temp_attachedterm"
+    if {$affectedPath_fromLaunch ne ""} {
+      puts $fo "AFFECTED PATHS BY LAUNCH:"
+      foreach temp_affected_path $affectedPath_fromLaunch {
+        lassign $temp_affected_path temp_slack temp_start_end
+        puts $fo "$temp_slack $temp_start_end" 
+      }
+     
+    }
+    close $fo
   }
-  set fo [open ]
 }
 
 define_proc_attribute getInfoOfFluencyOfAttachedTerm_forNewViolPath \

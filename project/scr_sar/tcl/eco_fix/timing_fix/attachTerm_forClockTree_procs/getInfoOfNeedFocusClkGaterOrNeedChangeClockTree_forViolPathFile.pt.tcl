@@ -1,7 +1,11 @@
 proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
-  set violPathFile ""
+  # NOTICE: need find points after common point
+  set violPathFile            ""
   set numNeedContinueCkBufInv 4
-  set tmp_dir_name ".tmp_dir_for_get_simple_viol_path_file"
+  set typeOfPathClockTree     "launch" ; # launch|capture
+  set tmp_dir_name            ".tmp_dir_for_get_simple_viol_path_file"
+  set output_dir              "./"
+  set outputFileBodyName      "findSameClockTreePart"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

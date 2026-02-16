@@ -4,6 +4,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set newViolFilePath ""
   set pba_mode "ex"
   set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
+  set outputFileBodyname "affectedPath"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -42,24 +43,26 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     foreach temp_path $pathOfStartToEndList {
       lassign $temp_path temp_start temp_end 
       set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]
+      set temp_path_slack [get_attribute $temp_col_full_clock_path slack]
       set temp_col_launch_clock_points [get_attribute [get_attribute $temp_col_full_clock_path launch_clock_paths] points]
       set temp_col_capture_clock_points [get_attribute [get_attribute $temp_col_full_clock_path capture_clock_paths] points]
       set temp_affected_paths_at_launch_clock_path [filter_collection $temp_col_launch_clock_points {$temp_attachedterm =~ "@name"}]
       set temp_affected_paths_at_capture_clock_path [filter_collection $temp_col_capture_clock_points {$temp_attachedterm =~ "@name"}]
       if {[sizeof_collection $temp_affected_paths_at_launch_clock_path]} {
         set sideOfLaunchOrCaptureClock "launch"
-        lappend affectedPath_fromLaunch $temp_path
+        lappend affectedPath_fromLaunch [list $temp_path_slack $temp_path]
       }
       if {[sizeof_collection $temp_affected_paths_at_capture_clock_path]} {
         if {$sideOfLaunchOrCaptureClock eq "launch"} {
-          lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path]
+          lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path_slack $temp_path]
         }
         set sideOfLaunchOrCaptureClock "capture" 
-        lappend affectedPath_fromCapture $temp_path
+        lappend affectedPath_fromCapture [list $temp_path_slack $temp_path]
       }
       set sideOfLaunchOrCaptureClock ""
     }
   }
+  set fo [open ]
 }
 
 define_proc_attribute getInfoOfFluencyOfAttachedTerm_forNewViolPath \

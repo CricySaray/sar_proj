@@ -13,7 +13,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     error "proc getInfoOfFluencyOfAttachedTerm_forNewViolPath: input error, not found viol file: $violPathFile" 
   }
   mkdir -p ./$tmp_dir_name
-  exec grep -E 'Startpoint:|Endpoint:' $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
+  exec grep -E "Startpoint:|Endpoint:" $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
   set fi [open $tmp_dir_name/simple_newViolFile.rpt r]
   set flagSearchStartOrEndpoint "start"
   set pathOfStartToEndList [list]
@@ -44,8 +44,8 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       lassign $temp_path temp_start temp_end 
       set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]
       set temp_path_slack [get_attribute $temp_col_full_clock_path slack]
-      set temp_col_launch_clock_points [get_attribute [get_attribute $temp_col_full_clock_path launch_clock_paths] points]
-      set temp_col_capture_clock_points [get_attribute [get_attribute $temp_col_full_clock_path capture_clock_paths] points]
+      set temp_col_launch_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path launch_clock_paths] points] object]
+      set temp_col_capture_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path capture_clock_paths] points] object]
       set temp_affected_paths_at_launch_clock_path [filter_collection $temp_col_launch_clock_points {$temp_attachedterm =~ "@name"}]
       set temp_affected_paths_at_capture_clock_path [filter_collection $temp_col_capture_clock_points {$temp_attachedterm =~ "@name"}]
       if {[sizeof_collection $temp_affected_paths_at_launch_clock_path]} {

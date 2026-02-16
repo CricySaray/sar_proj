@@ -1,6 +1,6 @@
 proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set attachedTerms [list]
-  set newViolFilePath ""
+  set violPathFile ""
   set pba_mode "ex"
   set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
   set outputFileBodyName "affectedPathByAttachedTerm"
@@ -9,11 +9,11 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  if {![file exists $newViolFilePath]} {
-    error "proc getInfoOfFluencyOfAttachedTerm_forNewViolPath: input error, not found viol file: $newViolFilePath" 
+  if {![file exists $violPathFile]} {
+    error "proc getInfoOfFluencyOfAttachedTerm_forNewViolPath: input error, not found viol file: $violPathFile" 
   }
   mkdir -p ./$tmp_dir_name
-  exec grep -E 'Startpoint:|Endpoint:' $newViolFilePath > $tmp_dir_name/simple_newViolFile.rpt
+  exec grep -E 'Startpoint:|Endpoint:' $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
   set fi [open $tmp_dir_name/simple_newViolFile.rpt r]
   set flagSearchStartOrEndpoint "start"
   set pathOfStartToEndList [list]
@@ -91,16 +91,12 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     close $fo
   }
 }
-  set attachedTerms [list]
-  set newViolFilePath ""
-  set pba_mode "ex"
-  set tmp_dir_name ".tmp_dir_for_gen_new_viol_path_simple_rpt"
-  set outputFileBodyName "affectedPathByAttachedTerm"
-
-define_proc_attribute getInfoOfFluencyOfAttachedTerm_forNewViolPath \
-  -info "get info of fluency of attached terms for new viol path"\
+define_proc_attributes getInfoOfFluencyOfAttachedTerm_forNewViolPath \
+  -info "get info of fluency of attached terms for new viol path file"\
   -define_args {
     {-attachedTerms "specify attached terms" AList list optional}
-    {-inst "specify the new viol path file" AString string optional}
-    {-distance "specify the distance of movement of inst when type is 'move'" AFloat float optional}
+    {-violPathFile "specify the new viol path file" AString string optional}
+    {-pba_mode "specify the pba mode for get_timing path" AString string optional}
+    {-tmp_dir_name "specify the tmp dir name" AString string optional}
+    {-outputFileBodyName "specify the output file body name" AString string optional}
   }

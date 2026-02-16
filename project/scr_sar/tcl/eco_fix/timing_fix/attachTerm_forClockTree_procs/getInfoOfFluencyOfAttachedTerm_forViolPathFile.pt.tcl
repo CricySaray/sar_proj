@@ -34,12 +34,16 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     }
   }
   close $fi
+  set pathNum [llength $pathOfStartToEndList]
+  puts "total find $pathNum path."
   set affectedPath_fromLaunch [list]
   set affectedPath_fromCapture [list]
+  set noAffectPath [list]
   set noticeAttachedTermExistsAtBothLaunchAndCapture [list]
   set sideOfLaunchOrCaptureClock ""
   set i 0
   suppress_message UITE-416
+  suppress_message UITE-479
   foreach temp_attachedterm $attachedTerms {
     foreach temp_path $pathOfStartToEndList {
       lassign $temp_path temp_start temp_end 
@@ -62,7 +66,11 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
           lappend affectedPath_fromCapture [list $temp_path_slack $temp_path]
         }
       }
-      set sideOfLaunchOrCaptureClock ""
+      if {$sideOfLaunchOrCaptureClock eq ""} {
+        lappend noAffectPath [list $temp_path_slack $temp_path]
+      } else {
+        set sideOfLaunchOrCaptureClock ""
+      }
     }
     incr i
     set outputfilename "$outputFileBodyName.No$i.rpt"
@@ -93,9 +101,23 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
         lassign $temp_start_end temp_start_2 temp_end_2
         puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
+      puts $fo ""
+    }
+    if {$noAffectPath ne ""} {
+      puts $fo "NO AFFECTED PATHS: (slack startpoint endpoint)"
+      foreach temp_no_affected_path $noAffectPath {
+        lassign $temp_no_affected_path temp_slack temp_start_end
+        lassign $temp_start_end temp_start_2 temp_end_2
+        puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
+      }
     }
     close $fo
+    set noticePathNum [llength $noticeAttachedTermExistsAtBothLaunchAndCapture]
+    set launchRelatedPathNum [llength $affectedPath_fromLaunch]
+    puts "For attached term: $temp_attachedterm"
+    puts "have"
   }
+  
 }
 define_proc_attributes getInfoOfFluencyOfAttachedTerm_forNewViolPath \
   -info "get info of fluency of attached terms for new viol path file"\

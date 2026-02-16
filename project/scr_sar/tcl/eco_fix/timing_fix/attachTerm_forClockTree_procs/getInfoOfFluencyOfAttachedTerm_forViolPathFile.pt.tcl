@@ -53,7 +53,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
         set sideOfLaunchOrCaptureClock "launch"
         lappend affectedPath_fromLaunch [list $temp_path_slack $temp_path]
       }
-      if {[lsearch -regexp $temp_list_capture_clock_points $temp_attachedterm]} {
+      if {[lsearch -regexp $temp_list_capture_clock_points $temp_attachedterm] != -1} {
         if {$sideOfLaunchOrCaptureClock eq "launch"} {
           lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path_slack $temp_path]
           set affectedPath_fromLaunch [lsearch -all -inline -not -exact $affectedPath_fromLaunch [list $temp_path_slack $temp_path]]
@@ -72,7 +72,8 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       puts $fo "NOTICE: affected path by both launch and capture clock path: (slack startpoint endpoint)"
       foreach temp_affected_path $noticeAttachedTermExistsAtBothLaunchAndCapture {
         lassign $temp_affected_path temp_attachedterm temp_slack temp_start_end
-        puts $fo "$temp_slack $temp_start_end" 
+        lassign $temp_start_end temp_start_2 temp_end_2
+        puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
       puts $fo ""
     }
@@ -80,7 +81,8 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       puts $fo "AFFECTED PATHS BY LAUNCH: (slack startpoint endpoint)"
       foreach temp_affected_path $affectedPath_fromLaunch {
         lassign $temp_affected_path temp_slack temp_start_end
-        puts $fo "$temp_slack $temp_start_end" 
+        lassign $temp_start_end temp_start_2 temp_end_2
+        puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
       puts $fo ""
     }
@@ -88,7 +90,8 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       puts $fo "AFFECTED PATHS BY CAPTURE: (slack startpoint endpoint)"
       foreach temp_affected_path $affectedPath_fromCapture {
         lassign $temp_affected_path temp_slack temp_start_end
-        puts $fo "$temp_slack $temp_start_end" 
+        lassign $temp_start_end temp_start_2 temp_end_2
+        puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
     }
     close $fo

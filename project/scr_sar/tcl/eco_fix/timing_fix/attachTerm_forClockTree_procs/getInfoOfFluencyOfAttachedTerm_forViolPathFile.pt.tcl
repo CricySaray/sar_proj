@@ -12,7 +12,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   if {![file exists $violPathFile]} {
     error "proc getInfoOfFluencyOfAttachedTerm_forNewViolPath: input error, not found viol file: $violPathFile" 
   }
-  mkdir -p ./$tmp_dir_name
+  exec mkdir -p ./$tmp_dir_name
   exec grep -E "Startpoint:|Endpoint:" $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
   set fi [open $tmp_dir_name/simple_newViolFile.rpt r]
   set flagSearchStartOrEndpoint "start"
@@ -39,6 +39,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set noticeAttachedTermExistsAtBothLaunchAndCapture [list]
   set sideOfLaunchOrCaptureClock ""
   set i 0
+  suppress_message UITE-416
   foreach temp_attachedterm $attachedTerms {
     foreach temp_path $pathOfStartToEndList {
       lassign $temp_path temp_start temp_end 
@@ -46,13 +47,13 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
       set temp_path_slack [get_attribute $temp_col_full_clock_path slack]
       set temp_col_launch_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path launch_clock_paths] points] object]
       set temp_col_capture_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path capture_clock_paths] points] object]
-      set temp_affected_paths_at_launch_clock_path [filter_collection $temp_col_launch_clock_points {$temp_attachedterm =~ "@name"}]
-      set temp_affected_paths_at_capture_clock_path [filter_collection $temp_col_capture_clock_points {$temp_attachedterm =~ "@name"}]
-      if {[sizeof_collection $temp_affected_paths_at_launch_clock_path]} {
+      set temp_list_launch_clock_points [get_object_name $temp_col_launch_clock_points]
+      set temp_list_capture_clock_points [get_object_name $temp_col_capture_clock_points]
+      if {[lsearch -regexp $temp_list_launch_clock_points $temp_attachedterm] != -1} {
         set sideOfLaunchOrCaptureClock "launch"
         lappend affectedPath_fromLaunch [list $temp_path_slack $temp_path]
       }
-      if {[sizeof_collection $temp_affected_paths_at_capture_clock_path]} {
+      if {[lsearch -regexp $temp_list_capture_clock_points $temp_attachedterm]} {
         if {$sideOfLaunchOrCaptureClock eq "launch"} {
           lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path_slack $temp_path]
           set affectedPath_fromLaunch [lsearch -all -inline -not -exact $affectedPath_fromLaunch [list $temp_path_slack $temp_path]]
@@ -73,6 +74,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
         lassign $temp_affected_path temp_attachedterm temp_slack temp_start_end
         puts $fo "$temp_slack $temp_start_end" 
       }
+      puts $fo ""
     }
     if {$affectedPath_fromLaunch ne ""} {
       puts $fo "AFFECTED PATHS BY LAUNCH: (slack startpoint endpoint)"
@@ -80,6 +82,7 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
         lassign $temp_affected_path temp_slack temp_start_end
         puts $fo "$temp_slack $temp_start_end" 
       }
+      puts $fo ""
     }
     if {$affectedPath_fromCapture ne ""} {
       puts $fo "AFFECTED PATHS BY CAPTURE: (slack startpoint endpoint)"

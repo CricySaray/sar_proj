@@ -104,8 +104,13 @@ proc get_fanout_endpoints {pin {type "all"}} {
 # ref       : link url
 # --------------------------
 proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode ex} {prefixOfInstInTopSta U_M3KL_MAIN_SUB_WRAP} {showlastItemNum 10}} {
+  set ifDumpSmallSlackPath 1
+  set thresholdOfDumpPath 0.03
+  set outputFileBodyName "slackLessPathDump_fromProc_get_slack_forSepcifiedPins"
+  set output_dir "./"
+
   set slack_less 9999
-  set list_slack_pin [list]
+  set list_slack_inst [list]
   set list_notFoundSlack_pin [list]
   puts "total get [llength $pinsOrInsts] pinsOrInsts, begin find slack..."
   set i 0
@@ -135,11 +140,12 @@ proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode e
         continue 
       }
     } elseif {[get_object_name [get_cells -q $temp_pin_or_inst]] ne ""} {
+      set temp_inst [get_cells $temp_pin_or_inst]
       if {[get_attribute [get_cells $temp_pin_or_inst] is_sequential] || [get_attribute [get_cells $temp_pin_or_inst] is_black_box]} {
         if {[regexp start $type]} {
-          set temp_pins_col [get_pins -of $temp_pin_or_inst -filter "direction==out"]
+          set temp_pins_col [get_pins -of $temp_inst -filter "direction==out"]
         } elseif {[regexp end $type]} {
-          set temp_pins_col [get_pins -of $temp_pin_or_inst -filter "direction==in"]
+          set temp_pins_col [get_pins -of $temp_inst -filter "direction==in"]
         } else {
           error "proc get_slack_forSepecifiedPins: error type at 2: is invalid type : $type "
         }
@@ -158,10 +164,10 @@ proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode e
       error "proc get_slack_forSepecifiedPins: error type : $type" 
     }
     if {$temp_slack ne "" && [string is double $temp_slack]} {
-      lappend list_slack_pin [list $temp_slack $temp_pin_or_inst]
+      lappend list_slack_inst [list $temp_slack $temp_inst]
     } else {
-      lappend list_notFoundSlack_pin [list $type $temp_pin_or_inst]
-      # error "proc get_slack_forSepecifiedPins: error not found slack value or not floating num for temp_pin: $temp_pin_or_inst"
+      lappend list_notFoundSlack_pin [list $type $temp_inst]
+      # error "proc get_slack_forSepecifiedPins: error not found slack value or not floating num for temp_pin: $temp_inst"
     }
   } 
   puts ""
@@ -170,10 +176,15 @@ proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode e
   puts "find $sequential_or_black_box_pinOrInst_num reg or mem/ip pins or insts."
   puts "have [llength $list_notFoundSlack_pin] path that not found slack!!!"
   puts " ------ "
-  set list_slack_pin [lsort -index 0 -decreasing -real $list_slack_pin]
+  set list_slack_inst [lsort -index 0 -decreasing -real $list_slack_inst]
+  set reverse_list_slack_inst [lreverse $list_slack_inst]
+  foreach temp_slack_pin $reverse_list_slack_inst {
+    lassign $temp_slack_pin temp_slack temp_inst
+    if {} 
+  }
   if {$showlastItemNum != 0} {
     set from_idx [expr {[llength $pinsOrInsts] - $showlastItemNum + 1}]
-    set list_slack_pin [lrange $list_slack_pin $from_idx end] 
+    set list_slack_inst [lrange $list_slack_inst $from_idx end] 
   }
-  puts [join $list_slack_pin \n]
+  puts [join $list_slack_inst \n]
 }

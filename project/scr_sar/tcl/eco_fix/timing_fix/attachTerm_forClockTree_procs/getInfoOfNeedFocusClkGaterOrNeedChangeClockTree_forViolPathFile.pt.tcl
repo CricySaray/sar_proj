@@ -222,17 +222,23 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   }
   close $fo
   set outputfilename_notFindMeetCondition "$output_dir/$outputFileBodyName.notMeetContinuousCondition.rpt"
+  set numOfNotMeetContinuousConditionPath [llength $notFindMeetContinueBufInvPathList]
   set fo_2 [open $outputfilename_notFindMeetCondition w]
-  puts $fo_2 "have [llength $notFindMeetContinueBufInvPathList] path that not meet continuous condition."
-  foreach temp_path $notFindMeetContinueBufInvPathList {
-    
+  puts $fo_2 "have $numOfNotMeetContinuousConditionPath path that not meet continuous condition."
+  puts $fo_2 ""
+  foreach temp_slack_path $notFindMeetContinueBufInvPathList {
+    lassign $temp_slack_path temp_slack_path temp_path
+    lassign $temp_path temp_start temp_end
+    puts $fo_2 "$temp_slack $temp_start\n\t\t$temp_end"
   }
+  close $fo_2
   puts ""
   puts " ------ "
   puts "total $pathNum path."
   puts "have $i groups."
-  puts "have $groupedPathNum grouped path that meets continue condition."
+  puts "have $groupedPathNum grouped path that meets continuous condition."
   puts "max group items: $maxGroupItems"
+  puts "have $numOfNotMeetContinuousConditionPath paths that does not meet continuous condition."
   puts "output summary file: $outputfilename"
   puts " ------ "
   

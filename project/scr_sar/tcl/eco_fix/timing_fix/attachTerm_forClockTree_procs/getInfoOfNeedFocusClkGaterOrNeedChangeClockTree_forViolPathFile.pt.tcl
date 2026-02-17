@@ -42,11 +42,15 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   close $fi
   set pathNum [llength $pathOfStartToEndList]
   puts "total find $pathNum path."
+
+  suppress_message UITE-416
+  suppress_message UITE-479
   
   set clockTreeMeetConditionPathBlock [list]
   set notFindMeetContinueBufInvPathList [list]
   foreach temp_path $pathOfStartToEndList {
     lassign $temp_path temp_start temp_end 
+    puts "Now processing: \n\tstartpoint: $temp_start\n\tendpoint: $temp_end"
     set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]
     set temp_path_slack [get_attribute $temp_col_full_clock_path slack]
     if {$typeOfPathClockTree eq "launch"} {
@@ -57,14 +61,15 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
         set temp_list_launch_clock_insts_after_process_continue_keep_condition [list] 
         set flagOfBeginMonitor 0
         foreach temp_inst $temp_list_launch_clock_insts {
-          if {[regexp $keepContinueClockTreeInstName $temp_inst] && !$flagOfBeginMonitor} {
+          if {[regexp -expanded $keepContinueClockTreeInstName $temp_inst]} {
             set flagOfBeginMonitor 1 
             lappend temp_list_launch_clock_insts_after_process_continue_keep_condition $temp_inst
-          }
-          if {![regexp $keepContinueClockTreeInstName $temp_inst] && $flagOfBeginMonitor} {
+          } elseif {![regexp -expanded $keepContinueClockTreeInstName $temp_inst] && $flagOfBeginMonitor} {
             break 
           }
         }
+      } else {
+        set temp_list_launch_clock_insts_after_process_continue_keep_condition $temp_list_launch_clock_insts 
       }
       set temp_num_of_buf_or_inv 0
       set temp_num_of_clkgater 0
@@ -94,14 +99,15 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
         set temp_list_capture_clock_insts_after_process_continue_keep_condition [list] 
         set flagOfBeginMonitor 0
         foreach temp_inst $temp_list_capture_clock_insts {
-          if {[regexp $keepContinueClockTreeInstName $temp_inst] && !$flagOfBeginMonitor} {
+          if {[regexp -expanded $keepContinueClockTreeInstName $temp_inst]} {
             set flagOfBeginMonitor 1 
             lappend temp_list_capture_clock_insts_after_process_continue_keep_condition $temp_inst
-          }
-          if {![regexp $keepContinueClockTreeInstName $temp_inst] && $flagOfBeginMonitor} {
+          } elseif {![regexp -expanded $keepContinueClockTreeInstName $temp_inst] && $flagOfBeginMonitor} {
             break 
           }
         }
+      } else {
+        set temp_list_capture_clock_insts_after_process_continue_keep_condition $temp_list_capture_clock_insts 
       }
       set temp_num_of_buf_or_inv 0
       set temp_num_of_clkgater 0
@@ -132,22 +138,25 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     if {$finalClockClockPath_to_violPath eq "" || [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] == -1} {
       lappend finalClockClockPath_to_violPath [list $temp_save_buffer_or_inverter_name [list [list $temp_path_slack $temp_path]]] 
     } elseif {$finalClockClockPath_to_violPath ne "" && [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] != -1} {
-      lset finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] 1 [list {*}[lindex $finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] 1] [list $temp_path_slack $temp_path]]
+      lset finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] end [list {*}[lindex $finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] end] [list $temp_path_slack $temp_path]]
     }
   }
   set outputfilename "$output_dir/$outputFileBodyName.rpt"
   set fo [open $outputfilename w]
+  set i 0
   foreach temp_block_info $finalClockClockPath_to_violPath {
+    incr i
     lassign $temp_block_info temp_save_buffer_or_inverter_name temp_paths 
-    puts $fo "No 1:"
+    puts $fo "No $i:"
     puts $fo "continue buffer or inverter inst:"
     puts $fo [join $temp_save_buffer_or_inverter_name \n]
     puts $fo "RELATED PATHS: (slack startpoint endpoint)"
     foreach temp_path $temp_paths {
-      lassign $temp_path temp_slack temp_start temp_end
-      puts $fo "$temp_slack $temp_start\n\t$temp_end"
+      lassign $temp_path temp_slack temp_start_end
+      lassign $temp_start_end temp_start temp_end
+      puts $fo "$temp_slack $temp_start\n\t\t$temp_end"
     }
-    puts ""
+    puts $fo ""
   }
   close $fo
   

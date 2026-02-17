@@ -718,6 +718,68 @@ if {[is_common_ui_mode]} {
 
 if {[is_common_ui_mode]} { gui_hide }
 
+proc get_fanin_startpoints {pin {type "all"}} { ; # type : all reg block port
+  set all_startpoins [get_object_name [all_fanin -startpoints_only -to $pin]]
+  if {$all_startpoins ne ""} {
+    if {$type eq "all"} {
+      return $all_startpoins
+    } elseif {$type eq "reg"} {
+      return [lmap temp_pin $all_startpoins {
+        if {[dbget [dbget top.insts.instTerms.name $temp_pin -p2].cell.subClass -e] eq "core"} {
+          set temp_pin 
+        } else { continue }
+      }]
+    } elseif {$type eq "block"} {
+      return [lmap temp_pin $all_startpoins {
+        if {[dbget [dbget top.insts.instTerms.name $temp_pin -p2].cell.subClass -e] eq "block"} {
+          set temp_pin 
+        } else { continue }
+      }]
+    } elseif {$type eq "port"} {
+      return [lmap temp_pin $all_startpoins {
+        if {[dbget top.terms.name $temp_pin -e] ne ""} {
+          set temp_pin 
+        } else { continue }
+      }]
+    } else {
+      error "porc get_fanin_startpoints: error type ($type) is invalid" 
+    }
+  } else {
+    puts "WARNING: have no startpoints!!!"
+    return [list] 
+  }
+}
+proc get_fanout_endpoints {pin {type "all"}} {
+  set all_endpoints [get_object_name [all_fanout -endpoints_only -from $pin]]
+  if {$all_endpoints ne ""} {
+    if {$type eq "all"} {
+      return $all_endpoints
+    } elseif {$type eq "reg"} {
+      return [lmap temp_pin $all_endpoints {
+        if {[dbget [dbget top.insts.instTerms.name $temp_pin -p2].cell.subClass -e] eq "core"} {
+          set temp_pin 
+        } else { continue }
+      }]
+    } elseif {$type eq "block"} {
+      return [lmap temp_pin $all_endpoints {
+        if {[dbget [dbget top.insts.instTerms.name $temp_pin -p2].cell.subClass -e] eq "block"} {
+          set temp_pin 
+        } else { continue }
+      }]
+    } elseif {$type eq "port"} {
+      return [lmap temp_pin $all_endpoints {
+        if {[dbget top.terms.name $temp_pin -e] ne ""} {
+          set temp_pin 
+        } else { continue }
+      }]
+    } else {
+      error "porc get_fanout_endpoints: error type ($type) is invalid" 
+    }
+  } else {
+    puts "WARNING: have no endpoints!!!"
+    return [list] 
+  }
+}
 
 
 ### format procs :

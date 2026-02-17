@@ -178,9 +178,22 @@ proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode e
   puts " ------ "
   set list_slack_inst [lsort -index 0 -decreasing -real $list_slack_inst]
   set reverse_list_slack_inst [lreverse $list_slack_inst]
+  set outputfilename "$output_dir/$outputFileBodyName.rpt"
+  if {[file exists $outputfilename]} {
+    file delete $outputfilename 
+    exec touch $outputfilename
+  }
   foreach temp_slack_pin $reverse_list_slack_inst {
     lassign $temp_slack_pin temp_slack temp_inst
-    if {} 
+    if {$temp_slack <= $thresholdOfDumpPath} {
+      if {[regexp start $type]} {
+        set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==out"]
+        redirect -append $outputfilename {report_timing -from $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000}
+      } elseif {[regexp end $type]} {
+        set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==in"]
+        redirect -append $outputfilename {report_timing -to $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000}
+      }
+    }
   }
   if {$showlastItemNum != 0} {
     set from_idx [expr {[llength $pinsOrInsts] - $showlastItemNum + 1}]

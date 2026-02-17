@@ -73,7 +73,6 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   set clockTreeMeetConditionPathBlock [list]
   set notFindMeetContinueBufInvPathList [list]
   set i 0
-  puts "total find $pathNum path."
   puts "processing path: ..."
   foreach temp_path $pathOfStartToEndList {
     incr i
@@ -192,6 +191,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo [join $temp_save_buffer_or_inverter_name \n]
     puts $fo "RELATED PATHS: (slack startpoint endpoint)"
     if {[llength $temp_paths] > $maxGroupItems} { set maxGroupItems [llength $temp_paths] }
+    set temp_paths [lsort -index 0 -real -increasing $temp_paths]
     foreach temp_path $temp_paths {
       lassign $temp_path temp_slack temp_start_end
       lassign $temp_start_end temp_start temp_end

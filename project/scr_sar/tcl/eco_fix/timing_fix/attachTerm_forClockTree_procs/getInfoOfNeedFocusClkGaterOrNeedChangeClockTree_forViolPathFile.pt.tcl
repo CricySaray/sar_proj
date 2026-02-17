@@ -72,7 +72,13 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   
   set clockTreeMeetConditionPathBlock [list]
   set notFindMeetContinueBufInvPathList [list]
+  set i 0
+  puts "total find $pathNum path."
+  puts "processing path: ..."
   foreach temp_path $pathOfStartToEndList {
+    incr i
+    puts -nonewline "$i "
+    flush stdout
     lassign $temp_path temp_start temp_end 
     # puts "Now processing: \n\tstartpoint: $temp_start\n\tendpoint: $temp_end"
     set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]

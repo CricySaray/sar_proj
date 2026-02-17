@@ -65,7 +65,12 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     set noticeAttachedTermExistsAtBothLaunchAndCapture_$temp_create_i [list]
     set noAffectPath_$temp_create_i [list]
   }
+  puts "processing ..."
+  set temp_No 0
   foreach temp_path $pathOfStartToEndList {
+    incr temp_No
+    puts -nonewline "$temp_No "
+    flush stdout
     lassign $temp_path temp_start temp_end 
     set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]
     set temp_path_slack [get_attribute $temp_col_full_clock_path slack]

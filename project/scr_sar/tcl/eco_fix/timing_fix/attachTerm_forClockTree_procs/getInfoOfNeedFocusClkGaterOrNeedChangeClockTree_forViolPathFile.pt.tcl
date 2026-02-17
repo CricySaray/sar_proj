@@ -183,6 +183,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   set outputfilename "$output_dir/$outputFileBodyName.rpt"
   set fo [open $outputfilename w]
   set i 0
+  set maxGroupItems 0
   foreach temp_block_info $finalClockClockPath_to_violPath {
     incr i
     lassign $temp_block_info temp_save_buffer_or_inverter_name temp_paths 
@@ -190,6 +191,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo "continue buffer or inverter inst:"
     puts $fo [join $temp_save_buffer_or_inverter_name \n]
     puts $fo "RELATED PATHS: (slack startpoint endpoint)"
+    if {[llength $temp_paths] > $maxGroupItems} { set maxGroupItems [llength $temp_paths] }
     foreach temp_path $temp_paths {
       lassign $temp_path temp_slack temp_start_end
       lassign $temp_start_end temp_start temp_end
@@ -198,6 +200,13 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo ""
   }
   close $fo
+  puts ""
+  puts " ------ "
+  puts "total $pathNum path."
+  puts "have $i groups."
+  puts "max group items: $maxGroupItems"
+  puts "output summary file: $outputfilename"
+  puts " ------ "
   
 }
 

@@ -23,17 +23,18 @@
 #   clock tree paths among them to reduce the number of groups. Nevertheless, this will correspondingly increase the impact caused by jumper adjustments.
 proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   # NOTICE: need find points after common point
-  set violPathFile                  ""
-  set numNeedContinueCkBufInv       4
-  set pba_mode                      "ex"
-  set buffOrInvRegExp               {DCCKN|DCCKB|CKB|CKN}
-  set clkgaterCelltypeRegExp        {^CKLNQD}
-  set keepContinueClockTreeInstName {U_MAIN_SUB}
-  set needFindInstNameExp           {_cdb_}
-  set typeOfPathClockTree           "launch" ; # launch|capture
-  set tmp_dir_name                  ".tmp_dir_for_get_simple_viol_path_file"
-  set output_dir                    "./"
-  set outputFileBodyName            "findSameClockTreePart"
+  set violPathFile                     ""
+  set ifFindLongestClockTreeCommonPath 1
+  set numNeedContinueCkBufInv          4
+  set pba_mode                         "ex"
+  set buffOrInvRegExp                  {DCCKN|DCCKB|CKB|CKN}
+  set clkgaterCelltypeRegExp           {^CKLNQD}
+  set keepContinueClockTreeInstName    {U_MAIN_SUB}
+  set needFindInstNameExp              {_cdb_}
+  set typeOfPathClockTree              "launch" ; # launch|capture
+  set tmp_dir_name                     ".tmp_dir_for_get_simple_viol_path_file"
+  set output_dir                       "./"
+  set outputFileBodyName               "findSameClockTreePart"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -114,13 +115,18 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
           set temp_save_buffer_or_inverter_name [linsert $temp_save_buffer_or_inverter_name 0 $temp_inst]
           if {$temp_num_of_buf_or_inv >= $numNeedContinueCkBufInv && $temp_num_of_need_find_inst_name >= $numNeedContinueCkBufInv} {
             set ifCanDumpList 1
-            lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
-            set temp_save_buffer_or_inverter_name [list]
-            set temp_num_of_buf_or_inv 0
-            break
+            if {!$ifFindLongestClockTreeCommonPath} {
+              lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
+              set temp_save_buffer_or_inverter_name [list]
+              set temp_num_of_buf_or_inv 0
+              break
+            }
           }
         } elseif {$ifCanDumpList && ![regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
-         
+          lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
+          set temp_save_buffer_or_inverter_name [list]
+          set temp_num_of_buf_or_inv 0
+          break
         } else {
           set temp_num_of_buf_or_inv 0 
         }
@@ -149,6 +155,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
       set temp_num_of_buf_or_inv 0
       set temp_num_of_need_find_inst_name 0
       set temp_num_of_clkgater 0
+      set ifCanDumpList 0
       set temp_save_buffer_or_inverter_name [list] ; # order: from prev inst to after inst
       foreach temp_inst $temp_list_capture_clock_insts_after_process_continue_keep_condition {
         if {[regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
@@ -158,11 +165,19 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
           }
           set temp_save_buffer_or_inverter_name [linsert $temp_save_buffer_or_inverter_name 0 $temp_inst]
           if {$temp_num_of_buf_or_inv >= $numNeedContinueCkBufInv && $temp_num_of_need_find_inst_name >= $numNeedContinueCkBufInv} {
-            lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
-            set temp_save_buffer_or_inverter_name [list]
-            set temp_num_of_buf_or_inv 0
-            break
+            set ifCanDumpList 1
+            if {!$ifFindLongestClockTreeCommonPath} {
+              lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
+              set temp_save_buffer_or_inverter_name [list]
+              set temp_num_of_buf_or_inv 0
+              break
+            }
           }
+        } elseif {$ifCanDumpList && ![regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
+          lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
+          set temp_save_buffer_or_inverter_name [list]
+          set temp_num_of_buf_or_inv 0
+          break
         } else {
           set temp_num_of_buf_or_inv 0 
         }

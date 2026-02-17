@@ -202,14 +202,16 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   set fo [open $outputfilename w]
   set i 0
   set maxGroupItems 0
+  set groupedPathNum 0
   foreach temp_block_info $finalClockClockPath_to_violPath {
     incr i
     lassign $temp_block_info temp_save_buffer_or_inverter_name temp_paths 
     puts $fo "No $i:"
     puts $fo "continue buffer or inverter inst:"
+    puts $fo "have [llength $temp_paths] RELATED PATHS: (slack startpoint endpoint)"
     puts $fo [join $temp_save_buffer_or_inverter_name \n]
-    puts $fo "RELATED PATHS: (slack startpoint endpoint)"
     if {[llength $temp_paths] > $maxGroupItems} { set maxGroupItems [llength $temp_paths] }
+    set groupedPathNum [expr {$groupedPathNum + [llength $temp_paths]}]
     set temp_paths [lsort -index 0 -real -increasing $temp_paths]
     foreach temp_path $temp_paths {
       lassign $temp_path temp_slack temp_start_end
@@ -219,10 +221,17 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo ""
   }
   close $fo
+  set outputfilename_notFindMeetCondition "$output_dir/$outputFileBodyName.notMeetContinuousCondition.rpt"
+  set fo_2 [open $outputfilename_notFindMeetCondition w]
+  puts $fo_2 "have [llength $notFindMeetContinueBufInvPathList] path that not meet continuous condition."
+  foreach temp_path $notFindMeetContinueBufInvPathList {
+    
+  }
   puts ""
   puts " ------ "
   puts "total $pathNum path."
   puts "have $i groups."
+  puts "have $groupedPathNum grouped path that meets continue condition."
   puts "max group items: $maxGroupItems"
   puts "output summary file: $outputfilename"
   puts " ------ "

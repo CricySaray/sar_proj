@@ -188,10 +188,10 @@ proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode e
     if {$temp_slack <= $thresholdOfDumpPath} {
       if {[regexp start $type]} {
         set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==out"]
-        redirect -append $outputfilename {report_timing -from $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000}
+        redirect -append $outputfilename "report_timing -from $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000"
       } elseif {[regexp end $type]} {
         set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==in"]
-        redirect -append $outputfilename {report_timing -to $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000}
+        redirect -append $outputfilename "report_timing -to $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000"
       }
     }
   }

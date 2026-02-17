@@ -233,6 +233,7 @@ define_proc_attributes getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPa
   -info "get info of need focus clk gater or need change clock tree for viol path file"\
   -define_args {
     {-violPathFile "specify the viol path file name" AString string optional}
+    {-ifFindLongestClockTreeCommonPath "if find longest clock tree common path that meet continue condition" oneOfString one_of_string {optional {value_help {values {0 1}}}}}
     {-numNeedContinueCkBufInv "specify the num of need continue clock buffer or inverter" AString string optional}
     {-pba_mode "specify the pba mode for get_timing_paths" AString string optional}
     {-buffOrInvRegExp "specify expression of buffer or inverter" AString string optional}

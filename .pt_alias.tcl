@@ -103,22 +103,39 @@ proc get_fanout_endpoints {pin {type "all"}} {
 # return    : print sorted result of slack and input pin_or_inst
 # ref       : link url
 # --------------------------
-proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode ex} {prefixOfInstInTopSta U_M3KL_MAIN_SUB_WRAP} {showlastItemNum 10}} {
-  set ifDumpSmallSlackPath 1
-  set thresholdOfDumpPath 0.03
-  set outputFileBodyName "slackLessPathDump_fromProc_get_slack_forSepcifiedPins"
-  set output_dir "./"
+source ~/project/scr_sar/tcl/flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
+proc get_slack_forSepecifiedPins {args} {
+  set type                  startpoint
+  set pinsOrInstsOrFilename ""
+  set pba_mode              ex
+  set prefixOfInstInTopSta  U_M3KL_MAIN_SUB_WRAP
+  set showlastItemNum       10
+  set ifDumpSmallSlackPath  1
+  set thresholdOfDumpPath   0.03
+  set outputFileBodyName    "slackLessPathDump_fromProc_get_slack_forSepcifiedPins"
+  set output_dir            "./"
+
+  parse_proc_arguments -args $args opt
+  foreach arg [array names opt] {
+    regsub -- "-" $arg "" var
+    set $var $opt($arg)
+  }
+
+  if {[file exists $pinsOrInstsOrFilename]} {
+    puts "input type is FILE. It will parse every line to convert list." 
+    set pinsOrInstsOrFilename [convert_file_to_list $pinsOrInstsOrFilename 1 1 0 1]
+  }
 
   set slack_less 9999
   set list_slack_inst [list]
   set list_notFoundSlack_pin [list]
-  puts "total get [llength $pinsOrInsts] pinsOrInsts, begin find slack..."
+  puts "total get [llength $pinsOrInstsOrFilename] pinsOrInstsOrFilename, begin find slack..."
   set i 0
   set sequential_or_black_box_pinOrInst_num 0
   puts "processing ...: "
   suppress_message UITE-416
   suppress_message UITE-479
-  foreach temp_pin_or_inst $pinsOrInsts {
+  foreach temp_pin_or_inst $pinsOrInstsOrFilename {
     incr i
     puts -nonewline "$i "
     flush stdout
@@ -164,40 +181,59 @@ proc get_slack_forSepecifiedPins {{type startpoint} {pinsOrInsts ""} {pba_mode e
       error "proc get_slack_forSepecifiedPins: error type : $type" 
     }
     if {$temp_slack ne "" && [string is double $temp_slack]} {
-      lappend list_slack_inst [list $temp_slack $temp_inst]
+      lappend list_slack_inst [list $temp_slack [get_object_name $temp_inst]]
     } else {
-      lappend list_notFoundSlack_pin [list $type $temp_inst]
+      lappend list_notFoundSlack_pin [list $type [get_object_name $temp_inst]]
       # error "proc get_slack_forSepecifiedPins: error not found slack value or not floating num for temp_pin: $temp_inst"
     }
   } 
   puts ""
   puts " ------ "
-  puts "total [llength $pinsOrInsts] pins or insts."
+  puts "total [llength $pinsOrInstsOrFilename] pins or insts."
   puts "find $sequential_or_black_box_pinOrInst_num reg or mem/ip pins or insts."
   puts "have [llength $list_notFoundSlack_pin] path that not found slack!!!"
   puts " ------ "
   set list_slack_inst [lsort -index 0 -decreasing -real $list_slack_inst]
-  set reverse_list_slack_inst [lreverse $list_slack_inst]
-  set outputfilename "$output_dir/$outputFileBodyName.rpt"
-  if {[file exists $outputfilename]} {
-    file delete $outputfilename 
-    exec touch $outputfilename
-  }
-  foreach temp_slack_pin $reverse_list_slack_inst {
-    lassign $temp_slack_pin temp_slack temp_inst
-    if {$temp_slack <= $thresholdOfDumpPath} {
-      if {[regexp start $type]} {
-        set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==out"]
-        redirect -append $outputfilename "report_timing -from $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000"
-      } elseif {[regexp end $type]} {
-        set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==in"]
-        redirect -append $outputfilename "report_timing -to $temp_pins -nos -significant_digits 4 -delay max -inputs_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 1000 -nworst 1000"
-      }
-    }
-  }
   if {$showlastItemNum != 0} {
-    set from_idx [expr {[llength $pinsOrInsts] - $showlastItemNum + 1}]
+    set from_idx [expr {[llength $pinsOrInstsOrFilename] - $showlastItemNum + 1}]
     set list_slack_inst [lrange $list_slack_inst $from_idx end] 
   }
   puts [join $list_slack_inst \n]
+
+  if {$ifDumpSmallSlackPath} {
+    puts ""
+    puts "have turned on dump paths when slack lesser than $thresholdOfDumpPath, nworst 1000, max_paths 100000"
+    set reverse_list_slack_inst [lreverse $list_slack_inst]
+    set outputfilename "$output_dir/$outputFileBodyName.rpt"
+    if {[file exists $outputfilename]} {
+      file delete $outputfilename 
+      exec touch $outputfilename
+    }
+    foreach temp_slack_pin $reverse_list_slack_inst {
+      lassign $temp_slack_pin temp_slack temp_inst
+      if {$temp_slack <= $thresholdOfDumpPath} {
+        if {[regexp start $type]} {
+          set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==out"]
+          redirect -append $outputfilename "report_timing -from $temp_pins -nos -significant_digits 4 -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 100000 -nworst 1000"
+        } elseif {[regexp end $type]} {
+          set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==in"]
+          redirect -append $outputfilename "report_timing -to $temp_pins -nos -significant_digits 4 -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 100000 -nworst 1000"
+        }
+      }
+    }
+  }
 }
+
+define_proc_attribute get_slack_forSepecifiedPins \
+  -info "get_slack_forSepecifiedPins"\
+  -define_args {
+    {-type "specify the type of startpoint or endpoint" oneOfString one_of_string {optional value_help {values {startpoint endpoint}}}}
+    {-pinsOrInstsOrFilename "specify the pins or insts or file name" AList list optional}
+    {-pba_mode "specify the pba mode" oneOfString one_of_string {optional value_help {values {exhaustive none path}}}}
+    {-prefixOfInstInTopSta "specify the prefix of inst or pin at top sta session" AString string optional}
+    {-showlastItemNum "specify the item number to show window after processing all path" AInt int optional}
+    {-ifDumpSmallSlackPath "specify if dump small slack path" oneOfString one_of_string {optional value_help {values {0 1}}}}
+    {-thresholdOfDumpPath "specify the slack threshold of dump path" AFloat float optional}
+    {-outputFileBodyName "specify the output file body name" AString string optional}
+    {-output_dir "specify the output dir" AString string optional}
+  }

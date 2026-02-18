@@ -21,6 +21,7 @@
 #     However, a drawback of this approach is that the grouping may be too granular, resulting in a relatively large number of groups.
 #     Additionally, there is a bold mode (undeveloped) which, after grouping is completed in safe mode, can further identify the common 
 #   clock tree paths among them to reduce the number of groups. Nevertheless, this will correspondingly increase the impact caused by jumper adjustments.
+source ../../../packages/get_block_info_fromTimingRptFile.package.tcl; # get_block_info_fromTimingRptFile
 proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   # NOTICE: need find points after common point
   set violPathFile                     ""
@@ -32,7 +33,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   set keepContinueClockTreeInstName    {U_MAIN_SUB}
   set needFindInstNameExp              {_cdb_}
   set typeOfPathClockTree              "launch" ; # launch|capture
-  set tmp_dir_name                     ".tmp_dir_for_get_simple_viol_path_file"
+  #set tmp_dir_name                     ".tmp_dir_for_get_simple_viol_path_file"
   set output_dir                       "./"
   set outputFileBodyName               "findSameClockTreePart"
   parse_proc_arguments -args $args opt
@@ -43,28 +44,43 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   if {![file exists $violPathFile]} {
     error "proc getInfoOfFluencyOfAttachedTerm_forNewViolPath: input error, not found viol file: $violPathFile" 
   }
-  exec mkdir -p ./$tmp_dir_name
-  exec grep -E "Startpoint:|Endpoint:" $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
-  set fi [open $tmp_dir_name/simple_newViolFile.rpt r]
-  set flagSearchStartOrEndpoint "start"
-  set pathOfStartToEndList [list]
-  set temp_start_end_pair [list]
-  while {[gets $fi line] != -1} {
-    if {$flagSearchStartOrEndpoint eq "start"} {
-      if {[regexp "Startpoint:" $line]} { lappend temp_start_end_pair [lindex $line end] ; set flagSearchStartOrEndpoint "end" } else {
-        error "proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile: error viol path content, can find startpoint-endpoint pair when find startpoint at line:\n\t$line" 
-      }
-    } elseif {$flagSearchStartOrEndpoint eq "end"} {
-      if {[regexp "Endpoint:" $line]} { lappend temp_start_end_pair [lindex $line end] ; set flagSearchStartOrEndpoint "start" } else {
-        error "proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile: error viol path content, can find startpoint-endpoint pair when find endpoint at line:\n\t$line" 
-      }
-      if {[llength $temp_start_end_pair] == 2} {
-        lappend pathOfStartToEndList $temp_start_end_pair
-        set temp_start_end_pair [list] 
+
+  if {0} {
+    exec mkdir -p ./$tmp_dir_name
+    exec grep -E "Startpoint:|Endpoint:" $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
+    set fi [open $tmp_dir_name/simple_newViolFile.rpt r]
+    set flagSearchStartOrEndpoint "start"
+    set pathOfStartToEndList [list]
+    set temp_start_end_pair [list]
+    while {[gets $fi line] != -1} {
+      if {$flagSearchStartOrEndpoint eq "start"} {
+        if {[regexp "Startpoint:" $line]} { lappend temp_start_end_pair [lindex $line end] ; set flagSearchStartOrEndpoint "end" } else {
+          error "proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile: error viol path content, can find startpoint-endpoint pair when find startpoint at line:\n\t$line" 
+        }
+      } elseif {$flagSearchStartOrEndpoint eq "end"} {
+        if {[regexp "Endpoint:" $line]} { lappend temp_start_end_pair [lindex $line end] ; set flagSearchStartOrEndpoint "start" } else {
+          error "proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile: error viol path content, can find startpoint-endpoint pair when find endpoint at line:\n\t$line" 
+        }
+        if {[llength $temp_start_end_pair] == 2} {
+          lappend pathOfStartToEndList $temp_start_end_pair
+          set temp_start_end_pair [list] 
+        }
       }
     }
+    close $fi
   }
-  close $fi
+
+  set timing_rpt_block_info_list [get_block_info_fromTimingRptFile $violPathFile "start_end" {Startpoint:} "" {slack \(VIO}]
+  set pathOfStartToEndList [lmap temp_block_info $timing_rpt_block_info_list {
+    set idxOfPrevOfStartpoint [lsearch -regexp $temp_block_info "clock network delay"] 
+    set idxOfAfterEndpoint [lsearch -regexp $temp_block_info "data arrival time"]
+    set temp_startpoint [lindex $temp_block_info [expr {$idxOfPrevOfStartpoint + 2}] 0]
+    set temp_endpoint [lindex $temp_block_info [expr {$idxOfAfterEndpoint - 1}] 0]
+    list $temp_startpoint $temp_endpoint
+  }]
+
+
+
   set pathNum [llength $pathOfStartToEndList]
   puts "total find $pathNum path."
 
@@ -210,6 +226,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo "continue buffer or inverter inst:"
     puts $fo "have [llength $temp_paths] RELATED PATHS: (slack startpoint endpoint)"
     puts $fo [join $temp_save_buffer_or_inverter_name \n]
+    puts $fo " ------ "
     if {[llength $temp_paths] > $maxGroupItems} { set maxGroupItems [llength $temp_paths] }
     set groupedPathNum [expr {$groupedPathNum + [llength $temp_paths]}]
     set temp_paths [lsort -index 0 -real -increasing $temp_paths]
@@ -248,7 +265,7 @@ define_proc_attributes getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPa
   -info "get info of need focus clk gater or need change clock tree for viol path file"\
   -define_args {
     {-violPathFile "specify the viol path file name" AString string optional}
-    {-ifFindLongestClockTreeCommonPath "if find longest clock tree common path that meet continue condition" oneOfString one_of_string {optional {value_help {values {0 1}}}}}
+    {-ifFindLongestClockTreeCommonPath "if find longest clock tree common path that meet continue condition" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-numNeedContinueCkBufInv "specify the num of need continue clock buffer or inverter" AString string optional}
     {-pba_mode "specify the pba mode for get_timing_paths" AString string optional}
     {-buffOrInvRegExp "specify expression of buffer or inverter" AString string optional}
@@ -260,6 +277,7 @@ define_proc_attributes getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPa
     {-output_dir "specify the output dir" AString string optional}
     {-outputFileBodyName "specify the output file body name" AString string optional}
   }
+
 proc get_unique_list_without_reorder {{input_list ""}} {
   if {$input_list eq ""} {
     return [list] 

@@ -22,6 +22,7 @@
 #     Additionally, there is a bold mode (undeveloped) which, after grouping is completed in safe mode, can further identify the common 
 #   clock tree paths among them to reduce the number of groups. Nevertheless, this will correspondingly increase the impact caused by jumper adjustments.
 source ../../../packages/get_block_info_fromTimingRptFile.package.tcl; # get_block_info_fromTimingRptFile
+source ../../../packages/get_unique_list_without_reorder.package.tcl; # get_unique_list_without_reorder
 proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   # NOTICE: need find points after common point
   set violPathFile                     ""
@@ -259,20 +260,6 @@ define_proc_attributes getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPa
     {-typeOfPathClockTree "specify the type of path clock tree to find" oneOfString one_of_string {optional value_help {values {launch capture}}}}
     {-output_dir "specify the output dir" AString string optional}
     {-outputFileBodyName "specify the output file body name" AString string optional}
+    {-suffixOfOutputFile "specify the suffix of output file in order to facilitate the distinction between output files from different periods and for different purposes." AString string optional}
   }
 
-proc get_unique_list_without_reorder {{input_list ""}} {
-  if {$input_list eq ""} {
-    return [list] 
-  } else {
-    set sortedList [list]
-    foreach temp_item $input_list {
-      if {$temp_item in $sortedList} {
-        continue 
-      } else {
-        lappend sortedList $temp_item 
-      }
-    }
-    return $sortedList
-  }
-}

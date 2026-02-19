@@ -33,7 +33,6 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   set keepContinueClockTreeInstName    {U_MAIN_SUB}
   set needFindInstNameExp              {_cdb_}
   set typeOfPathClockTree              "launch" ; # launch|capture
-  #set tmp_dir_name                     ".tmp_dir_for_get_simple_viol_path_file"
   set output_dir                       "./"
   set outputFileBodyName               "findSameClockTreePart"
   parse_proc_arguments -args $args opt
@@ -45,37 +44,14 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     error "proc getInfoOfFluencyOfAttachedTerm_forNewViolPath: input error, not found viol file: $violPathFile" 
   }
 
-  if {0} {
-    exec mkdir -p ./$tmp_dir_name
-    exec grep -E "Startpoint:|Endpoint:" $violPathFile > $tmp_dir_name/simple_newViolFile.rpt
-    set fi [open $tmp_dir_name/simple_newViolFile.rpt r]
-    set flagSearchStartOrEndpoint "start"
-    set pathOfStartToEndList [list]
-    set temp_start_end_pair [list]
-    while {[gets $fi line] != -1} {
-      if {$flagSearchStartOrEndpoint eq "start"} {
-        if {[regexp "Startpoint:" $line]} { lappend temp_start_end_pair [lindex $line end] ; set flagSearchStartOrEndpoint "end" } else {
-          error "proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile: error viol path content, can find startpoint-endpoint pair when find startpoint at line:\n\t$line" 
-        }
-      } elseif {$flagSearchStartOrEndpoint eq "end"} {
-        if {[regexp "Endpoint:" $line]} { lappend temp_start_end_pair [lindex $line end] ; set flagSearchStartOrEndpoint "start" } else {
-          error "proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile: error viol path content, can find startpoint-endpoint pair when find endpoint at line:\n\t$line" 
-        }
-        if {[llength $temp_start_end_pair] == 2} {
-          lappend pathOfStartToEndList $temp_start_end_pair
-          set temp_start_end_pair [list] 
-        }
-      }
-    }
-    close $fi
-  }
-
+  set simplePath_vs_originalTimingRptBlockInfo_LIST [list]
   set timing_rpt_block_info_list [get_block_info_fromTimingRptFile $violPathFile "start_end" {Startpoint:} "" {slack \(VIO}]
   set pathOfStartToEndList [lmap temp_block_info $timing_rpt_block_info_list {
     set idxOfPrevOfStartpoint [lsearch -regexp $temp_block_info "clock network delay"] 
     set idxOfAfterEndpoint [lsearch -regexp $temp_block_info "data arrival time"]
     set temp_startpoint [lindex $temp_block_info [expr {$idxOfPrevOfStartpoint + 2}] 0]
     set temp_endpoint [lindex $temp_block_info [expr {$idxOfAfterEndpoint - 1}] 0]
+    lappend simplePath_vs_originalTimingRptBlockInfo_LIST [list [list $temp_startpoint $temp_endpoint] $temp_block_info]
     list $temp_startpoint $temp_endpoint
   }]
 
@@ -214,7 +190,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
       lset finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] end [list {*}[lindex $finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] end] [list $temp_path_slack $temp_path]]
     }
   }
-  set outputfilename "$output_dir/$outputFileBodyName.rpt"
+  set outputfilename "$output_dir/$outputFileBodyName.$typeOfPathClockTree.rpt"
   set fo [open $outputfilename w]
   set i 0
   set maxGroupItems 0
@@ -224,7 +200,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     lassign $temp_block_info temp_save_buffer_or_inverter_name temp_paths 
     puts $fo "No $i:"
     puts $fo "continue buffer or inverter inst:"
-    puts $fo "have [llength $temp_paths] RELATED PATHS: (slack startpoint endpoint)"
+    puts $fo "have [llength $temp_paths] RELATED PATHS: (slack startpoint endpoint)    NOTICE: check clock tree path type: $typeOfPathClockTree"
     puts $fo [join $temp_save_buffer_or_inverter_name \n]
     puts $fo " ------ "
     if {[llength $temp_paths] > $maxGroupItems} { set maxGroupItems [llength $temp_paths] }
@@ -238,17 +214,24 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo ""
   }
   close $fo
-  set outputfilename_notFindMeetCondition "$output_dir/$outputFileBodyName.notMeetContinuousCondition.rpt"
+  set outputfilename_notFindMeetCondition "$output_dir/$outputFileBodyName.notMeetContinuousCondition.$typeOfPathClockTree.rpt"
+  set outputfilename_notFindMeetCondition_fulltimingrpt "$output_dir/$outputFileBodyName.notMeetContinuousCondition.originalTimingPath.$typeOfPathClockTree.rpt"
   set numOfNotMeetContinuousConditionPath [llength $notFindMeetContinueBufInvPathList]
   set fo_2 [open $outputfilename_notFindMeetCondition w]
+  set fo_3 [open $outputfilename_notFindMeetCondition_fulltimingrpt w]
   puts $fo_2 "have $numOfNotMeetContinuousConditionPath path that not meet continuous condition."
   puts $fo_2 ""
+  set notMeet_num 0
   foreach temp_slack_path $notFindMeetContinueBufInvPathList {
     lassign $temp_slack_path temp_slack_path temp_path
     lassign $temp_path temp_start temp_end
     puts $fo_2 "$temp_slack $temp_start\n\t\t$temp_end"
+    incr notMeet_num 
+    puts $fo_3 "songpath $notMeet_num:"
+    puts $fo_3 [join [lindex [lsearch -inline -exact -index 0 $simplePath_vs_originalTimingRptBlockInfo_LIST $temp_path] 1] \n]
+    puts $fo_3 ""
   }
-  close $fo_2
+  close $fo_2 ; close $fo_3
   puts ""
   puts " ------ "
   puts "total $pathNum path."
@@ -272,8 +255,7 @@ define_proc_attributes getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPa
     {-clkgaterCelltypeRegExp "specify the clkgater celltype regexpression" AString string optional}
     {-keepContinueClockTreeInstName "specify the keep continue clock tree inst name" AString string optional}
     {-needFindInstNameExp "specify the expression of need find inst name e.g. cdb inst, you can demand meet your condition of num of cdb inst" AString string optional}
-    {-typeOfPathClockTree "specify the type of path clock tree to find" AString string optional}
-    {-tmp_dir_name "specify the tmp dir name" AString string optional}
+    {-typeOfPathClockTree "specify the type of path clock tree to find" oneOfString one_of_string {optional value_help {values {launch capture}}}}
     {-output_dir "specify the output dir" AString string optional}
     {-outputFileBodyName "specify the output file body name" AString string optional}
   }

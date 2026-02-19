@@ -15,6 +15,7 @@
 # return    : output affected path summary file and summary list
 # ref       : link url
 # --------------------------
+alias sus "subst -nocommands -nobackslashes"
 proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   set attachedTerms [list]
   set violPathFile ""
@@ -54,76 +55,89 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
   close $fi
   set pathNum [llength $pathOfStartToEndList]
   puts "total find $pathNum path."
-  set i 0
   suppress_message UITE-416
   suppress_message UITE-479
+  set temp_create_i 0
   foreach temp_attachedterm $attachedTerms {
-    set affectedPath_fromLaunch [list]
-    set affectedPath_fromCapture [list]
-    set noticeAttachedTermExistsAtBothLaunchAndCapture [list]
-    set noAffectPath [list]
-    foreach temp_path $pathOfStartToEndList {
-      lassign $temp_path temp_start temp_end 
-      set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]
-      set temp_path_slack [get_attribute $temp_col_full_clock_path slack]
-      set temp_col_launch_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path launch_clock_paths] points] object]
-      set temp_col_capture_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path capture_clock_paths] points] object]
-      set temp_list_launch_clock_points [get_object_name $temp_col_launch_clock_points]
-      set temp_list_capture_clock_points [get_object_name $temp_col_capture_clock_points]
+    incr temp_create_i
+    set affectedPath_fromLaunch_$temp_create_i [list]
+    set affectedPath_fromCapture_$temp_create_i [list]
+    set noticeAttachedTermExistsAtBothLaunchAndCapture_$temp_create_i [list]
+    set noAffectPath_$temp_create_i [list]
+  }
+  puts "processing ..."
+  set temp_No 0
+  foreach temp_path $pathOfStartToEndList {
+    incr temp_No
+    puts -nonewline "$temp_No "
+    flush stdout
+    lassign $temp_path temp_start temp_end 
+    set temp_col_full_clock_path [get_timing_paths -pba_mode $pba_mode -path_type full_clock_expanded -from $temp_start -to $temp_end ]
+    set temp_path_slack [get_attribute $temp_col_full_clock_path slack]
+    set temp_col_launch_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path launch_clock_paths] points] object]
+    set temp_col_capture_clock_points [get_attribute [get_attribute [get_attribute $temp_col_full_clock_path capture_clock_paths] points] object]
+    set temp_list_launch_clock_points [get_object_name $temp_col_launch_clock_points]
+    set temp_list_capture_clock_points [get_object_name $temp_col_capture_clock_points]
+    set i 0
+    foreach temp_attachedterm $attachedTerms {
+      incr i
       if {[lsearch -regexp $temp_list_launch_clock_points $temp_attachedterm] != -1 && [lsearch -regexp $temp_list_capture_clock_points $temp_attachedterm] == -1} {
-        lappend affectedPath_fromLaunch [list $temp_path_slack $temp_path]
+        lappend affectedPath_fromLaunch_$i [list $temp_path_slack $temp_path]
       } elseif {[lsearch -regexp $temp_list_launch_clock_points $temp_attachedterm] == -1 && [lsearch -regexp $temp_list_capture_clock_points $temp_attachedterm] != -1} {
-        lappend affectedPath_fromCapture [list $temp_path_slack $temp_path]
+        lappend affectedPath_fromCapture_$i [list $temp_path_slack $temp_path]
       } elseif {[lsearch -regexp $temp_list_launch_clock_points $temp_attachedterm] != -1 && [lsearch -regexp $temp_list_capture_clock_points $temp_attachedterm] != -1} {
-        lappend noticeAttachedTermExistsAtBothLaunchAndCapture [list $temp_attachedterm $temp_path_slack $temp_path]
+        lappend noticeAttachedTermExistsAtBothLaunchAndCapture_$i [list $temp_attachedterm $temp_path_slack $temp_path]
       } else {
-        lappend noAffectPath [list $temp_path_slack $temp_path]
+        lappend noAffectPath_$i [list $temp_path_slack $temp_path]
       }
     }
-    incr i
-    set outputfilename "$output_dir/$outputFileBodyName.No$i.rpt"
+  }
+  set j 0
+  foreach temp_attachedterm $attachedTerms {
+    incr j
+    set outputfilename "$output_dir/$outputFileBodyName.No$j.rpt"
     set fo [open $outputfilename w]
     puts $fo "# affected by term: $temp_attachedterm"
-    if {$noticeAttachedTermExistsAtBothLaunchAndCapture ne ""} {
+    if {[sus \${noticeAttachedTermExistsAtBothLaunchAndCapture_$j}] ne ""} {
       puts $fo "NOTICE: affected path by both launch and capture clock path: (slack startpoint endpoint)"
-      foreach temp_affected_path $noticeAttachedTermExistsAtBothLaunchAndCapture {
+      foreach temp_affected_path [sus \${noticeAttachedTermExistsAtBothLaunchAndCapture_$j}] {
         lassign $temp_affected_path temp_attachedterm temp_slack temp_start_end
         lassign $temp_start_end temp_start_2 temp_end_2
         puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
       puts $fo ""
     }
-    if {$affectedPath_fromLaunch ne ""} {
+    if {[sus \${affectedPath_fromLaunch_$j}] ne ""} {
       puts $fo "AFFECTED PATHS BY LAUNCH: (slack startpoint endpoint)"
-      foreach temp_affected_path $affectedPath_fromLaunch {
+      foreach temp_affected_path [sus \${affectedPath_fromLaunch_$j}] {
         lassign $temp_affected_path temp_slack temp_start_end
         lassign $temp_start_end temp_start_2 temp_end_2
         puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
       puts $fo ""
     }
-    if {$affectedPath_fromCapture ne ""} {
+    if {[sus \${affectedPath_fromCapture_$j}] ne ""} {
       puts $fo "AFFECTED PATHS BY CAPTURE: (slack startpoint endpoint)"
-      foreach temp_affected_path $affectedPath_fromCapture {
+      foreach temp_affected_path [sus \${affectedPath_fromCapture_$j}] {
         lassign $temp_affected_path temp_slack temp_start_end
         lassign $temp_start_end temp_start_2 temp_end_2
         puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
       puts $fo ""
     }
-    if {$noAffectPath ne ""} {
+    if {[sus \${noAffectPath_$j}] ne ""} {
       puts $fo "NO AFFECTED PATHS: (slack startpoint endpoint)"
-      foreach temp_no_affected_path $noAffectPath {
+      foreach temp_no_affected_path [sus \${noAffectPath_$j}] {
         lassign $temp_no_affected_path temp_slack temp_start_end
         lassign $temp_start_end temp_start_2 temp_end_2
         puts $fo "$temp_slack $temp_start_2\n\t$temp_end_2" 
       }
     }
     close $fo
-    set noticePathNum [llength $noticeAttachedTermExistsAtBothLaunchAndCapture]
-    set launchRelatedPathNum [llength $affectedPath_fromLaunch]
-    set captureRelatedPathNum [llength $affectedPath_fromCapture]
-    set noAffectedPathNum [llength $noAffectPath]
+    set noticePathNum [llength [sus \${noticeAttachedTermExistsAtBothLaunchAndCapture_$j}]]
+    set launchRelatedPathNum [llength [sus \${affectedPath_fromLaunch_$j}]]
+    set captureRelatedPathNum [llength [sus \${affectedPath_fromCapture_$j}]]
+    set noAffectedPathNum [llength [sus \${noAffectPath_$j}]]
     puts "For attached term: $temp_attachedterm"
     puts "  need notice path         : $noticePathNum"
     puts "  launch related path num  : $launchRelatedPathNum"
@@ -132,7 +146,6 @@ proc getInfoOfFluencyOfAttachedTerm_forNewViolPath {args} {
     puts "  output file name         : $outputfilename"
     puts " ------ "
   }
-  
 }
 define_proc_attributes getInfoOfFluencyOfAttachedTerm_forNewViolPath \
   -info "get info of fluency of attached terms for new viol path file"\

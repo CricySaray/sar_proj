@@ -35,6 +35,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   set typeOfPathClockTree              "launch" ; # launch|capture
   set output_dir                       "./"
   set outputFileBodyName               "findSameClockTreePart"
+  set suffixOfOutputFile               "eco17_mem2icg"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
@@ -190,7 +191,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
       lset finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] end [list {*}[lindex $finalClockClockPath_to_violPath [lsearch -index 0 $finalClockClockPath_to_violPath $temp_save_buffer_or_inverter_name] end] [list $temp_path_slack $temp_path]]
     }
   }
-  set outputfilename "$output_dir/$outputFileBodyName.$typeOfPathClockTree.rpt"
+  set outputfilename "$output_dir/$outputFileBodyName.$typeOfPathClockTree.$suffixOfOutputFile.rpt"
   set fo [open $outputfilename w]
   set i 0
   set maxGroupItems 0
@@ -214,8 +215,8 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     puts $fo ""
   }
   close $fo
-  set outputfilename_notFindMeetCondition "$output_dir/$outputFileBodyName.notMeetContinuousCondition.$typeOfPathClockTree.rpt"
-  set outputfilename_notFindMeetCondition_fulltimingrpt "$output_dir/$outputFileBodyName.notMeetContinuousCondition.originalTimingPath.$typeOfPathClockTree.rpt"
+  set outputfilename_notFindMeetCondition "$output_dir/$outputFileBodyName.notMeetContinuousCondition.$typeOfPathClockTree.$suffixOfOutputFile.rpt"
+  set outputfilename_notFindMeetCondition_fulltimingrpt "$output_dir/$outputFileBodyName.notMeetContinuousCondition.originalTimingPath.$typeOfPathClockTree.$suffixOfOutputFile.rpt"
   set numOfNotMeetContinuousConditionPath [llength $notFindMeetContinueBufInvPathList]
   set fo_2 [open $outputfilename_notFindMeetCondition w]
   set fo_3 [open $outputfilename_notFindMeetCondition_fulltimingrpt w]

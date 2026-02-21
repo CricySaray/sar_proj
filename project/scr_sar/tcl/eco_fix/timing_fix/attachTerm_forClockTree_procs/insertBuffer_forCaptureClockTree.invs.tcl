@@ -10,7 +10,7 @@
 # return    : run eco cmd
 # ref       : link url
 # --------------------------
-proc insertBuffer_forCaptureClockTree {args} {
+proc insertBuffer_forCaptureClockTree_invs {args} {
   set suffixForEco                "fix_mem2reg"
   set numOfInsert                 1
   set celltypeOfBufferToInsert    DCCKBD4BWP35P140LVT
@@ -27,30 +27,30 @@ proc insertBuffer_forCaptureClockTree {args} {
   global song_eco_counter
   if {$ifResetIterationCounter} {
     if {![array exists song_eco_counter]} {
-      puts "proc insertBuffer_forCaptureClockTree: not need reset, cuz it have been reset."
+      puts "proc insertBuffer_forCaptureClockTree_invs: not need reset, cuz it have been reset."
     } elseif {![catch {array unset song_eco_counter}]} {
-      puts "proc insertBuffer_forCaptureClockTree: reset iteration counter SUCCESS!!!"
+      puts "proc insertBuffer_forCaptureClockTree_invs: reset iteration counter SUCCESS!!!"
       return [list]
     } else {
-      error "proc insertBuffer_forCaptureClockTree: error when unset array song_eco_counter!!! check your code"
+      error "proc insertBuffer_forCaptureClockTree_invs: error when unset array song_eco_counter!!! check your code"
     }
   }
 
   if {![array exists song_eco_counter]} {
-    set song_eco_counter(eco_num) $initIndexOfIterationCounter
+    set song_eco_counter(eco_num) [expr {$initIndexOfIterationCounter - 1}]
   } else {
     # incr song_eco_counter(eco_num)
   }
   if {$terms eq ""} {
-    error "proc insertBuffer_forCaptureClockTree: check your input , terms is empty!!!"
+    error "proc insertBuffer_forCaptureClockTree_invs: check your input , terms is empty!!!"
   } else {
     foreach temp_term $terms {
       if {[dbget top.insts.instTerms.name $temp_term -e] eq ""} {
-        error "proc insertBuffer_forCaptureClockTree: not found term name ($temp_term)"
+        error "proc insertBuffer_forCaptureClockTree_invs: not found term name ($temp_term)"
       }
     }
     if {[dbget head.libCells.name $celltypeOfBufferToInsert -e] eq ""} {
-      error "proc insertBuffer_forCaptureClockTree: check your input : not found celltype of buffer/inverter($celltypeOfBufferToInsert) in invs library."
+      error "proc insertBuffer_forCaptureClockTree_invs: check your input : not found celltype of buffer/inverter($celltypeOfBufferToInsert) in invs library."
     }
     set finalCmdsList [list]
     for {set i 1} {$i <= $numOfInsert} {incr i} {
@@ -77,7 +77,7 @@ proc insertBuffer_forCaptureClockTree {args} {
     }
   }
 }
-define_proc_arguments insertBuffer_forCaptureClockTree \
+define_proc_arguments insertBuffer_forCaptureClockTree_invs \
   -info "insert buffer for capture clock tree"\
   -define_args {
     {-ifDryRun "if only print cmd but not run actually" oneOfString one_of_string {optional value_type {values {0 1}}}}

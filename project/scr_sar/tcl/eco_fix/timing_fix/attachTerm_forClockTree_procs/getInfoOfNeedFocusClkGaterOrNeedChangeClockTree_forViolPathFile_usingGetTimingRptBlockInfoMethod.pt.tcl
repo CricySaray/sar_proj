@@ -57,8 +57,6 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
     list $temp_startpoint $temp_endpoint
   }]
 
-
-
   set pathNum [llength $pathOfStartToEndList]
   puts "total find $pathNum path."
 

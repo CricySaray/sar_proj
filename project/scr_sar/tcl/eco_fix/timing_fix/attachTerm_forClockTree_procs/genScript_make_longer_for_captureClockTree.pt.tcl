@@ -57,6 +57,9 @@ proc genScript_make_longer_for_captureClockTree {args} {
     }]
   }  
 
+  suppress_message UITE-479
+  suppress_message UITE-416
+
   set totalInstNum [llength $needProcessedInsts]
   if {$ifTurnOnSafeMode} { puts "at safe mode: only process register inst/pin" }
   puts "total $totalInstNum inst to processing..."
@@ -69,13 +72,14 @@ proc genScript_make_longer_for_captureClockTree {args} {
   set unfixInst [list]
   set i 0
   foreach temp_inst $needProcessedInsts {
+    incr i
     puts -nonewline "$i "
     flush stdout
     set margin_next_level [get_attribute [get_timing_paths -pba_mode $pba_mode -from [get_pins -of [get_cells $temp_inst] -filter "direction==out"]] slack]
     set viol_slack [get_attribute [get_timing_paths -pba_mode $pba_mode -to [get_pins -of [get_cells $temp_inst] -filter "direction==in"]] slack]
     if {$viol_slack >= 0.00000} {
       set ifCanFix " meet"
-    } elseif {$viol_slack < 0.00000 && $margin_next_level > $minMarginSlackOfNextLevel && $margin_next_level > [expr {abs($viol_slack * $multiplierOfviolSlackVsMarginSlack)}]} {
+    } elseif {$viol_slack < 0.00000 && $margin_next_level >= $minMarginSlackOfNextLevel && $margin_next_level > [expr {abs($viol_slack * $multiplierOfviolSlackVsMarginSlack)}]} {
       set ifCanFix "  ok "
     } else {
       set ifCanFix "unfix"
@@ -86,20 +90,20 @@ proc genScript_make_longer_for_captureClockTree {args} {
     } else {
       lappend finalCmdsList_invs "# $ifCanFix , marginSlack:$margin_next_level , violSlack:$viol_slack , clockPin:$clockPinOfInst"
       lappend finalCmdsList_pt   "# $ifCanFix , marginSlack:$margin_next_level , violSlack:$viol_slack , clockPin:$clockPinOfInst"
-      if {$viol_slack >= $delayOfCelltypeOfClockBuffer} {
+      if {$viol_slack >= "-$delayOfCelltypeOfClockBuffer"} {
         set num_buffer 1
-      } elseif {$viol_slack >= [expr {$delayOfCelltypeOfClockBuffer * 2}]} {
+      } elseif {$viol_slack >= [expr {$delayOfCelltypeOfClockBuffer * -2}]} {
         set num_buffer 2
-      } elseif {$viol_slack >= [expr {$delayOfCelltypeOfClockBuffer * 3}]} {
+      } elseif {$viol_slack >= [expr {$delayOfCelltypeOfClockBuffer * -3}]} {
         set num_buffer 3
       } else {
         set num_buffer 4
       }
       if {$ifCanFix   ne "unfix"} {
         if {$ifCanFix eq "  ok "} {
-          incr numOfUnfixedInst
-          lappend finalCmdsList_invs [list $clockPinOfInst "insertBuffer_forCaptureClockTree_invs -ifDryRun 0 -suffixForEco $suffixForNewCellAndNet -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
-          lappend finalCmdsList_pt [list $clockPinOfInst "insertBuffer_forCaptureClockTree_pt -ifDryRun 0 -suffixForEco $suffixForNewCellAndNet -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
+          incr numOfFixedInst
+          lappend finalCmdsList_invs [list $clockPinOfInst "insertBuffer_forCaptureClockTree_invs -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
+          lappend finalCmdsList_pt [list $clockPinOfInst "insertBuffer_forCaptureClockTree_pt -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
         } elseif {$ifCanFix eq " meet"} {
           incr numOfMeetInst
           lappend finalCmdsList_invs [list $clockPinOfInst "### MEET ###"]
@@ -127,18 +131,19 @@ proc genScript_make_longer_for_captureClockTree {args} {
     if {[regexp {^#} $temp_invs]} {
       puts $fo_invs $temp_invs
     } elseif {![regexp {^#} $temp_invs]} {
-      puts $fo_invs [regsub [subst {^$topHierNeedRemoveAtScript/}] [lindex $temp_invs 1] ""]
+      puts $fo_invs [regsub [subst {$topHierNeedRemoveAtScript/}] [lindex $temp_invs 1] ""]
     }
     if {[regexp {^#} $temp_pt]} {
       puts $fo_pt $temp_pt
     } elseif {![regexp {^#} $temp_pt]} {
-      puts $fo_pt [regsub [subst {^$topHierNeedRemoveAtScript/}] [lindex $temp_invs 1] ""]
+      puts $fo_pt [lindex $temp_pt 1]
     }
   }
   puts $fo_invs "setEcoMode -reset"
   puts $fo_pt "setEcoMode -reset"
   close $fo_invs ; close $fo_pt
 
+  puts ""
   puts " ------ "
   puts "total processed $totalInstNum inst."
   puts "fixed $numOfFixedInst inst."
@@ -152,15 +157,18 @@ proc genScript_make_longer_for_captureClockTree {args} {
     puts "have turn on switch of dumping unfixed path."
     puts "now dumping unfixed path ..."
     set outputfile_unfixpath "$output_dir/$outputFileBodyname.$suffixForNewCellAndNetAndOutputFile.unfix_path.rpt"
-    set fo_unfixpath [open $outputfile_unfixpath w]
+    if {[file exists $outputfile_unfixpath]} {
+      file delete $outputfile_unfixpath
+    }
     set j 0
     foreach temp_unfixinst $unfixInst {
+      incr j
       puts -nonewline "$j "
       flush stdout
-      redirect -append $fo_unfixpath {report_timing -pba_mode $pba_mode -to [get_pins -of [get_cells $temp_unfixinst] -filter "direction==in"] -nos -delay max -input_pins -trans -derate -cap -sort_by_slack -crosstalk_delta -slack_lesser_than 9999 -nets -max_paths 1 -nworst 1}
-      flush $fo_unfixpath
+      redirect -append $outputfile_unfixpath {report_timing -pba_mode $pba_mode -to [get_pins -of [get_cells $temp_unfixinst] -filter "direction==in"] -nos -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_lesser_than 9999 -nets -max_paths 1 -nworst 1}
+      flush stdout
     }
-    close $fo_unfixpath
+    puts ""
     puts "have dump all unfixed path to $outputfile_unfixpath"
   }
 }

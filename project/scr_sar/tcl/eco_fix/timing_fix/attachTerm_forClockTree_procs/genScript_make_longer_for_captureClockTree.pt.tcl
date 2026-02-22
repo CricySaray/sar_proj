@@ -13,33 +13,40 @@
 
 # source ./insertBuffer_forCaptureClockTree.pt.tcl; # insertBuffer_forCaptureClockTree_pt
 # source ./insertBuffer_forCaptureClockTree.invs.tcl; # insertBuffer_forCaptureClockTree_invs
-source ../../../flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
+# source ../../../flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
+source ../../../packages/get_block_info_fromTimingRptFile.package.tcl; # get_block_info_fromTimingRptFile
 proc genScript_make_longer_for_captureClockTree {args} {
-  set violPinsOrInstsOrFilename           [list]
-  set celltypeOfClkBuffer                 "DCCKBD4BWP35P140LVT"
-  set suffixForNewCellAndNetAndOutputFile "fix_mem2reg_fromeco18"
-  set topHierNeedRemoveAtScript           "U_M3KL_MAIN_SUB_WRAP"
-  set delayOfCelltypeOfClockBuffer        0.02 ; # ns
-  set minMarginSlackOfNextLevel           0.01 ; # when margin > this slack, it will run fixing
-  set multiplierOfviolSlackVsMarginSlack  1.5
-  set ifTurnOnSafeMode                    1 ; # safe mode: only process register cp pin, not process mem/ip/... cp/clk pin. not at safe mode: will process all cp/clk pin of provided inst/pins
-  set pba_mode                            ex
-  set insertBufferProcFilename_pt         "./insertBuffer_forCaptureClockTree.pt.tcl"
-  set insertBufferProcFilename_invs       "./insertBuffer_forCaptureClockTree.invs.tcl"
-  set outputFileBodyname                  "fix_setup_using_make_longer_for_captureClockTree"
-  set output_dir                          "./"
-  set ifDumpUnfixPath                     1
+  set violPinsOrInstsOrViolPathFilename                                    [list]
+  set ifContinueFixWhenNextLevelPathEndpointIsMem                          0
+  set slackLessValueToSearchNextLevelPathEndpointAsMemSlackLesserThanValue 0.1 ; # ns
+  set celltypeOfClkBuffer                                                  "DCCKBD4BWP35P140LVT"
+  set suffixForNewCellAndNetAndOutputFile                                  "fix_mem2reg_fromeco18"
+  set topHierNeedRemoveAtScript                                            "U_M3KL_MAIN_SUB_WRAP"
+  set delayOfCelltypeOfClockBuffer                                         0.02 ; # ns
+  set minMarginSlackOfNextLevel                                            0.01 ; # when margin > this slack, it will run fixing
+  set multiplierOfviolSlackVsMarginSlack                                   1.5
+  set ifTurnOnSafeMode                                                     1 ; # safe mode: only process register cp pin, not process mem/ip/... cp/clk pin. not at safe mode: will process all cp/clk pin of provided inst/pins
+  set pba_mode                                                             ex
+  set insertBufferProcFilename_pt                                          "./insertBuffer_forCaptureClockTree.pt.tcl"
+  set insertBufferProcFilename_invs                                        "./insertBuffer_forCaptureClockTree.invs.tcl"
+  set outputFileBodyname                                                   "fix_setup_using_make_longer_for_captureClockTree"
+  set output_dir                                                           "./"
+  set ifDumpUnfixPath                                                      1
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  if {[file exists $violPinsOrInstsOrFilename]} {
-    set violPinsOrInstsOrFilename [convert_file_to_list $violPinsOrInstsOrFilename 1 1 0 1]
+  if {[file exists $violPinsOrInstsOrViolPathFilename]} {
+    set timing_block_info_list [get_block_info_fromTimingRptFile $violPinsOrInstsOrViolPathFilename start_end {Startpoint:} "" {slack \(VIO}]
+    set violPinsOrInstsOrViolPathFilename [lsort -u [lmap temp_block $timing_block_info_list {
+      set temp_endpoint [lindex [lsearch -regexp -inline $temp_block {^\s*Endpoint:}] 1]
+      set temp_endpoint
+    }]]
   } 
 
   set needProcessedInsts [list]
-  foreach temp_pin_or_inst $violPinsOrInstsOrFilename {
+  foreach temp_pin_or_inst $violPinsOrInstsOrViolPathFilename {
     if {[get_pins $temp_pin_or_inst -q] ne ""} {
       lappend needProcessedInsts [get_object_name [get_cells -of [get_pins $temp_pin_or_inst]]]
     } elseif {[get_cells $temp_pin_or_inst -q] ne ""} {
@@ -57,6 +64,7 @@ proc genScript_make_longer_for_captureClockTree {args} {
     }]
   }  
 
+  suppress_message SEL-003
   suppress_message UITE-479
   suppress_message UITE-416
 
@@ -84,6 +92,10 @@ proc genScript_make_longer_for_captureClockTree {args} {
     } else {
       set ifCanFix "unfix"
     }
+    set next_level_endpoints [lsort -u [get_object_name [filter_collection [get_attribute [get_attribute [get_timing_paths -slack_lesser_than $slackLessValueToSearchNextLevelPathEndpointAsMemSlackLesserThanValue -pba_mode $pba_mode -from [get_pins -of [get_cells $temp_inst] -filter "direction==out"]] endpoint] cell] {is_black_box}]]]
+    if {$next_level_endpoints ne ""} {
+      set ifCanFix [string cat $ifCanFix ": NOTICE_WHEN_RUN_CMD: next level endpoints have mem!!!"]
+    }
     set clockPinOfInst [get_object_name [get_pins -of [get_cells $temp_inst] -filter "is_clock_pin"]]
     if {[lsearch -exact -index 0 $finalCmdsList_invs $clockPinOfInst] != -1} {
       continue
@@ -99,12 +111,17 @@ proc genScript_make_longer_for_captureClockTree {args} {
       } else {
         set num_buffer 4
       }
-      if {$ifCanFix   ne "unfix"} {
-        if {$ifCanFix eq "  ok "} {
+      if {![regexp unfix $ifCanFix]} {
+        if {[regexp ok $ifCanFix]} {
           incr numOfFixedInst
-          lappend finalCmdsList_invs [list $clockPinOfInst "insertBuffer_forCaptureClockTree_invs -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
-          lappend finalCmdsList_pt [list $clockPinOfInst "insertBuffer_forCaptureClockTree_pt -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
-        } elseif {$ifCanFix eq " meet"} {
+          if {[regexp NOTICE_WHEN_RUN_CMD $ifCanFix]} {
+            lappend finalCmdsList_invs [list $clockPinOfInst "insertBuffer_forCaptureClockTree_invs -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst" $next_level_endpoints]
+            lappend finalCmdsList_pt [list $clockPinOfInst "insertBuffer_forCaptureClockTree_pt -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst" $next_level_endpoints]
+          } else {
+            lappend finalCmdsList_invs [list $clockPinOfInst "insertBuffer_forCaptureClockTree_invs -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
+            lappend finalCmdsList_pt [list $clockPinOfInst "insertBuffer_forCaptureClockTree_pt -ifDryRun 0 -suffixForEco $suffixForNewCellAndNetAndOutputFile -celltypeOfBufferToInsert $celltypeOfClkBuffer -numOfInsert $num_buffer -terms $clockPinOfInst"]
+          }
+        } elseif {[regexp meet $ifCanFix]} {
           incr numOfMeetInst
           lappend finalCmdsList_invs [list $clockPinOfInst "### MEET ###"]
           lappend finalCmdsList_pt [list $clockPinOfInst "### MEET ###"]
@@ -112,8 +129,13 @@ proc genScript_make_longer_for_captureClockTree {args} {
       } else {
         incr numOfUnfixedInst
         lappend unfixInst $temp_inst
-        lappend finalCmdsList_invs [list $clockPinOfInst "### UNFIX ###"]
-        lappend finalCmdsList_pt [list $clockPinOfInst "### UNFIX ###"]
+        if {[regexp NOTICE_WHEN_RUN_CMD $ifCanFix]} {
+          lappend finalCmdsList_invs [list $clockPinOfInst "### UNFIX ###" $next_level_endpoints]
+          lappend finalCmdsList_pt [list $clockPinOfInst "### UNFIX ###" $next_level_endpoints]
+        } else {
+          lappend finalCmdsList_invs [list $clockPinOfInst "### UNFIX ###"]
+          lappend finalCmdsList_pt [list $clockPinOfInst "### UNFIX ###"]
+        }
       }
     }
   }
@@ -125,22 +147,31 @@ proc genScript_make_longer_for_captureClockTree {args} {
   puts $fo_invs "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
 
   puts $fo_pt "source $insertBufferProcFilename_pt"
-  puts $fo_pt "setEcoMode -reset"
-  puts $fo_pt "setEcoMode -batchMode true -updateTiming false -refinePlace false -honorDontTouch false -honorDontUse false -honorFixedNetWire false -honorFixedStatus false"
+  set final_list_i 0
   foreach temp_invs $finalCmdsList_invs temp_pt $finalCmdsList_pt {
     if {[regexp {^#} $temp_invs]} {
       puts $fo_invs $temp_invs
     } elseif {![regexp {^#} $temp_invs]} {
+      if {$final_list_i != 0} {
+        if {[regexp NOTICE_WHEN_RUN_CMD [lindex $finalCmdsList_invs [expr {$final_list_i - 1}]]]} {
+          puts $fo_invs "### mem_endpoint(slack lesser than $slackLessValueToSearchNextLevelPathEndpointAsMemSlackLesserThanValue ns): - > [join [lindex $temp_invs 2] "\n### mem_endpoint: - > "]"
+        }
+      }
       puts $fo_invs [regsub [subst {$topHierNeedRemoveAtScript/}] [lindex $temp_invs 1] ""]
     }
     if {[regexp {^#} $temp_pt]} {
       puts $fo_pt $temp_pt
     } elseif {![regexp {^#} $temp_pt]} {
+      if {$final_list_i != 0} {
+        if {[regexp NOTICE_WHEN_RUN_CMD [lindex $finalCmdsList_pt [expr {$final_list_i - 1}]]]} {
+          puts $fo_pt " mem_endpoint: - > [join [lindex $temp_pt 2] "\n mem_endpoint: - > "]"
+        }
+      }
       puts $fo_pt [lindex $temp_pt 1]
     }
+    incr final_list_i
   }
   puts $fo_invs "setEcoMode -reset"
-  puts $fo_pt "setEcoMode -reset"
   close $fo_invs ; close $fo_pt
 
   puts ""
@@ -175,7 +206,9 @@ proc genScript_make_longer_for_captureClockTree {args} {
 define_proc_attributes genScript_make_longer_for_captureClockTree \
   -info "gen script to make longer for capture clock tree"\
   -define_args {
-    {-violPinsOrInstsOrFilename "specify the viol pins or insts or input filename" AString string optional}
+    {-violPinsOrInstsOrViolPathFilename "specify the viol pins or insts or input filename" AString string optional}
+    {-ifContinueFixWhenNextLevelPathEndpointIsMem "if continue fix path when next level path endpoint is mem" oneOfString one_of_string {optional value_help {values {0 1}}}}
+    {-slackLessValueToSearchNextLevelPathEndpointAsMemSlackLesserThanValue "specify the slack that is less when search next level endpoint, such as mem" AFloat float optional}
     {-celltypeOfClkBuffer "specify the celltype of clock buffer, such as DCCKBD4BWP30P140LVT" AString string optional}
     {-suffixForNewCellAndNetAndOutputFile "specify the suffix name of new cell name, new net name and output file" AString string optional}
     {-topHierNeedRemoveAtScript "specify the top hier name that need remove at script. you can keep empty if no need" AString string optional}

@@ -105,15 +105,16 @@ proc get_fanout_endpoints {pin {type "all"}} {
 # --------------------------
 source ~/project/scr_sar/tcl/flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
 proc get_slack_forSepecifiedPins {args} {
-  set type                  startpoint
-  set pinsOrInstsOrFilename ""
-  set pba_mode              ex
-  set prefixOfInstInTopSta  U_M3KL_MAIN_SUB_WRAP
-  set showlastItemNum       10
-  set ifDumpSmallSlackPath  1
-  set thresholdOfDumpPath   0.03
-  set outputFileBodyName    "slackLessPathDump_fromProc_get_slack_forSepcifiedPins"
-  set output_dir            "./"
+  set type                       endpoint
+  set pinsOrInstsOrFilename      ""
+  set pba_mode                   ex
+  set prefixOfInstInTopSta       U_M3KL_MAIN_SUB_WRAP
+  set showlastItemNum            10
+  set ifDumpSmallSlackPath       1
+  set thresholdOfDumpPath        0.03
+  set nworstOfDumpSmallSlackPath 1
+  set outputFileBodyName         "slackLessPathDump_fromProc_get_slack_forSepcifiedPins"
+  set output_dir                 "./"
 
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
@@ -202,29 +203,40 @@ proc get_slack_forSepecifiedPins {args} {
 
   if {$ifDumpSmallSlackPath} {
     puts ""
-    puts "have turned on dump paths when slack lesser than $thresholdOfDumpPath, nworst 1000, max_paths 100000"
+    puts "have turned on dump paths when slack lesser than $thresholdOfDumpPath, nworst $nworstOfDumpSmallSlackPath, max_paths 100000"
     set reverse_list_slack_inst [lreverse $list_slack_inst]
     set outputfilename "$output_dir/$outputFileBodyName.rpt"
     if {[file exists $outputfilename]} {
       file delete $outputfilename 
       exec touch $outputfilename
     }
+
+    set iterate_of_dumpPath 0
+    set dumpedPathNum 0
     foreach temp_slack_pin $reverse_list_slack_inst {
+      incr iterate_of_dumpPath
+      puts -nonewline "$iterate_of_dumpPath "
+      flush stdout
       lassign $temp_slack_pin temp_slack temp_inst
       if {$temp_slack <= $thresholdOfDumpPath} {
         if {[regexp start $type]} {
+          incr dumpedPathNum
           set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==out"]
-          redirect -append $outputfilename "report_timing -from $temp_pins -nos -significant_digits 4 -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 100000 -nworst 1000"
+          redirect -append $outputfilename "report_timing -from $temp_pins -nos -significant_digits 4 -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less $thresholdOfDumpPath -nets -pba_mode $pba_mode -max_paths 100000 -nworst $nworstOfDumpSmallSlackPath"
         } elseif {[regexp end $type]} {
+          incr dumpedPathNum
           set temp_pins [get_pins -of [get_cells $temp_inst] -filter "direction==in"]
-          redirect -append $outputfilename "report_timing -to $temp_pins -nos -significant_digits 4 -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less 9999 -nets -pba_mode $pba_mode -max_paths 100000 -nworst 1000"
+          redirect -append $outputfilename "report_timing -to $temp_pins -nos -significant_digits 4 -delay max -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_less $thresholdOfDumpPath -nets -pba_mode $pba_mode -max_paths 100000 -nworst $nworstOfDumpSmallSlackPath"
         }
       }
     }
+    puts ""
+    puts " ------ "
+    puts "have dumped $dumpedPathNum $type path"
   }
 }
 
-define_proc_attribute get_slack_forSepecifiedPins \
+define_proc_attributes get_slack_forSepecifiedPins \
   -info "get_slack_forSepecifiedPins"\
   -define_args {
     {-type "specify the type of startpoint or endpoint" oneOfString one_of_string {optional value_help {values {startpoint endpoint}}}}
@@ -234,6 +246,7 @@ define_proc_attribute get_slack_forSepecifiedPins \
     {-showlastItemNum "specify the item number to show window after processing all path" AInt int optional}
     {-ifDumpSmallSlackPath "specify if dump small slack path" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-thresholdOfDumpPath "specify the slack threshold of dump path" AFloat float optional}
+    {-nworstOfDumpSmallSlackPath "specify the nworst num when dumping small slack path" AInt int optional}
     {-outputFileBodyName "specify the output file body name" AString string optional}
     {-output_dir "specify the output dir" AString string optional}
   }

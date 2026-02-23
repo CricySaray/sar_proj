@@ -56,6 +56,12 @@ proc getInfoOfNworstNum_toEveryEndpoint {args} {
   puts "total processed $numOfEndpoints endpoints."
   puts "worst slack: $worst_slack ns"
   puts "most nworst num: $mostNworstNum path."
+  puts " ------ "
+  puts " in order by nworst num:"
+  puts [join [table_format_with_title $nworst_endpoint_list_inOrderByNworstNum 0 left "" 0] \n]
+  puts " ------ "
+  puts " in order by worst slack:"
+  puts [join [table_format_with_title $nworst_endpoint_list_inOrderByWorstSlack 0 left "" 0] \n]
 }
 
 define_proc_attributes getInfoOfNworstNum_toEveryEndpoint \

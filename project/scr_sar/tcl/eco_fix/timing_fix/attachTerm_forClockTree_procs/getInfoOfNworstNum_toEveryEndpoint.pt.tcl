@@ -11,11 +11,11 @@ proc getInfoOfNworstNum_toEveryEndpoint {args} {
   }
   if {[file exists $violPathRptFilenameOrEndpointList]} {
     set fi [open $violPathRptFilenameOrEndpointList r]
-    set endpoints_list [lmap temp_line [regexp -expanded -all {^\s*Endpoint:} [split [read $fi] "\n"]] { 
+    set endpoints_list [lmap temp_line [lsearch -inline -regexp -all [split [read $fi] "\n"] {^\s*Endpoint:}] { 
       set temp_end [lindex $temp_line 1]
       if {[get_cells -q $temp_end] eq "" && [get_pins -q $temp_end] ne ""} {
         set temp_end [get_cells -of [get_pins $temp_end]]
-      } elseif {[get_cells -q $temp_end]} {
+      } elseif {[get_cells -q $temp_end] ne ""} {
         set temp_end
       } else {
         error "proc getInfoOfNworstNum_toEveryEndpoint: error : check your input file content: endpoint is not pin or inst name ($temp_end)"
@@ -26,7 +26,7 @@ proc getInfoOfNworstNum_toEveryEndpoint {args} {
     set endpoints_list [lmap temp_input_item $violPathRptFilenameOrEndpointList {
       if {[get_cells -q $temp_input_item] eq "" && [get_pins -q $temp_input_item] ne ""} {
         set temp_input_item [get_cells -of [get_pins $temp_input_item]]
-      } elseif {[get_cells -q $temp_input_item]} {
+      } elseif {[get_cells -q $temp_input_item] ne ""} {
         set temp_input_item
       } else {
         error "proc getInfoOfNworstNum_toEveryEndpoint: error : check your input endpoint list: endpoint is not pin or inst name ($temp_input_item)"

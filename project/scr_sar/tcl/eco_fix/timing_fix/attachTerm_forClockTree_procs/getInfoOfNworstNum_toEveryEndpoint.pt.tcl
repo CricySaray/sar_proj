@@ -35,6 +35,8 @@ proc getInfoOfNworstNum_toEveryEndpoint {args} {
   }
   set endpoints_list [lsort -u $endpoints_list]
   set numOfEndpoints [llength $endpoints_list]
+  puts "total find $numOfEndpoints endpoints."
+  puts "now processing them ..."
   set i 0
   set nworst_worstSlack_endpoint_list [list]
   foreach temp_endpoint $endpoints_list {
@@ -51,7 +53,7 @@ proc getInfoOfNworstNum_toEveryEndpoint {args} {
   set mostNworstNum [lindex $nworst_endpoint_list_inOrderByNworstNum 0 1]
   puts ""
   puts " ------ "
-  puts "total process $numOfEndpoints endpoints."
+  puts "total processed $numOfEndpoints endpoints."
   puts "worst slack: $worst_slack ns"
   puts "most nworst num: $mostNworstNum path."
 }

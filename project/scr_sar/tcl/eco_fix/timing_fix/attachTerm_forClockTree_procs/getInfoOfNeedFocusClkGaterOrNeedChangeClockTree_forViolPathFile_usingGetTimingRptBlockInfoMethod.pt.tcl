@@ -99,7 +99,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
       set ifCanDumpList 0
       set temp_save_buffer_or_inverter_name [list] ; # order: from prev inst to after inst
       foreach temp_inst $temp_list_launch_clock_insts_after_process_continue_keep_condition {
-        if {[regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
+        if {[regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]] || [regexp -expanded $clkgaterCelltypeRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
           incr temp_num_of_buf_or_inv 
           if {$needFindInstNameExp eq ""} { set temp_num_of_need_find_inst_name 99999 } else {
             if {[regexp -expanded $needFindInstNameExp $temp_inst]} { incr temp_num_of_need_find_inst_name }
@@ -122,8 +122,13 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
         } else {
           set temp_num_of_buf_or_inv 0 
         }
-        if {$temp_inst eq [lindex $temp_list_launch_clock_insts_after_process_continue_keep_condition end]} {
+        if {!$ifCanDumpList && $temp_inst eq [lindex $temp_list_launch_clock_insts_after_process_continue_keep_condition end]} {
           lappend notFindMeetContinueBufInvPathList [list $temp_path_slack $temp_path]
+        } elseif {$ifCanDumpList && $temp_inst eq [lindex $temp_list_launch_clock_insts_after_process_continue_keep_condition end]} {
+          lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
+          set temp_save_buffer_or_inverter_name [list]
+          set temp_num_of_buf_or_inv 0
+          break
         }
       }
     } elseif {$typeOfPathClockTree eq "capture"} {
@@ -150,7 +155,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
       set ifCanDumpList 0
       set temp_save_buffer_or_inverter_name [list] ; # order: from prev inst to after inst
       foreach temp_inst $temp_list_capture_clock_insts_after_process_continue_keep_condition {
-        if {[regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
+        if {[regexp -expanded $buffOrInvRegExp [get_attribute [get_cells $temp_inst] ref_name]] || [regexp -expanded $clkgaterCelltypeRegExp [get_attribute [get_cells $temp_inst] ref_name]]} {
           incr temp_num_of_buf_or_inv 
           if {$needFindInstNameExp eq ""} { set temp_num_of_need_find_inst_name 99999 } else {
             if {[regexp -expanded $needFindInstNameExp $temp_inst]} { incr temp_num_of_need_find_inst_name }
@@ -173,8 +178,13 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
         } else {
           set temp_num_of_buf_or_inv 0 
         }
-        if {$temp_inst eq [lindex $temp_list_capture_clock_insts_after_process_continue_keep_condition end]} {
+        if {!$ifCanDumpList && $temp_inst eq [lindex $temp_list_capture_clock_insts_after_process_continue_keep_condition end]} {
           lappend notFindMeetContinueBufInvPathList [list $temp_path_slack $temp_path]
+        } elseif {$ifCanDumpList && $temp_inst eq [lindex $temp_list_capture_clock_insts_after_process_continue_keep_condition end]} {
+          lappend clockTreeMeetConditionPathBlock [list $temp_path_slack $temp_path $temp_save_buffer_or_inverter_name ] 
+          set temp_save_buffer_or_inverter_name [list]
+          set temp_num_of_buf_or_inv 0
+          break
         }
       }
     } else {
@@ -223,7 +233,7 @@ proc getInfoOfNeedFocusClkGaterOrNeedChangeClockTree_forViolPathFile {args} {
   puts $fo_2 ""
   set notMeet_num 0
   foreach temp_slack_path $notFindMeetContinueBufInvPathList {
-    lassign $temp_slack_path temp_slack_path temp_path
+    lassign $temp_slack_path temp_slack temp_path
     lassign $temp_path temp_start temp_end
     puts $fo_2 "$temp_slack $temp_start\n\t\t$temp_end"
     incr notMeet_num 

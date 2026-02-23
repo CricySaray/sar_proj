@@ -164,7 +164,7 @@ proc genScript_make_longer_for_captureClockTree {args} {
     } elseif {![regexp {^#} $temp_pt]} {
       if {$final_list_i != 0} {
         if {[regexp NOTICE_WHEN_RUN_CMD [lindex $finalCmdsList_pt [expr {$final_list_i - 1}]]]} {
-          puts $fo_pt " mem_endpoint: - > [join [lindex $temp_pt 2] "\n mem_endpoint: - > "]"
+          puts $fo_pt "### mem_endpoint: - > [join [lindex $temp_pt 2] "\n### mem_endpoint: - > "]"
         }
       }
       puts $fo_pt [lindex $temp_pt 1]

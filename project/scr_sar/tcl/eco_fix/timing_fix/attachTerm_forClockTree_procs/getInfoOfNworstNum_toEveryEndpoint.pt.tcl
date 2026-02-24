@@ -1,3 +1,15 @@
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2026/02/24 09:20:54 Tuesday
+# label     : report_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc|clock_tree_relative_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : Get the number of nworst violation paths and the worst slack for each endpoint, and generate a table for display.
+# return    : table content to print window.
+# ref       : link url
+# --------------------------
 source ../../../packages/table_format_with_title.package.tcl; # table_format_with_title
 proc getInfoOfNworstNum_toEveryEndpoint {args} {
   set violPathRptFilenameOrEndpointList        "" ; # pt timing report path rpt

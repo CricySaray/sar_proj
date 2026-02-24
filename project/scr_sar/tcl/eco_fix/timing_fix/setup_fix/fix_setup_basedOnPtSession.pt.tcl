@@ -7,6 +7,7 @@ proc fix_setup_basedOnPtSession {args} {
   set slack_lesser_than "none"
   
   set path_type "full" ; # full|full_clock_expanded
+  defaultoptions -input_pins -nets -transition_time -capacitance -significant_digits 4 -crosstalk_delta -derate 
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var

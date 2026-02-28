@@ -15,7 +15,7 @@
 # source ./insertBuffer_forCaptureClockTree.invs.tcl; # insertBuffer_forCaptureClockTree_invs
 # source ../../../flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
 source ../../../packages/get_block_info_fromTimingRptFile.package.tcl; # get_block_info_fromTimingRptFile
-proc genScript_make_longer_for_captureClockTree {args} {
+proc genScript_make_longer_for_captureClockTree_toFixSetup {args} {
   set violPinsOrInstsOrViolPathFilename                                    [list]
   set ifContinueFixWhenNextLevelPathEndpointIsMem                          0
   set slackLessValueToSearchNextLevelPathEndpointAsMemSlackLesserThanValue 0.1 ; # ns
@@ -203,7 +203,7 @@ proc genScript_make_longer_for_captureClockTree {args} {
     puts "have dump all unfixed path to $outputfile_unfixpath"
   }
 }
-define_proc_attributes genScript_make_longer_for_captureClockTree \
+define_proc_attributes genScript_make_longer_for_captureClockTree_toFixSetup \
   -info "gen script to make longer for capture clock tree"\
   -define_args {
     {-violPinsOrInstsOrViolPathFilename "specify the viol pins or insts or input filename" AString string optional}

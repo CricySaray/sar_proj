@@ -1,5 +1,22 @@
 # NOTICE: When fixing the endpoint hold now, we do not deduplicate the startpoint. This is a very dangerous situation.  
 #         In order to complete the script quickly, the deduplication operation was not considered. You must add this deduplication protection later.
+#!/bin/tclsh
+# --------------------------
+# author    : sar song
+# date      : 2026/02/28 15:57:18 Saturday
+# label     : task_proc
+#   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
+#             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc|clock_tree_relative_proc)
+#   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
+# descrip   : We use the method of lengthening the launch clock tree to fix hold violations. This requires three steps:
+#              - First, obtain the startpoint-endpoint of the violation in the hold session.
+#              - Then, get the setup margin for these paths in the setup session.
+#              - Finally, return to the hold session to generate ECO commands, including commands for PT and commands for Innovus.
+#             The PT commands are used for execution and verification within the session, while the Innovus commands are used to 
+#             perform the actual ECO. The real effect will be checked in the next round of PT STA.
+# return    : output file name
+# ref       : link url
+# --------------------------
 
 
 source ../../../flow_build/common/convert_file_to_list.common.tcl; # convert_file_to_list
@@ -7,7 +24,7 @@ source ../../../packages/table_format_with_title.package.tcl; # table_format_wit
 source ../../../packages/get_block_info_fromTimingRptFile.package.tcl; # get_block_info_fromTimingRptFile
 
 
-proc getInfoOfStartpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSession {args} {
+proc genFileOfStartpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSession {args} {
   set violPinsOrInstsOrViolPathFilename                  [list]
   set pba_mode                                           ex
   set outputFileBodyName_ofStartpointEndpointList        "startpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSession"
@@ -64,7 +81,7 @@ proc getInfoOfStartpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSessio
   puts "have generated setup margin output file."
 }
 
-define_proc_attributes getInfoOfStartpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSession \
+define_proc_attributes genFileOfStartpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSession \
   -info "gen script make longer for launch clock tree to fix hold, it run at setup session."\
   -define_args {
     {-violPinsOrInstsOrViolPathFilename "specify the viol pins or insts or input filename" AString string optional}

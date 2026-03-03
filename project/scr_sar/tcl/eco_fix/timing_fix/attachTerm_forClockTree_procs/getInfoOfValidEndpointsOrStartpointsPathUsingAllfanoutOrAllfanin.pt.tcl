@@ -19,6 +19,7 @@ proc getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin {args} {
   set orderTypeForSlackOfEndpoint  increasing ; # increasing|decreasing
   set delayType                    max ; # max|min
   set typeOfEndpointsOrStartpoints "endpoints" ; # endpoints|startpoints
+  set 
   set ifDumpPathsOfEndpoints       1
   set ifShowRemovedEndpoints       1
   set pba_mode                     ex

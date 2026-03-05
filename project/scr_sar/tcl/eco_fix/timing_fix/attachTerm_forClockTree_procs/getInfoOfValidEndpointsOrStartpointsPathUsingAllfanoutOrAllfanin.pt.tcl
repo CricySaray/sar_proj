@@ -19,6 +19,7 @@ proc getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin {args} {
   set orderTypeForSlackOfEndpoint  increasing ; # increasing|decreasing
   set delayType                    max ; # max|min
   set typeOfEndpointsOrStartpoints "endpoints" ; # endpoints|startpoints
+  set methodsOfDumpReportTimingPath "asEndpoint" ; # asEndpoint|asStartpoint
   set ifDumpPathsOfEndpoints       1
   set ifShowRemovedEndpoints       1
   set pba_mode                     ex
@@ -91,6 +92,7 @@ proc getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin {args} {
       flush stdout
       set temp_worst_path_to_endpoint [get_timing_paths -slack_lesser_than 9999 -delay_type $delayType -pba_mode $pba_mode -path_type full_clock_expanded -to $temp_endpoint]
       set temp_worst_slack [get_attribute $temp_worst_path_to_endpoint slack]
+      if {$temp_worst_slack eq ""}  { set temp_worst_slack 9999 } ; # unconstraint path
       set temp_crpr_common_point [get_object_name [get_attribute $temp_worst_path_to_endpoint crpr_common_point]]
       set temp_launch_tree_points [get_object_name [get_attribute [get_attribute [get_attribute $temp_worst_path_to_endpoint launch_clock_paths] points] object]]
       set temp_capture_tree_points [get_object_name [get_attribute [get_attribute [get_attribute $temp_worst_path_to_endpoint capture_clock_paths] points] object]]
@@ -130,7 +132,7 @@ proc getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin {args} {
   }
   puts ""
   set outputfilename "$output_dir/$outputFileBodyName.$suffixOfOutputFile.rpt"
-  set outputfilename_dumpPaths "$output_dir/$outputFileBodyName.$suffixOfOutputFile.paths.rpt"
+  set outputfilename_dumpPaths "$output_dir/$outputFileBodyName.$suffixOfOutputFile.paths.$methodsOfDumpReportTimingPath.rpt"
   if {[file exists $outputfilename_dumpPaths]} {
     file delete $outputfilename_dumpPaths 
     exec touch $outputfilename_dumpPaths
@@ -153,14 +155,18 @@ proc getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin {args} {
     if {$ifDumpPathsOfEndpoints} {
       puts "user turn on the switch of dumpPathsOfEndpoints: dumping ..."
       puts "SONG_BLOCK: all valid endpoints paths in order by slack(worstest: first) for $temp_type : $temp_item"
-      exec echo "SONG_BLOCK: all valid endpoints paths in order by slack(worstest: first) for $temp_type : $temp_item" >> $outputfilename_dumpPaths
+      exec echo "SONG_BLOCK: all valid endpoints paths $methodsOfDumpReportTimingPath in order by slack(worstest: first) for $temp_type : $temp_item" >> $outputfilename_dumpPaths
       set j 0
       if {$orderTypeForSlackOfEndpoint eq "decreasing"} { set temp_result_body [lreverse $temp_result_body] }
       foreach temp_type_slack_endpoint $temp_result_body {
         incr j
         puts -nonewline "$j "
         flush stdout
-        redirect -append $outputfilename_dumpPaths {report_timing -significant_digits 4 -delay_type $delayType -pba_mode $pba_mode -to [get_pins -of [get_cells [lindex $temp_type_slack_endpoint end]] -filter "direction==in"] -nos -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_lesser_than 9999 -nets -max_paths 1 -nworst 1}
+        if {$methodsOfDumpReportTimingPath eq "asEndpoint"} {
+          redirect -append $outputfilename_dumpPaths {report_timing -significant_digits 4 -delay_type $delayType -pba_mode $pba_mode -to [get_pins -of [get_cells [lindex $temp_type_slack_endpoint end]] -filter "direction==in"] -nos -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_lesser_than 9999 -nets -max_paths 1 -nworst 1}
+        } elseif {$methodsOfDumpReportTimingPath eq "asStartpoint"} {
+          redirect -append $outputfilename_dumpPaths {report_timing -significant_digits 4 -delay_type $delayType -pba_mode $pba_mode -from [get_pins -of [get_cells [lindex $temp_type_slack_endpoint end]] -filter "direction==out"] -nos -input_pins -trans -derate -cap -sort_by slack -crosstalk_delta -slack_lesser_than 9999 -nets -max_paths 1 -nworst 1}
+        }
       }
       puts ""
     }
@@ -175,6 +181,7 @@ define_proc_attributes getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrA
     {-orderTypeForSlackOfEndpoint "specify the order type of slack of endpoints" oneOfString one_of_string {optional value_help {values {increasing decreasing}}}}
     {-delayType "specify the delay type to specify check setup or hold" oneOfString one_of_string {optional value_help {values {min max}}}}
     {-typeOfEndpointsOrStartpoints "specify the type of endpoints or startpoints" oneOfString one_of_string {optional value_help {values {endpoints startpoints}}}}
+    {-methodsOfDumpReportTimingPath " specify the method of report_timing detail path" oneOfString one_of_string {optional value_help {values {asStartpoint asEndpoint}}}}
     {-ifDumpPathsOfEndpoints "if dump paths of endpoints" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-ifShowRemovedEndpoints "if show removed endpoints" oneOfString one_of_string {optional value_help {values {0 1}}}}
     {-pba_mode "specify the pba mode" oneOfString one_of_string {optional value_help {values {ex none path}}}}

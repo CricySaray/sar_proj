@@ -172,6 +172,10 @@ proc getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin {args} {
     }
   }
   close $fo
+  puts ""
+  puts "have dump 2 output file: "
+  puts "    summary file            : $outputfilename"
+  puts "    detail timing paths file: $outputfilename_dumpPaths"
 }
 
 define_proc_attributes getInfoOfValidEndpointsOrStartpointsPathUsingAllfanoutOrAllfanin \

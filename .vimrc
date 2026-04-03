@@ -123,7 +123,8 @@ set hidden  " Hide buffers when they are abandoned
 set bufhidden=hide " 当buffer被丢弃的时候隐藏它
 set t_Co=256
 set background=dark
-colorscheme gruvbox " 设定配色方案
+"colorscheme gruvbox " 设定配色方案
+colorscheme songtest " 设定配色方案
 set number " 显示行号
 set cursorline " 突出显示当前行
 set ruler " 打开状态栏标尺

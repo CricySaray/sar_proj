@@ -9,8 +9,8 @@ alias vttt='vim ~/project/scr_sar/perl/tree.pl'
 alias te='perl ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 
-alias fa='perl /home/cricy/project/scr_sar/perl/file_archiver.pl'
-alias vfa='vim /home/cricy/project/scr_sar/perl/file_archiver.pl'
+alias fa='perl ~/project/scr_sar/perl/file_archiver.pl'
+alias vfa='vim ~/project/scr_sar/perl/file_archiver.pl'
 
 alias ef='perl ~/project/scr_sar/perl/encrypt_perlScript.pl'
 alias vef='vim ~/project/scr_sar/perl/encrypt_perlScript.pl'
@@ -94,7 +94,7 @@ export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 
 #------------------------------------------------
 # config for autojump (github : wting/autojump)
-[[ -s /home/cricy/.autojump/etc/profile.d/autojump.sh ]] && source /home/cricy/.autojump/etc/profile.d/autojump.sh
+[[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
 
 
 #------------------------------------------------
@@ -102,7 +102,7 @@ export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 # 使用fdfind搜索文件并通过vim打开
 function vf() {
   if [[ $# -eq 0 ]]; then
-    local search_dir="/home/cricy/"
+    local search_dir="~/"
     local search_term=""
   elif [[ $# -eq 1 ]]; then
     local search_dir="$1"

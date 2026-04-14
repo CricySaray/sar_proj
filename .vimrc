@@ -84,6 +84,7 @@ cabbrev inst %s/\\(.*\\)\\/.*/\\1/g
 cabbrev vv vs ~/.vimrc
 cabbrev ess v/endpoint:\\|startpoint:\\|slack (/d
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
+cabbrev ahk r ~/project/scr_sar/ref_content/autohotkey_template_paste_longstring.ahk
 cabbrev dp r ~/project/scr_sar/ref_content/define_proc_arguments.tcl
 cabbrev pdp r ~/project/scr_sar/ref_content/define_perl_options.txt
 " insert head of proc for tcl or perl, can change DATE to time now

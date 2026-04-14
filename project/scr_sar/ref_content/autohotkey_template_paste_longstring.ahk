@@ -1,3 +1,0 @@
-~XButton1::
-  SendInput {Text}...
-return

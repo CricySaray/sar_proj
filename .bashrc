@@ -94,7 +94,7 @@ export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 
 #------------------------------------------------
 # config for autojump (github : wting/autojump)
-[[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
+# [[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
 
 
 #------------------------------------------------

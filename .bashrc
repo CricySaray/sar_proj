@@ -135,17 +135,17 @@ function cdf() {
     cd "$selected_dir"
     pwd  # 可选：显示当前目录
   fi
-  # 检查 autojump 是否可用
-  if ! command -v autojump &> /dev/null; then
-    echo "autojump not found. Directory not recorded." >&2
-    return 1
-  fi
-  # 记录当前目录到 autojump 数据库
-  if ! autojump -a "$PWD"; then
-    echo "Failed to add directory to autojump database." >&2
-    return 1
-  fi
-  autojump --purge &> /dev/null
+  # # 检查 autojump 是否可用
+  # if ! command -v autojump &> /dev/null; then
+  #   echo "autojump not found. Directory not recorded." >&2
+  #   return 1
+  # fi
+  # # 记录当前目录到 autojump 数据库
+  # if ! autojump -a "$PWD"; then
+  #   echo "Failed to add directory to autojump database." >&2
+  #   return 1
+  # fi
+  # autojump --purge &> /dev/null
   return 0
 }
 
@@ -155,17 +155,17 @@ function cdf() {
 function c() {
   # 使用内置的 cd 命令
   builtin cd "$@" || return 1
-  # 检查 autojump 是否可用
-  if ! command -v autojump &> /dev/null; then
-    echo "autojump not found. Directory not recorded." >&2
-    return 1
-  fi
-  # 记录当前目录到 autojump 数据库
-  if ! autojump -a "$PWD"; then
-    echo "Failed to add directory to autojump database." >&2
-    return 1
-  fi
-  autojump --purge &> /dev/null
+  # # 检查 autojump 是否可用
+  # if ! command -v autojump &> /dev/null; then
+  #   echo "autojump not found. Directory not recorded." >&2
+  #   return 1
+  # fi
+  # # 记录当前目录到 autojump 数据库
+  # if ! autojump -a "$PWD"; then
+  #   echo "Failed to add directory to autojump database." >&2
+  #   return 1
+  # fi
+  # autojump --purge &> /dev/null
   return 0
 }
 alias c='c'

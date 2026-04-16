@@ -45,7 +45,7 @@ my $note = "";                 # Annotation content for --note (-n)
 my $id;                        # Temporary ID variable
 my $popid = "x";               # Target ID for --pop (-o)
 my $line_limit = 20;           # Max lines to display in --pop (truncates beyond this)
-my $dir = "/home/cricy/.teamshare";  # Shared directory path
+my $dir = "/home/aidensong/.teamshare";  # Shared directory path
 my $latest_id_file = "$dir/.latest_id";  # File to track latest ID
 my $debug = 0;                 # Debug mode (-d/--debug)
 my $list = 0;                  # Trigger --list (-l) function
@@ -384,7 +384,7 @@ sub get_current_id {
     my $content = <$fh>;
     close $fh;
     
-    if (defined $content && $content =~ /^\d+$/) {
+    if (defined $content && $content =~ m/^\d+$/) {
       $current_id = int($content);
       $current_id = 0 if $current_id < 0 || $current_id > 999;
       print "[DEBUG] Valid ID found in $latest_id_file: $current_id\n" if $debug;
@@ -396,7 +396,7 @@ sub get_current_id {
     }
   }
   
-  print "[DEBUG] $latest_id_file not found/corrupted. Scanning $dir for 3-digit files...\n" if $debug;
+  print "[DEBUG] $latest_id_file not found or corrupted. Scanning $dir for 3-digit files...\n" if $debug;
   print "Notice: $latest_id_file not found or corrupted. Initializing from directory contents.\n";
   
   my @files = glob("$dir/[0-9][0-9][0-9]");

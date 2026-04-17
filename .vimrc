@@ -112,6 +112,13 @@ if has("syntax")
   syntax on
 endif
 filetype plugin indent on
+
+" 改用 bash 执行外部命令（彻底避开 csh
+" 的坑），使用csh的时候，在vim中使用外部命令例如awk的时候，会自动source
+" .cshrc，这样会降低外部命令的运行效率
+set shell=/bin/bash
+set shellcmdflag=-c
+
 set scrolloff=5
 set nocompatible
 set showcmd  " Show (partial) command in status line.

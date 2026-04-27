@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/08 09:48:33 Friday
 # label     : db_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|misc_proc)
@@ -86,7 +86,7 @@ proc build_sar_LUT_usingDICT {args} {
     accessed using the operateLUT proc. If such information were obtained through calculations each time, it would make the proc extremely inefficient."
   set usage "You can obtain the content here through a unified lookup table function. For example: operateLUT -type read -attr {core_inner_boundary_rects}, \
     but note that you need to source this file in the invs db beforehand."
-  add_file_header -fileID $fo -descrip $descrip -usage $usage -author "sar song"
+  add_file_header -fileID $fo -descrip $descrip -usage $usage -author "aiden song"
   puts $fo "catch \{unset $lutDictName\}"
   puts $fo "global $lutDictName"
   debug_msg "# --- create dict"

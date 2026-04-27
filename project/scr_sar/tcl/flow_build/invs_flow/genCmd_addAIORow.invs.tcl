@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/31 23:10:22 Sunday
 # label     : flow_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
@@ -31,7 +31,7 @@ proc genCmd_addAIORow {{dieArea_rect {0 0 10 10}} {IO_site_name ""} {numOrRowEve
 
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/31 23:10:22 Sunday
 # label     : flow_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)

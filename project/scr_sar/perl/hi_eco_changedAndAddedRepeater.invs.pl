@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/07/19 16:33:12 Saturday
 # label     : gui_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|misc_proc)

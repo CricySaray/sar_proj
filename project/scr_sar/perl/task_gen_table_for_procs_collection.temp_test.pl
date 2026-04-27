@@ -1,6 +1,6 @@
 #!/bin/perl
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/11/12 19:52:24 Wednesday
 # label     : 
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
@@ -14,7 +14,7 @@ use strict;
 use warnings;
 require ./sub_gen_table.pl; # gen_table
 my @table_meta_data = [
-  ['perl', 'teamshare', 'sar song', '2025/11/12 19:56:58 Wednesday', 'push, pop, plist, pfind and phelp'],
+  ['perl', 'teamshare', 'aiden song', '2025/11/12 19:56:58 Wednesday', 'push, pop, plist, pfind and phelp'],
   ['tcl', '', '', '', ''],
 ];
 my $table_content = gen_table(

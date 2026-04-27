@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/07/24
 # label     : misc_proc
 # descrip   : Merge sourced files with improved comment stripping; supports auto lang detection

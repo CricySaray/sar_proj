@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/09/01 15:39:39 Monday
 # label     : check_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
@@ -100,7 +100,7 @@ proc gen_report_if_memAndIP_in_coreOrDieRegion {{suffixOfFile ""} {coreRegion {}
       Especially during the Floorplan phase, you can use the command names set in the attached additional command file $cmdFile_select_InstsForEveryState \
       to conveniently check whether these three states meet your expectations. If there are any states that exceed expectations, timely modifications are required."
     set usage "see this cmd file: $cmdFile_select_InstsForEveryState"
-    add_file_header -fileID $fi -author "sar song" -descrip $descrip -usage $usage -line_width 150 -splitLineWidth 36 -tee
+    add_file_header -fileID $fi -author "aiden song" -descrip $descrip -usage $usage -line_width 150 -splitLineWidth 36 -tee
     pw $fi "CORE REGION CHECK:"
     pw $fi ""
     pw $fi $coreCheck_formatted_to_table
@@ -112,7 +112,7 @@ proc gen_report_if_memAndIP_in_coreOrDieRegion {{suffixOfFile ""} {coreRegion {}
     close $fi
     set cmdfi [open $cmdFile_select_InstsForEveryState w]
     set usage "source this file and can use cmds below"
-    add_file_header -fileID $fi -author "sar song" -usage $usage -line_width 150 -splitLineWidth 36 -tee
+    add_file_header -fileID $fi -author "aiden song" -usage $usage -line_width 150 -splitLineWidth 36 -tee
     pw $cmdfi ""
     pw $cmdfi "# CMDS FOR CORE SELECT"
     pw $cmdfi ""
@@ -131,7 +131,7 @@ proc gen_report_if_memAndIP_in_coreOrDieRegion {{suffixOfFile ""} {coreRegion {}
 
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/09/01 15:59:17 Monday
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)

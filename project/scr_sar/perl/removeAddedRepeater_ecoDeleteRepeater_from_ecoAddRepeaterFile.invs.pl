@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # --------------------------
-# author    : sar song (modified)
+# author    : aiden song (modified)
 # date      : 2025/07/23 15:30:00 Wednesday
 # label     : eco_name_extractor
 # descrip   : Extract -name parameter values from ecoAddRepeater commands in ECO scripts and generate TCL scripts

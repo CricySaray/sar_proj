@@ -2,7 +2,7 @@
 #         In order to complete the script quickly, the deduplication operation was not considered. You must add this deduplication protection later.
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2026/02/28 15:57:18 Saturday
 # label     : task_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc

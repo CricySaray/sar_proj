@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : Mon Jul  7 20:42:42 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc)

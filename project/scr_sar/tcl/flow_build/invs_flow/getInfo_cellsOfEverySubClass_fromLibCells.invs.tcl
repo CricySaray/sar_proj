@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/30 19:43:11 Saturday
 # label     : misc_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
@@ -42,7 +42,7 @@ proc get_cells_of_every_subClass_from_libCells {{outputfile ""} {ifFormatToTable
         set listCmd [list $fi [join $detail_list_of_cells \n]]
         set descrip "Displays all libCells in the subClasses of the Database. There are two display formats: tables and lists."
         set usage "To better classify all cells and facilitate search and query"
-        add_file_header -fileID $fi -author "sar song" -date "auto" -descrip $descrip -usage $usage -line_width 150 -splitLineWidth 25
+        add_file_header -fileID $fi -author "aiden song" -date "auto" -descrip $descrip -usage $usage -line_width 150 -splitLineWidth 25
       } else { 
         set detailCmd [list $formated_cells_list] 
         set listCmd [list [join $detail_list_of_cells \n]]

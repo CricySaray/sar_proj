@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : Wed Jul  2 15:37:39 CST 2025
 # descrip   : get all seqential insts, and get all pins name of every inst. if list does NOT has RB(reset pin name), append to list. return list 
 # ref       : link url

@@ -12,7 +12,7 @@
 # return    : tcl output file
 # ref       : link url
 # --------------------------
-proc genFile_scriptForMemIpLocation {args} {
+proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd {args} {
   set outputfilename "./mem_placeInstance_forFP_at[clock format [clock second] -format "%Y%m%d_%H%M"].tcl"
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
@@ -35,7 +35,7 @@ proc genFile_scriptForMemIpLocation {args} {
     puts $fo_temp [join $cmdsList \n]
     close $fo_temp
   } else {
-    error "proc genFile_scriptForMemIpLocation: check your invs db: there is no mem or ip!!!"
+    error "proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd: check your invs db: there is no mem or ip!!!"
   }
 }
 
@@ -45,7 +45,7 @@ if {[catch {is_common_ui_mode}]} {
   set temp_define define_proc_arguments
 }
 
-$temp_define genFile_scriptForMemIpLocation \
+$temp_define genFile_scriptForMemIpLocation_usingPlaceInstanceCmd \
   -info "write script for mem or ip"\
   -define_args {
     {-outputfilename "specify output file of script" AString string optional}

@@ -40,9 +40,9 @@ proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd {args} {
     puts $fo_temp [join $cmdsList \n]
     close $fo_temp
     if {$selected == 1} {
-      puts "Proc info: have dump all mem/ips location to file: $outputfilename"
-    } else {
       puts "Proc info: have dump selected mem/ips location to file: $outputfilename"
+    } else {
+      puts "Proc info: have dump all mem/ips location to file: $outputfilename"
     }
   } else {
     error "proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd: check your invs db: there is no mem or ip!!!"

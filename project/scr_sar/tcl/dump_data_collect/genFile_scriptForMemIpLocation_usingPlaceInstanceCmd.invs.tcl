@@ -14,12 +14,17 @@
 # --------------------------
 proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd {args} {
   set outputfilename "./mem_placeInstance_forFP_at[clock format [clock second] -format "%Y%m%d_%H%M"].tcl"
+  set selected 0
   parse_proc_arguments -args $args opt
   foreach arg [array names opt] {
     regsub -- "-" $arg "" var
     set $var $opt($arg)
   }
-  set allPlacedMemAndIP_ptr [dbget [dbget top.insts.cell.subClass block -p2].pstatus {^placed|fixed} -regexp -p -e]
+  if {$selected == 1} {
+    set allPlacedMemAndIP_ptr [dbget [dbget selected.cell.subClass block -p2].pstatus {^placed|fixed} -regexp -p -e]
+  } else {
+    set allPlacedMemAndIP_ptr [dbget [dbget top.insts.cell.subClass block -p2].pstatus {^placed|fixed} -regexp -p -e]
+  }
   if {$allPlacedMemAndIP_ptr ne ""} {
     set cmdsList [lmap temp_memip_ptr $allPlacedMemAndIP_ptr {
       set temp_pt {*}[dbget $temp_memip_ptr.pt -e] 
@@ -34,6 +39,11 @@ proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd {args} {
     set fo_temp [open $outputfilename w]
     puts $fo_temp [join $cmdsList \n]
     close $fo_temp
+    if {$selected == 1} {
+      puts "Proc info: have dump all mem/ips location to file: $outputfilename"
+    } else {
+      puts "Proc info: have dump selected mem/ips location to file: $outputfilename"
+    }
   } else {
     error "proc genFile_scriptForMemIpLocation_usingPlaceInstanceCmd: check your invs db: there is no mem or ip!!!"
   }
@@ -49,4 +59,5 @@ $temp_define genFile_scriptForMemIpLocation_usingPlaceInstanceCmd \
   -info "write script for mem or ip"\
   -define_args {
     {-outputfilename "specify output file of script" AString string optional}
+    {-selected "only dump selected mem/ips location" "" boolean optional}
   }

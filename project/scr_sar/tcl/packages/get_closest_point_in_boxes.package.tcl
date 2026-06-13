@@ -6,8 +6,9 @@
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc
 #             |flow_proc|report_proc|cross_lang_proc|eco_proc|misc_proc|snippet|signoff_check|drc_proc|clock_tree_relative_proc)
 #   perl -> (format_sub|getInfo_sub|perl_task|flow_perl)
-# descrip   : 
-# return    : 
+# descrip   : Input a point and a set of boxes, then find and return the point in the boxes that is closest to the given point.
+#             New logic: If input point is inside any box, return original point directly.
+# return    : pt of point
 # ref       : link url
 # --------------------------
 # Proc to find the closest point inside boxes using Manhattan distance
@@ -21,12 +22,10 @@ proc get_closest_point_in_boxes {point boxes} {
       error "Invalid point coordinate: must be numeric, got $coord"
     }
   }
-
   # Error defense 2: Validate boxes is a list
   if {![llength $boxes]} {
     error "Invalid boxes: empty list, must contain at least one rectangle"
   }
-
   # Error defense 3: Validate each rectangle in boxes
   set rect_idx 0
   foreach rect $boxes {
@@ -49,26 +48,38 @@ proc get_closest_point_in_boxes {point boxes} {
   # Parse input point
   lassign $point px py
 
+  # New added: Judge if input point is inside any box
+  set point_inside 0
+  foreach rect $boxes {
+    lassign $rect rx ry rx1 ry1
+    # Determine whether the point is within the current rectangle boundary
+    if {$px >= $rx && $px <= $rx1 && $py >= $ry && $py <= $ry1} {
+      set point_inside 1
+      break
+    }
+  }
+
+  # If point is inside boxes, return original point directly
+  if {$point_inside} {
+    return $point
+  }
+
+  # Original logic: Find closest point when point is outside all boxes
   set min_dist Inf
   set closest_point {}
-
   # Iterate all rectangles to find closest point
   foreach rect $boxes {
     lassign $rect rx ry rx1 ry1
-
     # Calculate closest point in current rectangle (Manhattan distance projection)
     set cx [expr {max($rx, min($px, $rx1))}]
     set cy [expr {max($ry, min($py, $ry1))}]
-
     # Calculate Manhattan distance
     set dist [expr {abs($px - $cx) + abs($py - $cy)}]
-
     # Update minimum distance and closest point
     if {$dist < $min_dist} {
       set min_dist $dist
       set closest_point [list $cx $cy]
     }
   }
-
   return $closest_point
 }

@@ -28,11 +28,11 @@ proc get_fanoutNum_and_inputTermsName_of_pin {{pin ""}} {
 }
 
 proc get_driverPin {{pin ""}} {
-  if {$pin == "" || [dbget top.insts.instTerms.name $pin -e] == ""} {
+  if {$pin eq "" || [dbget top.insts.instTerms.name $pin -e] eq "" || [dbget top.terms.name $pin -e] eq ""} {
     error "proc get_driverPin: pin ($pin) can't find in invs db!!!"; # no pin
   } else {
-    set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isOutput 1 -p].name ] 0]
-    if {$driver eq "0x0"} {
+    set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isOutput 1 -p].name -e] 0]
+    if {$driver eq ""} {
       set temp_net [dbget [dbget top.insts.instTerms.name $pin -p].net.name -e] 
       set driver [get_ports -q -of [get_nets $temp_net] -filter "direction==in"]
       if {$driver ne ""} {

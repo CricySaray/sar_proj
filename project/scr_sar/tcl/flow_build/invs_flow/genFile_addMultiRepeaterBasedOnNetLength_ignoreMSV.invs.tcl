@@ -43,6 +43,7 @@ proc genFile_addMultiRepeaterBasedOnNetLength_ignoreMSV {args} {
   }]
 
   set i 0
+  set temp_cmdsList [list]
   foreach temp_viol_term $pureTermsList {
     set temp_driver_pin [get_driverPin_honerInstTermsAndPorts $temp_viol_term]
     set temp_driver_pin_pt [lindex [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].pt -e] 0]
@@ -61,7 +62,7 @@ proc genFile_addMultiRepeaterBasedOnNetLength_ignoreMSV {args} {
     }
     set temp_net_length [get_net_length $temp_net_name]
     if {$temp_net_length < $thresholdOfMinNetLengthToInsertBuffer} {
-      lappend cmdsList "# ignore violPin of which driverPin($temp_driver_pin) cuz of no exceeding threshold of min net length: $temp_viol_term"
+      lappend temp_cmdsList "# ignore violPin of which driverPin($temp_driver_pin) cuz of no exceeding threshold of min net length: $temp_viol_term"
       continue
     }
     set sinks [get_sinkPins_honorInstTermsAndPorts $temp_driver_pin]
@@ -83,13 +84,16 @@ proc genFile_addMultiRepeaterBasedOnNetLength_ignoreMSV {args} {
       set temp_sinks_of_farthest_group [lmap temp_sink_pt $temp_sink_pts {
         lindex $temp_sink_pt 0
       }]
+      if {[regexp {\{$temp_sinks_of_farthest_group\}} $temp_cmdsList]} { continue }
       incr i
-      lappend cmdsList "ecoAddRepeater -cell $bufferCellType -spreadPrefix ${newBufferPrefix}_pinNo$i -spreadCount $temp_count_of_repeaters -term \{$temp_sinks_of_farthest_group\}"
+      lappend temp_cmdsList "ecoAddRepeater -cell $bufferCellType -spreadPrefix ${newBufferPrefix}_pinNo$i -spreadCount $temp_count_of_repeaters -term \{$temp_sinks_of_farthest_group\}"
     } else {
-      lappend cmdsList "# ignore violPin of which driverPin($temp_driver_pin) cuz of no exceeding threshold of min net length for manhattan distance: $temp_viol_term"
+      lappend temp_cmdsList "# ignore violPin of which driverPin($temp_driver_pin) cuz of no exceeding threshold of min net length for manhattan distance: $temp_viol_term"
       continue
     }
   }
+  # set temp_cmdsList [lsort -u $temp_cmdsList]
+  set cmdsList [concat $cmdsList $temp_cmdsList]
   lappend cmdsList "setEcoMode -reset"
 
   set fo [open $outputfilename w]

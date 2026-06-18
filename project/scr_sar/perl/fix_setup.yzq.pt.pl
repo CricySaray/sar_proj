@@ -23,7 +23,7 @@ open my $fo2, '>', "fail_$ARGV[1].list";
 while (<$fi>) {
   if (/Point/../data arrival time/) {
   #push @pathInfo, [$i, $2, $3] if /(\S+)\/(?:ZN?|CO|Q) \((\S+?BWP\S+?(?<!ULVT))\).* (\S+) &/;
-    push @pathInfo, [$i, $2, $3] if /(\S+)\/(?:O?|CO|Q) \((\S+?X\d\+\S*?(?<!AL9))\).* (\S+) &/;
+    push @pathInfo, [$i, $2, $3] if /(\S+)\/(?:\w+) \((\S+?X\d\+\S*?(?<!AL9))\).* (\S+) &/;
     $endPt = $1 if /(\S+?\/\S+)/;
     $pathFlag = 1 if /data arrival time/;
   }

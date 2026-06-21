@@ -14,10 +14,11 @@ source ../../packages/check_rectangle_placement.package.tcl; # check_rectangle_p
 source ../../packages/every_any.package.tcl; # every
 source ../../packages/calculate_manhattan_distance.package.tcl; # calculate_manhattan_distance
 source ../../packages/get_route_rects.package.tcl; # get_route_rects
+source ../../packages/group_points_by_distribution_and_preferFartherCenterPt.package.tcl; # group_points_by_distribution_and_preferFartherCenterPt
 alias sus "subst -nocommands -nobackslashes"
 proc genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutCommonSituation_onlyOne2One {args} {
   set boxlist                       {{} {}} ; # plz input box list in sequence!!!
-  set bufferCelltype                BUFFD4BWP143M169H3P48CPDLVT
+  set bufferCelltype                BUFFD12BWP143M169H3P48CPDULVT
   set driverPinsList                [list]
   set ifGetInputPinOfProvidedPins   1
   set ifCreateRegionForBuffers      1
@@ -83,21 +84,13 @@ proc genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutCommonSituation_onlyOne2O
   # } else {
   #   puts "totally have [llength $inputPinsList] input port or output pin objects."
   # }
-  set portsList_ofUniqueByNetInstTermsAndFilterOutOne2OnePath [lmap temp_driver_pin $purePinsList {
-    if {[dbget top.insts.instTerms.name $temp_driver_pin -e] ne ""} {
-      if {[dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.numTerms] == 2 && [every x [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.instTerms.name -e] { expr {$x ni $portsListOfHaveNoInputPort} }] && [every x [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.terms.name -e] { expr {$x ni $portsListOfHaveNoInputPort}  }]} {
-        set temp_driver_pin
-      } else { continue }
-    } elseif {[dbget top.terms.name $temp_driver_pin -e] ne ""} {
-      if {[dbget [dbget top.terms.name $temp_driver_pin -p].net.numTerms] == 2 && [every x [dbget [dbget top.terms.name $temp_driver_pin -p].net.instTerms.name -e] { expr {$x ni $portsListOfHaveNoInputPort} }] && [every x [dbget [dbget top.terms.name $temp_driver_pin -p].net.instTerms.name -e] { expr {$x ni $portsListOfHaveNoInputPort}  }]} {
-        set temp_driver_pin
-      } else { continue }
-    } else { continue }
-  }]
-  if {$portsList_ofUniqueByNetInstTermsAndFilterOutOne2OnePath eq ""} {
+  set pinsList_driverPins [lsort -u [lmap temp_driver_pin $purePinsList {
+    get_driverPin_honerInstTermsAndPorts $temp_driver_pin
+  }]]
+  if {$pinsList_driverPins eq ""} {
     error "proc genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutCommonSituation_onlyOne2One: ERROR: driverPinsList have no instTerms or terms object!!!"
   } else {
-    puts "totally have [llength $portsList_ofUniqueByNetInstTermsAndFilterOutOne2OnePath] one2one path."
+    puts "totally have [llength $pinsList_driverPins] driverPin path."
   }
 
   if {[check_rectangle_placement $boxlist 300 1] == 1} {
@@ -111,23 +104,39 @@ proc genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutCommonSituation_onlyOne2O
       set box_of_region_No$temp_box_region_itr_num $temp_box
       incr temp_box_region_itr_num
     }
-    foreach temp_driver_pin $portsList_ofUniqueByNetInstTermsAndFilterOutOne2OnePath {
+    foreach temp_driver_pin $pinsList_driverPins {
       if {[dbget top.insts.instTerms.name $temp_driver_pin -e] ne ""} {
-        set providedPinLoc [lindex [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].pt -e] 0]
+        set providedDriverPinLoc [lindex [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].pt -e] 0]
+        set providedSinkPins [lsort -u [concat [dbget [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.instTerms.isInput 1 -p].name -e] [dbget [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.terms.inOutDir "output" -p].name -e]]]
       } else {
-        set providedPinLoc [lindex [dbget [dbget top.terms.name $temp_driver_pin -p].pt -e] 0]
+        set providedDriverPinLoc [lindex [dbget [dbget top.terms.name $temp_driver_pin -p].pt -e] 0]
+        set providedSinkPins [lsort -u [concat [dbget [dbget [dbget top.terms.name $temp_driver_pin -p].net.instTerms.isInput 1 -p].name -e] [dbget [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.terms.inOutDir "output" -p].name -e]]]
       }
-      set connectedPinName_temp [lsearch -not -all -inline [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.instTerms.name -e] $temp_driver_pin]
-      if {$connectedPinName_temp eq "" && [dbget top.insts.instTerms.name $connectedPinName_temp -e] ne ""} {
-        set connectedPinLoc [lindex [dbget [dbget top.insts.instTerms.name $connectedPinName_temp -p].pt -e] 0]
-      } else {
-        set connectedPinLoc [lindex [dbget [dbget top.terms.name $connectedPinName_temp -p].pt -e] 0]
-      }
-      set sequenceBoxesOfInsertBuffer [lreverse [get_route_rects $boxlist $providedPinLoc $connectedPinLoc]]
+      set providedSinkPinLocs [lmap temp_sinkpin $providedSinkPins {
+        if {[dbget top.insts.instTerms.name $temp_sinkpin -e] ne ""} {
+          set temp_sinkpinpt [lindex [dbget [dbget top.insts.instTerms.name $temp_sinkpin -p].pt -e] 0]
+        } else {
+          set temp_sinkpinpt [lindex [dbget [dbget top.terms.name $temp_sinkpin -p].pt -e] 0]
+        }
+        list $temp_sinkpin $temp_sinkpinpt
+      }]
+      set groupedSinkPinPtsList [group_points_by_distribution_and_preferFartherCenterPt [list $temp_driver_pin $providedDriverPinLoc] $providedSinkPinLocs ]
+      lassign $groupedSinkPinPtsList temp_farthestGourp temp_nearestGroup
+      lassign $temp_farthestGourp temp_farthest_sinkPinLocs temp_farthest_centerPt
+      set farthest_sinkPins [lmap temp_sinkpin_loc $temp_farthest_sinkPinLocs {
+        lindex $temp_sinkpin_loc 0
+      }]
+      # set connectedPinName_temp [lsearch -not -all -inline [dbget [dbget top.insts.instTerms.name $temp_driver_pin -p].net.instTerms.name -e] $temp_driver_pin]
+      # if {$connectedPinName_temp eq "" && [dbget top.insts.instTerms.name $connectedPinName_temp -e] ne ""} {
+      #   set connectedPinLoc [lindex [dbget [dbget top.insts.instTerms.name $connectedPinName_temp -p].pt -e] 0]
+      # } else {
+      #   set connectedPinLoc [lindex [dbget [dbget top.terms.name $connectedPinName_temp -p].pt -e] 0]
+      # }
+      set sequenceBoxesOfInsertBuffer [lreverse [get_route_rects $boxlist $providedDriverPinLoc $temp_farthest_centerPt]]
       set box_itr_num 1
       foreach temp_box $sequenceBoxesOfInsertBuffer {
         set temp_name_of_buffer ${prefixOfAddedBufferName}_portNo${port_itr_num}_boxNo${box_itr_num}
-        lappend cmdsList "ecoAddRepeater -name $temp_name_of_buffer -cell $bufferCelltype -loc \{[db_rect -center $temp_box]\} -term $temp_driver_pin"
+        lappend cmdsList "ecoAddRepeater -name $temp_name_of_buffer -cell $bufferCelltype -loc \{[db_rect -center $temp_box]\} -term \{$farthest_sinkPins\}"
         lappend ${prefixOfAddedRegion}_No[lsearch $boxlist $temp_box] $temp_name_of_buffer ; # record insts -> region inst group
         incr box_itr_num
       }
@@ -184,3 +193,33 @@ define_proc_arguments genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutCommonSi
     {-prefixOfAddedRegion "specify the prefix of added region" AString string optional}
     {-prefixOfAddedBufferName "specify the prefix of added buffer" AString string optional}
   }
+
+proc get_driverPin_honerInstTermsAndPorts {{pin ""}} {
+  if {$pin eq "" || [dbget top.insts.instTerms.name $pin -e] eq "" && [dbget top.terms.name $pin -e] eq ""} {
+    error "proc get_driverPin: pin ($pin) can't find in invs db!!!"; # no pin
+  } else {
+    if {[dbget top.insts.instTerms.name $pin -e] ne ""} {
+      set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.instTerms.isOutput 1 -p].name -e] 0]
+      if {$driver eq ""} {
+        set driver [lindex [dbget [dbget [dbget top.insts.instTerms.name $pin -p].net.terms.inOutDir "input" -p].name -e] 0]
+        if {$driver eq ""} {
+          error "proc get_driverPin_honerInstTermsAndPorts: ERROR: term/pin($pin) has no driver!!!"
+        }
+      }
+    } else {
+      set driver [lindex [dbget [dbget [dbget top.terms.name $pin -p].net.instTerms.isOutput 1 -p].name -e] 0]
+      if {$driver eq ""} {
+        set driver [lindex [dbget [dbget [dbget top.terms.name $pin -p].net.terms.inOutDir "input" -p].name -e] 0]
+        if {$driver eq ""} {
+          error "proc get_driverPin_honerInstTermsAndPorts: ERROR: term/pin($pin) has no driver!!!"
+        }
+      }
+    }
+    set driver [lsort -u $driver]
+    if {[llength $driver] == 1} {
+      return $driver
+    } else {
+      error "proc get_driverPin_honerInstTermsAndPorts: ERROR: driver term have one more!!! invalid return value!!!"
+    }
+  }
+}

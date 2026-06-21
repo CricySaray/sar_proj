@@ -110,7 +110,7 @@ proc genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutPortToPorts {args} {
       set inputPortLoc [lindex [dbget [dbget top.terms.name $temp_port -p].pt -e] 0]
       set outputPortsLoc [dbget [dbget [dbget top.terms.name $temp_port -p].net.terms.inOutDir output -p].pt -e]
       set resistenceCenterPt [calculateResistantCenter_fromPoints $outputPortsLoc]
-      set sequenceBoxesOfInsertBuffer [get_route_rects $boxlist $inputPortLoc $resistenceCenterPt]
+      set sequenceBoxesOfInsertBuffer [lreverse [get_route_rects $boxlist $inputPortLoc $resistenceCenterPt]]
       set box_itr_num 1
       foreach temp_box $sequenceBoxesOfInsertBuffer {
         set temp_name_of_buffer ${prefixOfAddedBufferName}_portNo${port_itr_num}_boxNo${box_itr_num}

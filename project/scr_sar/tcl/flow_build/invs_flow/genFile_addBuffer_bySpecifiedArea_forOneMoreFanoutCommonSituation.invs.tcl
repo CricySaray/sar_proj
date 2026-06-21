@@ -132,7 +132,7 @@ proc genFile_addBuffer_bySpecifiedArea_forOneMoreFanoutCommonSituation_onlyOne2O
       # } else {
       #   set connectedPinLoc [lindex [dbget [dbget top.terms.name $connectedPinName_temp -p].pt -e] 0]
       # }
-      set sequenceBoxesOfInsertBuffer [lreverse [get_route_rects $boxlist $providedDriverPinLoc $temp_farthest_centerPt]]
+      set sequenceBoxesOfInsertBuffer [get_route_rects $boxlist $providedDriverPinLoc $temp_farthest_centerPt]
       set box_itr_num 1
       foreach temp_box $sequenceBoxesOfInsertBuffer {
         set temp_name_of_buffer ${prefixOfAddedBufferName}_portNo${port_itr_num}_boxNo${box_itr_num}

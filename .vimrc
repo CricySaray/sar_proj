@@ -140,6 +140,8 @@ set shiftwidth=2 " 设定 << 和 >> 命令移动时的宽度为 3，同时，用
 set softtabstop=2 " 使得按退格键时可以一次删掉 2 个空格
 set tabstop=2 " 设定 tab 长度为 2
 set expandtab
+" only for python file: 
+autocmd FileType python setlocal expandtab tabstop=4 shiftwidth=4 softtabstop=4
 " set shiftwidth=4 "when indenting with '>', use 4 spaces width
 set nobackup " 覆盖文件时不备份
 " set autochdir " 自动切换当前目录为当前文件所在的目录

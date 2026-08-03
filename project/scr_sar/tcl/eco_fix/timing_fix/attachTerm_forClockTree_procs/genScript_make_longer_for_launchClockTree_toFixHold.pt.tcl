@@ -23,7 +23,6 @@ source ../../../flow_build/common/convert_file_to_list.common.tcl; # convert_fil
 source ../../../packages/table_format_with_title.package.tcl; # table_format_with_title
 source ../../../packages/get_block_info_fromTimingRptFile.package.tcl; # get_block_info_fromTimingRptFile
 
-
 proc genFileOfStartpointEndpointListAtHoldSession_forGetSetupMarginAtSetupSession {args} {
   set violPinsOrInstsOrViolPathFilename                  [list]
   set pba_mode                                           ex

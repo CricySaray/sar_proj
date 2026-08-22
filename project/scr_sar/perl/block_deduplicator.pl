@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2026/02/10 10:00:00 Tuesday
 # label     : getInfo_sub
 # descrip   : This Perl script extracts text blocks from input (compressed/plain), processes each block with piped shell commands,

@@ -9,8 +9,8 @@ alias vttt='vim ~/project/scr_sar/perl/tree.pl'
 alias te='perl ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 
-alias fa='perl /home/cricy/project/scr_sar/perl/file_archiver.pl'
-alias vfa='vim /home/cricy/project/scr_sar/perl/file_archiver.pl'
+alias fa='perl ~/project/scr_sar/perl/file_archiver.pl'
+alias vfa='vim ~/project/scr_sar/perl/file_archiver.pl'
 
 alias ef='perl ~/project/scr_sar/perl/encrypt_perlScript.pl'
 alias vef='vim ~/project/scr_sar/perl/encrypt_perlScript.pl'
@@ -63,9 +63,9 @@ alias vv='vim ~/.vimrc'
 alias sv='source ~/.vimrc'
 alias vb='vim ~/.bashrc'
 alias sb='source ~/.bashrc'
-alias lt='ls -lthr'
-alias tl='lt -lthr'
-alias t='lt -lthr'
+alias lt='ls -lthr --time-style=long-iso'
+alias tl='lt'
+alias t='lt'
 alias ll='ls -alF'
 alias la='ls -alhr'
 alias l='ls -CF'
@@ -94,7 +94,7 @@ export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 
 #------------------------------------------------
 # config for autojump (github : wting/autojump)
-[[ -s /home/cricy/.autojump/etc/profile.d/autojump.sh ]] && source /home/cricy/.autojump/etc/profile.d/autojump.sh
+# [[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
 
 
 #------------------------------------------------
@@ -102,7 +102,7 @@ export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 # 使用fdfind搜索文件并通过vim打开
 function vf() {
   if [[ $# -eq 0 ]]; then
-    local search_dir="/home/cricy/"
+    local search_dir="~/"
     local search_term=""
   elif [[ $# -eq 1 ]]; then
     local search_dir="$1"
@@ -135,17 +135,17 @@ function cdf() {
     cd "$selected_dir"
     pwd  # 可选：显示当前目录
   fi
-  # 检查 autojump 是否可用
-  if ! command -v autojump &> /dev/null; then
-    echo "autojump not found. Directory not recorded." >&2
-    return 1
-  fi
-  # 记录当前目录到 autojump 数据库
-  if ! autojump -a "$PWD"; then
-    echo "Failed to add directory to autojump database." >&2
-    return 1
-  fi
-  autojump --purge &> /dev/null
+  # # 检查 autojump 是否可用
+  # if ! command -v autojump &> /dev/null; then
+  #   echo "autojump not found. Directory not recorded." >&2
+  #   return 1
+  # fi
+  # # 记录当前目录到 autojump 数据库
+  # if ! autojump -a "$PWD"; then
+  #   echo "Failed to add directory to autojump database." >&2
+  #   return 1
+  # fi
+  # autojump --purge &> /dev/null
   return 0
 }
 
@@ -155,17 +155,17 @@ function cdf() {
 function c() {
   # 使用内置的 cd 命令
   builtin cd "$@" || return 1
-  # 检查 autojump 是否可用
-  if ! command -v autojump &> /dev/null; then
-    echo "autojump not found. Directory not recorded." >&2
-    return 1
-  fi
-  # 记录当前目录到 autojump 数据库
-  if ! autojump -a "$PWD"; then
-    echo "Failed to add directory to autojump database." >&2
-    return 1
-  fi
-  autojump --purge &> /dev/null
+  # # 检查 autojump 是否可用
+  # if ! command -v autojump &> /dev/null; then
+  #   echo "autojump not found. Directory not recorded." >&2
+  #   return 1
+  # fi
+  # # 记录当前目录到 autojump 数据库
+  # if ! autojump -a "$PWD"; then
+  #   echo "Failed to add directory to autojump database." >&2
+  #   return 1
+  # fi
+  # autojump --purge &> /dev/null
   return 0
 }
 alias c='c'

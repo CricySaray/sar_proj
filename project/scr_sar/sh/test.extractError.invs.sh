@@ -1,6 +1,6 @@
 #!/bin/csh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/07/21 15:47:41 Monday
 # label     : sum_csh
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|misc_proc)

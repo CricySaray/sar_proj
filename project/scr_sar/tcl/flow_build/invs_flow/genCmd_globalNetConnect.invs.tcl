@@ -1,12 +1,12 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/09/10 17:08:05 Wednesday
 # label     : flow_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
 #   perl -> (format_sub)
 # descrip   : gen cmd for globalNetConnect
-# return    : 
+# return    : cmd list
 # ref       : link url
 # --------------------------
 proc genCmd_globalNetConnect {args} {

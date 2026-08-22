@@ -1,5 +1,5 @@
 [user]
-	name = cricy
+	name = anrui.song
 	email = cricysaray@qq.com
 [alias]
 	rr = rm -r --cached .
@@ -85,5 +85,9 @@
   deltaCacheSize = 2047m
   packSizeLimit = 2047m
   windowMemory = 2047m
-[safe]
-	directory = *
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential

@@ -1,6 +1,6 @@
 #!/bin/python3
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/21 20:24:49 Thursday
 # label     : 
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)

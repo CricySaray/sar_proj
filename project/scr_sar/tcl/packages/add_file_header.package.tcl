@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/17 12:55:06 Sunday
 # label     : package_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|misc_proc)
@@ -17,7 +17,7 @@ source ./logic_AND_OR.package.tcl; # eo
 proc add_file_header {args} {
   set fileID                  ""
   set proc_name               [lindex [info level 1] 0]
-  set author                  "sar song"
+  set author                  "aiden song"
   set date 			              "auto"
   set descrip                 "None"
   set usage                   "None"

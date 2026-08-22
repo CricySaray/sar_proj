@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/09/05 10:19:29 Friday
 # label     : check_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
@@ -35,7 +35,7 @@ proc check_if_missing_lef {{outputfile "check_if_missing_lef.list"}} {
   }
   set fi [open $outputfile w]
   set descrip "missing lef detail"
-  add_file_header -fileID $fi -author "sar song" -descrip $descrip -tee
+  add_file_header -fileID $fi -author "aiden song" -descrip $descrip -tee
   pw $fi "MISSING LEF LIST: (num of missing lef: [llength $miss_lef_cells_list])"
   pw $fi [join $miss_lef_cells_list \n]
   pw $fi ""

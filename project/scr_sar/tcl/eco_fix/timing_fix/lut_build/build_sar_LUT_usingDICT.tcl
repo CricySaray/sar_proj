@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/08/08 09:48:33 Friday
 # label     : db_proc
 #   -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|misc_proc)
@@ -33,7 +33,7 @@ source ./proc_findCoreRectInsideBoundary_usingCoreBoxesAndHaloAndPlaceBlockages.
 source ../../../packages/add_file_header.package.tcl; # add_file_header
 alias sus "subst -nocommands -nobackslashes"
 proc build_sar_LUT_usingDICT {args} {
-  set process                                   {TSMC_cln22ull} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp|TSMC_cln22ull
+  set process                                   {TSMC_cln22ull} ; # TSMC_cln12ffc|M31GPSC900NL040P*_40N|TSMC_arm_cln40lp|TSMC_tcbn40lpbwp|TSMC_cln22ull|TSMC_n3eff
   set promptPrefix                              "# song"
   set LUT_filename                              "lutDict.tcl"
   set lutDictName                               "lutDict"
@@ -75,6 +75,11 @@ proc build_sar_LUT_usingDICT {args} {
     set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
     set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
     set VT_mapList {{{} SVT} {LVT LVT} {ULVT ULVT} {HVT HVT}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
+  } elseif {$process in {TSMC_n3eff}} { ; # this will contain ULVT/ULVTLL/LVT/LVTLL vt type and TRV/TRVL/TRL/TRLL vt type
+    set capacityFlag {D|M} ; set vtFastRange {ULVT ULVTLL LVT LVTLL} ; set stdCellFlag "BWP" ; set clkFlag {^CKB|^CKN|^PCK} ; set celltypeMatchExp {^.*D(\dP?\d?)BWP\d+.*P\d+CPDU?LVT(LL)?$} ; set VtMatchExp {U?LVT(LL)?} ; set refBuffer "BUFFD8BWP143M169H3P48CPDULVTLL" ; set refClkBuffer "CKBD8BWP143M169H3P48CPDULVT"
+    set ifDriveCapacityConvert_from_P_to_point 1 ; # this flag will run: set VTtype [regsub P $VTtype .] AT102
+    set noCareCellClass {notFoundLibCell IP mem filler noCare BoundaryCell DTCD pad physical clamp esd decap ANT tapCell ISOcell pad IOfiller}
+    set VT_mapList {{{ULVT|TRV} ULVT} {{ULVTLL|TRVL} ULVTLL} {{LVT|TRL} LVT} {{LVTLL|TRLL} LVTLL}} ; set driveCapacity_mapList {} ; set ifNeedMapVTlist 1
   } else {
     error "proc build_sar_LUT_usingDICT: error process($process) which is not support now!!!"
   }
@@ -86,7 +91,7 @@ proc build_sar_LUT_usingDICT {args} {
     accessed using the operateLUT proc. If such information were obtained through calculations each time, it would make the proc extremely inefficient."
   set usage "You can obtain the content here through a unified lookup table function. For example: operateLUT -type read -attr {core_inner_boundary_rects}, \
     but note that you need to source this file in the invs db beforehand."
-  add_file_header -fileID $fo -descrip $descrip -usage $usage -author "sar song"
+  add_file_header -fileID $fo -descrip $descrip -usage $usage -author "aiden song"
   puts $fo "catch \{unset $lutDictName\}"
   puts $fo "global $lutDictName"
   debug_msg "# --- create dict"

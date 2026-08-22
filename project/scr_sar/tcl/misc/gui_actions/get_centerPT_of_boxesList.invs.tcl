@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : Wed Jul  2 15:54:08 CST 2025
 # descrip   : get center pt of boxes
 # integrity check : check if box has 4 integer item and if item is floating

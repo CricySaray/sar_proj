@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : Sun Jul  6 00:41:35 CST 2025
 # label     : atomic_proc
 #   -> (atomic_proc|display_proc|task_proc)
@@ -47,6 +47,8 @@ proc expandMapList {{process {}}} {
     set customMapList {{ANT {{ANTENNA.*}}} {noCare {{BHD.*} {^LVL.*}}} {decap {{^G?DCAP.*}}} {filler {{^G?FILL.*}}} {IOfiller {{PFILL.*}}} {cutCell {{^PBRK.*}}} {pad {{.*_DR$}}} {ISOcell {{^ISO.*}}} {tapCell {{^TAP.*}}} {tieCell {{^TIE.*}}}} 
   } elseif {$process in {TSMC_cln22ull}} {
     set customMapList {{ANT {{ANTENNA.*}}} {noCare {{BHD.*} {^LVL.*}}} {decap {{^G?DCAP.*}}} {filler {{^G?FILL.*}}} {ISOcell {{^ISO.*}}} {tapCell {{^TAP.*}}} {tieCell {{^TIE.*}}}} 
+  } elseif {$process in {TSMC_n3eff}} {
+    set customMapList {{BoundaryCell {{BOUNDARY_.*}}} {DTCD {{N12_DTCD_[BF]EOL_.*}}} {pad {{PAD\d+PITCH}}} {physical {{PB2B\w+}}} {clamp {{PCLAMP.*}}} {IP {{PLL_.*}}} {esd {{.*LLESD_.*}}} {decap {{decap_.*} {^DCAP\d+\w+.*}}} {ANT {{ANTENNABWP.*}}} {filler {{^FILL\d+BWP.*}}} {noCare {{GFILL.*}}} {tapCell {{^TAPCELLBWP.*}}}}
   }
   if {[llength $customMapList]} {
     set expandedMapList [lmap item_map $customMapList {

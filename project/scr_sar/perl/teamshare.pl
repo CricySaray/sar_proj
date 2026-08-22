@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/09/04 11:06:30 Thursday
 # label     : misc_sub
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|misc_proc)
@@ -26,6 +26,7 @@
 #             run: plist --range ',10' to show first 10 entries; find 'test' --range '-5,' to search last 5 entries.
 # update    : 2026/01/19 12:55:43 Monday
 #             run: plist --time --owner --permission to show metadata for entries.
+#             2026/XX/XX: Ensure all pushed files have 777 permissions regardless of script owner
 # ref       : link url
 # --------------------------
 use strict;
@@ -45,7 +46,7 @@ my $note = "";                 # Annotation content for --note (-n)
 my $id;                        # Temporary ID variable
 my $popid = "x";               # Target ID for --pop (-o)
 my $line_limit = 20;           # Max lines to display in --pop (truncates beyond this)
-my $dir = "/home/cricy/.teamshare";  # Shared directory path
+my $dir = "/home/aidensong/.teamshare";  # Shared directory path
 my $latest_id_file = "$dir/.latest_id";  # File to track latest ID
 my $debug = 0;                 # Debug mode (-d/--debug)
 my $list = 0;                  # Trigger --list (-l) function
@@ -87,6 +88,7 @@ if ($help) {
   print "                      - CONTENT: Quoted string (supports multi-line via \\n).\n";
   print "                      - Auto-generates 3-digit ID (000-999) for retrieval.\n";
   print "                      - Optional: Use --note (-n) to add annotation.\n";
+  print "                      - All pushed files have 777 permissions for team access.\n";
   print "\n  --note \"ANNOTATION\" (-n)  Add annotation for --push (-p) (optional).\n";
   print "                      - ANNOTATION: Quoted string (brief description).\n";
   print "                      - Only valid with --push (-p) (ignored with other options).\n";
@@ -186,7 +188,7 @@ if ($help) {
   print "1. Shared Directory: Auto-creates \$dir ($dir) with 0777 permissions if missing.\n";
   print "2. ID Cycling: IDs 000-999, resets to 000 after 999 (overwrites old file).\n";
   print "3. Script Copy Warning: Do NOT copy to local paths (causes UID mismatch).\n";
-  print "4. Permission Control: Only script owner can set 0777 permissions for pushed files.\n";
+  print "4. Permission Control: All pushed files are set to 0777 permissions to allow full team access (read/write/delete).\n";
   print "5. ID Recovery: Auto-recovers latest ID from directory if .latest_id is corrupted.\n";
   print "6. Line Truncation: --pop (-o) truncates content to $line_limit lines (annotations intact).\n";
   print "7. Regex Search: Escape special chars (., *, ?, +) with backslash. Use modifiers like (?i) for case-insensitive.\n";
@@ -358,7 +360,8 @@ sub get_file_metadata {
 
   # Get owner username (convert UID to name; fallback to UID if name not found)
   my $owner_uid = $stat->uid;
-  my $owner = getpwuid($owner_uid) // $owner_uid;
+  # my $owner = getpwuid($owner_uid) // $owner_uid;    # usage of perl 5.10+
+  my $owner = getpwuid($owner_uid) ? getpwuid($owner_uid) : $owner_uid; # usage of perl 5.9-
 
   # Get formatted modification time (YYYY-MM-DD HH:MM:SS)
   my $mtime = strftime("%Y-%m-%d %H:%M:%S", localtime($stat->mtime));
@@ -384,7 +387,7 @@ sub get_current_id {
     my $content = <$fh>;
     close $fh;
     
-    if (defined $content && $content =~ /^\d+$/) {
+    if (defined $content && $content =~ m/^\d+$/) {
       $current_id = int($content);
       $current_id = 0 if $current_id < 0 || $current_id > 999;
       print "[DEBUG] Valid ID found in $latest_id_file: $current_id\n" if $debug;
@@ -396,7 +399,7 @@ sub get_current_id {
     }
   }
   
-  print "[DEBUG] $latest_id_file not found/corrupted. Scanning $dir for 3-digit files...\n" if $debug;
+  print "[DEBUG] $latest_id_file not found or corrupted. Scanning $dir for 3-digit files...\n" if $debug;
   print "Notice: $latest_id_file not found or corrupted. Initializing from directory contents.\n";
   
   my @files = glob("$dir/[0-9][0-9][0-9]");
@@ -437,8 +440,9 @@ sub update_latest_id {
   print $fh "$id\n";
   close $fh;
   
-  unless (chmod 0666, $latest_id_file) {
-    warn "Warning: Could not set permissions on $latest_id_file: $!\n";
+  # Set .latest_id to 777 to ensure all users can update it
+  unless (chmod 0777, $latest_id_file) {
+    warn "Warning: Could not set 777 permissions on $latest_id_file: $!\n";
   }
 }
 
@@ -466,25 +470,11 @@ if (length($msg)) {
   close $fh;
   print "[DEBUG] Content (with optional note) written to $file_path successfully\n" if $debug;
   
-  # Permission Setup
-  my $current_script_path = $0;
-  my $script_file_stat = stat($current_script_path) or do {
-    warn "[WARNING] Failed to get status of script $current_script_path: $!\n" if $debug;
-    warn "Warning: Failed to get status of script $current_script_path: $!\n";
-    goto SKIP_PERMISSION_SETUP;
-  };
-  my $script_owner_uid = $script_file_stat->uid;
-  my $current_executor_uid = $<;
-
-  if ($current_executor_uid == $script_owner_uid) {
-    print "[DEBUG] Current user is script owner. Setting 0777 permissions on $file_path\n" if $debug;
-    unless (chmod 0777, $file_path) {
-      warn "Warning: Could not set permissions on $file_path: $!\n";
-    }
-  } else {
-    print "[DEBUG] Current user is not script owner. Skipping permission setup for $file_path\n" if $debug;
+  # Set file permission to 777 unconditionally for all users
+  print "[DEBUG] Setting 777 permissions on $file_path for all team members\n" if $debug;
+  unless (chmod 0777, $file_path) {
+    warn "Warning: Could not set 777 permissions on $file_path: $!\n";
   }
-SKIP_PERMISSION_SETUP:
   
   update_latest_id($new_id);
   

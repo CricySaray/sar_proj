@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/09/12 09:19:45 Friday
 # label     : report_proc
 #   tcl  -> (atomic_proc|display_proc|gui_proc|task_proc|dump_proc|check_proc|math_proc|package_proc|test_proc|datatype_proc|db_proc|flow_proc|report_proc|misc_proc)
@@ -30,7 +30,7 @@ proc genReport_utilization_asDensity {args} {
   } else { set outputfilename $outputfile }
   set fi [open $outputfilename w]
   set descrip "display some density, count and area of std cell or macro."
-  add_file_header -fileID $fi -author "sar song" -descrip $descrip
+  add_file_header -fileID $fi -author "aiden song" -descrip $descrip
   set stdcells_ptr [dbget top.insts.cell.subClass $classInCoreArea -p2]
   set stdcellNum [llength $stdcells_ptr]
   set stdcellArea [dbget $stdcells_ptr.area]

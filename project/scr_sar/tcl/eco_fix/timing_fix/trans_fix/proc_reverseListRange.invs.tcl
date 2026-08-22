@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/07/25
 # label     : atomic_proc
 # descrip   : Reverse list with range, depth, and group preservation (bugfix)

@@ -83,7 +83,9 @@ cabbrev sc %!awk '{print "size_cell",$2,$1}'
 cabbrev inst %s/\\(.*\\)\\/.*/\\1/g
 cabbrev vv vs ~/.vimrc
 cabbrev ess v/endpoint:\\|startpoint:\\|slack (/d
+cabbrev formatslack %!awk '$1 ~ /slack/ {print $1,$2,$3 ; next} 1'
 cabbrev re r ~/project/scr_sar/ref_content/setEcoMode.tcl
+" cabbrev ahk r ~/project/scr_sar/ref_content/autohotkey_template_paste_longstring.ahk
 cabbrev dp r ~/project/scr_sar/ref_content/define_proc_arguments.tcl
 cabbrev pdp r ~/project/scr_sar/ref_content/define_perl_options.txt
 " insert head of proc for tcl or perl, can change DATE to time now
@@ -110,6 +112,13 @@ if has("syntax")
   syntax on
 endif
 filetype plugin indent on
+
+" 改用 bash 执行外部命令（彻底避开 csh
+" 的坑），使用csh的时候，在vim中使用外部命令例如awk的时候，会自动source
+" .cshrc，这样会降低外部命令的运行效率
+set shell=/bin/bash
+set shellcmdflag=-c
+
 set scrolloff=5
 set nocompatible
 set showcmd  " Show (partial) command in status line.
@@ -131,6 +140,8 @@ set shiftwidth=2 " 设定 << 和 >> 命令移动时的宽度为 3，同时，用
 set softtabstop=2 " 使得按退格键时可以一次删掉 2 个空格
 set tabstop=2 " 设定 tab 长度为 2
 set expandtab
+" only for python file: 
+autocmd FileType python setlocal expandtab tabstop=4 shiftwidth=4 softtabstop=4
 " set shiftwidth=4 "when indenting with '>', use 4 spaces width
 set nobackup " 覆盖文件时不备份
 " set autochdir " 自动切换当前目录为当前文件所在的目录

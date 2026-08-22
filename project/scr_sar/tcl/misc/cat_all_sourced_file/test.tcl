@@ -1,6 +1,6 @@
 #!/bin/tclsh
 # --------------------------
-# author    : sar song
+# author    : aiden song
 # date      : 2025/07/27
 # label     : misc_proc
 # descrip   : Merge sourced files with accurate comment stripping (handles multi-line control structures)

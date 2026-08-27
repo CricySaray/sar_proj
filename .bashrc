@@ -91,6 +91,7 @@ export PYTHON_HOME=/usr/bin/python3
 export PATH=$PYTHON_HOME/bin:$PATH
 
 export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
+export PATH="/home/anruisong/.local/bin:$PATH"
 
 #------------------------------------------------
 # config for autojump (github : wting/autojump)

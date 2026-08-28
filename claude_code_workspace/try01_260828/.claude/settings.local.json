@@ -16,7 +16,27 @@
       "PowerShell(Get-Content \"$env:TEMP\\\\skills-tree.json\" -Raw)",
       "PowerShell(curl.exe -s -L \"https://raw.githubusercontent.com/anthropics/skills/main/README.md\" -o \"$env:TEMP\\\\skills-README.md\"; curl.exe -s -L \"https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md\" -o \"$env:TEMP\\\\skill-creator-SKILL.md\"; Write-Output \"=== README ===\"; Get-Content \"$env:TEMP\\\\skills-README.md\" -Raw)",
       "Read(/tmp/**)",
-      "PowerShell(cd \"$env:TEMP\"; tar -tzf skills.tar.gz | Select-String \"skill-creator\" | Select-Object -First 60)"
+      "PowerShell(cd \"$env:TEMP\"; tar -tzf skills.tar.gz | Select-String \"skill-creator\" | Select-Object -First 60)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "PowerShell(Get-ChildItem -Force | Where-Object { $_.Name -notlike '.claude' } | Select-Object Name, @{Name='IsDirectory';Expression={$_.PSIsContainer}} | Format-Table -AutoSize)",
+      "PowerShell(Move-Item -Path rsync_cmd_usage.md -Destination tech-docs/ -Force)",
+      "PowerShell(Write-Host \"=== Root directory ===\"; Get-ChildItem | Where-Object { $_.Name -notlike '.claude' } | ForEach-Object { if \\($_.PSIsContainer\\) { \"$\\($_.Name\\) - Directory\" } else { \"$\\($_.Name\\) - File\" } }; Write-Host \"`n=== makerun-pr-script/ ===\"; Get-ChildItem makerun-pr-script | Select-Object -ExpandProperty Name; Write-Host \"`n=== tech-docs/ ===\"; Get-ChildItem tech-docs | Select-Object -ExpandProperty Name)",
+      "PowerShell(npx skills use \"https://github.com/anthropics/skills\" --skill \"pptx\")",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(wsl which node)",
+      "PowerShell(wsl npx skills use \"https://github.com/anthropics/skills\" --skill \"pptx\")",
+      "PowerShell(ubuntu run \"which npx\")",
+      "PowerShell(ubuntu.exe run \"cd /home/cricy/claude_code_workspace/try01_260828 && npx skills use https://github.com/anthropics/skills --skill pptx\")",
+      "PowerShell(ubuntu.exe run \"npx skills use https://github.com/anthropics/skills --skill pptx\")",
+      "PowerShell(ubuntu.exe run \"/usr/bin/npx skills use https://github.com/anthropics/skills --skill pptx\")",
+      "PowerShell(wsl -e bash -c \"which node && which npm && which npx\")",
+      "PowerShell(git clone https://github.com/anthropics/skills.git temp-anthropics-skills)",
+      "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"cd ~/claude_code_workspace/try01_260828 && which node && which npm && which npx\")",
+      "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"which node; which npm; which npx; pwd; ls -la ~/\")",
+      "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"which node; node --version; which npm; npm --version\")",
+      "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs\")"
     ]
   },
   "hooks": {
@@ -27,8 +47,8 @@
           {
             "type": "command",
             "command": "$raw=[Console]::In.ReadToEnd(); $j=$null; if($raw){try{$j=$raw|ConvertFrom-Json}catch{}}; if($j -and $j.tool_input){$fp=$j.tool_input.file_path; if(-not $fp){$fp=$j.tool_input.notebook_path}; if($fp){$p=$fp.Replace('\\','/'); $p=$p -ireplace '^//wsl\\.localhost/ubuntu/?',''; $p='/'+$p.TrimStart('/'); $inHome=$p -match '^/home/anruisong(/|$)'; $inWork=$p -match '^/home/anruisong/claude_code_workspace/try01_260828(/|$)'; if($inHome -and -not $inWork){Write-Output '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Path under /home/anruisong is read-only except the current working directory\"}}'}}}"
-        }
-      ]
+          }
+        ]
       }
     ]
   }

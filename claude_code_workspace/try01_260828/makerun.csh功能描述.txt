@@ -1,0 +1,44 @@
+#!/bin/csh -f
+
+#################################################################
+# makern.csh - Create new PR run directory with standard backend flow structure
+#
+# Basic functions:
+# 1. Auto-detect project from current working path
+# 2. Create full directory structure (PR/PV/STA/FM/PI/signoff_check)
+# 3. Copy/link all standard flow scripts and configuration templates
+# 4. Inject project-specific foundry, project, and user libpath settings
+#
+# Usage modes:
+# 1. Create empty new run:
+#    makern.csh <suffix>
+#    Example: makern.csh a -> creates directory <block>_<MMDD_HHMM>_a
+#
+# 2. Copy full configuration from existing run:
+#    makern.csh <suffix> -f <source_run_path>
+#    Copies settings.tcl, User_lib_list.tcl, user_plug, SCB configs, STA configs
+#    Updates all paths to point to new run directory
+#
+# 3. Create run starting from specified step (step-level copy):
+#    makern.csh <suffix> -f <source_run_path> <start_step>
+#    Supported steps: preplace, place, cco pt, route
+#    - Creates symbolic links (absolute path) to input DB for target step
+#    - Touches stage marker files for all completed steps before target
+#
+# Step to DB mapping (input DB linked for target start step):
+# Note: If no step is provided after -f <source_run_path>, only configurations
+#       are copied (no DB links, no stage markers touched), for full run restart.
+#
+# Target Step   | Linked Input DB Files                         | Touched Stage Markers
+# (no step)     | None (DB directory empty, no links created)  | None (no markers touched)
+# preplace      | PR/DB/init.enc + PR/DB/init.enc.dat          | init
+# place         | PR/DB/preplace.enc + PR/DB/preplace.enc.dat  | init preplace
+# ccopt         | PR/DB/place_opt_design.enc + PR/DB/place_opt_design.enc.dat | init preplace place
+# route         | PR/DB/ccopt_opt.enc + PR/DB/ccopt_opt.enc.dat | init preplace place ccopt
+#
+# Example:
+# makern.csh test1 -f ../nand_sys_lt_0720_1537_v4_run5 ccopt
+# -> Links place_opt_design.enc from source run as ccopt input
+# -> Creates stage markers for init/preplace/place to mark prior steps complete
+#########
+# Detect project based on current path

@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/home/anruisong/claude_code_workspace/try01_260828/.claude/**)",
+      "PowerShell($py = Get-Command python -ErrorAction SilentlyContinue; if \\($py\\) { Write-Output \"python: $\\($py.Source\\)\"; python --version; python -c \"import pptx; print\\('python-pptx', pptx.__version__\\)\" 2>$null; if \\(-not $?\\) { Write-Output \"python-pptx: NOT installed\" } } else { Write-Output \"python: NOT found\" })",
+      "Edit(/.claude/skills/ppt_create/**)",
+      "PowerShell(winget install --id Python.Python.3.13 -e --scope user --accept-package-agreements --accept-source-agreements --silent --disable-interactivity 2>&1)",
+      "PowerShell(Stop-Process -Name winget -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Name winget -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:www.iconfont.cn)",
+      "WebSearch",
+      "PowerShell(npx skills use \"https://github.com/anthropics/skills\" --skill \"skill-creator\" 2>&1 | Out-File -FilePath \"$env:TEMP\\\\skill-creator-output.txt\" -Encoding utf8; Write-Output \"EXIT CODE: $LASTEXITCODE\"; Write-Output \"--- OUTPUT FILE ---\"; Get-Content \"$env:TEMP\\\\skill-creator-output.txt\")",
+      "PowerShell(Write-Output \"--- node ---\"; \\(Get-Command node -ErrorAction SilentlyContinue\\).Source; Write-Output \"--- npm ---\"; \\(Get-Command npm -ErrorAction SilentlyContinue\\).Source; Write-Output \"--- npx ---\"; \\(Get-Command npx -ErrorAction SilentlyContinue\\).Source; Write-Output \"--- node version ---\"; node --version 2>$null; Write-Output \"--- npm version ---\"; npm --version 2>$null; Write-Output \"--- where node ---\"; where.exe node 2>$null; Write-Output \"--- where npm ---\"; where.exe npm 2>$null; Write-Output \"--- where npx ---\"; where.exe npx 2>$null)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "PowerShell(curl.exe -s -L \"https://api.github.com/repos/anthropics/skills/git/trees/main?recursive=1\" -o \"$env:TEMP\\\\skills-tree.json\"; Write-Output \"EXIT: $LASTEXITCODE\"; Write-Output \"--- size ---\"; \\(Get-Item \"$env:TEMP\\\\skills-tree.json\"\\).Length; Write-Output \"--- first 2000 chars ---\"; \\(Get-Content \"$env:TEMP\\\\skills-tree.json\" -Raw\\).Substring\\(0,2000\\))",
+      "PowerShell(Get-Content \"$env:TEMP\\\\skills-tree.json\" -Raw)",
+      "PowerShell(curl.exe -s -L \"https://raw.githubusercontent.com/anthropics/skills/main/README.md\" -o \"$env:TEMP\\\\skills-README.md\"; curl.exe -s -L \"https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md\" -o \"$env:TEMP\\\\skill-creator-SKILL.md\"; Write-Output \"=== README ===\"; Get-Content \"$env:TEMP\\\\skills-README.md\" -Raw)",
+      "Read(/tmp/**)",
+      "PowerShell(cd \"$env:TEMP\"; tar -tzf skills.tar.gz | Select-String \"skill-creator\" | Select-Object -First 60)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$raw=[Console]::In.ReadToEnd(); $j=$null; if($raw){try{$j=$raw|ConvertFrom-Json}catch{}}; if($j -and $j.tool_input){$fp=$j.tool_input.file_path; if(-not $fp){$fp=$j.tool_input.notebook_path}; if($fp){$p=$fp.Replace('\\','/'); $p=$p -ireplace '^//wsl\\.localhost/ubuntu/?',''; $p='/'+$p.TrimStart('/'); $inHome=$p -match '^/home/anruisong(/|$)'; $inWork=$p -match '^/home/anruisong/claude_code_workspace/try01_260828(/|$)'; if($inHome -and -not $inWork){Write-Output '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Path under /home/anruisong is read-only except the current working directory\"}}'}}}"
+        }
+      ]
+      }
+    ]
+  }
+}

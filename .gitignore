@@ -2,6 +2,8 @@
 */
 !project/
 !project/**
+!claude_code_workspace/
+!claude_code_workspace/**
 !.vimrc
 !.bashrc
 !.cshrc

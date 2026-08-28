@@ -1,0 +1,208 @@
+# makerun.csh 功能需求汇总（供模型编写代码使用）
+
+> 本文档唯一用途：让另一个模型据此编写 `makerun.csh` 脚本的 csh 代码。
+> 源材料：`.claude/makerun.csh功能描述.txt`。
+
+## 阅读规则（目标模型必须先读本节）
+
+- 每条需求有唯一编号 `REQ-xxx` 或 `REQ-CON-xxx`。
+- 语义词：`MUST` = 必须实现（缺失即不满足需求）；`MAY` = 可选。
+- 目录名、文件名、步骤名、映射表等 `字符串字面量` 是精确的，必须逐字符一致。
+- 源描述中明确写出的内容 = 硬性需求，逐条照做。
+- 源描述中**没有写明**的内容（来源路径、注入语法、marker 存放位置等） = 见第 6 节「假设与待确认项」，实现模型不得自行脑补超出该节范围的具体值；若必须取值，采用第 6 节给出的建议值并在代码注释中标注 `[ASSUMPTION]`。
+- 第 8 节示例可作为验收测试用例，实现后按示例逐一核对。
+
+---
+
+## 1. 概述
+
+| 项 | 值 |
+|---|---|
+| 脚本文件名 | `makerun.csh`（源描述中同一脚本另写作 `makern.csh`，二者指同一脚本） |
+| 语言 | csh；第一行 shebang 必须为 `#!/bin/csh -f` |
+| 用途 | 创建新的 PR（Place & Route）run 目录，搭建标准后端流程目录结构，复制/链接标准流程脚本与配置模板，注入项目设置，并支持从已有 run 复制配置或从指定步骤续跑 |
+
+---
+
+## 2. 命令行接口（CLI）规范
+
+语法（唯一合法形式）：
+
+```
+makerun.csh <suffix> [-f <source_run_path>] [<start_step>]
+```
+
+参数表：
+
+| 参数 | 位置 | 必选 | 含义 | 合法值 |
+|---|---|---|---|---|
+| `suffix` | 第 1 个位置参数 | 必选 | 拼接到新 run 目录名的后缀 | 任意非空字符串（示例中为 `a`、`b`、`test1`） |
+| `-f` | 选项 | 可选 | 开关；开启"从源 run 复制"能力 | 后必须紧跟 `source_run_path` |
+| `source_run_path` | 跟随 `-f` | 随 `-f` 出现 | 源 run 目录路径 | 有效目录路径；可为相对路径（示例 `../nand_sys_lt_0720_1537_v4_run5`） |
+| `start_step` | 最后一个位置参数 | 随 `-f` 出现 | 起始步骤名；开启"从指定步骤续跑"能力 | 严格等于下列之一：`preplace`、`place`、`ccopt`、`route` |
+
+命令行约束（违反必须报错退出，且不创建任何文件）：
+
+- `REQ-CON-001`：`start_step` 不允许在缺少 `-f` 时出现。即：`makerun.csh d place` 必须报错退出。
+- `REQ-CON-002`：提供 `-f` 但**不提供** `start_step` → 模式 2（仅复制配置，见 `REQ-006`）。
+- `REQ-CON-003`：提供 `-f` **且提供** `start_step` → 模式 3（见 `REQ-007`）。
+- `REQ-CON-004`：`start_step` 的值必须严格属于集合 `{preplace, place, ccopt, route}`，任何其他值（如 `bogus`）必须报错退出。注意源描述曾写作 `cco pt`（带空格），实现时以 `ccopt` 为准。
+
+---
+
+## 3. 基础功能（三种模式均必须执行）
+
+### REQ-001 [MUST] 根据当前工作路径自动检测项目（block）
+- 行为：脚本运行时应从当前工作目录 `$PWD` 中解析出项目/block 名称。
+- 输出：得到一个 `<block>` 字符串，供 `REQ-005` 目录命名使用。
+- 源描述未说明取路径中哪一段作为 block 名 → 见 `ASSUMPTION-A`。
+
+### REQ-002 [MUST] 创建标准目录结构
+- 行为：必须在新 run 根目录下创建以下 6 个目录（相对路径，逐字符一致）：
+  ```
+  PR
+  PV
+  STA
+  FM
+  PI
+  signoff_check
+  ```
+- 明确规则：若目录已存在，不得因此报错（幂等）。
+
+### REQ-003 [MUST] 复制/链接标准流程脚本与配置模板
+- 行为：必须将"所有标准流程脚本"与"配置模板"复制或链接到新 run 中。
+- 源描述未给出这些文件的清单与来源目录 → 见 `ASSUMPTION-B`。
+
+### REQ-004 [MUST] 注入项目特定设置
+- 行为：必须注入以下三类项目相关设置：
+  1. `foundry` 设置
+  2. `project` 设置
+  3. `user libpath` 设置
+- 源描述未说明注入到哪个文件、用何种语法 → 见 `ASSUMPTION-C`。
+
+---
+
+## 4. 三种使用模式
+
+### REQ-005 [MUST] 模式 1：创建全新空 run
+- 命令：`makerun.csh <suffix>`
+- 行为（按顺序）：
+  1. 执行 `REQ-001` 检测 block 名。
+  2. 按 `REQ-002` 创建 6 个目录。
+  3. 按 `REQ-003` 复制/链接标准脚本与配置模板。
+  4. 按 `REQ-004` 注入项目设置。
+  5. **不**创建任何 DB 链接；**不** touch 任何 stage marker；**不**从源 run 复制配置（因为无 `-f`）。
+- 新 run 目录名必须严格为：
+  ```
+  <block>_<MMDD>_<HHMM>_<suffix>
+  ```
+  - `<block>`：来自 `REQ-001`。
+  - `<MMDD>`：运行时刻的月日，两位、前导零填充（例：8 月 28 日 → `0828`）。
+  - `<HHMM>`：运行时刻的时分，两位、前导零填充（例：9 点 30 分 → `0930`）。
+  - `<suffix>`：用户第 1 个参数，原样拼接。
+- 示例：
+  ```
+  输入:  makerun.csh a
+  当前时间: 2026-08-28 09:30, 检测到 block=xxx
+  输出:  创建目录 xxx_0828_0930_a
+  ```
+
+### REQ-006 [MUST] 模式 2：从已有 run 复制完整配置（用于完整重启 run）
+- 命令：`makerun.csh <suffix> -f <source_run_path>`
+- 行为（在 `REQ-001`~`REQ-004` 全部执行之后，额外执行）：
+  1. 必须从源 run 复制以下 5 项到新 run：
+     - `settings.tcl`
+     - `User_lib_list.tcl`
+     - `user_plug`（文件或目录，见 `ASSUMPTION-D`）
+     - SCB 配置文件（SCB configs）
+     - STA 配置文件（STA configs）
+  2. 必须把所复制内容中的**所有路径**更新为新 run 目录路径（即配置指向新 run，而非源 run）。具体替换规则见 `ASSUMPTION-F`。
+  3. 必须**不**创建任何 DB 链接（新 run 的 DB 目录保持为空）。
+  4. 必须**不** touch 任何 stage marker。
+- 示例：
+  ```
+  输入:  makerun.csh b -f ../xxx_run
+  输出:  创建 xxx_<MMDD>_<HHMM>_b
+        复制 settings.tcl、User_lib_list.tcl、user_plug、SCB configs、STA configs 到新 run
+        复制后其中所有路径已改写为新 run 路径
+        PR/DB 目录为空，无任何符号链接，无 marker
+  ```
+
+### REQ-007 [MUST] 模式 3：从指定步骤起步创建 run（分步复制）
+- 命令：`makerun.csh <suffix> -f <source_run_path> <start_step>`
+- 行为（在 `REQ-001`~`REQ-004` 全部执行之后，额外执行）：
+  1. 全部执行 `REQ-006` 的配置复制与路径更新（模式 3 = 模式 2 的配置复制 + 下述 DB 链接与 marker）。
+  2. 必须为 `start_step` 创建指向源 run 输入 DB 文件的**符号链接**：
+     - 链接为**绝对路径**（symlink 的 target 必须是绝对路径）。
+     - 链接名与 target 见 `REQ-008` 映射表。
+  3. 必须 touch `start_step` 之前所有已完成步骤的 stage marker 文件（清单见 `REQ-008` 映射表）。
+- 明确规则：
+  - DB 链接必须是 `符号链接 (symlink)`，不得是复制文件。
+  - 链接 target 必须解析为绝对路径。
+- 示例：
+  ```
+  输入:  makerun.csh test1 -f ../nand_sys_lt_0720_1537_v4_run5 ccopt
+  输出:  创建 xxx_<MMDD>_<HHMM>_test1
+        在新 run 的 PR/DB/ 下创建 2 个符号链接:
+          place_opt_design.enc      -> <源run绝对路径>/PR/DB/place_opt_design.enc
+          place_opt_design.enc.dat  -> <源run绝对路径>/PR/DB/place_opt_design.enc.dat
+        touch 3 个 marker: init, preplace, place
+  ```
+
+---
+
+## 5. 步骤→DB 映射表（`REQ-008`，模式 3 的唯一真源）
+
+以下表格逐行为准，不得自行增删：
+
+| `start_step` | 链接到源 run 的输入 DB 文件（2 个成对，绝对路径 symlink） | 需要 touch 的 stage marker 文件（按此顺序） |
+|---|---|---|
+| （不提供） | 无（DB 目录为空，不创建任何链接） | 无（不 touch 任何 marker） |
+| `preplace` | `PR/DB/init.enc` + `PR/DB/init.enc.dat` | `init` |
+| `place` | `PR/DB/preplace.enc` + `PR/DB/preplace.enc.dat` | `init`、`preplace` |
+| `ccopt` | `PR/DB/place_opt_design.enc` + `PR/DB/place_opt_design.enc.dat` | `init`、`preplace`、`place` |
+| `route` | `PR/DB/ccopt_opt.enc` + `PR/DB/ccopt_opt.enc.dat` | `init`、`preplace`、`place`、`ccopt` |
+
+从映射表归纳出的 4 条硬性规则（实现时不得违反）：
+
+- `RULE-1`：每个 DB 输入都是 **`.enc` 与 `.enc.dat` 两个文件成对**链接，缺一不可。
+- `RULE-2`：`start_step` 链接的是**紧邻上一个步骤的产出 DB**（步骤链：`init → preplace → place → ccopt → route`；例：start=`ccopt` 链接的是 `place` 步骤的产出 `place_opt_design.enc`）。
+- `RULE-3`：touch 的 marker 集合 = **处于 `start_step` 之前的所有步骤名**（有序：`init`、`preplace`、`place`、`ccopt`、`route`）。
+- `RULE-4`：不提供 `start_step` 时（模式 2）DB 目录为空、无链接、无 marker。
+
+---
+
+## 6. 假设与待确认项（源描述未明确定义，实现模型不得自行扩大范围）
+
+| ID | 主题 | 源描述状况 | 建议实现取值（若必须取值） |
+|---|---|---|---|
+| `ASSUMPTION-A` | 项目名解析规则 | 仅说"根据当前工作路径自动检测项目"，未说明取路径中哪一段 | 取 `$PWD` 中与 block 匹配的路径段；实现前需与使用者确认 |
+| `ASSUMPTION-B` | 标准流程脚本/配置模板的清单与来源目录 | 未列明 | 需使用者提供模板目录清单；实现时做成可配置变量 |
+| `ASSUMPTION-C` | foundry/project/user libpath 的注入方式 | 未说明注入到哪个文件、何种语法 | 需使用者确认（tcl 变量 / env / 配置文件） |
+| `ASSUMPTION-D` | `user_plug` 是文件还是目录 | 未说明 | 需使用者确认；实现时对"文件或目录"两种情况都处理 |
+| `ASSUMPTION-E` | stage marker 文件的确切路径与命名 | 仅给出 marker 名 `init/preplace/place/ccopt`，未给路径 | marker 文件名 = 步骤名（无扩展名）；存放目录按既有 flow 约定（如新 run 的 PR 目录），需使用者确认 |
+| `ASSUMPTION-F` | 模式 2"更新所有路径"的具体规则 | 未说明哪些文件的哪些字段要被替换 | 把配置中原 run 路径前缀替换为新 run 路径前缀；具体字段需使用者确认 |
+
+---
+
+## 7. 关键行为一览（供快速核对）
+
+1. 三种模式都执行：检测 block → 建 6 目录 → 复制/链接标准脚本模板 → 注入项目设置。
+2. 模式 2 = 基础功能 + 复制源配置并改写路径。
+3. 模式 3 = 模式 2 + 建 DB 符号链接 + touch 前置 marker。
+4. `-f` 缺省时带 `start_step` → 报错退出。
+5. `start_step` 非法值 → 报错退出。
+6. 时间戳 `MMDD_HHMM` 取脚本运行时刻。
+
+---
+
+## 8. 验收示例（实现后逐条核对）
+
+| 用例 | 输入命令 | 预期结果 |
+|---|---|---|
+| 1 模式1 | `makerun.csh a` | 创建 `<block>_<MMDD>_<HHMM>_a`，内含 6 目录 + 标准脚本/模板 + 项目设置；无 DB 链接、无 marker |
+| 2 模式2 | `makerun.csh b -f ../xxx_run` | 创建 `<block>_<MMDD>_<HHMM>_b`；复制 settings.tcl / User_lib_list.tcl / user_plug / SCB configs / STA configs 并改写全部路径；PR/DB 为空；无 marker |
+| 3 模式3 | `makerun.csh c -f ../xxx_run place` | 创建 `<block>_<MMDD>_<HHMM>_c`；链接 `preplace.enc`+`preplace.enc.dat`（绝对路径指向源 run）；touch `init`、`preplace` 两个 marker |
+| 4 模式3 | `makerun.csh d -f ../xxx_run route` | 链接 `ccopt_opt.enc`+`ccopt_opt.enc.dat`；touch `init`、`preplace`、`place`、`ccopt` 四个 marker |
+| 5 非法输入 | `makerun.csh e place` | 报错退出，不创建任何内容（违反 `REQ-CON-001`） |
+| 6 非法输入 | `makerun.csh e -f ../xxx_run bogus` | 报错退出，不创建任何内容（违反 `REQ-CON-004`） |

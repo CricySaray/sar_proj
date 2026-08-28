@@ -36,7 +36,12 @@
       "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"cd ~/claude_code_workspace/try01_260828 && which node && which npm && which npx\")",
       "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"which node; which npm; which npx; pwd; ls -la ~/\")",
       "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"which node; node --version; which npm; npm --version\")",
-      "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs\")"
+      "PowerShell(& \"C:\\\\Windows\\\\System32\\\\wsl.exe\" /bin/bash -l -c \"curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs\")",
+      "Bash(npx skills *)"
+    ],
+    "additionalDirectories": [
+      "/tmp",
+      "./agents/skill"
     ]
   },
   "hooks": {

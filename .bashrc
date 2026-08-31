@@ -64,10 +64,18 @@ alias sv='source ~/.vimrc'
 alias vb='vim ~/.bashrc'
 alias sb='source ~/.bashrc'
 alias lt='ls -lthr --time-style=long-iso'
+# 复刻你原来 ls -lhtr 行为：长列表+隐藏文件，按修改时间，旧文件在上、新文件在底部（ls‑lhtr 原版习惯）
+alias lt='eza -lhg --sort=changed --time-style=long-iso --git'
+alias ltt='eza -lhgT --level=2 --sort=changed --time-style=long-iso --git'
+alias lt_dirFirst='eza -lhg --sort=changed --time-style=long-iso --group-directories-first --git'
 alias tl='lt'
 alias t='lt'
+
 alias ll='ls -alF'
 alias la='ls -alhr'
+alias la='eza -lahg --sort=changed --time-style=long-iso --git'
+alias lat='eza -lahgT -level=2 --sort=changed --time-style=long-iso --git'
+alias la_dirFirst='eza -lahg --sort=changed --time-style=long-iso --group-directories-first --git'
 alias l='ls -CF'
 alias .='cd ..'
 alias ..='cd ../../'
@@ -463,3 +471,4 @@ export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND ;} history -a"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+

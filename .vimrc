@@ -913,6 +913,7 @@ Jetpack 'andymass/vim-matchup'
 Jetpack 'jiangmiao/auto-pairs'
 Jetpack 'preservim/nerdtree'
 Jetpack 'ryanoasis/vim-devicons'
+Jetpack 'airblade/vim-gitgutter'
 " Jetpack 'https://github.com/dense-analysis/ale'
 " Jetpack 'junegunn/fzf.vim'
 " Jetpack 'junegunn/fzf', { 'do': {-> fzf#install()} }
@@ -924,6 +925,9 @@ Jetpack 'ryanoasis/vim-devicons'
 call jetpack#end()
 " --------
 " setting for plugs 
+"" config for gitgutter
+nnoremap <leader>gu :GitGutterToggle<CR>
+
 "" for jiangmiao/auto-pairs
 let g:AutoPairsFlyMode = 0
 let g:AutoPairsShortcutBackInsert = '<M-b>'

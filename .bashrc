@@ -89,6 +89,11 @@ alias pfind='perl ~/project/scr_sar/perl/teamshare.pl -find'
 alias phelp='perl ~/project/scr_sar/perl/teamshare.pl -h'
 
 #------------------------------------------------
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# source zoxide config for bash. url link: https://github.com/ajeetdsouza/zoxide.git
+eval "$(zoxide init bash)"
+
+#------------------------------------------------
 # config for attr (manage filesystem, add attribute info for files)
 alias sf='setfattr'
 alias gf='getfattr'
@@ -100,10 +105,6 @@ export PATH=$PYTHON_HOME/bin:$PATH
 
 export PERL5LIB=/usr/local/lib/x86_64-linux-gnu/perl/5.34.0:$PERL5LIB
 export PATH="/home/anruisong/.local/bin:/home/anruisong/.cargo/bin:$PATH"
-
-#------------------------------------------------
-# config for autojump (github : wting/autojump)
-# [[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
 
 
 #------------------------------------------------
@@ -144,17 +145,6 @@ function cdf() {
     cd "$selected_dir"
     pwd  # 可选：显示当前目录
   fi
-  # # 检查 autojump 是否可用
-  # if ! command -v autojump &> /dev/null; then
-  #   echo "autojump not found. Directory not recorded." >&2
-  #   return 1
-  # fi
-  # # 记录当前目录到 autojump 数据库
-  # if ! autojump -a "$PWD"; then
-  #   echo "Failed to add directory to autojump database." >&2
-  #   return 1
-  # fi
-  # autojump --purge &> /dev/null
   return 0
 }
 
@@ -164,17 +154,6 @@ function cdf() {
 function c() {
   # 使用内置的 cd 命令
   builtin cd "$@" || return 1
-  # # 检查 autojump 是否可用
-  # if ! command -v autojump &> /dev/null; then
-  #   echo "autojump not found. Directory not recorded." >&2
-  #   return 1
-  # fi
-  # # 记录当前目录到 autojump 数据库
-  # if ! autojump -a "$PWD"; then
-  #   echo "Failed to add directory to autojump database." >&2
-  #   return 1
-  # fi
-  # autojump --purge &> /dev/null
   return 0
 }
 alias c='c'
@@ -415,10 +394,6 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-
-# [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-# source "$HOME/.cargo/env"
-# . "$HOME/.cargo/env"
 
 
 #-------------------------------------------------

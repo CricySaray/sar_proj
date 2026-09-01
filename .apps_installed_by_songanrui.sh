@@ -2,6 +2,9 @@
 sudo apt update
 # sudo apt upgrade
 
+# install ripgrep
+sudo apt install ripgrep
+
 # install rust toolchain: rustc & cargo & std
 sudo apt install rustup
 rustup update
@@ -27,3 +30,8 @@ cargo install zoxide --locked
 # install eza (similiar with ls)
 cargo install eza
 
+# install mcfly(advanced ctrl + R to search)
+cargo install mcfly --locked
+
+# install sd(similiar with sed, but faster)
+cargo install sd

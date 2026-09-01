@@ -64,7 +64,7 @@ alias vv='vim ~/.vimrc'
 alias sv='source ~/.vimrc'
 alias vb='vim ~/.bashrc'
 alias sb='source ~/.bashrc'
-alias lt='ls -lthr --time-style=long-iso'
+# alias lt='ls -lthr --time-style=long-iso'
 # 复刻你原来 ls -lhtr 行为：长列表+隐藏文件，按修改时间，旧文件在上、新文件在底部（ls‑lhtr 原版习惯）
 alias lt='eza -lhg --sort=changed --time-style=long-iso --git'
 alias ltt='eza -lhgT --level=2 --sort=changed --time-style=long-iso --git'
@@ -73,7 +73,7 @@ alias tl='lt'
 alias t='lt'
 
 alias ll='ls -alF'
-alias la='ls -alhr'
+# alias la='ls -alhr'
 alias la='eza -lahg --sort=changed --time-style=long-iso --git'
 alias la_dirFirst='eza -lahg --sort=changed --time-style=long-iso --group-directories-first --git'
 alias l='ls -CF'
@@ -89,9 +89,90 @@ alias pfind='perl ~/project/scr_sar/perl/teamshare.pl -find'
 alias phelp='perl ~/project/scr_sar/perl/teamshare.pl -h'
 
 #------------------------------------------------
+# config for fzf and zoxide(similiar with cd) 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 # source zoxide config for bash. url link: https://github.com/ajeetdsouza/zoxide.git
 eval "$(zoxide init bash)"
+
+#------------------------------------------------
+# config for mcfly(advanced ctrl + R to search history)
+# ===================== McFly (bash) =====================
+# Reference: https://github.com/cantino/mcfly
+
+# --- default history config from origin bashrc
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+if command -v mcfly &> /dev/null; then
+  # Official bash init, binds Ctrl‑R to mcfly search by default
+  eval "$(mcfly init bash)"
+
+  # -------- Actively used config (effective) --------
+  # McFly sqlite database storage path
+  export MCFLY_HISTORY="$HOME/.mcfly/history.db"
+  # Commands to ignore, will NOT be written into mcfly history db (space‑separated)
+  export MCFLY_IGNORED_COMMANDS="ls ll pwd clear exit history"
+  # Max history entries stored inside mcfly sqlite db
+  export MCFLY_HISTORY_LIMIT=100000
+  # Prompt verbosity: 0=silent, 1=short, 2=verbose
+  export MCFLY_PROMPT=0
+  # Deduplicate identical history entries
+  export MCFLY_DEDUPE_HISTORY=true
+
+
+  # -------- Available but DISABLED / unused options (uncomment to enable) --------
+  ## Input key scheme: emacs(default) | vim
+  # export MCFLY_KEY_SCHEME=vim
+
+  ## Custom hotkey to trigger mcfly search, override default Ctrl‑R
+  # export MCFLY_TRIGGER_KEY="\C-s"
+
+  ## Filter search results by directory context: true/false
+  # export MCFLY_FUZZY=true
+
+  ## Disable mcfly's automatic history scoring algorithm
+  # export MCFLY_NO_SCORE=false
+
+  ## When true: do not record commands starting with space
+  # export MCFLY_IGNORE_SPACE=true
+
+  ## Terminal UI theme: default | light | dark
+  # export MCFLY_THEME="dark"
+
+  ## Number of items shown on one search page
+  # export MCFLY_PAGE_SIZE=10
+
+  ## Minimum score threshold for showing candidates
+  # export MCFLY_MIN_SCORE=0
+
+  ## Disable the mcfly status line inside search ui
+  # export MCFLY_DISABLE_STATUS_LINE=false
+
+  ## Disable the hint / preview of command arguments
+  # export MCFLY_DISABLE_HINT=false
+
+  ## Disable colors in mcfly interactive ui
+  # export MCFLY_NO_COLOR=false
+
+  ## Log debug messages to file for troubleshooting
+  # export MCFLY_LOG="$HOME/.mcfly/mcfly.log"
+
+  ## Adjust weight factors for scoring algorithm (advanced tuning)
+  # export MCFLY_SCORE_RECENT_WEIGHT=1.0
+  # export MCFLY_SCORE_FREQUENCY_WEIGHT=1.0
+  # export MCFLY_SCORE_DIRECTORY_WEIGHT=1.0
+
+fi
+# ========================================================
+
+
 
 #------------------------------------------------
 # config for attr (manage filesystem, add attribute info for files)
@@ -292,16 +373,6 @@ _fzf_compgen_dir() {
 #       *) return;;
 # esac
 
-# don't put duplicate lines or lines starting with space in the history.
-# See bash(1) for more options
-HISTCONTROL=ignoreboth
-
-# append to the history file, don't overwrite it
-shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.

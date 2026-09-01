@@ -48,19 +48,6 @@
       "./agents/skill"
     ]
   },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$raw=[Console]::In.ReadToEnd(); $j=$null; if($raw){try{$j=$raw|ConvertFrom-Json}catch{}}; if($j -and $j.tool_input){$fp=$j.tool_input.file_path; if(-not $fp){$fp=$j.tool_input.notebook_path}; if($fp){$p=$fp.Replace('\\','/'); $p=$p -ireplace '^//wsl\\.localhost/ubuntu/?',''; $p='/'+$p.TrimStart('/'); $inHome=$p -match '^/home/anruisong(/|$)'; $inWork=$p -match '^/home/anruisong/claude_code_workspace/try01_260828(/|$)'; if($inHome -and -not $inWork){Write-Output '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Path under /home/anruisong is read-only except the current working directory\"}}'}}}"
-          }
-        ]
-      }
-    ]
-  },
   "enabledPlugins": {
     "mattpocock-skills@claude-plugins-official": true
   }

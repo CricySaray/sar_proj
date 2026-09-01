@@ -276,30 +276,6 @@ lc() {
     return 1
   fi
 }
-# vn：打开当前目录下最新的文件。
-# vn ~/projects：打开 ~/projects 目录下最新的文件。
-# vn . 3：递归查找当前目录下 3 层深度内的最新文件。
-vn() {
-  local dir="${1:-.}"           # 默认搜索当前目录，可指定路径
-  local max_depth="${2:-1}"     # 默认不递归，可指定递归深度
-  local ignore_dirs=("log" "temp")
-  local ignore_filter=""
-  # 构建忽略过滤器，只包含存在于搜索路径中的文件夹
-  for ignore_dir in "${ignore_dirs[@]}"; do
-    if [[ -d "$dir/$ignore_dir" ]]; then
-      ignore_filter+=" -not -path '*/$ignore_dir/*'"
-    fi
-  done
-  # 查找最新文件
-  local cmd="find '$dir' -maxdepth $max_depth -type f $ignore_filter -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-"
-  local newest_file=$(eval "$cmd")
-  if [[ -n "$newest_file" ]]; then
-    vim "$newest_file"
-  else
-    echo "No files found in $dir!" >&2
-    return 1
-  fi
-}
 
 #------------------------------------------------
 # GIT alias 

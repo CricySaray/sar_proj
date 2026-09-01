@@ -30,8 +30,8 @@ cargo install zoxide --locked
 # install eza (similiar with ls)
 cargo install eza
 
-# install mcfly(advanced ctrl + R to search)
-cargo install mcfly --locked
+# install mcfly(advanced ctrl + R to search) note: not good to use
+# cargo install mcfly --locked
 
 # install sd(similiar with sed, but faster)
 cargo install sd

@@ -5,6 +5,9 @@
 !claude_code_workspace/
 !claude_code_workspace/**
 !.vimrc
+!.config/
+!.config/**
+.config/gh/hosts.yml
 !.bashrc
 !.cshrc
 !.tmux.conf

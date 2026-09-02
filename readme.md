@@ -69,5 +69,3 @@ cd sar_proj
 **CricySaray**
 
 GitHub: [https://github\.com/CricySaray](https://github.com/CricySaray)
-
-> （注：部分内容可能由 AI 生成）

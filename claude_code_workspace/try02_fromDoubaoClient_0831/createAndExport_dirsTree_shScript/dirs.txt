@@ -1,0 +1,22 @@
+# chip backend module standard directory layout
+# indentation = hierarchy level (2 spaces per level)
+# each line is only one directory name; parents come from indent
+
+chip_top
+  src
+    rtl
+    sdc
+# sonsosnsonsdkjf
+    constraints
+  run
+    logs
+    reports/
+      timing
+      power
+  scripts/
+    tcl
+    perl
+  data/
+    lef
+    def
+  docs

@@ -4,6 +4,10 @@
 !project/**
 !claude_code_workspace/
 !claude_code_workspace/**
+
+demo*/
+demo*/**
+
 !.vimrc
 !.config/
 !.config/**

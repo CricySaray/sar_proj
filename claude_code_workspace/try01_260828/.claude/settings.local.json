@@ -41,11 +41,20 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:claw0x.com)",
       "WebFetch(domain:segmentfault.com)",
-      "WebFetch(domain:andrew.ooo)"
+      "WebFetch(domain:andrew.ooo)",
+      "Read(//home/anruisong/**)",
+      "Bash(bash -x ~/.bashrc)",
+      "Bash(bash --norc -i -c 'source ~/.bashrc')",
+      "Bash(bash -i -c 'source ~/.bashrc 2>&1')",
+      "Bash(bash -i -x -c 'source ~/.bashrc')",
+      "Read(//usr/share/bash-completion/**)",
+      "Bash(dpkg -l)",
+      "Bash(awk '/cd \\\\.\\\\. \\\\/usr\\\\/share\\\\/bash-completion/{print NR\": \"$0; for\\(i=NR-15; i<NR; i++\\) print lines[i]; print \"==> ERROR LINE: \"$0; exit} {lines[NR]=$0}')"
     ],
     "additionalDirectories": [
       "/tmp",
-      "./agents/skill"
+      "./agents/skill",
+      "/home/anruisong"
     ]
   },
   "enabledPlugins": {

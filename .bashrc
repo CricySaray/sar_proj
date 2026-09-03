@@ -5,16 +5,16 @@ alias cr='cd ~/project/backend/run'
 alias ct='cd ~/project/test_temp/'
 
 alias ttt='perl ~/project/scr_sar/perl/tree.pl'
-alias vttt='vim ~/project/scr_sar/perl/tree.pl'
+alias vttt='nvim ~/project/scr_sar/perl/tree.pl'
 
 alias te='perl ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
-alias vte='vim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
+alias vte='nvim ~/project/scr_sar/perl/misc/genTree_basedOnIndentedFile.pl'
 
 alias fa='perl ~/project/scr_sar/perl/file_archiver.pl'
-alias vfa='vim ~/project/scr_sar/perl/file_archiver.pl'
+alias vfa='nvim ~/project/scr_sar/perl/file_archiver.pl'
 
 alias ef='perl ~/project/scr_sar/perl/encrypt_perlScript.pl'
-alias vef='vim ~/project/scr_sar/perl/encrypt_perlScript.pl'
+alias vef='nvim ~/project/scr_sar/perl/encrypt_perlScript.pl'
 
 function ww() {
   ca $1
@@ -29,33 +29,33 @@ function ca() {
   fi
 }
 alias rp='realpath'
-alias vwn='vim ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
+alias vwn='nvim ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
 alias wn='perl ~/project/scr_sar/perl/tcl_namespace_wrapper.pl'
-alias vca='vim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
+alias vca='nvim ~/project/scr_sar/tcl/misc/cat_all_sourced_file/cat_all.recursive.tcl'
 alias fd='fdfind -Is'
 alias cs='ca ./fix_trans.invs.tcl'
 alias ts='tclsh'
 alias tk='touch .gitkeep'; # for updating empty dir to git
 alias his='history'
 alias bat='batcat'
-alias vi='vim .gitignore'
-alias vm='vim Makefile'
+alias vi='nvim .gitignore'
+alias vm='nvim Makefile'
 alias p='pwd'
-alias vt='vim ~/.tmux.conf'
+alias vt='nvim ~/.tmux.conf'
 alias tm='tmux'
-alias vc='vim ~/.cshrc'
+alias vc='nvim ~/.cshrc'
 alias d='du -sh'
-alias vinvs='vim ~/.invs_alias.tcl'
-alias vpt='vim ~/.pt_alias.tcl'
+alias vinvs='nvim ~/.invs_alias.tcl'
+alias vpt='nvim ~/.pt_alias.tcl'
 alias gp='grep -rni'
 alias ma='make'
 alias open='xdg-open'
 alias md='mkdir -p'
 alias tt='tree'
 alias s='source'
-alias v='vim'
 alias v='nvim'
-alias bv='vim -esnc' # vim on batch mode
+alias v='nvim'
+alias bv='nvim -esnc' # nvim on batch mode
 # usage of bv, for example:
 # > bv 'argdo g/test/d|update' -c 'q' an*
 # It can batch delete all lines containing the "test" character in files with the "an*" pattern. 
@@ -63,7 +63,7 @@ alias bv='vim -esnc' # vim on batch mode
 # single `q` command. Note that the `q` command must be written separately in a `-c` option.
 alias vv='nvim ~/.config/nvim/init.lua'
 alias sv='source ~/.vimrc'
-alias vb='vim ~/.bashrc'
+alias vb='nvim ~/.bashrc'
 alias sb='source ~/.bashrc'
 # alias lt='ls -lthr --time-style=long-iso'
 # 复刻你原来 ls -lhtr 行为：长列表+隐藏文件，按修改时间，旧文件在上、新文件在底部（ls‑lhtr 原版习惯）
@@ -129,7 +129,7 @@ if command -v mcfly &> /dev/null; then
 
 
   # -------- Available but DISABLED / unused options (uncomment to enable) --------
-  ## Input key scheme: emacs(default) | vim
+  ## Input key scheme: emacs(default) | nvim
   # export MCFLY_KEY_SCHEME=vim
 
   ## Custom hotkey to trigger mcfly search, override default Ctrl‑R
@@ -190,7 +190,7 @@ export PATH="/home/anruisong/.local/bin:/home/anruisong/.cargo/bin:$PATH"
 
 
 #------------------------------------------------
-# vim + fdfind
+# nvim + fdfind
 # 使用fdfind搜索文件并通过vim打开
 function vf() {
   if [[ $# -eq 0 ]]; then
@@ -203,7 +203,7 @@ function vf() {
   local file=$(fdfind --type f ${search_term:+.} -H -E '.git' "$search_term" "$search_dir" 2>/dev/null | \
                fzf --preview 'bat --style=numbers --color=always {} 2>/dev/null')
   if [[ -n "$file" ]]; then
-    vim "$file"
+    nvim "$file"
   fi
 }
 
@@ -280,7 +280,7 @@ lc() {
 
 #------------------------------------------------
 # GIT alias 
-alias vg='vim ~/.gitconfig'
+alias vg='nvim ~/.gitconfig'
 alias gs='git status -s'
 alias gpu='g p'
 # 在.bashrc或.zshrc中添加
@@ -307,7 +307,7 @@ export DISPLAY=255.255.255.252
 export FZF_COMPLETION_TRIGGER='~~'
 # Options to fzf command
 export FZF_COMPLETION_OPTS='--border --info=inline'
-# Options for path completion (e.g. vim **<TAB>)
+# Options for path completion (e.g. nvim **<TAB>)
 export FZF_COMPLETION_PATH_OPTS='--walker file,dir,follow,hidden'
 # Options for directory completion (e.g. cd **<TAB>)
 export FZF_COMPLETION_DIR_OPTS='--walker dir,follow'

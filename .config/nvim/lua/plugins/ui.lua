@@ -103,6 +103,28 @@ return {
         watch_gitdir = {
           follow_files = true,
         },
+        on_attach = function(bufnr)
+          local gs = require("gitsigns")
+          local function map(mode, lhs, rhs, opts)
+            opts = opts or {}
+            opts.buffer = bufnr
+            vim.keymap.set(mode, lhs, rhs, opts)
+          end
+
+          -- 快速定位 hunk
+          map("n", "]c", function()
+            if vim.wo.diff then vim.cmd.normal({ "]c", bang = true })
+            else gs.nav_hunk("next") end
+          end, { desc = "next hunk" })
+          map("n", "[c", function()
+            if vim.wo.diff then vim.cmd.normal({ "[c", bang = true })
+            else gs.nav_hunk("prev") end
+          end, { desc = "prev hunk" })
+
+          -- 预览
+          map("n", "<leader>hp", gs.preview_hunk,         { desc = "preview hunk" })
+          map("n", "<leader>hi", gs.preview_hunk_inline,  { desc = "preview hunk inline" })
+        end,
         current_line_blame = false,
         current_line_blame_opts = {
           virt_text = true,

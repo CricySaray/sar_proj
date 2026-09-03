@@ -68,7 +68,7 @@ map("n", "<leader>p", function() vim.cmd("call TogglePaste()") end)
 map("i", "<leader>p", "<C-o>:call TogglePaste()<CR>")
 
 -- <leader>r：智能替换（大小写敏感，限定变量边界）
-map("n", "<leader>r", function() vim.cmd("call <SID>SmartReplace()") end)
+map("n", "<leader>r", function() vim.cmd("call SmartReplace()") end)
 
 -- <leader>w：切换折行（normal + visual）
 map({"n","v"}, "<leader>w", "<cmd>ToggleWrap<CR>")
@@ -191,13 +191,6 @@ map({"n","x","o"}, "<leader><Tab>", function()
     return vim.api.nvim_replace_termcodes("<plug>(fzf-maps-n)", true, false, true)
   end
 end, { expr = true })
-
--- -----------------------------------------------------------------------------
---  gitsigns（原 vimrc 中 <leader>gu 由 gitsigns 接管）
--- -----------------------------------------------------------------------------
-map("n", "<leader>gu", function()
-  require("gitsigns").toggle_current_line_blame()
-end, { silent = true, desc = "gitsigns: toggle blame" })
 
 -- -----------------------------------------------------------------------------
 --  nvim-tree 关闭（<leader>q 已在前面定义）

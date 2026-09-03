@@ -451,7 +451,7 @@ endfunction
 --  对光标下的单词进行大小写敏感的批量替换，限定在变量边界。
 -- -----------------------------------------------------------------------------
 vim.cmd([[
-function! s:SmartReplace()
+function! SmartReplace()
   let old_name = expand("<cword>")
   let new_name = input("replace to (case-sensitive): ", old_name)
 

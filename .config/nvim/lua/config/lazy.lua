@@ -15,21 +15,32 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Make sure to setup `mapleader` and `maplocalleader` before
--- loading lazy.nvim so that mappings are correct.
--- This is also a good place to setup other settings (vim.opt)
-vim.g.mapleader = " "
+-- 重要：setup 之前必须先设置好 mapleader / maplocalleader，
+-- 这样 lazy 内部、以及插件里的映射才会使用正确的 leader。
+-- 与原 vimrc 保持一致：mapleader 与 maplocalleader 都使用反斜杠。
+vim.g.mapleader = "\\"
 vim.g.maplocalleader = "\\"
 
 -- Setup lazy.nvim
 require("lazy").setup({
   spec = {
-    -- import your plugins
+    -- 自动 import lua/plugins/ 下的所有 spec
     { import = "plugins" },
   },
-  -- Configure any other settings here. See the documentation for more details.
-  -- colorscheme that will be used when installing plugins.
-  install = { colorscheme = { "habamax" } },
-  -- automatically check for plugin updates
+  -- 安装插件时使用的 colorscheme
+  install = { colorscheme = { "gruvbox" } },
+  -- 自动检查插件更新
   checker = { enabled = true },
+  -- 性能选项：禁用一些 vim 自带但用不到的插件
+  performance = {
+    rtp = {
+      disabled_plugins = {
+        "gzip",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
 })

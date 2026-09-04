@@ -31,6 +31,9 @@ require("lazy").setup({
   install = { colorscheme = { "gruvbox" } },
   -- 自动检查插件更新
   checker = { enabled = true },
+  -- 禁用 luarocks 支持：本配置没有任何依赖 luarocks 的插件，
+  -- 关闭后可消除 checkhealth 中 hererocks/luarocks 的 ERROR。
+  rocks = { enabled = false },
   -- 性能选项：禁用一些 vim 自带但用不到的插件
   performance = {
     rtp = {

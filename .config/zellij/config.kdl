@@ -167,7 +167,7 @@ keybinds clear-defaults=true {
         bind "Alt f" { ToggleFloatingPanes; }
         bind "Ctrl g" { SwitchToMode "locked"; }
         bind "Alt i" { MoveTab "left"; }
-        bind "Alt n" { NewPane; }
+        bind "Alt n" { NewPane "down"; }
         bind "Alt o" { MoveTab "right"; }
         bind "Alt p" { TogglePaneInGroup; }
         bind "Alt Shift p" { ToggleGroupMarking; }
@@ -570,7 +570,7 @@ session_serialization false
 // Whether stacked panes display as a list with the expanded pane pinned to the bottom
 // Default: true
 // 
-// stacked_pane_list false
+ stacked_pane_list false
  
 // Whether to show tips on startup
 // Default: true
